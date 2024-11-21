@@ -1,3 +1,15 @@
+export const studentMessages: Record<string, string> = Object.freeze({
+  LIST: "Retrieve all the users list",
+  BYID: "Retrieve user details by userId",
+  CREATE: "Create a new student",
+  UPDATE: "Update a existing user",
+  DELETE: "Delete user by userId",
+  BULK_DELETE: "Bulk Delete users by userIds",
+  USER_NOT_FOUND: "Your account is not found or active, contact admin",
+  ENCRYPT_PASSWORD_ERROR: "Password must be an encrypted value",
+  USER_PROFILE_INVALID_FILE_TYPE: "Invalid file type. Only .png , .jpg or jpeg files are allowed.",
+});
+
 export const userMessages: Record<string, string> = Object.freeze({
   LIST: "Retrieve all the users list",
   BYID: "Retrieve user details by userId",
@@ -34,11 +46,47 @@ export const appStatus: Record<string, any> = Object.freeze({
   NEW: "New"
 });
 
+export const learningInterest: Record<string, any> = Object.freeze({
+  QURAN :"Quran",
+  ISLAMIC: "Islamic Studies",
+  ARABIC : "Arabic",
+});
+export const numberOfStudents: Record<string, any> = Object.freeze({
+  ONE: 1,
+  TWO: 2,
+  THREE: 3,
+  FOUR: 4,
+  FIVE: 5,
+});
+export const preferredTeacher: Record<string, any> = Object.freeze({
+  TEACHER_1 : "Male",
+  TEACHER_2 : "Female",
+  TEACHER_3 : "Either",
+});
+
+export const referenceSource: Record<string, any> = Object.freeze({
+  FRIEND: "Friend",
+  SOCIALMEDIA: "Social Media", // Keep as string
+  EMAIL: "E-Mail", 
+  GOOGLE:"Google",
+  OTHER: "Other"  
+});
+
 export const appPlatforms: Record<string, string> = Object.freeze({
   WEB: "Web",
   ONLINE: "Online"
 })
 
+export const evaluationStatus: Record<string, any> = Object.freeze({
+  PENDING:"PENDING",
+  INPROGRESS:"INPROGRESS",
+  COMPLETED:"COMPLETED"
+  });
+
+  export const role: Record<string, any> = Object.freeze({
+    ACADEMICCOACH: "ACADEMICCOACH",
+    TEACHER: "Teacher",
+  });
 
 export const eventType: Record<string, any> = Object.freeze({
   MEETING_SCHEDULED: "MEETING_SCHEDULED",

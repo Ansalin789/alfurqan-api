@@ -6,6 +6,37 @@ enum Status {
   NEW = 'New'
 }
 
+enum LearningInterest {
+  QURAN = 'Quran',
+  ISLAMIC = 'Islamic Studies',
+  ARANIC = 'Arabic',
+}
+enum NumberOfStudents {
+  ONE = 1,
+  TWO = 2,
+  THREE = 3,
+  FOUR = 4,
+  FIVE = 5,
+}
+enum PreferredTeacher {
+  TEACHER_1 = 'Male',
+  TEACHER_2 = 'Female',
+  TEACHER_3 = 'Either',
+}
+
+enum ReferalResource{
+  FRIENDS='Friend',
+  SOCIALMEDIA='Social Media',
+  EMAIL='E-Mail',
+  GOOGLE='Google',
+  OTHER='Other'
+}
+enum EvaluationStatus{
+  PENDING='PENDING',
+  INPROGRESS='INPROGRESS',
+  COMPLETED='COMPLETED'
+}
+
 export interface IUser extends Document {
   userId?: string;
   userName: string;
@@ -22,7 +53,6 @@ export interface IUser extends Document {
 }
 
 export interface IUserCreate {
-  _id?: string | number;
   userId?: string;
   userName: string;
   email: string;
@@ -34,6 +64,135 @@ export interface IUserCreate {
   createdDate?: Date;
   createdBy: string;
   lastUpdatedDate?: Date;
+  lastUpdatedBy: string;
+}
+
+
+export interface IStudents extends Document {
+  firstName: string;
+  lastName: string;
+  academicCoach: {
+    academicCoachId: string;
+    name: string;
+    role: string;
+    email: string;
+};
+  email: string;
+  phoneNumber: number;
+  country?: string;
+  countryCode: string;
+  learningInterest: LearningInterest;
+  numberOfStudents: NumberOfStudents;
+  preferredTeacher: PreferredTeacher;
+  preferredFromTime: string;
+  preferredToTime: string;
+  referralSource: ReferalResource;
+  startDate : Date;
+  evaluationStatus: EvaluationStatus;
+  status: Status;
+  createdDate?: Date;
+  createdBy: string;
+  lastUpdatedDate?: Date;
+  lastUpdatedBy: string;
+}
+
+export interface IStudentCreate {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: number;
+  country?: string;
+  countryCode: string;
+  learningInterest: LearningInterest;
+  numberOfStudents: NumberOfStudents;
+  preferredTeacher: PreferredTeacher;
+  preferredFromTime: string;
+  preferredToTime: string;
+  referralSource: ReferalResource;
+  startDate : Date;
+  evaluationStatus: EvaluationStatus;
+  status: Status;
+  createdDate?: Date;
+  createdBy: string;
+  lastUpdatedDate?: Date;
+  lastUpdatedBy: string;
+}
+
+export interface IUsershiftschedule extends Document{
+  academicCoachId: string;
+  teacherId: string;
+  name: string;
+  email: string;
+  role: string;
+  workhrs: string;
+  startdate: Date;
+  enddate: Date;
+  fromtime: string;
+  totime: string;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  lastUpdatedDate: Date;
+  lastUpdatedBy: string
+}
+
+export interface IUsershiftscheduleCreate{
+  academicCoachId: string;
+  teacherId: string;
+  name: string;
+  email: string;
+  role: string;
+  workhrs: string;
+  startdate: Date;
+  enddate: Date;
+  fromtime: string;
+  totime: string;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  lastUpdatedDate: Date;
+  lastUpdatedBy: string
+}
+
+export interface IMeetingSchedule extends Document {
+  academicCoach: {
+    academicCoachId: string;
+    name: string;
+    email: string;
+  };  
+  teacher: {
+    teacherId: string;
+    name: string;
+    email: string;
+  };   
+  student: {
+    studentId: string;
+    name: string;
+    email: string;
+  };
+  subject: string;
+  meetingLocation: string;
+  class: {
+    classId: string;
+    className: string;
+    classType: string;
+  };  
+  meetingType: string;
+  meetingLink: string;
+  isScheduledMeeting: boolean;
+  scheduledStartDate: Date;
+  scheduledEndDate: Date;
+  scheduledFrom: string;
+  scheduledTo: string;
+  timeZone: string;
+  remainderInMinutes: number;
+  description: string;
+  meetingStatus: string;
+  candidateResponse: string;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  lastUpdatedDate: Date;
   lastUpdatedBy: string;
 }
 
@@ -210,3 +369,5 @@ export interface ITenantSettingsPayload {
   lastUpdatedDate?: Date;
   lastUpdatedBy?: string;
 }
+
+
