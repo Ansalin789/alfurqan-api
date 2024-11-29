@@ -9,7 +9,8 @@ import { sendEmailClient } from "../shared/email";
 import { role } from "../config/messages";
 import axios from "axios";
 import { config } from "../config/env";
-
+import MeetingSchedule from "../models/calendar";
+import Course from "../models/course";
 
 /**
  * Creates a new user.
@@ -20,9 +21,7 @@ import { config } from "../config/env";
 export const createStudent = async (
     payload: IStudentCreate
 ): Promise<IStudents | { error: any }> => {
-    // Create a new instance of the UserModel with the provided data
     const newUser = await new StudentModel(payload);
-    console.log("newUser>>>>",newUser);
     if (newUser.startDate?.toDateString() === new Date().toDateString()) {
         return {
             error: badRequest('Evaluation class is not allowed to current date. Select another date'),
@@ -35,19 +34,27 @@ export const createStudent = async (
     let academicCoachDetails: any = null;
 
     if (shiftScheduleRecord.length > 0) {
-        console.log(">>>>>", payload.startDate);
-        console.log("<<<<<<<<<", shiftScheduleRecord);
         
         for (const shiftSchedule of shiftScheduleRecord) { // Use for...of instead of forEach
             if (payload.startDate >= shiftSchedule.startdate && payload.startDate <= shiftSchedule.enddate) {
                 await validateHours(shiftSchedule.startdate, shiftSchedule.enddate, shiftSchedule.fromtime, shiftSchedule.totime, payload);
-                academicCoachDetails = {
-                    academicCoachId: shiftSchedule.academicCoachId,
-                    name: shiftSchedule.name,
-                    role: shiftSchedule.role,
-                    email: shiftSchedule.email
-                };
-                console.log("academicCoachDetails>>>>", academicCoachDetails);
+             const meetingAvailability = await MeetingSchedule.findOne({
+                academicCoachId: shiftSchedule.academicCoachId,
+                startDate: shiftSchedule.startdate,
+                endDate: shiftSchedule.enddate, 
+                fromtime: shiftSchedule.fromtime,
+                totime: shiftSchedule.totime,
+             }) 
+             if(!meetingAvailability){
+              academicCoachDetails = {
+                academicCoachId: shiftSchedule.academicCoachId,
+                name: shiftSchedule.name,
+                role: shiftSchedule.role,
+                email: shiftSchedule.email
+            };
+            console.log("academicCoachDetails>>>>", academicCoachDetails);
+             }
+                
                 break; // Exit the loop once a valid academic coach is found
             }
         }
@@ -62,30 +69,26 @@ export const createStudent = async (
         email: academicCoachDetails?.email // Provide a default value if undefined
     };
 console.log("newUser academicCoach>>>>",newUser);
-    // Ensure lastName meets the minimum length requirement
-     // Set a default if invalid
-    // Save the new user to the database
     const savedUser = await newUser.save();
-  //   const emailTemplate = await EmailTemplate.findOne({
-  //       templateKey: 'welcome_email',
-  //   }).exec();
-  //  console.log("emailTemplate>>>>",emailTemplate);
-
-  //   if(emailTemplate){
-  //       const emailTo = [
-  //           { email: payload.email, name: payload.firstName + ' ' + payload.lastName }
-  //       ];
-  //       const subject = "Welcome To Alfurqan";
-  //       const htmlPart = emailTemplate.templateContent.replace('<username>', payload.firstName + ' ' + payload.lastName);
-  //       console.log("emailTemplate>>>>",emailTemplate);
-  //       sendEmailClient(emailTo, subject,htmlPart);
-  //   }
+  
+    const emailTemplate = await EmailTemplate.findOne({
+        templateKey: 'welcome_email',
+    }).exec();
+    if(emailTemplate){
+        const emailTo = [
+            { email: payload.email, name: payload.firstName + ' ' + payload.lastName }
+        ];
+        const subject = "Welcome To Alfurqan";
+        const htmlPart = emailTemplate.templateContent.replace('<username>', payload.firstName + ' ' + payload.lastName);
+      //  console.log("emailTemplate>>>>",emailTemplate);
+        sendEmailClient(emailTo, subject,htmlPart);
+    }
 
     const meetingDetails = await zoomMeetingInvite(savedUser);
     const zoomMailTemplate = await EmailTemplate.findOne({
       templateKey: 'evaluation',
   }).exec();
-  console.log("emailTemplate>>>>",zoomMailTemplate);
+  //console.log("emailTemplate>>>>",zoomMailTemplate);
     const subject = 'Evaluation Zoom Meeting';
         const htmlPart = zoomMailTemplate?.templateContent.replace('<date>', payload.startDate.toDateString()).replace('<meetingtime>', payload.preferredFromTime).replace('<zoomlink>', meetingDetails.join_url);
         const emailTo = [
@@ -96,23 +99,95 @@ console.log("newUser academicCoach>>>>",newUser);
         if(htmlPart){
             sendEmailClient(emailTo, subject,htmlPart);
         }
-
-    // Convert the savedUser to a plain object
+        const course = await Course.findOne({
+          courseName: payload.learningInterest,
+        });
+        const CreatemeetingDetails = await MeetingSchedule.create(
+          {
+            academicCoach: {
+            academicCoachId: academicCoachDetails?.academicCoachId,
+            name: academicCoachDetails?.name,
+            role: academicCoachDetails?.role,
+            email: academicCoachDetails?.email
+            },
+          teacher: {
+            teacherId: null,
+            name: null,
+            email: null,
+          },
+          student: {
+            studentId: savedUser._id,
+            name: savedUser.firstName + ' ' + savedUser.lastName,
+            email: savedUser.email
+          },
+          subject: "Student Evaluation",
+          meetingLocation: 'Zoom',
+          course: {
+            courseId: course?._id,
+            courseName: course?.courseName,
+          },
+          classType: 'Evaluation',
+          meetingType: 'Online',
+          meetingLink: meetingDetails.join_url,
+          isScheduledMeeting: true,
+          scheduledStartDate: savedUser.startDate,
+          scheduledEndDate: savedUser.startDate,
+          scheduledFrom: savedUser.preferredFromTime,
+          scheduledTo: savedUser.preferredToTime,
+          timeZone: savedUser.timeZone,
+          description: 'Test Description',
+          meetingStatus: 'Scheduled',
+          studentResponse: 'Pending',
+          status: 'Active',
+          createdDate: new Date(),
+          createdBy: savedUser.firstName + ' ' + savedUser.lastName,
+          lastUpdatedDate: new Date(),
+          lastUpdatedBy: savedUser.firstName + ' ' + savedUser.lastName,
+    });
     const userObject = savedUser.toObject();
+    await CreatemeetingDetails.save();
     return userObject;
 };
 
 
 async function validateHours(shiftstartdate: Date, shiftenddate: Date, fromtime: string, totime: string, payload: IStudentCreate): Promise<any> {
-        console.log(fromtime, totime, payload.startDate);
+        const result = await calculateHours(payload);
+        if(result>1){
+            throw new Error('Evaluation class duration is more than 1 hour');
+        }
+        if((payload.preferredFromTime>= fromtime && payload.preferredFromTime<=totime) && (payload.preferredToTime>= fromtime && payload.preferredToTime<=totime)){
+            return true;
+        }
+        return false;
+}
+function calculateHours(payload: IStudentCreate) {
+  // Function to convert time string to Date objec
+  const fromTime = parseTimeToDate(payload.preferredFromTime);
+  const toTime = parseTimeToDate(payload.preferredToTime);
+  
+  // Check if the dates are valid
+  if (isNaN(fromTime.getTime()) || isNaN(toTime.getTime())) {
+      throw new Error('Invalid date format for preferredFromTime or preferredToTime');
+  }
 
-    if (!(payload.preferredFromTime >= fromtime.toString() || payload.preferredFromTime <= totime.toString()) 
-    ||!(payload.preferredToTime >= fromtime.toString() || payload.preferredToTime <= totime.toString())) {
-        throw new Error('Student time does not fall within the academic coach shift time');
-    }
-    return true;
+  const hours = (toTime.getTime() - fromTime.getTime()) / 3600000; // Convert milliseconds to hours
+  return hours;
 }
 
+function parseTimeToDate(timeString: string): Date {
+  const [time, modifier] = timeString.split(' ');
+  let [hours, minutes] = time.split(':').map(Number);
+
+  if (modifier === 'PM' && hours < 12) {
+      hours += 12; // Convert PM hours to 24-hour format
+  } else if (modifier === 'AM' && hours === 12) {
+      hours = 0; // Convert 12 AM to 0 hours
+  }
+
+  const date = new Date();
+  date.setHours(hours, minutes, 0, 0); // Set hours, minutes, seconds, and milliseconds
+  return date;
+}
 
 
 async function zoomMeetingInvite(savedUser: import("mongoose").Document<unknown, {}, IStudents> & IStudents & { _id: import("mongoose").Types.ObjectId; }) {
@@ -139,7 +214,6 @@ async function zoomMeetingInvite(savedUser: import("mongoose").Document<unknown,
     );
   console.log("response.data.join_url>>", response.data.join_url);
   console.log("response.data.start_url>>", response.data.start_url);
-  
     return {
       join_url: response.data.join_url,
       start_url: response.data.start_url,
@@ -152,11 +226,7 @@ async function getZoomAccessToken() {
     const clientId = config.zoomConfig.zoom_client_id;
     const clientSecret = config.zoomConfig.zoom_client_secret;
     const accountId = config.zoomConfig.zoom_account_id;
-console.log("accountId>>>>",accountId);
-console.log("clientId>>>>",clientId);
-console.log("clientSecret>>>>",clientSecret);
     const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-    console.log("auth>>>>",auth);
     const response = await axios.post(
       `https://zoom.us/oauth/token?grant_type=account_credentials&account_id=${process.env.ZOOM_ACCOUNT_ID}`,
       {},
@@ -173,4 +243,9 @@ console.log("clientSecret>>>>",clientSecret);
   
     return accessToken;
 }
+
+
+
+
+
 

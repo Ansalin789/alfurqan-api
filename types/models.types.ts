@@ -86,6 +86,7 @@ export interface IStudents extends Document {
   preferredTeacher: PreferredTeacher;
   preferredFromTime: string;
   preferredToTime: string;
+  timeZone: string;
   referralSource: ReferalResource;
   startDate : Date;
   evaluationStatus: EvaluationStatus;
@@ -108,6 +109,7 @@ export interface IStudentCreate {
   preferredTeacher: PreferredTeacher;
   preferredFromTime: string;
   preferredToTime: string;
+  timeZone: string;
   referralSource: ReferalResource;
   startDate : Date;
   evaluationStatus: EvaluationStatus;
@@ -172,11 +174,53 @@ export interface IMeetingSchedule extends Document {
   };
   subject: string;
   meetingLocation: string;
-  class: {
-    classId: string;
-    className: string;
-    classType: string;
+  course: {
+    courseId: string;
+    courseName: string;
+  };
+  classType: string; 
+  meetingType: string;
+  meetingLink: string;
+  isScheduledMeeting: boolean;
+  scheduledStartDate: Date;
+  scheduledEndDate: Date;
+  scheduledFrom: string;
+  scheduledTo: string;
+  timeZone: string;
+  remainderInMinutes: number;
+  description: string;
+  meetingStatus: string;
+  studentResponse: string;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  lastUpdatedDate: Date;
+  lastUpdatedBy: string;
+}
+
+export interface IMeetingScheduleCreate {
+  academicCoach: {
+    academicCoachId: string;
+    name: string;
+    email: string;
   };  
+  teacher: {
+    teacherId: string;
+    name: string;
+    email: string;
+  };   
+  student: {
+    studentId: string;
+    name: string;
+    email: string;
+  };
+  subject: string;
+  meetingLocation: string;
+  course: {
+    courseId: string;
+    courseName: string;
+  };
+  classType: string; 
   meetingType: string;
   meetingLink: string;
   isScheduledMeeting: boolean;
@@ -196,6 +240,23 @@ export interface IMeetingSchedule extends Document {
   lastUpdatedBy: string;
 }
 
+export interface ICourse extends Document {
+  courseName: string;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  lastUpdatedDate: Date;
+  lastUpdatedBy: string;
+}
+
+export interface ICourseCreate {
+  courseName: string;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  lastUpdatedDate: Date;
+  lastUpdatedBy: string;
+}
 // Define the ITenant interface
 export interface ITenant extends Document {
   tenantCode: string;
@@ -223,6 +284,65 @@ export interface ITenant extends Document {
   tenantJobCode: string;
 }
 
+
+export interface IEvaluation extends Document {
+
+  student: {
+    studentId: string;
+    studentFirstName: string;
+    studentLastName: string;
+    studentEmail: string;
+    studentPhone: string;
+    studentCity: string;
+    studentCountry: string;
+    preferredDate?: Date;
+    preferredFromTime?: string;
+    preferredToTime?: string;
+    preferredTeacher: string;
+    noOfStudents: number;
+};
+course: {
+    courseId: string;
+    courseName: string;
+};
+isLanguageLevel: boolean;
+languageLevel: string;
+isReadingLevel: boolean;
+readingLevel?: string;
+isGrammarLevel: boolean;
+grammarLevel: string;
+hours: number;
+subscription: {
+    subscriptionId: string;
+    subscriptionName: string;
+    subscriptionPricePerHr: number;
+    subscriptionDays: number;
+    subscriptionStartDate: Date;
+    subscriptionEndDate: Date;
+};
+classStartDate: Date;
+classEndDate: Date;
+classStartTime: string;
+classEndTime: string;
+accomplishmentTime?: string;
+studentRate: number;
+expectedFinishingDate: Date;
+gardianName: string;
+gardianEmail: string;
+gardianPhone: string;
+gardianCity: string;
+gardianCountry: string;
+gardianTimeZone: string;
+gardianLanguage: string;
+studentStatus?: string;
+teacherStatus?: string;
+status?: string;
+createdDate: Date;
+createdBy?: string;
+updatedDate?: Date;
+updatedBy?: string;
+  
+} 
 export interface IActiveSession extends Document {
   userId: string;
   loginDate: Date;

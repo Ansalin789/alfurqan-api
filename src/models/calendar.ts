@@ -10,29 +10,29 @@ const meetingScheduleSchema = new Schema<IMeetingSchedule>(
     academicCoach: {
     academicCoachId: {
         type: String,
-        required: true,
+        required: false,
       },
       name: {
         type: String,
-        required: true,
+        required: false,
       },
       email: {
         type: String,
-        required: true,
+        required: false,
       },
     },
     teacher: {
       teacherId: {
         type: String,
-        required: true,
+        required: false,
       },
       name: {
         type: String,
-        required: true,
+        required: false,
       },
       email: {
         type: String,
-        required: true,
+        required: false,
       }
     },
     student: {
@@ -56,20 +56,20 @@ const meetingScheduleSchema = new Schema<IMeetingSchedule>(
     meetingLocation: {
       type: String,
       required: false,
-    },
-    class: {
-      classId: {
+    },  
+    course: {
+      courseId: {
         type: String,
-      required: true,
-    },
-    className: {
-      type: String,
-      required: true,
+        required: true,
+      },
+      courseName: {
+        type: String,
+        required: true,
+      },
     },
     classType: {
       type: String,
       required: false,
-    },
     },
     meetingType: {
       type: String,
@@ -115,7 +115,7 @@ const meetingScheduleSchema = new Schema<IMeetingSchedule>(
       type: String,
       required: false,
     },
-    candidateResponse: {
+    studentResponse: {
       type: String,
       required: false,
     },

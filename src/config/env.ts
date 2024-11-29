@@ -13,7 +13,7 @@ export const config: Config = {
     //"mongodb://alfurqan:Blackstone%232024@88.222.215.48:27017"  // First let's test without authentication
   },
   // mongo: {
-  //   url: "mongodb://127.0.0.1:27017/alfurqan" // Changed to use IPv4
+  //   url: "mongodb://alfurqan:Blackstone%232024@88.222.215.48:27017" // Changed to use IPv4
   // },
   // sentry: {
   //   dsn: process.env.SENTRY_DSN ?? "",

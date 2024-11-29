@@ -81,6 +81,10 @@ const studentSchema = new Schema<IStudents>(
       type: String,
       required: true
     },
+    timeZone:{
+      type: String,
+      required: false
+    },
     referralSource:{
       type: String,
       enum: Object.values(CustomEnumerator.ReferralSource),
@@ -137,6 +141,7 @@ export const zodStudentSchema = z.object({
   preferredTeacher: z.enum([preferredTeacher.TEACHER_1, preferredTeacher.TEACHER_2, preferredTeacher.TEACHER_3]),
   preferredFromTime: z.string().regex(/^(0[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$/, "Time must be in format HH:MM AM/PM"),
   preferredToTime: z.string().regex(/^(0[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$/, "Time must be in format HH:MM AM/PM"),
+  timeZone: z.string().min(1),
   referralSource: z.enum([referenceSource.FRIEND, referenceSource.SOCIALMEDIA, referenceSource.EMAIL, referenceSource.GOOGLE, referenceSource.OTHER]),
   startDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: commonMessages.INVALID_DATE_FORMAT,

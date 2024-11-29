@@ -55,6 +55,7 @@ const createInputValidation = z.object({
     preferredTeacher: true,
     preferredFromTime: true,
     preferredToTime: true,
+    timeZone: true,
     referralSource: true,
     startDate: true,
     evaluationStatus: true,
@@ -82,6 +83,7 @@ export default {
   preferredTeacher: payload.preferredTeacher || "defaultPreferredTeacher", 
   preferredFromTime: payload.preferredFromTime,
   preferredToTime: payload.preferredToTime,
+  timeZone: payload.timeZone,
   referralSource: payload.referralSource || "defaultReferralSource", 
   startDate: payload.startDate || new Date(), // Provide a default value for startDate
   evaluationStatus: payload.evaluationStatus || EvaluationStatus.PENDING, // Use a valid EvaluationStatus value
