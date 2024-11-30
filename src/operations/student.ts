@@ -1,9 +1,9 @@
 import { IStudentCreate, IStudents } from "../../types/models.types";
 import StudentModel from "../models/student";
-import { studentMessages } from "../config/messages";
+import { commonMessages, studentMessages } from "../config/messages";
 import { badRequest, Boom } from "@hapi/boom";
 import UserShiftSchedule from "../models/usershiftschedule"; // Add this import
-import { forEach } from "lodash";
+import { forEach, isNil } from "lodash";
 import EmailTemplate from "../models/emailTemplate";
 import { sendEmailClient } from "../shared/email";
 import { role } from "../config/messages";
@@ -11,6 +11,9 @@ import axios from "axios";
 import { config } from "../config/env";
 import MeetingSchedule from "../models/calendar";
 import Course from "../models/course";
+import { GetAllRecordsParams } from "../shared/enum";
+import AppLogger from "../helpers/logging";
+
 
 /**
  * Creates a new user.
@@ -246,6 +249,64 @@ async function getZoomAccessToken() {
 
 
 
+export const getAllStudentsRecords = async (
+  params: GetAllRecordsParams
+): Promise<{ totalCount: number; students: IStudents[] }> => {
+  const { searchText, offset, limit, filterValues } = params;
 
+  // Construct query object based on filters
+  const query: any = {};
 
+  // Add searchText to the query if provided
+  if (searchText) {
+    query.$or = [
+      { name: { $regex: searchText, $options: "i" } }, // Search by name
+      { email: { $regex: searchText, $options: "i" } }, // Search by email (if applicable)
+    ];
+  }
+
+  // Add filters to the query
+  if (filterValues) {
+    if (filterValues.course) {
+      query.course = { $in: filterValues.course }; // Filter by course
+    }
+    if (filterValues.country) {
+      query.country = { $in: filterValues.country }; // Filter by country
+    }
+    if (filterValues.teacher) {
+      query.teacher = { $in: filterValues.teacher }; // Filter by teacher IDs
+    }
+    if (filterValues.status) {
+      query.status = { $in: filterValues.status }; // Filter by status
+    }
+  }
+  const studentQuery = StudentModel.find(query);
+  
+  if (!isNil(offset) && !isNil(limit)) {
+    const skip = Math.max(
+      0,
+      ((Number(offset) ?? Number(commonMessages.OFFSET)) - 1) *
+      (Number(limit) ?? Number(commonMessages.LIMIT))
+    );
+    studentQuery
+      .skip(skip)
+      .limit(Number(limit) ?? Number(commonMessages.LIMIT));
+  }
+
+  // Use Promise.all to perform both query and count operations concurrently
+  const [students, totalCount] = await Promise.all([
+    // Fetch students with pagination
+    studentQuery.exec(),
+    // Count total records for the query
+    StudentModel.countDocuments(query).exec(),
+  ]);
+
+  // Log successful retrieval
+  AppLogger.info(studentMessages.GET_ALL_LIST_SUCCESS, {
+    totalCount: totalCount,
+  });
+
+  // Return total count and fetched students
+  return { totalCount, students };
+};
 

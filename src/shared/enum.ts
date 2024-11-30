@@ -56,39 +56,31 @@ export class CustomEnumerator {
 }
 
 export interface GetAllRecordsParams {
-  tenantId: string;
+
   searchText?: string;
-  offset?: string | null;
-  limit?: string | null;
-  sortBy: string;
-  sortOrder?: "asc" | "desc";
-  jobStatus?: string[];
-  jobId?: string;
-  referenceId?: string;
+  offset?: number | undefined;
+  limit?: number | undefined;
   filterValues?: {
-    jobSector?: string[];
-    jobs?: string[];
-    recruiter?: string[];
-    status?: string[];
-    users?: string[];
-    meetingStatus?: string[];
-    candidateResponse?: string[];
-    referenceType?: string[];
-    notificationType?: string[];
-  };
-  isPinned?: boolean;
-  scheduledStartDate?: string;
-  scheduledEndDate?: string;
-  modules?: string[];
-  keyNames?: string[];
-  userId?: string;
-  startDate?: string;
-  endDate?: string;
-  jobTitles?: string[];
-  jobSectors?: string[];
-  clients?: string[];
-  interviewDetailId?: string;
-  feedbackTypes?: string[];
+  course?: string;
+  country?: string;
+  teacher?: string;
+  status?: string;
+};  
+
+
+  // isPinned?: boolean;
+  // scheduledStartDate?: string;
+  // scheduledEndDate?: string;
+  // modules?: string[];
+  // keyNames?: string[];
+  // userId?: string;
+  // startDate?: string;
+  // endDate?: string;
+  // jobTitles?: string[];
+  // jobSectors?: string[];
+  // clients?: string[];
+  // interviewDetailId?: string;
+  // feedbackTypes?: string[];
 }
 
 export default CustomEnumerator;

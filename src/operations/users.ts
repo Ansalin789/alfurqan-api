@@ -19,16 +19,12 @@ export const getAllUserRecords = async (
   params: GetAllRecordsParams
 ): Promise<{ users: IUser[]; totalCount: number }> => {
   const {
-    tenantId,
     searchText,
     offset,
     limit,
-    sortBy,
-    sortOrder,
   } = params;
 
   const query: any = {
-    tenantId,
     status: { $in: [appStatus.ACTIVE, appStatus.IN_ACTIVE] },
   };
 
@@ -39,8 +35,7 @@ export const getAllUserRecords = async (
     ];
   }
 
-  const sortOptions: any = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
-  const userQuery = UserModel.find(query).select("-password").sort(sortOptions);
+  const userQuery = UserModel.find(query).select("-password");
 
   if (!isNil(offset) && !isNil(limit)) {
     const skip = Math.max(0, ((Number(offset) ?? 0) - 1) * (Number(limit) ?? 10));

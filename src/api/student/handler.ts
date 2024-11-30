@@ -3,6 +3,8 @@ import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodStudentSchema } from "../../models/student";
 import UserShiftSchedule from "../../models/usershiftschedule"; // Add this import
+import { createStudent, getAllStudentsRecords } from "../../operations/student";
+import { EvaluationStatus } from "../../shared/enum";
 
 
 // import {
@@ -14,8 +16,7 @@ import UserShiftSchedule from "../../models/usershiftschedule"; // Add this impo
 //   // getUserRecordById,
 //   // updateUser,
 // } from "../../operations/users";
-import { createStudent } from "../../operations/student";
-import { EvaluationStatus } from "../../shared/enum";
+
 
 // // Input Validations for users list
 // const getUsersListInputValidation = z.object({
@@ -41,6 +42,7 @@ import { EvaluationStatus } from "../../shared/enum";
 //   }),
 // });
 
+
 // Input Validation for Create a User
 const createInputValidation = z.object({
   payload: zodStudentSchema.pick({
@@ -64,6 +66,19 @@ const createInputValidation = z.object({
     lastUpdatedBy: true,
   }),
 });
+
+
+// Input Validations for student list
+const getStudentsListInputValidation = z.object({
+  query: zodStudentSchema.pick({
+    searchText: true,
+    offset: true,
+    limit: true,
+    filterValues: true
+  }),
+});
+
+
 
 export default {
   // Create a new student
@@ -91,5 +106,19 @@ export default {
   createdBy: payload.createdBy,
   lastUpdatedBy: payload.lastUpdatedBy
   })
+},
+
+// Retrieve all the candidates list
+async getAllStudents(req: Request, h: ResponseToolkit) {
+  const { query } = getStudentsListInputValidation.parse({
+    query: {
+      ...req.query,
+      filterValues: req.query?.filterValues ? JSON.parse(req.query.filterValues) : {},
+    },
+  });
+  return getAllStudentsRecords(query);
+},
+
+
 }
-}
+ 

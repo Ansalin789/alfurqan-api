@@ -4,7 +4,7 @@ import { IStudents } from "../../types/models.types";
 
 import CustomEnumerator from "../shared/enum";
 import { z } from "zod";
-import { appStatus, commonMessages, evaluationStatus, learningInterest, numberOfStudents,preferredTeacher, referenceSource } from "../config/messages";
+import { appStatus,appRegexPatterns, commonMessages, evaluationStatus, learningInterest, numberOfStudents,preferredTeacher, referenceSource } from "../config/messages";
 
 const studentSchema = new Schema<IStudents>(
   {
@@ -156,6 +156,25 @@ export const zodStudentSchema = z.object({
     message: commonMessages.INVALID_DATE_FORMAT,
   }).transform((val) => new Date(val)).optional(),
   lastUpdatedBy: z.string(),
+  searchText: z.string().default(""),
+  offset: z.number().optional(),
+  limit: z.number().optional(),
+  filterValues : z.object({
+    // Filter for courses: Array of course names or IDs, optional
+    course: z.string()
+      .optional(),
+    // Filter for countries: Array of country codes or names, optional
+    country: z.string()
+      .optional(),
+    // Filter for teachers: Array of Object IDs, optional, validated with regex
+    teacher: z.string()
+    .optional(),
+    // Filter for status: Array of enums, optional, with default values
+    status: z.string()
+    .optional()
+  })
 })
+
+
 
 export default mongoose.model<IStudents>("Students", studentSchema);

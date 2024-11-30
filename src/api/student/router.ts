@@ -20,6 +20,34 @@ const register = async (server: Server): Promise<void> => {
       },
     },
 
+     
+    {
+      method: "GET",
+      path: "/studentlist",
+      options: {
+        handler: handler.getAllStudents,
+        description: studentMessages.LIST,
+        tags: ["api", "studentlist"],
+        // auth: {
+        //   strategies: ["jwt"],
+        // },
+        
+      },
+    },
+
+    // {
+    //   method: "GET",
+    //   path: "/students/{studentsId}",
+    //   options: {
+    //     handler: handler.getStudentRecordById,
+    //     description: studentsMessages.BYID,
+    //     tags: ["api", "students"],
+    //     // auth: {
+    //     //   strategies: ["jwt"],
+    //     // },
+    //   },
+    // },
+
   ];
   server.route(routes);
 };

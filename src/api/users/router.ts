@@ -5,18 +5,18 @@ import { userMessages } from "../../config/messages";
 const register = async (server: Server): Promise<void> => {
   // Register all routes for this unit
   const routes: ServerRoute[] = [
-    {
-      method: "GET",
-      path: "/users",
-      options: {
-        handler: handler.getAllUsers,
-        description: userMessages.LIST,
-        tags: ["api", "users"],
-        auth: {
-          strategies: ["jwt"],
-        },
-      },
-    },
+    // {
+    //   method: "GET",
+    //   path: "/users",
+    //   options: {
+    //     handler: handler.getAllUsers,
+    //     description: userMessages.LIST,
+    //     tags: ["api", "users"],
+    //     auth: {
+    //       strategies: ["jwt"],
+    //     },
+    //   },
+    // },
     {
       method: "GET",
       path: "/users/{userId}",
