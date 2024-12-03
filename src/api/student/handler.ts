@@ -3,8 +3,12 @@ import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodStudentSchema } from "../../models/student";
 import UserShiftSchedule from "../../models/usershiftschedule"; // Add this import
-import { createStudent, getAllStudentsRecords } from "../../operations/student";
-import { EvaluationStatus } from "../../shared/enum";
+import { createStudent, getAllStudentsRecords,getStudentRecordById } from "../../operations/student";
+import { EvaluationStatus } from "../../shared/enum";  
+import {  studentMessages } from "../../config/messages"
+import { notFound } from "@hapi/boom";
+import { isNil } from "lodash";
+import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 
 
 // import {
@@ -70,8 +74,10 @@ const createInputValidation = z.object({
 
 // Input Validations for student list
 const getStudentsListInputValidation = z.object({
-  query: zodStudentSchema.pick({
+  query: zodGetAllRecordsQuerySchema.pick({
     searchText: true,
+    sortBy: true,
+    sortOrder: true,
     offset: true,
     limit: true,
     filterValues: true
@@ -108,7 +114,7 @@ export default {
   })
 },
 
-// Retrieve all the candidates list
+// Retrieve all the students list
 async getAllStudents(req: Request, h: ResponseToolkit) {
   const { query } = getStudentsListInputValidation.parse({
     query: {
@@ -120,5 +126,49 @@ async getAllStudents(req: Request, h: ResponseToolkit) {
 },
 
 
+  // Retrieve student details by studentId
+async getStudentRecordById(req: Request, h: ResponseToolkit) {
+  const result = await getStudentRecordById(String(req.params.studentId));
+
+  if (isNil(result)) {
+    return notFound(studentMessages.STUDENTS_NOT_FOUND);
+  }
+
+  return result;
+},
 }
  
+// export const getFilteredStudents = async ({
+//   country,
+//   course,
+//   teacher,
+//   status,
+//   offset = 1,
+//   limit = 10,
+// }: {
+//   country?: string;
+//   course?: string;
+//   teacher?: string;
+//   status?: string;
+//   offset?: number;
+//   limit?: number;
+// }) => {
+//   try {
+//     // Build query filters dynamically
+//     const filters: any = {};
+//     if (country) filters.country = country;
+//     if (course) filters.course = course;
+//     if (teacher) filters.teacher = teacher;
+//     if (status) filters.status = status;
+
+//     // Simulate database query with filters, offset, and limit
+//     const students = await zodStudentSchema.find(filters)
+//       .skip(offset)
+//       .limit(limit);
+
+//     return students;
+//   } catch (error) {
+//     console.error("Error fetching filtered students:", error);
+//     throw new Error("Failed to fetch students");
+//   }
+// };

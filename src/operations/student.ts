@@ -13,7 +13,18 @@ import MeetingSchedule from "../models/calendar";
 import Course from "../models/course";
 import { GetAllRecordsParams } from "../shared/enum";
 import AppLogger from "../helpers/logging";
+import { Types } from "mongoose";
 
+
+
+export interface StudentFilter {
+  id(id: any): string;
+ 
+  status: string;
+  country?: string;
+  course?: string;
+  teacher?: string;
+}
 
 /**
  * Creates a new user.
@@ -252,7 +263,8 @@ async function getZoomAccessToken() {
 export const getAllStudentsRecords = async (
   params: GetAllRecordsParams
 ): Promise<{ totalCount: number; students: IStudents[] }> => {
-  const { searchText, offset, limit, filterValues } = params;
+  const { searchText,  sortBy,
+    sortOrder,offset, limit, filterValues } = params;
 
   // Construct query object based on filters
   const query: any = {};
@@ -280,7 +292,11 @@ export const getAllStudentsRecords = async (
       query.status = { $in: filterValues.status }; // Filter by status
     }
   }
-  const studentQuery = StudentModel.find(query);
+
+  const sortOptions: any = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
+
+  const studentQuery = StudentModel.find(query).sort(sortOptions);
+
   
   if (!isNil(offset) && !isNil(limit)) {
     const skip = Math.max(
@@ -309,4 +325,48 @@ export const getAllStudentsRecords = async (
   // Return total count and fetched students
   return { totalCount, students };
 };
+
+
+
+
+export const getStudentRecordById = async (
+  id: string
+): Promise<IStudents | null> => {
+  return StudentModel.findOne({
+    _id: new Types.ObjectId(id),
+  }).lean();
+};
+
+export const getStudentRecordByData = async (
+  filters: StudentFilter
+): Promise<IStudents | null> => {
+  const query: any = {};
+
+  // Add filters dynamically
+ 
+
+  if (!isNil(filters.teacher)) {
+    query.teacher = filters.teacher; // Filter by teacher
+  }
+
+  if (!isNil(filters.course)) {
+    query.course = filters.course; // Filter by course
+  }
+
+  if (!isNil(filters.status)) {
+    query.status = filters.status; // Filter by status
+  }
+
+  if (!isNil(filters.country)) {
+    query.country = filters.country; // Filter by country
+  }
+
+  // Handle _id filter if needed
+  if (!isNil(filters.id)) {
+    query._id = new Types.ObjectId(String(filters.id));
+  }
+
+  return StudentModel.findOne(query).lean();
+};
+
 

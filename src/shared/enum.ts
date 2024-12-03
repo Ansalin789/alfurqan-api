@@ -58,8 +58,10 @@ export class CustomEnumerator {
 export interface GetAllRecordsParams {
 
   searchText?: string;
-  offset?: number | undefined;
-  limit?: number | undefined;
+  sortBy: string;
+  sortOrder?: "asc" | "desc";
+  offset?: string | null;
+  limit?: string | null;
   filterValues?: {
   course?: string;
   country?: string;

@@ -23,10 +23,7 @@ import {
 // Input Validations for users list
 const getUsersListInputValidation = z.object({
   query: zodGetAllRecordsQuerySchema.pick({
-    tenantId: true,
     searchText: true,
-    sortBy: true,
-    sortOrder: true,
     offset: true,
     limit: true,
   }),
