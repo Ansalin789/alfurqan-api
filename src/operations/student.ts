@@ -19,7 +19,6 @@ import { Types } from "mongoose";
 
 export interface StudentFilter {
   id(id: any): string;
- 
   status: string;
   country?: string;
   course?: string;
@@ -279,6 +278,7 @@ export const getAllStudentsRecords = async (
 
   // Add filters to the query
   if (filterValues) {
+    console.log("Filter Values:", filterValues); // Log filter values
     if (filterValues.course) {
       query.course = { $in: filterValues.course }; // Filter by course
     }
@@ -292,6 +292,8 @@ export const getAllStudentsRecords = async (
       query.status = { $in: filterValues.status }; // Filter by status
     }
   }
+  
+  console.log("Constructed Query:", JSON.stringify(query, null, 2)); // Log the constructed query
 
   const sortOptions: any = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
 
@@ -343,8 +345,6 @@ export const getStudentRecordByData = async (
   const query: any = {};
 
   // Add filters dynamically
- 
-
   if (!isNil(filters.teacher)) {
     query.teacher = filters.teacher; // Filter by teacher
   }
