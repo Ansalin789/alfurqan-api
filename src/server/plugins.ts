@@ -6,6 +6,8 @@ import studentAPI from "../api/student/router"
 import shiftScheduleAPI from "../api/shiftSchedule/router"
 import errorHandler from "../errors";
 import JWTAuth from "../plugins/jwt_auth";
+import evaluationAPI from "../api/evaluation/router";
+import subscriptionAPI from "../api/subscriptions/router";
 export const appPlugins = [
   {
     plugin: systemLifeCycle,
@@ -26,7 +28,13 @@ export const appPlugins = [
     plugin: studentAPI,
   },
   {
+    plugin: evaluationAPI,
+  },
+  {
     plugin: shiftScheduleAPI,
+  },
+  {
+    plugin: subscriptionAPI,
   },
  
 ];

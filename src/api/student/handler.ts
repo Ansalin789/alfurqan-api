@@ -109,6 +109,7 @@ export default {
   startDate: payload.startDate || new Date(), // Provide a default value for startDate
   evaluationStatus: payload.evaluationStatus || EvaluationStatus.PENDING, // Use a valid EvaluationStatus value
   status: payload.status || "defaultStatus", // Provide a default value for status
+  createdDate: new Date(),
   createdBy: payload.createdBy,
   lastUpdatedBy: payload.lastUpdatedBy
   })

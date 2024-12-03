@@ -10,6 +10,18 @@ export const studentMessages: Record<string, string> = Object.freeze({
   USER_PROFILE_INVALID_FILE_TYPE: "Invalid file type. Only .png , .jpg or jpeg files are allowed.",
 });
 
+export const evaluationMessages: Record<string, string> = Object.freeze({
+  LIST: "Retrieve all the users list",
+  BYID: "Retrieve user details by userId",
+  CREATE: "Create a new student",
+  UPDATE: "Update a existing user",
+  DELETE: "Delete user by userId",
+  BULK_DELETE: "Bulk Delete users by userIds",
+  USER_NOT_FOUND: "Your account is not found or active, contact admin",
+  ENCRYPT_PASSWORD_ERROR: "Password must be an encrypted value",
+  USER_PROFILE_INVALID_FILE_TYPE: "Invalid file type. Only .png , .jpg or jpeg files are allowed.",
+});
+
 export const userMessages: Record<string, string> = Object.freeze({
   LIST: "Retrieve all the users list",
   BYID: "Retrieve user details by userId",

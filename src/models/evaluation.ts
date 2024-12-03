@@ -1,11 +1,13 @@
 import { model, Schema } from "mongoose";
 
 import { IEvaluation } from "../../types/models.types";
+import { z } from "zod";
+import { appStatus, commonMessages, evaluationStatus, learningInterest, preferredTeacher, referenceSource } from "../config/messages";
 
 const evaluationSchema = new Schema<IEvaluation>({
   student: {
     studentId: {
-        type: String,
+       type: String,
        required: true,
     },
     studentFirstName: {
@@ -21,21 +23,29 @@ const evaluationSchema = new Schema<IEvaluation>({
         required: true,
     },
     studentPhone: {
-        type: String,
-        required: true,
-    },
-    studentCity: {
-        type: String,
+        type: Number,
         required: true,
     },
     studentCountry: {
         type: String,
         required: true,
     },
-    preferredDate: {
-        type: Date,
-        required: false,
+    studentCountryCode: {
+        type: String,
+        required: true,
     },
+    learningInterest: {
+        type: String,
+        required: true,
+    },
+    numberOfStudents: {
+        type: Number,
+        required: true,
+    },
+    preferredTeacher: {
+        type: String,
+        required: true,
+    }, 
     preferredFromTime: {
         type: String,
         required: false,
@@ -43,26 +53,36 @@ const evaluationSchema = new Schema<IEvaluation>({
     preferredToTime: {
         type: String,
         required: false,
+    }, 
+    timeZone: {
+        type: String,
+        required: true,
     },
-    preferredTeacher: {
+    referralSource: {
+        type: String,
+        required: true,
+    },
+    preferredDate: {
+        type: Date,
+        required: false,
+    },
+    evaluationStatus: {
         type: String,
         required: true,
     },  
-    noOfStudents: {
-        type: Number,
+    status: {
+        type: String,
         required: true,
     },
+    createdDate: {
+        type: Date,
+        required: true,
+    },
+    createdBy: {
+        type: String,
+        required: false,
+    }
   },
-    course: {
-      courseId: {
-        type: String,
-        required: true,
-      },
-      courseName: {
-        type: String,
-        required: true,
-        },
-    },
     isLanguageLevel: {
         type: Boolean,
         required: true,
@@ -116,6 +136,10 @@ const evaluationSchema = new Schema<IEvaluation>({
             required: true,
         }
     },
+    planTotalPrice: {
+        type: Number,
+        required: true
+    },
     classStartDate: {
         type: Date,
         required: true,
@@ -140,7 +164,7 @@ const evaluationSchema = new Schema<IEvaluation>({
         required: true,
     },
     expectedFinishingDate: {
-        type: Date,
+        type: Number,
         required: true,
     },
     gardianName: {
@@ -175,8 +199,7 @@ const evaluationSchema = new Schema<IEvaluation>({
         type: String,
         required: false,
     },
-
-    teacherStatus: {
+    classStatus: {
         type: String,
         required: false,
     },
@@ -207,5 +230,68 @@ const evaluationSchema = new Schema<IEvaluation>({
     timestamps: false,
 }
 );
+export const zodEvaluationSchema = z.object({
+    student: z.object({
+        studentFirstName: z.string(),
+        studentLastName: z.string(),
+        studentEmail: z.string(),
+        studentPhone: z.number(),
+        studentCountry: z.string(),
+        studentCountryCode: z.string(),
+        learningInterest: z.enum([learningInterest.QURAN, learningInterest.ISLAMIC, learningInterest.ARABIC]),
+        numberOfStudents: z.number(),
+        preferredTeacher: z.enum([preferredTeacher.TEACHER_1, preferredTeacher.TEACHER_2, preferredTeacher.TEACHER_3]),
+        preferredFromTime: z.string().regex(/^(0[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$/, "Time must be in format HH:MM AM/PM"),
+        preferredToTime: z.string().regex(/^(0[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$/, "Time must be in format HH:MM AM/PM"),
+        timeZone: z.string(),
+        referralSource: z.enum([referenceSource.FRIEND, referenceSource.SOCIALMEDIA, referenceSource.EMAIL, referenceSource.GOOGLE, referenceSource.OTHER]),
+        preferredDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+            message: commonMessages.INVALID_DATE_FORMAT,
+          }).transform((val) => new Date(val)).optional(),
+        evaluationStatus: z.enum([evaluationStatus.PENDING, evaluationStatus.INPROGRESS, evaluationStatus.COMPLETED]),
+        status: z.enum([appStatus.ACTIVE, appStatus.IN_ACTIVE, appStatus.DELETED]),
+        createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+            message: commonMessages.INVALID_DATE_FORMAT,
+          }).transform((val) => new Date(val)).optional(),
+        createdBy: z.string().optional(),
+      
+    }),
+    isLanguageLevel: z.boolean(),
+    languageLevel: z.string(),
+    isReadingLevel: z.boolean(),
+    readingLevel: z.string().optional(),
+    isGrammarLevel: z.boolean(),
+    grammarLevel: z.string(),
+    hours: z.number(),
+    subscription: z.object({
+        subscriptionName: z.string(),
+    }),
+    classStartDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+        message: commonMessages.INVALID_DATE_FORMAT,
+      }).transform((val) => new Date(val)),
+    classEndDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+        message: commonMessages.INVALID_DATE_FORMAT,
+      }).transform((val) => new Date(val)).optional(),
+    classStartTime: z.string(),
+    classEndTime: z.string(),
+    gardianName: z.string(),
+    gardianEmail: z.string(),
+    gardianPhone: z.string(),
+    gardianCity: z.string(),
+    gardianCountry: z.string(),
+    gardianTimeZone: z.string(),
+    gardianLanguage: z.string(),
+    studentStatus: z.string().optional(),
+    classStatus: z.string().optional(),
+    status: z.string().optional(),
+    createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+        message: commonMessages.INVALID_DATE_FORMAT,
+      }).transform((val) => new Date(val)).optional(),
+    createdBy: z.string().optional(),
+    updatedDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+        message: commonMessages.INVALID_DATE_FORMAT,
+      }).transform((val) => new Date(val)).optional().optional(),
+    updatedBy: z.string().optional(),
+});
 
 export default model<IEvaluation>("Evaluation", evaluationSchema);

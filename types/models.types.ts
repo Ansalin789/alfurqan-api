@@ -79,7 +79,7 @@ export interface IStudents extends Document {
 };
   email: string;
   phoneNumber: number;
-  country?: string;
+  country: string;
   countryCode: string;
   learningInterest: LearningInterest;
   numberOfStudents: NumberOfStudents;
@@ -91,7 +91,7 @@ export interface IStudents extends Document {
   startDate : Date;
   evaluationStatus: EvaluationStatus;
   status: Status;
-  createdDate?: Date;
+  createdDate: Date;
   createdBy: string;
   lastUpdatedDate?: Date;
   lastUpdatedBy: string;
@@ -102,7 +102,7 @@ export interface IStudentCreate {
   lastName: string;
   email: string;
   phoneNumber: number;
-  country?: string;
+  country: string;
   countryCode: string;
   learningInterest: LearningInterest;
   numberOfStudents: NumberOfStudents;
@@ -114,7 +114,7 @@ export interface IStudentCreate {
   startDate : Date;
   evaluationStatus: EvaluationStatus;
   status: Status;
-  createdDate?: Date;
+  createdDate: Date;
   createdBy: string;
   lastUpdatedDate?: Date;
   lastUpdatedBy: string;
@@ -286,24 +286,26 @@ export interface ITenant extends Document {
 
 
 export interface IEvaluation extends Document {
-
-  student: {
-    studentId: string;
-    studentFirstName: string;
-    studentLastName: string;
-    studentEmail: string;
-    studentPhone: string;
-    studentCity: string;
-    studentCountry: string;
-    preferredDate?: Date;
-    preferredFromTime?: string;
-    preferredToTime?: string;
-    preferredTeacher: string;
-    noOfStudents: number;
-};
-course: {
-    courseId: string;
-    courseName: string;
+student: {
+  studentId: string;
+  studentFirstName: string;
+  studentLastName: string;
+  studentEmail: string;
+  studentPhone: number;
+  studentCountry: string;
+  studentCountryCode: string;
+  learningInterest: LearningInterest;
+  numberOfStudents: number;
+  preferredTeacher: PreferredTeacher;
+  preferredFromTime: string;
+  preferredToTime: string;
+  timeZone: string;
+  referralSource: ReferalResource;
+  preferredDate: Date;
+  evaluationStatus: EvaluationStatus;
+  status: Status;
+  createdDate: Date;
+  createdBy: string;
 };
 isLanguageLevel: boolean;
 languageLevel: string;
@@ -320,13 +322,14 @@ subscription: {
     subscriptionStartDate: Date;
     subscriptionEndDate: Date;
 };
+planTotalPrice: number
 classStartDate: Date;
 classEndDate: Date;
 classStartTime: string;
 classEndTime: string;
 accomplishmentTime?: string;
 studentRate: number;
-expectedFinishingDate: Date;
+expectedFinishingDate: number;
 gardianName: string;
 gardianEmail: string;
 gardianPhone: string;
@@ -335,7 +338,7 @@ gardianCountry: string;
 gardianTimeZone: string;
 gardianLanguage: string;
 studentStatus?: string;
-teacherStatus?: string;
+classStatus?: string;
 status?: string;
 createdDate: Date;
 createdBy?: string;
@@ -343,6 +346,76 @@ updatedDate?: Date;
 updatedBy?: string;
   
 } 
+
+
+export interface IEvaluationCreate{
+
+  student: {
+  studentFirstName: string;
+  studentLastName: string;
+  studentEmail: string;
+  studentPhone: number;
+  studentCountry: string;
+  studentCountryCode: string;
+  learningInterest: LearningInterest;
+  numberOfStudents: number;
+  preferredTeacher: PreferredTeacher;
+  preferredFromTime?: string;
+  preferredToTime?: string;
+  timeZone: string;
+  referralSource: ReferalResource;
+  preferredDate?: Date;
+  evaluationStatus: EvaluationStatus;
+  status: Status;
+  createdDate: Date;
+  createdBy?: string;
+};
+isLanguageLevel: boolean;
+languageLevel: string;
+isReadingLevel: boolean;
+readingLevel?: string;
+isGrammarLevel: boolean;
+grammarLevel: string;
+hours: number;
+subscription: {
+    subscriptionName: string;
+};
+
+classStartDate: Date;
+classEndDate: Date;
+classStartTime: string;
+classEndTime: string;
+gardianName: string;
+gardianEmail: string;
+gardianPhone: string;
+gardianCity: string;
+gardianCountry: string;
+gardianTimeZone: string;
+gardianLanguage: string;
+studentStatus?: string;
+classStatus?: string;
+status?: string;
+createdDate: Date;
+createdBy?: string;
+updatedDate?: Date;
+updatedBy?: string;
+  
+}
+
+
+export interface ISubscritions extends Document{
+  subscriptionName: string,
+  subscriptionPricePerHr: number,
+  subscriptionDays: number,
+  subscriptionStartDate: Date,
+  subscriptionEndDate: Date,
+  status: string,
+  createdDate: Date,
+  createdBy: string,
+  updatedDate: Date,
+  updatedBy: string
+}
+
 export interface IActiveSession extends Document {
   userId: string;
   loginDate: Date;
