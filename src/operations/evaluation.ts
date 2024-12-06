@@ -4,11 +4,26 @@ import EvaluationModel from "../models/evaluation"
 import StudentModel from "../models/student"
 import UserShiftSchedule from "../models/usershiftschedule"; // Add this import
 import MeetingSchedule from "../models/calendar";
-import { Types } from "aws-sdk/clients/acm";
+// import { Types } from "aws-sdk/clients/acm";
 import SubscriptionModel from "../models/subscription"
 import EmailTemplate from "../models/emailTemplate";
+import { GetAllRecordsParams } from "../shared/enum";
+import { commonMessages, evaluationMessages } from "../config/messages";
+import { isNil } from "lodash";
+import AppLogger from "../helpers/logging";
+import { Types } from "mongoose";
 
 
+
+
+
+export interface EvaluationFilter {
+  id(id: any): string;
+  status: string;
+  country?: string;
+  course?: string;
+  teacher?: string;
+}
 
 
 /**
@@ -231,3 +246,139 @@ export const updateStudentEvaluation = async (
 //     throw new Error("Function not implemented.");
 // }
 
+// export const getAllEvaluationRecords = async (
+//     params: GetAllRecordsParams
+//   ): Promise<{ totalCount: number; evaluation: IEvaluation[] }> => {
+//     const { searchText,  sortBy,sortOrder,offset, limit, filterValues } = params;
+  
+//     // Construct query object based on filters
+//     const query: any = {};
+  
+//     // Add searchText to the query if provided
+//     if (searchText) {
+//       query.$or = [
+//         { name: { $regex: searchText, $options: "i" } }, // Search by name
+//         { email: { $regex: searchText, $options: "i" } }, // Search by email (if applicable)
+//       ];
+//     }
+  
+//     // Add filters to the query
+//     if (filterValues) {
+//       console.log("Filter Values:", filterValues); // Log filter values
+//       if (filterValues.course) {
+//         query.course = { $in: filterValues.course }; // Filter by course
+//       }
+//       if (filterValues.country) {
+//         query.country = { $in: filterValues.country }; // Filter by country
+//       }
+//       if (filterValues.teacher) {
+//         query.teacher = { $in: filterValues.teacher }; // Filter by teacher IDs
+//       }
+//       if (filterValues.status) {
+//         query.status = { $in: filterValues.status }; // Filter by status
+//       }
+//     }
+//   }
+
+
+/**
+ * Retrieves a list of all evaluation records with filters, sorting, and pagination.
+ *
+ * @param {GetAllRecordsParams} params - Parameters for filtering, sorting, and pagination.
+ * @returns {Promise<{ totalCount: number; evaluation: IEvaluation[] }>} - The total count and list of evaluations.
+ */
+export const getAllEvaluationRecords = async (
+  params: GetAllRecordsParams
+): Promise<{ totalCount: number; evaluation: IEvaluation[] }> => {
+  const { searchText, sortBy, sortOrder, offset, limit, filterValues } = params;
+
+  const query: any = {};
+
+  if (searchText) {
+    query.$or = [
+      { name: { $regex: searchText, $options: "i" } },
+      { email: { $regex: searchText, $options: "i" } },
+    ];
+  }
+
+  if (filterValues) {
+    if (filterValues.course) {
+      query.course = { $in: filterValues.course };
+    }
+    if (filterValues.country) {
+      query.country = { $in: filterValues.country };
+    }
+    if (filterValues.teacher) {
+      query.teacher = { $in: filterValues.teacher };
+    }
+    if (filterValues.status) {
+      query.status = { $in: filterValues.status };
+    }
+  }
+
+  const sortOptions: any = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
+
+  const studentQuery = EvaluationModel.find(query).sort(sortOptions);
+
+  if (!isNil(offset) && !isNil(limit)) {
+    const skip = Math.max(
+      0,
+      ((Number(offset) ?? Number(commonMessages.OFFSET)) - 1) *
+      (Number(limit) ?? Number(commonMessages.LIMIT))
+    );
+    studentQuery
+      .skip(skip)
+      .limit(Number(limit) ?? Number(commonMessages.LIMIT));
+  }
+  const [evaluation, totalCount] = await Promise.all([
+    studentQuery.exec(),
+    EvaluationModel.countDocuments(query).exec(),
+  ]);
+
+ // Log successful retrieval
+ AppLogger.info(evaluationMessages.GET_ALL_LIST_SUCCESS, {
+  totalCount: totalCount,
+});
+
+  return { totalCount, evaluation };
+};
+
+
+  export const getEvaluationRecordById = async (
+    id: string
+  ): Promise<IEvaluation | null> => {
+    return EvaluationModel.findOne({
+      _id: new Types.ObjectId(id),
+    }).lean();
+  };
+  
+  // export const getStudentRecordByData = async (
+  //   filters: EvaluationFilter
+  // ): Promise<IEvaluation | null> => {
+  //   const query: any = {};
+  
+  //   // Add filters dynamically
+  //   if (!isNil(filters.teacher)) {
+  //     query.teacher = filters.teacher; // Filter by teacher
+  //   }
+  
+  //   if (!isNil(filters.course)) {
+  //     query.course = filters.course; // Filter by course
+  //   }
+  
+  //   if (!isNil(filters.status)) {
+  //     query.status = filters.status; // Filter by status
+  //   }
+  
+  //   if (!isNil(filters.country)) {
+  //     query.country = filters.country; // Filter by country
+  //   }
+  
+  //   // Handle _id filter if needed
+  //   if (!isNil(filters.id)) {
+  //     query._id = new Types.ObjectId(String(filters.id));
+  //   }
+  
+  //   return EvaluationModel.findOne(query).lean();
+  // };
+  

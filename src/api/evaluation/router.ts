@@ -19,6 +19,34 @@ const register = async (server: Server): Promise<void> => {
       },
     },
 
+    {
+      method: "GET",
+      path: "/evaluationlist",
+      options: {
+        handler: handler.getAllEvaluationList,
+        description: evaluationMessages.LIST,
+        tags: ["api", "evaluationlist"],
+        // auth: {
+        //   strategies: ["jwt"],
+        // },
+      },
+    },
+    
+    
+    
+    {
+      method: "GET",
+      path: "/evaluationlist/{evaluationId}",
+      options: {
+        handler: handler.getEvaluationRecordById,
+        description: evaluationMessages.BYID,
+        tags: ["api", "evaluationlist"],
+        // auth: {
+        //   strategies: ["jwt"],
+        // },
+      },
+    },
+
   ];
   server.route(routes);
 };

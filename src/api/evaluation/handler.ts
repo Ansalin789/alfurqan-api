@@ -1,9 +1,13 @@
 import { ResponseToolkit,Request } from "@hapi/hapi";
 import { zodEvaluationSchema } from "../../models/evaluation";
 import { z } from "zod";
-import { createEvaluationRecord } from "../../operations/evaluation";
+import { createEvaluationRecord,getAllEvaluationRecords,getEvaluationRecordById} from "../../operations/evaluation";
 import { LearningInterest } from "../../shared/enum";
-
+import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
+import { getAllStudentsRecords } from "../../operations/student";
+import { evaluationMessages, studentMessages } from "../../config/messages";
+import { isNil } from "lodash";
+import { notFound } from "@hapi/boom";
 
 
 
@@ -36,6 +40,18 @@ const createInputValidation = z.object({
     createdDate:true,  
     updatedBy:true
     }).partial()
+  });
+
+
+  const getEvaluationListInputValidation = z.object({
+    query: zodGetAllRecordsQuerySchema.pick({
+      searchText: true,
+      sortBy: true,
+      sortOrder: true,
+      offset: true,
+      limit: true,
+      filterValues: true
+    }),
   });
 
 export default {
@@ -119,6 +135,35 @@ export default {
 //   lastUpdatedBy: payload.lastUpdatedBy
 //   })
 // }
-}
+
+
+// Retrieve all the Evaluation list
+ getAllEvaluationList(req: Request, h: ResponseToolkit) {
+    const { query } = getEvaluationListInputValidation.parse({
+      query: {
+        ...req.query,
+        filterValues: req.query?.filterValues ? JSON.parse(req.query.filterValues) : {},
+      },
+    });
+    return getAllEvaluationRecords(query);
+  },
+  
+
+  
+
+
+
+    // Retrieve student details by studentId
+  async getEvaluationRecordById(req: Request, h: ResponseToolkit) {
+    const result = await getEvaluationRecordById(String(req.params.evaluationId));
+  
+    if (isNil(result)) {
+      return notFound(evaluationMessages.EVALUATIONS_NOT_FOUND);
+    }
+  
+    return result;
+  },
+  }
+
 
 
