@@ -318,7 +318,7 @@ export const getAllEvaluationRecords = async (
 
   const sortOptions: any = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
 
-  const studentQuery = EvaluationModel.find(query).sort(sortOptions);
+  const evaluationQuery = EvaluationModel.find(query).sort(sortOptions);
 
   if (!isNil(offset) && !isNil(limit)) {
     const skip = Math.max(
@@ -326,12 +326,12 @@ export const getAllEvaluationRecords = async (
       ((Number(offset) ?? Number(commonMessages.OFFSET)) - 1) *
       (Number(limit) ?? Number(commonMessages.LIMIT))
     );
-    studentQuery
+    evaluationQuery
       .skip(skip)
       .limit(Number(limit) ?? Number(commonMessages.LIMIT));
   }
   const [evaluation, totalCount] = await Promise.all([
-    studentQuery.exec(),
+    evaluationQuery.exec(),
     EvaluationModel.countDocuments(query).exec(),
   ]);
 
@@ -352,33 +352,33 @@ export const getAllEvaluationRecords = async (
     }).lean();
   };
   
-  // export const getStudentRecordByData = async (
-  //   filters: EvaluationFilter
-  // ): Promise<IEvaluation | null> => {
-  //   const query: any = {};
+  export const getStudentRecordByData = async (
+    filters: EvaluationFilter
+  ): Promise<IEvaluation | null> => {
+    const query: any = {};
   
-  //   // Add filters dynamically
-  //   if (!isNil(filters.teacher)) {
-  //     query.teacher = filters.teacher; // Filter by teacher
-  //   }
+    // Add filters dynamically
+    if (!isNil(filters.teacher)) {
+      query.teacher = filters.teacher; // Filter by teacher
+    }
   
-  //   if (!isNil(filters.course)) {
-  //     query.course = filters.course; // Filter by course
-  //   }
+    if (!isNil(filters.course)) {
+      query.course = filters.course; // Filter by course
+    }
   
-  //   if (!isNil(filters.status)) {
-  //     query.status = filters.status; // Filter by status
-  //   }
+    if (!isNil(filters.status)) {
+      query.status = filters.status; // Filter by status
+    }
   
-  //   if (!isNil(filters.country)) {
-  //     query.country = filters.country; // Filter by country
-  //   }
+    if (!isNil(filters.country)) {
+      query.country = filters.country; // Filter by country
+    }
   
-  //   // Handle _id filter if needed
-  //   if (!isNil(filters.id)) {
-  //     query._id = new Types.ObjectId(String(filters.id));
-  //   }
+    // Handle _id filter if needed
+    if (!isNil(filters.id)) {
+      query._id = new Types.ObjectId(String(filters.id));
+    }
   
-  //   return EvaluationModel.findOne(query).lean();
-  // };
+    return EvaluationModel.findOne(query).lean();
+  };
   
