@@ -26,6 +26,8 @@ const getUsersListInputValidation = z.object({
     searchText: true,
     offset: true,
     limit: true,
+    sortBy: true,
+    sortOrder: true,
   }),
 });
 
@@ -74,15 +76,18 @@ const updateInputValidation = z.object({
 
 export default {
   // Retrieve all the users list
-  // async getAllUsers(req: Request, h: ResponseToolkit) {
-  //   const { query } = getUsersListInputValidation.parse({
-  //     query: req.query,
-  //   });
+  async getAllUsers(req: Request, h: ResponseToolkit) {
+    const { query } = getUsersListInputValidation.parse({
+      query: req.query,
+    });
 
-  //   // Fetch the user records using the validated and parsed parameters
-  //   return getAllUserRecords(query);
-  // },
+    // Fetch the user records using the validated and parsed parameters
+    return getAllUserRecords(query);
+  },
 
+
+
+  
   // Retrieve user details by userId
   async getUserRecordById(req: Request, h: ResponseToolkit) {
     const result = await getUserRecordById(String(req.params.userId));

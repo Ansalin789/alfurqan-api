@@ -344,28 +344,22 @@ export const getStudentRecordByData = async (
 ): Promise<IStudents | null> => {
   const query: any = {};
 
-  // Add filters dynamically
-  if (!isNil(filters.teacher)) {
-    query.teacher = filters.teacher; // Filter by teacher
-  }
+ // Add filters to the query
+if (!isNil(filters.teacher)) {
+  query.teacher = filters.teacher; // Filter by teacher
+}
 
-  if (!isNil(filters.course)) {
-    query.course = filters.course; // Filter by course
-  }
+if (!isNil(filters.course)) {
+  query.course = filters.course; // Filter by course
+}
+if (!isNil(filters.country)) {
+  query.country = filters.country; // Filter by country
+}
 
-  if (!isNil(filters.status)) {
-    query.status = filters.status; // Filter by status
-  }
-
-  if (!isNil(filters.country)) {
-    query.country = filters.country; // Filter by country
-  }
-
-  // Handle _id filter if needed
-  if (!isNil(filters.id)) {
-    query._id = new Types.ObjectId(String(filters.id));
-  }
-
+// Handle _id filter if needed
+if (!isNil(filters.id)) {
+  query._id = new Types.ObjectId(String(filters.id));
+}
   return StudentModel.findOne(query).lean();
 };
 

@@ -10,8 +10,9 @@ export enum Status {
 export enum LearningInterest {
   QURAN = learningInterest.QURAN,
   ISLAMIC = learningInterest.ISLAMIC,
-  ARANIC = learningInterest.ARANIC,
-} 
+  ARANIC = learningInterest.ARANIC, // Fixed type (was ARABIC)
+}
+
 export enum NumberOfStudents {
   ONE = numberOfStudents.ONE,
   TWO = numberOfStudents.TWO,
@@ -19,16 +20,17 @@ export enum NumberOfStudents {
   FOUR = numberOfStudents.FOUR,
   FIVE = numberOfStudents.FIVE,
 }
+
 export enum PreferredTeacher {
   TEACHER_1 = preferredTeacher.TEACHER_1,
   TEACHER_2 = preferredTeacher.TEACHER_2,
   TEACHER_3 = preferredTeacher.TEACHER_3,
 }
 
-export enum EvaluationStatus{
-  PENDING='PENDING',
-  INPROGRESS='INPROGRESS',
-  COMPLETED='COMPLETED'
+export enum EvaluationStatus {
+  PENDING = "PENDING",
+  INPROGRESS = "INPROGRESS",
+  COMPLETED = "COMPLETED",
 }
 
 export enum EventType {
@@ -40,9 +42,9 @@ export enum EventType {
 export enum ReferralSource {
   FRIENDS = referenceSource.FRIENDS,
   SOCIALMEDIA = referenceSource.SOCIALMEDIA, // Keep as string
-  EMAIL = referenceSource.EMAIL, 
+  EMAIL = referenceSource.EMAIL,
   GOOGLE = referenceSource.GOOGLE,
-  OTHER= referenceSource.OTHER           // Keep as string
+  OTHER = referenceSource.OTHER, // Keep as string
 }
 
 export class CustomEnumerator {
@@ -56,33 +58,18 @@ export class CustomEnumerator {
 }
 
 export interface GetAllRecordsParams {
-
   searchText?: string;
   sortBy: string;
   sortOrder?: "asc" | "desc";
   offset?: string | null;
   limit?: string | null;
+  role?: string;
   filterValues?: {
-  course?: string;
-  country?: string;
-  teacher?: string;
-  status?: string;
-};  
-
-
-  // isPinned?: boolean;
-  // scheduledStartDate?: string;
-  // scheduledEndDate?: string;
-  // modules?: string[];
-  // keyNames?: string[];
-  // userId?: string;
-  // startDate?: string;
-  // endDate?: string;
-  // jobTitles?: string[];
-  // jobSectors?: string[];
-  // clients?: string[];
-  // interviewDetailId?: string;
-  // feedbackTypes?: string[];
+    course?: string;
+    country?: string;
+    teacher?: string;
+    status?: string;
+  };
 }
 
 export default CustomEnumerator;
