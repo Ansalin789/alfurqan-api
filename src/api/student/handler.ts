@@ -54,6 +54,7 @@ const createInputValidation = z.object({
     lastName: true,
     email: true,
     phoneNumber: true,
+    city: true,
     country: true,
     countryCode: true,
     learningInterest: true,

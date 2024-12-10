@@ -26,6 +26,10 @@ const evaluationSchema = new Schema<IEvaluation>({
         type: Number,
         required: true,
     },
+    studentCity:{
+        type: String,
+        required: false,
+    },
     studentCountry: {
         type: String,
         required: true,
@@ -195,11 +199,23 @@ const evaluationSchema = new Schema<IEvaluation>({
         type: String,
         required: true,
     },
+    assignedTeacher:{
+        type: String,
+        required: true
+    },
     studentStatus: {
         type: String,
         required: false,
     },
     classStatus: {
+        type: String,
+        required: false,
+    },
+   comments:{
+    type: String,
+    required: false
+   },
+    trialClassStatus:{
         type: String,
         required: false,
     },
@@ -236,6 +252,7 @@ export const zodEvaluationSchema = z.object({
         studentLastName: z.string(),
         studentEmail: z.string(),
         studentPhone: z.number(),
+        studentCity: z.string().optional(),
         studentCountry: z.string(),
         studentCountryCode: z.string(),
         learningInterest: z.enum([learningInterest.QURAN, learningInterest.ISLAMIC, learningInterest.ARABIC]),
@@ -281,8 +298,11 @@ export const zodEvaluationSchema = z.object({
     gardianCountry: z.string(),
     gardianTimeZone: z.string(),
     gardianLanguage: z.string(),
+    assignedTeacher: z.string(),
     studentStatus: z.string().optional(),
     classStatus: z.string().optional(),
+    comments: z.string().optional(),
+    trialClassStatus: z.string().optional(),
     status: z.string().optional(),
     createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
         message: commonMessages.INVALID_DATE_FORMAT,

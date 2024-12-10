@@ -50,6 +50,10 @@ const studentSchema = new Schema<IStudents>(
       required: true,
       minlength: 10
     },
+    city:{
+      type: String,
+      required: false
+    },
     country: {
       type: String,
       required: true
@@ -134,6 +138,7 @@ export const zodStudentSchema = z.object({
   lastName: z.string().min(1),
   email: z.string().email(),
   phoneNumber: z.number().min(10),
+  city: z.string().optional(),
   country: z.string().min(3),
   countryCode: z.string().min(1),
   learningInterest: z.enum([learningInterest.QURAN, learningInterest.ISLAMIC, learningInterest.ARABIC]),

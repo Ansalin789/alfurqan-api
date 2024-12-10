@@ -42,6 +42,7 @@ export const createStudent = async (
     }
 
     const shiftScheduleRecord = await UserShiftSchedule.find({
+      role: "ACADEMICCOACH",
     });
     console.log(shiftScheduleRecord);
     let academicCoachDetails: any = null;

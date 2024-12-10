@@ -31,9 +31,16 @@ const register = async (server: Server): Promise<void> => {
         // },
       },
     },
-    
-    
-    
+    {
+      method: "PUT",
+      path: "/evaluation/{evaluationId}",
+      options: {
+       handler: handler.updateEvaluation,
+       description: evaluationMessages.UPDATE,
+       tags: ["api", "evaluation"],
+    },
+    },
+  
     {
       method: "GET",
       path: "/evaluationlist/{evaluationId}",
@@ -47,6 +54,7 @@ const register = async (server: Server): Promise<void> => {
       },
     },
 
+         
   ];
   server.route(routes);
 };

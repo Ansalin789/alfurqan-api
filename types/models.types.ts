@@ -79,6 +79,7 @@ export interface IStudents extends Document {
 };
   email: string;
   phoneNumber: number;
+  city?: string;
   country: string;
   countryCode: string;
   learningInterest: LearningInterest;
@@ -102,6 +103,7 @@ export interface IStudentCreate {
   lastName: string;
   email: string;
   phoneNumber: number;
+  city?: string;
   country: string;
   countryCode: string;
   learningInterest: LearningInterest;
@@ -257,32 +259,6 @@ export interface ICourseCreate {
   lastUpdatedDate: Date;
   lastUpdatedBy: string;
 }
-// Define the ITenant interface
-export interface ITenant extends Document {
-  tenantCode: string;
-  tenantName: string;
-  tenantLogo: string;
-  organizationName: string;
-  countryCode: string;
-  phoneNumber?: string;
-  mobileNumber: string;
-  emailId: string;
-  gstNo?: string;
-  panNo: string;
-  website?: string;
-  faxNo?: string;
-  address?: string;
-  postalCode?: string;
-  country?: string;
-  activeLicense?: object;
-  settings?: any[];
-  status: keyof typeof CustomEnumerator.Status;
-  createdDate: Date;
-  createdBy: string;
-  lastUpdatedDate: Date;
-  lastUpdatedBy: string;
-  tenantJobCode: string;
-}
 
 
 export interface IEvaluation extends Document {
@@ -292,6 +268,7 @@ student: {
   studentLastName: string;
   studentEmail: string;
   studentPhone: number;
+  studentCity?: string;
   studentCountry: string;
   studentCountryCode: string;
   learningInterest: LearningInterest;
@@ -337,8 +314,11 @@ gardianCity: string;
 gardianCountry: string;
 gardianTimeZone: string;
 gardianLanguage: string;
-studentStatus?: string;
-classStatus?: string;
+assignedTeacher: string;
+studentStatus: string;
+classStatus: string;
+comments?: string;
+trialClassStatus?: string;
 status?: string;
 createdDate: Date;
 createdBy?: string;
@@ -355,6 +335,7 @@ export interface IEvaluationCreate{
   studentLastName: string;
   studentEmail: string;
   studentPhone: number;
+  studentCity?: string;
   studentCountry: string;
   studentCountryCode: string;
   learningInterest: LearningInterest;
@@ -392,8 +373,11 @@ gardianCity: string;
 gardianCountry: string;
 gardianTimeZone: string;
 gardianLanguage: string;
-studentStatus?: string;
-classStatus?: string;
+assignedTeacher: string;
+studentStatus: string;
+classStatus: string;
+comments?: string;
+trialClassStatus?:string
 status?: string;
 createdDate: Date;
 createdBy?: string;
@@ -425,37 +409,7 @@ export interface IActiveSession extends Document {
 }
 
 
-export interface ITenantNotes extends Document {
-  tenantId: string;
-  userId: string;
-  referenceType: string;
-  referenceId: string;
-  comment: string;
-  parentId: string;
-  isPinned: boolean;
-  status: keyof typeof CustomEnumerator.Status;
-  createdDate: Date;
-  createdBy: string;
-  lastUpdatedDate: Date;
-  lastUpdatedBy: string;
-  taggedUsers?: { userId?: string; userName?: string; }[];
-}
 
-export interface ICreateTenantNotes {
-  tenantId: string;
-  userId: string;
-  referenceType: string;
-  referenceId: string;
-  comment: string;
-  parentId: string | null;
-  isPinned: boolean;
-  status: keyof typeof CustomEnumerator.Status;
-  createdDate: Date;
-  createdBy: string;
-  lastUpdatedDate: Date;
-  lastUpdatedBy: string;
-  taggedUsers: { userId: string; userName: string; }[];
-}
 
 export interface IErrorDetail {
   fileName: string;
@@ -535,32 +489,6 @@ export interface MeetingSchedulePayload {
   remarks?: string;
 }
 
-// Define the ITenantSettings interface
-export interface ITenantSettings extends Document {
-  tenantId: string;
-  keyName: string;
-  keyValue: any;
-  aiModel?:string;
-  apiKey?:string;
-  module: string;
-  isConnected: boolean;
-  status: keyof typeof CustomEnumerator.Status;
-  createdDate?: Date;
-  createdBy: string;
-  lastUpdatedDate?: Date;
-  lastUpdatedBy?: string;
-}
-export interface ITenantSettingsPayload {
-  tenantId: string;
-  keyName: string;
-  keyValue: any;
-  module: string;
-  isConnected: boolean;
-  status: keyof typeof CustomEnumerator.Status;
-  createdDate?: Date;
-  createdBy: string;
-  lastUpdatedDate?: Date;
-  lastUpdatedBy?: string;
-}
+
 
 
