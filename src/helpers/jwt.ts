@@ -1,7 +1,7 @@
 import { isNil, isEmpty } from "lodash";
 import { Request } from "@hapi/hapi";
 import { getActiveUserRecord } from "../operations/users";
-import { getActiveTenantRecordByCode } from "../operations/tenant";
+// import { getActiveTenantRecordByCode } from "../operations/tenant";
 import { getActiveSessionRecord } from "../operations/active_session";
 
 export const validateUserAuth = async (decoded: string, req: Request) => {
