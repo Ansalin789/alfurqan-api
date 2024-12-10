@@ -74,7 +74,7 @@ const evaluationSchema = new Schema<IEvaluation>({
         type: String,
         required: true,
     },  
-    status: {
+    status: { 
         type: String,
         required: true,
     },
