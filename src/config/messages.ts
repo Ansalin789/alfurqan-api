@@ -234,3 +234,9 @@ export const notificationsMessages: Record<string, any> = Object.freeze({
   MISSING_DATE_PAIR: "Both the start date and end date are required.",
 
 })
+export const dashboardMessages: Record<string, any> = Object.freeze({
+  WIDGET_COUNT: "Get dashboard widget counts",
+  // ... any other dashboard-related messages
+});
+
+

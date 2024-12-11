@@ -8,7 +8,11 @@ import errorHandler from "../errors";
 import JWTAuth from "../plugins/jwt_auth";
 import evaluationAPI from "../api/evaluation/router";
 import subscriptionAPI from "../api/subscriptions/router";
+<<<<<<< HEAD
 import meetingScheduleAPI from "../api/meetingSchedule/router";
+=======
+import dashboardAPI from "../api/dashboard/router";
+>>>>>>> 5da6df2f87435b510db434be7cb8258fc8cd6957
 export const appPlugins = [
   {
     plugin: systemLifeCycle,
@@ -37,9 +41,15 @@ export const appPlugins = [
   {
     plugin: subscriptionAPI,
   },
+<<<<<<< HEAD
  
 {
   plugin: meetingScheduleAPI
 }
+=======
+  {
+    plugin: dashboardAPI,
+  },
+>>>>>>> 5da6df2f87435b510db434be7cb8258fc8cd6957
 
 ];
