@@ -7,16 +7,17 @@ const register = async (server: Server): Promise<void> => {
   const routes: ServerRoute[] = [
     {
       method: "GET",
-      path: "/meetingSchedule",
+      path: "/meetingSchedulelist",
       options: {
-        handler: handler.getAllUsers,
+        handler: handler.getAllAcademicCoach,
         description: userMessages.LIST,
-        tags: ["api", "users"],
-        auth: {
-          strategies: ["jwt"],
-        },
+        tags: ["api", "meetingSchedulelist"],
+        // auth: {
+        //   strategies: ["jwt"],
+        // },
       },
     },
+    
     
   ];
   server.route(routes);
