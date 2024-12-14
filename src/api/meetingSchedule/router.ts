@@ -1,6 +1,6 @@
 import { Server, ServerRoute } from "@hapi/hapi";
 import handler from './handler';
-import { userMessages } from "../../config/messages";
+import { meetingSchedulesMessages} from "../../config/messages";
 
 const register = async (server: Server): Promise<void> => {
   // Register all routes for this unit
@@ -10,7 +10,7 @@ const register = async (server: Server): Promise<void> => {
       path: "/meetingSchedulelist",
       options: {
         handler: handler.getAllAcademicCoach,
-        description: userMessages.LIST,
+        description: meetingSchedulesMessages.LIST,
         tags: ["api", "meetingSchedulelist"],
         // auth: {
         //   strategies: ["jwt"],
@@ -18,6 +18,18 @@ const register = async (server: Server): Promise<void> => {
       },
     },
     
+    {
+      method: "GET",
+      path: "/meetingSchedulelist/{academicCoachId}",
+      options: {
+        handler: handler.getAcademicCoachId,
+        description: meetingSchedulesMessages.LIST,
+        tags: ["api", "meetingSchedulelist"],
+        // auth: {
+        //   strategies: ["jwt"],
+        // },
+      },
+    },
     
   ];
   server.route(routes);

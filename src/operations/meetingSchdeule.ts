@@ -4,6 +4,8 @@ import { commonMessages, meetingSchedulesMessages } from "../config/messages";
 import { GetAllRecordsParams } from "../shared/enum";
 import AppLogger from "../helpers/logging";
 import MeetingSchedules from "../models/calendar";
+import { Types } from "mongoose";
+
 
 export const getAllAcademicCoach = async (
   params: GetAllRecordsParams
@@ -57,4 +59,16 @@ export const getAllAcademicCoach = async (
 
   // Return results
   return { totalCount, academicCoach };
+  
 };
+
+
+export const getAcademicCoachId = async (
+  id: string
+): Promise<IMeetingSchedule | null> => {
+  console.log(">>>>>", id);
+  return MeetingSchedules.findOne({
+    _id: new Types.ObjectId(id),
+  }).lean();
+};
+

@@ -75,7 +75,10 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation"; // Assuming this is your schema
-import { getAllAcademicCoach } from "../../operations/meetingSchdeule";
+import { getAcademicCoachId, getAllAcademicCoach} from "../../operations/meetingSchdeule";
+import { meetingSchedulesMessages, userMessages } from "../../config/messages";
+import { isNil } from "lodash";
+import { notFound } from "@hapi/boom";
 
 // Input Validations for student list
 const getmeetingScheduleListInputValidation = z.object({
@@ -112,6 +115,17 @@ const handler = {
       return h.response({ error: "Invalid query parameters" }).code(400);
     }
   },
-};
+  
+  async getAcademicCoachId(req: Request, h: ResponseToolkit) {
+    console.log("id>>",req.params.academicCoachId);
+    const result = await getAcademicCoachId(String(req.params.academicCoachId));
+  // console.log("id>>",req.params.academicCoachId)
+    if (isNil(result)) {
+      return notFound(meetingSchedulesMessages.BYID);
+    }
+  
+    return result;
+  },
+  }
 
 export default handler;
