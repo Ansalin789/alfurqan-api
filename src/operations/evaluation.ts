@@ -50,10 +50,8 @@ export const createEvaluationRecord = async (
         };
     }
 
-    const loginUser = await User.findOne({
-      userName: payload.createdBy,
-     role : 'ACADEMICCOACH'
-  }).exec()
+    const loginUser = await User.findOne({userName: payload.createdBy,role : 'ACADEMICCOACH'}).exec();
+    
  let teacherDetails: any = null;
 if(loginUser){
      newStudent.academicCoach = {

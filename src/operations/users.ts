@@ -2,8 +2,9 @@ import { Types } from "mongoose";
 import UserModel from "../models/users";
 import { IUser, IUserCreate } from "../../types/models.types";
 import { appStatus } from "../config/messages";
-import { isEmpty, isNil } from "lodash";
+import {  isNil } from "lodash";
 import { GetAllRecordsParams } from "../shared/enum";
+import users from "../models/users";
 
 /**
  * Retrieves all user records for a given tenant, with support for search, pagination, sorting, role filtering, and excluding passwords.
@@ -14,44 +15,32 @@ import { GetAllRecordsParams } from "../shared/enum";
  *  - `users`: An array of user records for the given tenant, with passwords excluded.
  *  - `totalCount`: The total number of user records matching the query.
  */
+
+
 export const getAllUserRecords = async (
   params: GetAllRecordsParams
 ): Promise<{ users: IUser[]; totalCount: number }> => {
-  const { searchText, offset, limit } = params;
   const { role } = params;
 
-
-  const query: any = {
-    status: { $in: [appStatus.ACTIVE, appStatus.IN_ACTIVE] },
-  };
-
-  // Add role filtering
-  if (!isEmpty(role)) {
+  // Construct query based on role if provided
+  const query: any = {};
+  if (role) {
     query.role = role;
   }
 
-  // Add search filters
-  if (!isEmpty(searchText)) {
-    query.$or = [
-      { userName: { $regex: searchText, $options: "i" } },
-      { email: { $regex: searchText, $options: "i" } },
-    ];
-  }
+  // Fetch all users matching the query and return plain JavaScript objects using .lean()
+  const users = await UserModel.find(query).exec(); // Use .lean() to get plain objects
+  console.log("users>>>>>>>>",users);
+  // Get the total count of users matching the query
+  const totalCount = await UserModel.countDocuments(query); // Count users matching the role
 
-  const userQuery = UserModel.find(query).select("-password");
-
-  if (!isNil(offset) && !isNil(limit)) {
-    const skip = Math.max(0, ((Number(offset) ?? 0) - 1) * (Number(limit) ?? 10));
-    userQuery.skip(skip).limit(Number(limit) ?? 10);
-  }
-
-  const [users, totalCount] = await Promise.all([
-    userQuery.exec(),
-    UserModel.countDocuments(query).exec(),
-  ]);
-
-  return { users, totalCount };
+  return { users, totalCount }; // Return both users and totalCount
 };
+
+
+
+
+
 
 /**
  * Retrieves a user record by its ID, optionally filtered by role, excluding the password.

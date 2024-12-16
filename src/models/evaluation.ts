@@ -73,8 +73,8 @@ const evaluationSchema = new Schema<IEvaluation>({
     evaluationStatus: {
         type: String,
         required: true,
-    },
-    status: {
+    }, 
+    status: { 
         type: String,
         required: true,
     },
