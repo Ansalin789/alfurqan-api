@@ -10,7 +10,7 @@ import {
   userMessages,
 } from "../../config/messages";
 import { zodUserSchema } from "../../models/users";
-import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
+import { zodGetAllRecordsQuerySchema, zodGetAllUserRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import {
   bulkDeleteUsers,
   createUser,
@@ -22,12 +22,8 @@ import {
 
 // Input Validations for users list
 const getUsersListInputValidation = z.object({
-  query: zodGetAllRecordsQuerySchema.pick({
-    searchText: true,
-    offset: true,
-    limit: true,
-    sortBy: true,
-    sortOrder: true,
+  query: zodGetAllUserRecordsQuerySchema.pick({
+    role: true
   }),
 });
 

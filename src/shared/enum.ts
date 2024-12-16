@@ -72,4 +72,8 @@ export interface GetAllRecordsParams {
   };
 }
 
+export interface GetAlluserRecordsParams {
+  role: string;
+}
+
 export default CustomEnumerator;

@@ -3,7 +3,7 @@ import UserModel from "../models/users";
 import { IUser, IUserCreate } from "../../types/models.types";
 import { appStatus } from "../config/messages";
 import {  isNil } from "lodash";
-import { GetAllRecordsParams } from "../shared/enum";
+import { GetAllRecordsParams, GetAlluserRecordsParams } from "../shared/enum";
 import users from "../models/users";
 
 /**
@@ -18,7 +18,7 @@ import users from "../models/users";
 
 
 export const getAllUserRecords = async (
-  params: GetAllRecordsParams
+  params: GetAlluserRecordsParams
 ): Promise<{ users: IUser[]; totalCount: number }> => {
   const { role } = params;
 
@@ -27,10 +27,12 @@ export const getAllUserRecords = async (
   if (role) {
     query.role = role;
   }
-
+  console.log(">>>>",query.role);
   // Fetch all users matching the query and return plain JavaScript objects using .lean()
-  const users = await UserModel.find(query).exec(); // Use .lean() to get plain objects
-  console.log("users>>>>>>>>",users);
+  const users = await UserModel.find({
+    role: query.role,
+  }).exec();
+ // console.log("users>>>>>>>>",users);
   // Get the total count of users matching the query
   const totalCount = await UserModel.countDocuments(query); // Count users matching the role
 

@@ -115,6 +115,10 @@ export const zodGetAllRecordsQuerySchema = z.object({
 //   interviewDetailId: z.string().regex(appRegexPatterns.OBJECT_ID, commonMessages.INVALID_OBJECT_ID).optional(),
  });
 
+export const zodGetAllUserRecordsQuerySchema = z.object({
+  role: z.string().min(3),
+});
+
 export const zodAuthenticationSchema = z.object({
   username: z.string().min(3),
   password: z.string().min(8),
