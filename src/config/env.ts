@@ -49,6 +49,9 @@ export const config: Config = {
     zoom_client_id:process.env.ZOOM_CLIENT_ID!,
     zoom_client_secret:process.env.ZOOM_CLIENT_SECRET!,
     zoom_account_id:process.env.ZOOM_ACCOUNT_ID!  
+  },
+  stripeKey: {
+    stripesecretkey:process.env.STRIPE_SECRET_KEY!
   }
 };
 
