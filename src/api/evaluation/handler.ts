@@ -1,9 +1,9 @@
 import { ResponseToolkit,Request } from "@hapi/hapi";
 import { zodEvaluationSchema } from "../../models/evaluation";
 import { z } from "zod";
-import { createEvaluationRecord,getAllEvaluationRecords,getEvaluationRecordById, updateStudentEvaluation} from "../../operations/evaluation";
+import { createEvaluationRecord,getAllEvaluationRecords,getEvaluationRecordById, updateStudentEvaluation, updateStudentInvoice} from "../../operations/evaluation";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
-import { evaluationMessages, studentMessages } from "../../config/messages";
+import { evaluationMessages } from "../../config/messages";
 import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
 
@@ -38,6 +38,8 @@ const createInputValidation = z.object({
     classStatus: true,
     comments: true,
     trialClassStatus: true,
+    invoiceStatus: true,
+    paymentStatus: true,
     status:true,
     createdBy:true,
     createdDate:true,  
@@ -45,6 +47,23 @@ const createInputValidation = z.object({
     }).partial()
   });
 
+
+  export const zodUpdateEvaluationSchema = z.object({
+    invoiceStatus: z.string().optional(),
+    paymentLink: z.string().optional(),
+    paymentStatus: z.string().optional(),
+    paymenentResponse : z.string().optional()
+  })
+
+  const invoiceValidation = z.object({
+    payload: zodUpdateEvaluationSchema.pick({
+      invoiceStatus: true,
+      paymentLink: true,
+      paymentStatus: true,
+      paymenentResponse: true
+    }).partial()
+    
+  })
 
   const getEvaluationListInputValidation = z.object({
     query: zodGetAllRecordsQuerySchema.pick({
@@ -56,6 +75,7 @@ const createInputValidation = z.object({
       filterValues: true
     }),
   });
+
 
 export default {
     async createEvaluation(req: Request, h: ResponseToolkit) {
@@ -108,7 +128,9 @@ export default {
            studentStatus: payload.studentStatus || "",
            classStatus: payload.classStatus || "",
            comments: payload.comments || "",
-           trialClassStatus: payload.comments || "",
+           trialClassStatus: payload.trialClassStatus || "",
+           invoiceStatus: payload.invoiceStatus || "Pending",
+           paymentStatus: payload.paymentStatus || "Pending",
             status: payload.status,
             createdDate: new Date(),
             createdBy: payload.createdBy,
@@ -168,6 +190,10 @@ export default {
  assignedTeacher:payload.assignedTeacher || "",
  studentStatus: payload.studentStatus || "",
  classStatus: payload.classStatus || "",
+ comments: payload.comments || "",
+ trialClassStatus: payload.trialClassStatus || "",
+ invoiceStatus: payload.invoiceStatus || "Pending",
+ paymentStatus: payload.paymentStatus || "Pending",
   status: payload.status,
   createdDate: new Date(),
   createdBy: payload.createdBy,
@@ -200,6 +226,17 @@ export default {
   
     return result;
   },
+
+  async updateInvoice(req: Request, h: ResponseToolkit){
+    const { payload } = invoiceValidation.parse({
+      payload: req.payload,
+   });
+
+   return updateStudentInvoice(String(req.params.evaluationId),{   
+    invoiceStatus: payload.invoiceStatus,
+    paymentStatus: payload.paymentStatus
+     })
+  }
   }
 
 

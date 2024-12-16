@@ -16,8 +16,8 @@ import axios from "axios";
 import { sendEmailClient } from "../shared/email";
 import Course from "../models/course";
 import { config } from "../config/env";
-import User from "../models/users"
-
+import User from "../models/users";
+import StudentPortModel from "../models/alstudents";
 
 
 
@@ -64,8 +64,7 @@ if(loginUser){
         email: loginUser?.email // Provide a default value if undefined
      };
 }
-   
-
+  
     newStudent.firstName = payload.student.studentFirstName;
     newStudent.lastName = payload.student.studentLastName;
     newStudent.email =   payload.student.studentEmail;
@@ -206,12 +205,14 @@ console.log("createEvaluation>>>",createEvaluation)
   id: string,
   payload: Partial<IEvaluationCreate>
 ): Promise<IEvaluation |  null> => {
+
+
   const updateEvaluations = EvaluationModel.findOneAndUpdate(
       { _id: new Types.ObjectId(id) },
      { $set: payload },
       { new: true }
     ).lean();
-
+//console.log("updateEvaluations>>>",updateEvaluations);
     const shiftScheduleRecord = await UserShiftSchedule.find({
       role: 'TEACHER'
 }).exec();
@@ -249,11 +250,14 @@ if (shiftScheduleRecord.length > 0) {
 const evaluation = await EvaluationModel.findOne({
  _id: new Types.ObjectId(id)
 }).exec();
+console.log("payload.trialClassStatus>>>", payload.trialClassStatus);
 
-if(payload.trialClassStatus == "Completed"){
+if(payload.trialClassStatus == "Completed" && payload.studentStatus == "Joined"){
   const emailTemplate = await EmailTemplate.findOne({
     templateKey: 'Invoice',
 }).exec();
+console.log("emailTemplate>>>", emailTemplate);
+
 if(emailTemplate && payload.student && payload.subscription && evaluation ){
     const emailTo = [
         { email: payload.student.studentEmail, name: payload.student.studentFirstName + ' ' + payload.student.studentLastName }
@@ -264,11 +268,14 @@ if(emailTemplate && payload.student && payload.subscription && evaluation ){
     .replace('<email>', payload.student.studentEmail ).replace('<plan>', payload.subscription.subscriptionName).replace('<coursename>', payload.student.learningInterest)
     .replace('<amount>', evaluation.planTotalPrice.toString()).replace('<adjustamount>', evaluation.planTotalPrice.toString()).replace('<subtotal>',evaluation.planTotalPrice.toString())
     .replace('<total>',evaluation.planTotalPrice.toString());
-    sendEmailClient(emailTo, subject,htmlPart);
+   await sendEmailClient(emailTo, subject,htmlPart);
+  const email = await sendEmailClient(emailTo, subject,htmlPart);
+console.log("email>>>>",email);
 }
 }
 
-    const updatedEvaluation = await updateEvaluations as IEvaluation | null; // Cast to expected type
+    const updatedEvaluation = await updateEvaluations as IEvaluation; // Cast to expected type
+    console.log("updatedEvaluation>>>",updatedEvaluation);
     return updatedEvaluation;
    
 };
@@ -469,6 +476,37 @@ export const getAllEvaluationRecords = async (
       _id: new Types.ObjectId(id),
     }).lean();
   };
-  
+  export interface EvaluationUpdate{
+    invoiceStatus: string,
+    paymentStatus: string,
 
+  }
+  
+export const updateStudentInvoice = async (  
+  id: string,
+  payload: Partial<EvaluationUpdate>
+): Promise<IEvaluation | null> => {
+
+  const updateInvoice = await EvaluationModel.findOneAndUpdate(
+    { _id: new Types.ObjectId(id) },
+    { $set: payload },
+    { new: true }
+  ).lean();
+  const updatedEvaluation = await updateInvoice as IEvaluation; // Cast to expected type
+  console.log("updatedEvaluation>>>>>>>>>",updatedEvaluation);
+  if(updatedEvaluation.invoiceStatus == "Completed" && updatedEvaluation.paymentStatus == "Pending"){
+    //createStudentPortal(updatedEvaluation);
+  }
+
+  return updatedEvaluation
+}
+
+// async function createStudentPortal(updatedEvaluation:any) {
+//   const createStudentPortal = await StudentPortModel.create(
+    
+//   )
+
+//   const newCandidate = new EvaluationModel(payload);
+//   return newCandidate.save();
+// }
   

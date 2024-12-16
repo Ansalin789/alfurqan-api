@@ -42,6 +42,16 @@ const register = async (server: Server): Promise<void> => {
     },
   
     {
+      method: "PUT",
+      path: "/invoice/{evaluationId}",
+      options: {
+       handler: handler.updateInvoice,
+       description: evaluationMessages.UPDATE,
+       tags: ["api", "evaluation"],
+    },
+    },
+
+    {
       method: "GET",
       path: "/evaluationlist/{evaluationId}",
       options: {

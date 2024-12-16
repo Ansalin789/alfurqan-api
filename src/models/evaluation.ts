@@ -73,7 +73,7 @@ const evaluationSchema = new Schema<IEvaluation>({
     evaluationStatus: {
         type: String,
         required: true,
-    },  
+    },
     status: {
         type: String,
         required: true,
@@ -219,6 +219,18 @@ const evaluationSchema = new Schema<IEvaluation>({
         type: String,
         required: false,
     },
+    invoiceStatus: {
+     type: String,
+     required: false
+    },
+    paymentLink:{
+      type: String,
+      required: false
+    },
+    paymentStatus:{
+    type: String,
+    required: false
+    },
     status: {
         type: String,
         required: false,
@@ -302,7 +314,10 @@ export const zodEvaluationSchema = z.object({
     studentStatus: z.string().optional(),
     classStatus: z.string().optional(),
     comments: z.string().optional(),
-    trialClassStatus: z.string().optional(),
+    trialClassStatus: z.string(),
+    invoiceStatus: z.string().optional(),
+    paymentLink: z.string().optional(),
+    paymentStatus: z.string().optional(),
     status: z.string().optional(),
     createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
         message: commonMessages.INVALID_DATE_FORMAT,

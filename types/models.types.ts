@@ -319,6 +319,9 @@ studentStatus: string;
 classStatus: string;
 comments?: string;
 trialClassStatus?: string;
+invoiceStatus?: string;
+paymentLink?: string;
+paymentStatus?: string;
 status?: string;
 createdDate: Date;
 createdBy?: string;
@@ -377,13 +380,15 @@ assignedTeacher: string;
 studentStatus: string;
 classStatus: string;
 comments?: string;
-trialClassStatus?:string
+trialClassStatus?:string;
+invoiceStatus?: string;
+paymentLink?: string;
+paymentStatus?: string;
 status?: string;
 createdDate: Date;
 createdBy?: string;
 updatedDate?: Date;
-updatedBy?: string;
-  
+updatedBy?: string;  
 }
 
 
@@ -398,6 +403,47 @@ export interface ISubscritions extends Document{
   createdBy: string,
   updatedDate: Date,
   updatedBy: string
+}
+
+export interface IClassSchedule extends Document{
+  student: {
+    studentFirstName: string;
+    studentLastName: string;
+    studentEmail: string;
+  },
+  teacher:{
+    teacherId: string;
+    teacherName: string;
+    teacherEmail: string;
+  },
+  classDay: any;
+  package: string;
+  preferedTeacher: string;
+  course: string;
+  totalHourse: Number;
+  startDate: Date;
+  endDate: Date;
+  startTime: string;
+  endTime: string;
+  scheduleStatus: string,
+  status: string,
+  createdDate: Date,
+  createdBy: string,
+  lastUpdatedDate: Date,
+  lastUpdatedBy: string
+}
+
+export interface IClassScheduleCreate{
+  classDay: string;
+  package: string;
+  preferedTeacher: string;
+  course: string;
+  totalHourse: Number;
+  startDate: Date;
+  endDate: Date;
+  startTime: string;
+  endTime: string;
+  scheduleStatus: string,
 }
 
 export interface IActiveSession extends Document {
@@ -490,5 +536,35 @@ export interface MeetingSchedulePayload {
 }
 
 
+export interface IAlStudents extends Document{
+  student:{
+    studentId: string;
+    studentEmail: string;
+    studentPhone: Number;
+  };
+  username: string,
+  password: string;
+  role: string;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate: Date;
+  updatedBy: string;
+}
 
 
+export interface IAlStudentCreate extends Document{
+  student:{
+    studentId: string;
+    studentEmail: string;
+    studentPhone: Number;
+  };
+  username: string,
+  password: string;
+  role: string;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate: Date;
+  updatedBy: string;
+}
