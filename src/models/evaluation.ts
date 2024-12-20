@@ -260,6 +260,7 @@ const evaluationSchema = new Schema<IEvaluation>({
 );
 export const zodEvaluationSchema = z.object({
     student: z.object({
+        studentId: z.string().optional(),
         studentFirstName: z.string(),
         studentLastName: z.string(),
         studentEmail: z.string(),

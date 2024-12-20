@@ -1,5 +1,5 @@
 import { badRequest } from "@hapi/boom";
-import { IEvaluation, IEvaluationCreate } from "../../types/models.types"
+import { IEvaluation, IEvaluationCreate, IStudents } from "../../types/models.types"
 import EvaluationModel from "../models/evaluation"
 import StudentModel from "../models/student"
 import UserShiftSchedule from "../models/usershiftschedule"; // Add this import
@@ -18,6 +18,7 @@ import Course from "../models/course";
 import { config } from "../config/env";
 import User from "../models/users";
 import StudentPortModel from "../models/alstudents";
+import Stripe from 'stripe';
 
 
 
@@ -42,7 +43,7 @@ export interface EvaluationFilter {
 export const createEvaluationRecord = async (
     payload: IEvaluationCreate
   ): Promise<IEvaluation | { error: any }> => {
-    const newStudent = new StudentModel(payload.student);
+    let newStudent = new StudentModel(payload.student);
 
     if (payload.student.preferredDate?.toDateString() === new Date().toDateString()) {
         return {
@@ -51,7 +52,8 @@ export const createEvaluationRecord = async (
     }
 
     const loginUser = await User.findOne({userName: payload.createdBy,role : 'ACADEMICCOACH'}).exec();
-    
+   
+    console.log("loginUser>>>>", loginUser);
  let teacherDetails: any = null;
 if(loginUser){
      newStudent.academicCoach = {
@@ -62,7 +64,6 @@ if(loginUser){
         email: loginUser?.email // Provide a default value if undefined
      };
 }
-  
     newStudent.firstName = payload.student.studentFirstName;
     newStudent.lastName = payload.student.studentLastName;
     newStudent.email =   payload.student.studentEmail;
@@ -82,12 +83,23 @@ if(loginUser){
     newStudent.status = payload.student.status;
     newStudent.createdDate = new Date();
     newStudent.createdBy = payload.student.studentEmail || "Admin";
+    let createStudent;
+if(!payload.student.studentId){
+  createStudent = await newStudent.save()
+  const id = createStudent._id
+  console.log("id>>>>>>>>>", id);
+  console.log("createStudent>>>>>>", createStudent);
+}else if(payload.student.studentId){
+  const updateInvoice = await StudentModel.findOneAndUpdate(
+    { _id: new Types.ObjectId(payload.student.studentId) },
+    { $set: payload.student },
+    { new: true }
+  ).lean();
 
+  const updatedStudent = await updateInvoice as IStudents;
+  console.log("id>>>>>>>>>", updatedStudent);
+}
 
-const createStudent = await newStudent.save()
-    const id = createStudent._id
-    console.log("id>>>>>>>>>", id);
-    console.log("createStudent>>>>>>", createStudent);
 const subscriptonDetaails = await SubscriptionModel.findOne({
     subscriptionName: payload.subscription.subscriptionName
 }).exec();
@@ -96,7 +108,7 @@ console.log("subscriptonDetaails>>>>>>", subscriptonDetaails)
     const newEvaluation = new EvaluationModel(payload);
     if(createStudent){
         newEvaluation.student = {
-        studentId: id.toString(),
+        studentId: createStudent.id.toString(),
         studentFirstName: createStudent.firstName,
         studentLastName: createStudent.lastName,
         studentEmail: createStudent.email,
@@ -477,6 +489,7 @@ export const getAllEvaluationRecords = async (
   export interface EvaluationUpdate{
     invoiceStatus: string,
     paymentStatus: string,
+   
 
   }
   
@@ -490,21 +503,59 @@ export const updateStudentInvoice = async (
     { $set: payload },
     { new: true }
   ).lean();
+
+  // const { amount, currency } : any= payload;
+  // const stripe = new Stripe(config.stripeKey.stripesecretkey);
+  // console.log("stripe>>>",stripe);
+  //   const paymentIntent = await stripe.paymentIntents.create({
+  //     amount,
+  //     currency,
+  //   });
+
+
+  //   console.log("paymentIntent>>>",paymentIntent);
+
+
+  //     const clientSecret = paymentIntent.client_secret;
+  
   const updatedEvaluation = await updateInvoice as IEvaluation; // Cast to expected type
   console.log("updatedEvaluation>>>>>>>>>",updatedEvaluation);
-  if(updatedEvaluation.invoiceStatus == "Completed" && updatedEvaluation.paymentStatus == "Pending"){
-    //createStudentPortal(updatedEvaluation);
+  if(updatedEvaluation.invoiceStatus == "Completed" && updatedEvaluation.paymentStatus == "Paid"){
+    createStudentPortal(updatedEvaluation);
   }
 
   return updatedEvaluation
 }
 
-// async function createStudentPortal(updatedEvaluation:any) {
-//   const createStudentPortal = await StudentPortModel.create(
-    
-//   )
+ async function createStudentPortal(updatedEvaluation:any) {
+ 
+    const specialChars = '@#$%&*!';
+    const randomNum = Math.floor(Math.random() * 1000); // Random number between 0-999
+    const randomSpecial = specialChars[Math.floor(Math.random() * specialChars.length)]; // Random special character
+  
+    // Generate password
+    const firstThreeChars = updatedEvaluation.student.studentFirstName.substring(0, 3); // First 3 characters of the username
+    const reversedUsername = updatedEvaluation.student.studentFirstName.split('').reverse().join(''); // Reverse the username
+  
+    const password = `${firstThreeChars}${randomSpecial}${randomNum}${reversedUsername}`;
 
-//   const newCandidate = new EvaluationModel(payload);
-//   return newCandidate.save();
-// }
+  const createStudentPortal = await StudentPortModel.create({
+    student : {
+      studentId : updatedEvaluation.student.studentId,
+      studentEmail: updatedEvaluation.student.studentEmail,
+      studentPhone: updatedEvaluation.student.studentPhone
+    },
+    username: updatedEvaluation.student.studentFirstName,
+    password: password,
+    role: "Student",
+    status: "Active",
+    createdDate: new Date,
+    createdBy: updatedEvaluation.createdBy,
+    updatedDate: new Date
+  }
+   )
+
+const saveStudent = createStudentPortal.save()
+  return saveStudent;
+}
   

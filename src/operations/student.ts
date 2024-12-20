@@ -6,7 +6,6 @@ import UserShiftSchedule from "../models/usershiftschedule"; // Add this import
 import { forEach, isNil } from "lodash";
 import EmailTemplate from "../models/emailTemplate";
 import { sendEmailClient } from "../shared/email";
-import { role } from "../config/messages";
 import axios from "axios";
 import { config } from "../config/env";
 import MeetingSchedule from "../models/calendar";

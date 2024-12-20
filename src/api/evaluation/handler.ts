@@ -50,17 +50,15 @@ const createInputValidation = z.object({
 
   export const zodUpdateEvaluationSchema = z.object({
     invoiceStatus: z.string().optional(),
-    paymentLink: z.string().optional(),
     paymentStatus: z.string().optional(),
-    paymenentResponse : z.string().optional()
+  
   })
 
   const invoiceValidation = z.object({
     payload: zodUpdateEvaluationSchema.pick({
       invoiceStatus: true,
-      paymentLink: true,
       paymentStatus: true,
-      paymenentResponse: true
+    
     }).partial()
     
   })
@@ -84,6 +82,7 @@ export default {
         });
         return createEvaluationRecord({
             student: { // Ensure studentId is included
+                studentId: payload.student?.studentId || "", 
                 studentFirstName: payload.student?.studentFirstName || "",
                 studentLastName: payload.student?.studentLastName || "",
                 studentEmail: payload.student?.studentEmail || "",
@@ -232,10 +231,10 @@ export default {
       payload: req.payload,
    });
 
-   return updateStudentInvoice(String(req.params.evaluationId),{   
+   return await updateStudentInvoice(String(req.params.evaluationId),{   
     invoiceStatus: payload.invoiceStatus,
     paymentStatus: payload.paymentStatus
-     })
+     });
   }
   }
 

@@ -334,6 +334,7 @@ updatedBy?: string;
 export interface IEvaluationCreate{
 
   student: {
+  studentId?: string
   studentFirstName: string;
   studentLastName: string;
   studentEmail: string;
@@ -407,6 +408,7 @@ export interface ISubscritions extends Document{
 
 export interface IClassSchedule extends Document{
   student: {
+    studentId: string;
     studentFirstName: string;
     studentLastName: string;
     studentEmail: string;
@@ -423,8 +425,8 @@ export interface IClassSchedule extends Document{
   totalHourse: Number;
   startDate: Date;
   endDate: Date;
-  startTime: string;
-  endTime: string;
+  startTime: any;
+  endTime: any;
   scheduleStatus: string,
   status: string,
   createdDate: Date,
@@ -434,15 +436,18 @@ export interface IClassSchedule extends Document{
 }
 
 export interface IClassScheduleCreate{
-  classDay: string;
+  teacher:{
+    teacherName: string;
+  },
+  classDay: string[];
   package: string;
   preferedTeacher: string;
   course: string;
   totalHourse: Number;
   startDate: Date;
   endDate: Date;
-  startTime: string;
-  endTime: string;
+  startTime: string[];
+  endTime: string[];
   scheduleStatus: string,
 }
 
@@ -567,4 +572,32 @@ export interface IAlStudentCreate extends Document{
   createdBy: string;
   updatedDate: Date;
   updatedBy: string;
+}
+
+export interface IPaymentDetails extends Document{
+  userId: string;
+  userName: string;
+  paymentStatus: string;
+  paymentAmount: string;
+  paymentResponse: JSON;
+  paymentResponseId: string;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  lastUpdatedDate: Date;
+  lastUpdatedBy: string
+}
+
+export interface CreatePaymentDetails{
+  userId: string;
+  userName: string;
+  paymentStatus: string;
+  paymentAmount: string;
+  paymentResponse: JSON;
+  paymentResponseId: string;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  lastUpdatedDate: Date;
+  lastUpdatedBy: string
 }
