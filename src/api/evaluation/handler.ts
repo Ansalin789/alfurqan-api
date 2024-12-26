@@ -42,6 +42,7 @@ const createInputValidation = z.object({
     comments: true,
     trialClassStatus: true,
     invoiceStatus: true,
+    paymentLink: true,
     paymentStatus: true,
     status:true,
     createdBy:true,
@@ -135,6 +136,7 @@ export default {
            comments: payload.comments || "",
            trialClassStatus: payload.trialClassStatus || "",
            invoiceStatus: payload.invoiceStatus || "Pending",
+           paymentLink: payload.paymentLink || "",
            paymentStatus: payload.paymentStatus || "Pending",
             status: payload.status,
             createdDate: new Date(),
@@ -152,6 +154,7 @@ export default {
  
   return updateStudentEvaluation(String(req.params.evaluationId),{     
     student: { // Ensure studentId is included
+      studentId: payload.student?.studentId || "", 
       studentFirstName: payload.student?.studentFirstName || "",
       studentLastName: payload.student?.studentLastName || "",
       studentEmail: payload.student?.studentEmail || "",
@@ -198,6 +201,7 @@ export default {
  comments: payload.comments || "",
  trialClassStatus: payload.trialClassStatus || "",
  invoiceStatus: payload.invoiceStatus || "Pending",
+ paymentLink: payload.paymentLink || "",
  paymentStatus: payload.paymentStatus || "Pending",
   status: payload.status,
   createdDate: new Date(),
