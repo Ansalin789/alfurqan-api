@@ -506,21 +506,6 @@ export const updateStudentInvoice = async (
     { $set: payload },
     { new: true }
   ).lean();
-
-  // const { amount, currency } : any= payload;
-  // const stripe = new Stripe(config.stripeKey.stripesecretkey);
-  // console.log("stripe>>>",stripe);
-  //   const paymentIntent = await stripe.paymentIntents.create({
-  //     amount,
-  //     currency,
-  //   });
-
-
-  //   console.log("paymentIntent>>>",paymentIntent);
-
-
-  //     const clientSecret = paymentIntent.client_secret;
-  
   const updatedEvaluation = await updateInvoice as IEvaluation; // Cast to expected type
   const savePaymentDetails = await PaymentDetailsModel.create
 
