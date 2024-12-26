@@ -1,5 +1,5 @@
 import { Server, ServerRoute } from "@hapi/hapi";
-import { evaluationMessages } from "../../config/messages";
+import { ClassSchedulesMessages, evaluationMessages } from "../../config/messages";
 import handler from "./handler";
 
 const register = async (server: Server): Promise<void> => {
@@ -28,6 +28,27 @@ const register = async (server: Server): Promise<void> => {
          tags: ["api", "evaluation"],
       },
       },
+      
+      {
+        method: "GET",
+        path: "/classShedule",
+        options: {
+         handler: handler.getAllClassShedule,
+         description: ClassSchedulesMessages.LIST,
+         tags: ["api", "classShedule"],
+      },
+      },
+
+      {
+        method: "GET",
+        path: "/classShedule/{classSheduleId}",
+        options: {
+         handler: handler.getAllClassSheduleById,
+         description: ClassSchedulesMessages.BYID,
+         tags: ["api", "classShedule"],
+      },
+      },
+
     ];
     server.route(routes);
   };

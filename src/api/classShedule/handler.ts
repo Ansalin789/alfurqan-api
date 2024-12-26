@@ -2,7 +2,10 @@ import { ResponseToolkit,Request } from "@hapi/hapi";
 import { zodClassScheduleSchema } from "../../models/classShedule";
 // import { createclassShedule } from "../../operations/classschedule"
 import { z } from "zod";
-import { updateStudentClassSchedule } from "../../operations/classschedule";
+import { getAllClassShedule, getAllClassSheduleById, updateStudentClassSchedule } from "../../operations/classschedule";
+import { ClassSchedulesMessages } from "../../config/messages";
+import { isNil } from "lodash";
+import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 
 const createInputValidation = z.object({
     payload: zodClassScheduleSchema.pick({
@@ -19,6 +22,17 @@ const createInputValidation = z.object({
         scheduleStatus: true,
     }).partial()
   });
+
+const getAllClassSheduleInput = z.object({
+  query: zodGetAllRecordsQuerySchema.pick({
+    searchText: true,
+    sortBy: true,
+    sortOrder: true,
+    offset: true,
+    limit: true,
+    filterValues: true,
+  }),
+});
 
 export default {
 
@@ -52,4 +66,62 @@ export default {
     scheduleStatus: payload.scheduleStatus
      });
   }
+,
+
+async getAllClassShedule(req: Request, h: ResponseToolkit) {
+  try {
+    // Cast `req` to `Request` with query properties
+    const parsedQuery = getAllClassSheduleInput.parse({
+      query: {
+        ...((req as any).query), // Cast req.query to 'any' or a more specific type if needed
+        filterValues: (() => {
+          try {
+            return req.query?.filterValues
+              ? JSON.parse(req.query.filterValues as string)
+              : {};
+          } catch {
+            throw new Error("Invalid filterValues JSON format.");
+          }
+        })(),
+      },
+    });
+
+    const query = parsedQuery.query;
+
+    // Call your service or database function to fetch data
+    const result = await getAllClassShedule(query);
+
+    // Return the response
+    return h.response(result).code(200);
+  } catch (error) {
+    // Handle errors (validation or other errors)
+    return h.response({ error }).code(400);
+  }
+}
+,
+
+  // Handler for getting student by ID
+  async getAllClassSheduleById(req: Request, h: ResponseToolkit) {
+    try {
+      // Fetch the student by ID
+      const result = await getAllClassSheduleById(String(req.params.alstudentsId));
+
+      // Handle not found case
+      if (isNil(result)) {
+        return h
+          .response({ message: ClassSchedulesMessages.NOT_FOUND })
+          .code(404);
+      }
+
+      // Return the found student
+      return h.response(result).code(200);
+    } catch (error) {
+      // Handle errors (unexpected or other)
+      return h
+        .response({ error })
+        .code(500);
+    }
+  }
+
+
 }

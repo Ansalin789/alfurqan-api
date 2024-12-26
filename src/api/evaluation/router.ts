@@ -48,7 +48,7 @@ const register = async (server: Server): Promise<void> => {
        handler: handler.updateInvoice,
        description: evaluationMessages.UPDATE,
        tags: ["api", "evaluation"],
-    },
+    },  
     },
 
     {

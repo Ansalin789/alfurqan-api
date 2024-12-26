@@ -191,6 +191,52 @@ export const meetingSchedulesMessages: Record<string, any> = Object.freeze({
   FAILED_ASSESSMENT: 'Failed to connect Assessment. Please check the integration.'
 });
 
+export const ClassSchedulesMessages: Record<string, any> = Object.freeze({
+  LIST: "Retrieve all the meeting schedules list",
+  BYID: "Retrieve meeting schedules details by meetingScheduleId",
+  INTERVIEW_LIST:"Retrieve all the interview scheduled meeting",
+  INTERVIEW_LIST_CANDIDATE:"Retrieve all the interview scheduled meeting for candidate",
+  MEETING_SCHEDULE_NOT_FOUND: "Meeting schedule not found",
+  GET_ALL_LIST_START: 'getAllMeetingSchedulesRecords - Start',
+  GET_ALL_LIST_SUCCESS: 'getAllMeetingSchedulesRecords - Success',
+  MEETING_STATUS: ['Pending', 'Completed', 'Cancelled'],
+  CANDIDATE_RESPONSE: ['ACCEPTED', 'NOT RESPONDED', 'DECLINED'],
+  DATE_FORMAT: /^\d{4}-\d{2}-\d{2}$/,
+  DATE_FORMAT_INVALID: 'Date must be in the format YYYY-MM-DD',
+  CREATE: "Create a new meeting schedules",
+  UPDATE: "Update meeting schedule details by meetingScheduleId",
+  DELETE: "Delete meeting schedule details by meetingScheduleId",
+  INVALID_APPLICATION_STATUS: "Meeting schedule is already ",
+  MEETING_NOT_SCHEDULED: "Meeting is not scheduled",
+  MEETING_SCHEDULED_CANCELLED: "Meeting schedule has been cancelled",
+  UPDATE_FAILED: "Failed to update the meeting schedule",
+  DELETE_FAILED: "Failed to delete the meeting schedule",
+  REFERENCE_TYPE: ['MEETING_SCHEDULED'],
+  INVALID_ID: "Invalid ID",
+  INVALID_DATE_RANGE: "The date range is invalid because the start date is greater than the end date.",
+  MISSING_DATE_PAIR: "Both the start date and end date are required.",
+  TEAMS_FOR_BUSINESS: "teamsForBusiness",
+  REQUIRED: "required",
+  OPTIONAL: "optional",
+  HTML: "HTML",
+  VERIFY_INTEGRATION: 'Verify the integration for',
+  FAILED_TO_CONNECT: 'Failed to connect',
+  CHECK_INTEGRATION: '. Kindly check the integration',
+  INVALID_CREDENTIAL: 'Invalid credentials provided for tenant configuration.',
+  UNAUTHORIZED_ACCESS: 'Unauthorized access. Please check the tenant credentials.',
+  FORBIDDEN_ACCESS: 'Forbidden access. You do not have permission to perform this action.',
+  FAILED_ACCESS_TOKEN: `Failed to retrieve access token for schedule meeting. Kindly verfiy the clander integration`,
+  EMAIL_NOT_FOUND: "The requested resource or user email was not found",
+  UNKNOWN_ERROR: 'An unknown error occurred while creating the event:',
+  NORESPONSE: "No response received from the server while creating the event.",
+  FAILED_TO_CREATE_EVENT: "Failed to create calendar event.",
+  FAILED_TO_UPDATE_EVENT: "Failed to update calendar event",
+  UNKNOWN_ERROR_UPDATE_EVENT: 'An unexpected error occurred while updating the event.',
+  INVALID_REFERENCE_ID: "Invalid referenceId",
+  FAILED_ASSESSMENT: 'Failed to connect Assessment. Please check the integration.'
+});
+
+
 export const socketEventNames: Record<string, any> = Object.freeze({
   USERS: 'users',
   DASHBOARD: 'dashboard',
@@ -240,3 +286,14 @@ export const dashboardMessages: Record<string, any> = Object.freeze({
 });
 
 
+export const alstudentsMessages: Record<string, string> = Object.freeze({
+  LIST: "Retrieve all the users list",
+  BYID: "Retrieve user details by userId",
+  CREATE: "Create a new user",
+  UPDATE: "Update a existing user",
+  DELETE: "Delete user by userId",
+  BULK_DELETE: "Bulk Delete users by userIds",
+  USER_NOT_FOUND: "Your account is not found or active, contact admin",
+  ENCRYPT_PASSWORD_ERROR: "Password must be an encrypted value",
+  USER_PROFILE_INVALID_FILE_TYPE: "Invalid file type. Only .png , .jpg or jpeg files are allowed.",
+});
