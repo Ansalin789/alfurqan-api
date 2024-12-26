@@ -11,6 +11,7 @@ import subscriptionAPI from "../api/subscriptions/router";
 import meetingScheduleAPI from "../api/meetingSchedule/router";
 import dashboardAPI from "../api/dashboard/router";
 import paymentAPI from "../api/payment/router";
+import classScheduleAPI from "../api/classShedule/router";
 export const appPlugins = [
   {
     plugin: systemLifeCycle,
@@ -47,5 +48,8 @@ export const appPlugins = [
   },
   {
     plugin: paymentAPI,
+  },
+  {
+    plugin: classScheduleAPI,
   }
 ];

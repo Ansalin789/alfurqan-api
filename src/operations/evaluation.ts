@@ -19,6 +19,7 @@ import { config } from "../config/env";
 import User from "../models/users";
 import StudentPortModel from "../models/alstudents";
 import Stripe from 'stripe';
+import PaymentDetailsModel from "../models/paymentDetails"
 
 
 
@@ -142,9 +143,9 @@ console.log("subscriptonDetaails>>>>>>", subscriptonDetaails)
     const price = payload.hours* newEvaluation.subscription.subscriptionPricePerHr
    const totalHrs = payload.hours* 28;
    const hrsPerWeek = payload.hours;
-    newEvaluation.planTotalPrice = price;
-    newEvaluation.accomplishmentTime = totalHrs.toString();
-    newEvaluation.studentRate = hrsPerWeek;
+   // newEvaluation.planTotalPrice = price;
+   // newEvaluation.accomplishmentTime = totalHrs.toString();
+   // newEvaluation.studentRate = hrsPerWeek;
     newEvaluation.expectedFinishingDate = 28
 
 
@@ -189,6 +190,8 @@ newEvaluation.assignedTeacher = teacherDetails.name
 newEvaluation.studentStatus = payload.studentStatus,
 newEvaluation.classStatus = payload.classStatus,
 newEvaluation.trialClassStatus = payload.trialClassStatus
+ newEvaluation.assignedTeacherId = teacherDetails.teacherId
+ newEvaluation.assignedTeacherEmail = teacherDetails.email
 console.log("studentStatus", newEvaluation.studentStatus);
 console.log("class status", newEvaluation.classStatus);
 
@@ -519,6 +522,8 @@ export const updateStudentInvoice = async (
   //     const clientSecret = paymentIntent.client_secret;
   
   const updatedEvaluation = await updateInvoice as IEvaluation; // Cast to expected type
+  const savePaymentDetails = await PaymentDetailsModel.create
+
   console.log("updatedEvaluation>>>>>>>>>",updatedEvaluation);
   if(updatedEvaluation.invoiceStatus == "Completed" && updatedEvaluation.paymentStatus == "Paid"){
     createStudentPortal(updatedEvaluation);

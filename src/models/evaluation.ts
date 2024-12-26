@@ -203,6 +203,14 @@ const evaluationSchema = new Schema<IEvaluation>({
         type: String,
         required: true
     },
+    assignedTeacherId:{
+        type: String,
+        required: true
+    },
+    assignedTeacherEmail:{
+        type: String,
+        required: true
+    },
     studentStatus: {
         type: String,
         required: false,
@@ -296,6 +304,7 @@ export const zodEvaluationSchema = z.object({
     subscription: z.object({
         subscriptionName: z.string(),
     }),
+    planTotalPrice: z.number(),
     classStartDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
         message: commonMessages.INVALID_DATE_FORMAT,
       }).transform((val) => new Date(val)),
@@ -312,6 +321,8 @@ export const zodEvaluationSchema = z.object({
     gardianTimeZone: z.string(),
     gardianLanguage: z.string(),
     assignedTeacher: z.string(),
+    accomplishmentTime: z.string().optional(),
+    studentRate: z.number().optional().optional(),
     studentStatus: z.string().optional(),
     classStatus: z.string().optional(),
     comments: z.string().optional(),
