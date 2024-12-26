@@ -315,6 +315,8 @@ gardianCountry: string;
 gardianTimeZone: string;
 gardianLanguage: string;
 assignedTeacher: string;
+assignedTeacherId:string;
+assignedTeacherEmail:string;
 studentStatus: string;
 classStatus: string;
 comments?: string;
@@ -365,7 +367,7 @@ hours: number;
 subscription: {
     subscriptionName: string;
 };
-
+planTotalPrice: number
 classStartDate: Date;
 classEndDate: Date;
 classStartTime: string;
@@ -378,6 +380,8 @@ gardianCountry: string;
 gardianTimeZone: string;
 gardianLanguage: string;
 assignedTeacher: string;
+accomplishmentTime?: string;
+studentRate: number;
 studentStatus: string;
 classStatus: string;
 comments?: string;
@@ -428,6 +432,15 @@ export interface IClassSchedule extends Document{
   startTime: any;
   endTime: any;
   scheduleStatus: string,
+  scheduledStartDate: Date,
+  classType: string,
+  classLink: string,
+  isScheduledMeeting: boolean,
+  timeZone: string,
+  remainderInMinutes: number,
+  description: string,
+  meetingStatus: string,
+  studentResponse: string,
   status: string,
   createdDate: Date,
   createdBy: string,
@@ -438,6 +451,7 @@ export interface IClassSchedule extends Document{
 export interface IClassScheduleCreate{
   teacher:{
     teacherName: string;
+    teacherEmail: string;
   },
   classDay: string[];
   package: string;
@@ -581,6 +595,7 @@ export interface IPaymentDetails extends Document{
   paymentAmount: string;
   paymentResponse: JSON;
   paymentResponseId: string;
+  paymentDate: Date;
   status: string;
   createdDate: Date;
   createdBy: string;

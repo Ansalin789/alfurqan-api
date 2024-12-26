@@ -15,6 +15,7 @@ const createInputValidation = z.object({
     payload: zodEvaluationSchema.pick({
     student:true,
     subscription:true,
+    planTotalPrice: true,
     isLanguageLevel:true,
     languageLevel:true,
     isReadingLevel:true,
@@ -34,6 +35,8 @@ const createInputValidation = z.object({
     gardianTimeZone:true,
     gardianLanguage:true,
     assignedTeacher: true,
+    accomplishmentTime: true,
+    studentRate: true,
     studentStatus: true,
     classStatus: true,
     comments: true,
@@ -112,6 +115,7 @@ export default {
             subscription:{
                 subscriptionName: payload.subscription?.subscriptionName || "",
             } ,
+            planTotalPrice: payload.planTotalPrice ||0,
             classStartDate: payload.classStartDate || new Date(),
             classEndDate: payload.classEndDate || new Date(),
             classStartTime: payload.classStartTime || "defaultStartTime",
@@ -124,6 +128,8 @@ export default {
             gardianTimeZone: payload.gardianTimeZone || "defaultTimeZone", // Add default value
             gardianLanguage: payload.gardianLanguage || "",
            assignedTeacher:payload.assignedTeacher || "",
+           accomplishmentTime: payload.accomplishmentTime,
+           studentRate: payload.studentRate || 0,
            studentStatus: payload.studentStatus || "",
            classStatus: payload.classStatus || "",
            comments: payload.comments || "",
