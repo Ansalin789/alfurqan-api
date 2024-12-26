@@ -22,7 +22,7 @@ const register = async (server: Server): Promise<void> => {
 
      {
            method: "GET",
-           path: "/alstudentslist/{alstudentsId}",
+           path: "/alstudents/{alstudentsId}",
            options: {
              handler: handler.getalstudentsById,
              description: alstudentsMessages.BYID,

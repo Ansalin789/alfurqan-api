@@ -12,6 +12,7 @@ import meetingScheduleAPI from "../api/meetingSchedule/router";
 import dashboardAPI from "../api/dashboard/router";
 import paymentAPI from "../api/payment/router";
 import classScheduleAPI from "../api/classShedule/router";
+import alstudentsAPI from "../api/alstudents/router"
 export const appPlugins = [
   {
     plugin: systemLifeCycle,
@@ -51,5 +52,8 @@ export const appPlugins = [
   },
   {
     plugin: classScheduleAPI,
+  },
+  {
+    plugin: alstudentsAPI,
   }
 ];
