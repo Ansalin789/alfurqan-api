@@ -1,6 +1,7 @@
 import { model, Schema } from "mongoose";
 import { z } from "zod";
 import { IAlStudents } from "../../types/models.types";
+import { appStatus, commonMessages } from "../config/messages";
 
 
 const alStudentSchema = new Schema<IAlStudents>(
@@ -8,7 +9,7 @@ const alStudentSchema = new Schema<IAlStudents>(
 student: {
     studentId: {
        type: String,
-       required: true,
+       required: false,
     },
     studentEmail: {
         type: String,
@@ -30,6 +31,15 @@ password:{
 role: {
     type: String,
     required: true,
+},
+startDate:{
+    type: Date,
+    required: false,
+
+},
+endDate:{
+    type: Date,
+    required: false,
 },
 status: {
     type: String,
@@ -57,7 +67,23 @@ updatedBy: {
     timestamps: false,
 }
 );
-export const zodEvaluationSchema = z.object({
- 
+export const zodAlStudentSchema = z.object({
+    student: z.object({
+      studentId: z.string().optional(),
+      studentEmail: z.string(),
+      studentPhone: z.number(),
+    }),
+    username: z.string().min(3),
+    password: z.string().min(8),
+    role: z.string(),
+      status: z.enum([appStatus.ACTIVE, appStatus.IN_ACTIVE, appStatus.DELETED]),
+      createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+        message: commonMessages.INVALID_DATE_FORMAT,
+      }).transform((val) => new Date(val)).optional(),
+      createdBy: z.string(),
+      lastUpdatedDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+        message: commonMessages.INVALID_DATE_FORMAT,
+      }).transform((val) => new Date(val)).optional(),
+      lastUpdatedBy: z.string(),
 });
 export default model<IAlStudents>("AlfurqanStudent", alStudentSchema);

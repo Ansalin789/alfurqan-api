@@ -564,6 +564,8 @@ export interface IAlStudents extends Document{
   username: string,
   password: string;
   role: string;
+  startDate: Date;
+  endDate:Date;
   status: string;
   createdDate: Date;
   createdBy: string;
@@ -572,20 +574,14 @@ export interface IAlStudents extends Document{
 }
 
 
-export interface IAlStudentCreate extends Document{
+export interface IAlStudentCreate{
   student:{
     studentId: string;
     studentEmail: string;
     studentPhone: Number;
   };
   username: string,
-  password: string;
   role: string;
-  status: string;
-  createdDate: Date;
-  createdBy: string;
-  updatedDate: Date;
-  updatedBy: string;
 }
 
 export interface IPaymentDetails extends Document{

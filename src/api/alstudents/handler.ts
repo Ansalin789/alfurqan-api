@@ -2,9 +2,13 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
-import { getAllalstudentsList, getalstudentsById } from "../../operations/alstudents";
+import { createAlStudent, getAllalstudentsList, getalstudentsById } from "../../operations/alstudents";
 import { alstudentsMessages } from "../../config/messages";
 import { isNil } from "lodash";
+import { zodAlStudentSchema } from "../../models/alstudents";
+import EvaluationModel from "../../models/evaluation"
+import student from "../../models/student";
+
 
 // Input validation schema
 const getAllalstudentsListInputValidation = z.object({
@@ -17,6 +21,17 @@ const getAllalstudentsListInputValidation = z.object({
     filterValues: true,
   }),
 });
+
+
+// Input Validation for Create a User
+const createInputValidation = z.object({
+  payload: zodAlStudentSchema.pick({
+    student: true,
+    username: true,
+    role: true
+  }),
+});
+
 
 // Handler object
 const handler = {
@@ -58,24 +73,50 @@ const handler = {
   async getalstudentsById(req: Request, h: ResponseToolkit) {
     try {
       // Fetch the student by ID
-      const result = await getalstudentsById(String(req.params.alstudentsId));
+      const studentDetails = await getalstudentsById(String(req.params.alstudentsId));
+
+      console.log(">>>",studentDetails?.student.studentId);
+      const studentEvaluationDetails = await EvaluationModel.findOne({
+        'student.studentId': studentDetails?.student?.studentId
+    }).exec();
 
       // Handle not found case
-      if (isNil(result)) {
+      if (isNil(studentDetails)) {
         return h
           .response({ message: alstudentsMessages.ALFURQANSTUDENTS_NOT_FOUND })
           .code(404);
       }
 
       // Return the found student
-      return h.response(result).code(200);
+      return {studentDetails,studentEvaluationDetails};
     } catch (error) {
       // Handle errors (unexpected or other)
       return h
         .response({ error })
         .code(500);
     }
-  }
+  },
+
+  async createStudentPortal(req: Request, h: ResponseToolkit) {
+    // Create a new user
+      const { payload } = createInputValidation.parse({
+        payload: req.payload,
+      });
+  
+  
+      //const hashedPassword = await hashPassword(decryptPassword(password));
+  
+      return createAlStudent({
+        student:{
+        studentId: payload.student?.studentId || "",
+        studentEmail: payload.student?.studentEmail|| "",
+        studentPhone: payload.student?.studentPhone || 0
+        },
+        username: payload.username || " ",
+        role: payload.role|| " "
+      });
+    },
 };
+
 
 export { handler };

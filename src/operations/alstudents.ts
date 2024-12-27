@@ -1,6 +1,6 @@
 
 import { isNil } from "lodash";
-import { IAlStudents } from "../../types/models.types";
+import { IAlStudentCreate, IAlStudents } from "../../types/models.types";
 import { alstudentsMessages, commonMessages } from "../config/messages";
 import { GetAllRecordsParams } from "../shared/enum";
 import AppLogger from "../helpers/logging";
@@ -79,3 +79,28 @@ export const getAllalstudentsList = async (
       _id: new Types.ObjectId(id),
     }).lean();
   };
+
+  /**
+ * Creates a new user.
+ *
+ * @param {IAlStudentCreate} payload - The data of the user to be created.
+ */
+ export const createAlStudent = async (
+   payload: IAlStudentCreate
+ ): Promise<IAlStudents | null> => {
+   const newStudent = new AlStudentsModel(payload);
+   const specialChars = '@#$%&*!';
+    const randomNum = Math.floor(Math.random() * 1000); // Random number between 0-999
+    const randomSpecial = specialChars[Math.floor(Math.random() * specialChars.length)]; // Random special character
+  
+    // Generate password
+    const firstThreeChars = newStudent.username.substring(0, 3); // First 3 characters of the username
+    const reversedUsername = newStudent.username.split('').reverse().join(''); // Reverse the username
+  
+    const studentPassword = `${firstThreeChars}${randomSpecial}${randomNum}${reversedUsername}`;
+   newStudent.password = studentPassword
+
+   const savedUser = await newStudent.save();
+
+   return savedUser
+ };
