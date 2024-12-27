@@ -117,6 +117,7 @@ export const zodGetAllRecordsQuerySchema = z.object({
 
 export const zodGetAllUserRecordsQuerySchema = z.object({
   role: z.string().min(3),
+  date:z.string().optional(),
 });
 
 export const zodAuthenticationSchema = z.object({

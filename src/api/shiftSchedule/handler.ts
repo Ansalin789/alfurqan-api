@@ -1,8 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
-import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
+import { zodGetAllRecordsQuerySchema, zodGetAllUserRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import UserShiftSchedule from "../../models/usershiftschedule";
+import { GetAlluserRecordsParams } from "../../shared/enum";
+import { badRequest } from "@hapi/boom";
+import { getAllTeachers } from "../../operations/shiftshedule";
 
 
 
@@ -34,6 +37,12 @@ interface ShiftSchedulePayload {
 //   }),
 // });
 
+let getUsersListInputValidation = z.object({
+  query: zodGetAllUserRecordsQuerySchema.pick({
+    role: true,
+    date: true
+  })
+});
 
 
 
@@ -44,7 +53,30 @@ const createInputValidation = z.object({
 
 export default {
 
+async getAllUsers(req: Request, h: ResponseToolkit) {
+  try {
+    // Validate and parse the request query
+    const { query } = getUsersListInputValidation.parse({
+      query: req.query,
+    });
 
+    // Define the filter with correct type
+    const filter: GetAlluserRecordsParams = {
+      role: query.role, // role is required
+      date: query.date, // date is optional
+    };
+  
+    // Fetch filtered records
+    return await getAllTeachers (filter);
+  } catch (error: unknown) {
+    // Handle validation errors with type guards
+    if (error instanceof Error) {
+      return badRequest(error);
+    } else {
+      return badRequest("Unknown error occurred");
+    }
+  }
+},
 
   // Create a new user
   async createShiftschedule(req: Request, h: ResponseToolkit) {

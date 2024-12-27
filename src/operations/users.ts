@@ -4,7 +4,6 @@ import { IUser, IUserCreate } from "../../types/models.types";
 import { appStatus } from "../config/messages";
 import {  isNil } from "lodash";
 import { GetAllRecordsParams, GetAlluserRecordsParams } from "../shared/enum";
-import users from "../models/users";
 
 /**
  * Retrieves all user records for a given tenant, with support for search, pagination, sorting, role filtering, and excluding passwords.
@@ -27,7 +26,8 @@ export const getAllUserRecords = async (
   if (role) {
     query.role = role;
   }
-  console.log(">>>>",query.role);
+  
+  console.log(">>>>",query.date);
   // Fetch all users matching the query and return plain JavaScript objects using .lean()
   const users = await UserModel.find({
     role: query.role,

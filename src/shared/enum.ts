@@ -73,7 +73,10 @@ export interface GetAllRecordsParams {
 }
 
 export interface GetAlluserRecordsParams {
+  date?: string;
   role: string;
+  // startdate?: string;
+  // enddate?: string;
 }
 
 export default CustomEnumerator;
