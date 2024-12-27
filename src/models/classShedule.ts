@@ -30,16 +30,16 @@ const classScheduleSchema = new Schema<IClassSchedule>(
       teacher: {
         teacherId: {
            type: String,
-           required: true,
+           required: false,
         },
         teacherName: {
             type: String,
-            required: true,
+            required: false,
         },
        
         teacherEmail: {
             type: String,
-            required: true,
+            required: false,
         }
        
       },
@@ -58,11 +58,11 @@ const classScheduleSchema = new Schema<IClassSchedule>(
       course:{
         courseId:{
           type: String,
-          required: true,
+          required: false,
         },
         courseName:{
           type: String,
-          required: true,
+          required: false,
         }
       
       },
@@ -92,15 +92,15 @@ const classScheduleSchema = new Schema<IClassSchedule>(
       },
     scheduledStartDate: {
       type: Date,
-      required: true,
+      required: false,
     },
     classType:{
       type: String,
-      required: true,
+      required: false,
     },
     classLink:{
       type: String,
-      required: true,
+      required: false,
     },
     isScheduledMeeting:{
       type: Boolean,
