@@ -147,9 +147,6 @@ console.log("subscriptonDetaails>>>>>>", subscriptonDetaails)
    // newEvaluation.accomplishmentTime = totalHrs.toString();
    // newEvaluation.studentRate = hrsPerWeek;
     newEvaluation.expectedFinishingDate = 28
-
-
-    
     const shiftScheduleRecord = await UserShiftSchedule.find({
       role: 'TEACHER'
 }).exec();
@@ -265,7 +262,7 @@ const evaluation = await EvaluationModel.findOne({
 }).exec();
 console.log("payload.trialClassStatus>>>", payload.trialClassStatus);
 
-if(payload.trialClassStatus == "Completed" && payload.studentStatus == "Joined"){
+if(payload.trialClassStatus == "COMPLETED" && payload.studentStatus == "JOINED"){
   const emailTemplate = await EmailTemplate.findOne({
     templateKey: 'Invoice',
 }).exec();
@@ -280,7 +277,8 @@ if(emailTemplate && payload.student && payload.subscription && evaluation ){
     .replace('<address>', payload.student.studentCity? payload.student.studentCity: " ").replace('<phonenumber>', payload.student.studentPhone.toString())
     .replace('<email>', payload.student.studentEmail ).replace('<plan>', payload.subscription.subscriptionName).replace('<coursename>', payload.student.learningInterest)
     .replace('<amount>', evaluation.planTotalPrice.toString()).replace('<adjustamount>', evaluation.planTotalPrice.toString()).replace('<subtotal>',evaluation.planTotalPrice.toString())
-    .replace('<total>',evaluation.planTotalPrice.toString());
+    .replace('<total>',evaluation.planTotalPrice.toString()).replace('<paymentLink>',evaluation.paymentLink
+  );
    await sendEmailClient(emailTo, subject,htmlPart);
   const email = await sendEmailClient(emailTo, subject,htmlPart);
 console.log("email>>>>",email);

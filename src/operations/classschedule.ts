@@ -7,6 +7,10 @@ import AppLogger from "../helpers/logging";
 import { GetAllRecordsParams } from "../shared/enum";
 import { alstudentsMessages, commonMessages } from "../config/messages";
 import { isNil } from "lodash";
+import { Client } from '@microsoft/microsoft-graph-client';
+import moment from 'moment';
+import { ClientSecretCredential } from "@azure/identity";
+
 /**
  * Creates a new candidate record in the database.
  *
@@ -170,6 +174,10 @@ export const updateStudentClassSchedule = async (
           preferedTeacher: payload.preferedTeacher,
         });
 
+        //await createRecurringEvents("tech@alfurqan.academy",newClassSchedule.startDate, newClassSchedule.endDate, newClassSchedule.classDay,newClassSchedule);
+         const eventDetails = await createEvent(newClassSchedule);
+         console.log("eventDetails>>>", eventDetails);
+
         const savedClassSchedule = await newClassSchedule.save();
         console.log("savedClassSchedule>>>>", savedClassSchedule);
         results.push(savedClassSchedule);
@@ -180,7 +188,7 @@ export const updateStudentClassSchedule = async (
     }
   }
 
-  console.log("results>>>", results);
+  //console.log("results>>>", results);
   return results;
 };
 
@@ -224,7 +232,6 @@ export const getAllClassShedule = async (
 
   // Create the query with sorting
   const studentQuery = ClassScheduleModel.find(query).sort(sortOptions);
-
   // Apply pagination (offset and limit)
   if (!isNil(offset) && !isNil(limit)) {
     const skip = Math.max(
@@ -257,3 +264,82 @@ export const getAllClassShedule = async (
       _id: new Types.ObjectId(_id),
     }).lean();
   };
+
+ 
+ const { MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET, MICROSOFT_TENANT_ID } : any = process.env;
+
+// Initialize Azure Credential
+const credential = new ClientSecretCredential(
+  MICROSOFT_TENANT_ID,
+  MICROSOFT_CLIENT_ID,
+  MICROSOFT_CLIENT_SECRET
+);
+
+// Initialize Microsoft Graph Client
+const client = Client.initWithMiddleware({
+  authProvider: {
+      getAccessToken: async (): Promise<string> => {
+          const tokenResponse = await credential.getToken(
+              'https://graph.microsoft.com/.default'
+          );
+          return tokenResponse.token;
+      },
+  }
+});
+
+
+// Create Event Function
+async function createEvent(newClassSchedule: any): Promise<void> {
+  console.log("newClassSchedule>>>>", newClassSchedule)
+  const event = {
+      subject: 'Team Meeting',
+      body: {
+          contentType: 'HTML',
+          content: 'Discuss project updates and next steps.',
+      },
+      start: {
+          dateTime: newClassSchedule.startDate.toString(),
+          timeZone: 'Asia/Kolkata',
+      },
+      end: {
+          dateTime: newClassSchedule.endDate.toString(),
+          timeZone: 'Asia/Kolkata',
+      },
+      location: {
+          displayName: 'Conference Room 1',
+      },
+      attendees: [
+          {
+              emailAddress: {
+                  address: newClassSchedule.student.studentEmail,
+                  name: newClassSchedule.studentFirstName,
+              },
+              type: 'required',
+          },
+          {
+              emailAddress: {
+                  address: newClassSchedule.teacher.teacherEmail,
+                  name: newClassSchedule.teacher.teacherEmail,
+              },
+              type: 'required',
+          },
+      ],
+      allowNewTimeProposals: true,
+      isOnlineMeeting: true,
+      onlineMeetingProvider: 'teamsForBusiness',
+  };
+
+  try {
+      const userId = 'tech@alfurqan.academy';
+      const response = await client.api(`/users/${userId}/calendar/events`).post(event);
+      console.log('Event created successfully:', response.id);
+  } catch (error: any) {
+      console.error('Error creating event:', error);
+      if (error) {
+          console.error('Response body:', error);
+          console.error('Response headers:', error);
+      } else {
+          console.error('Error message:', error);
+      }
+  }
+}

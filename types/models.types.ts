@@ -322,7 +322,7 @@ classStatus: string;
 comments?: string;
 trialClassStatus?: string;
 invoiceStatus?: string;
-paymentLink?: string;
+paymentLink: string;
 paymentStatus?: string;
 status?: string;
 createdDate: Date;

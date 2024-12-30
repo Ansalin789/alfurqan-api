@@ -6,6 +6,8 @@ import { GetAllRecordsParams } from "../shared/enum";
 import AppLogger from "../helpers/logging";
 import AlStudentsModel from "../models/alstudents"; // Ensure proper model import
 import { Types } from "mongoose";
+import  ClassScheduleModel  from "../models/classShedule"
+
 
 export const getAllalstudentsList = async (
   params: GetAllRecordsParams
@@ -62,6 +64,23 @@ export const getAllalstudentsList = async (
     studentQuery.exec(), // Fetch students with pagination
     AlStudentsModel.countDocuments(query).exec(), // Count total records
   ]);
+  //console.log("students>>>>>>>>", students);
+
+
+// Add classSchedule count to each student
+const studentsWithClassScheduleCount = await Promise.all(
+  students.map(async (student) => {
+    const classScheduleCount = await ClassScheduleModel.countDocuments({
+      'student.studentId': student._id.toString()
+    }).exec();
+
+    return {
+      ...student.toObject(),
+      classScheduleCount,
+    };
+  })
+);
+console.log("studentsWithClassScheduleCount>>>>",studentsWithClassScheduleCount);
 
   // Log successful retrieval
   AppLogger.info(alstudentsMessages.GET_ALL_LIST_SUCCESS, {
@@ -69,7 +88,7 @@ export const getAllalstudentsList = async (
   });
 
   // Return total count and fetched students
-  return { totalCount, students };
+  return { totalCount, students: studentsWithClassScheduleCount };
 };
 
  export const getalstudentsById = async (
