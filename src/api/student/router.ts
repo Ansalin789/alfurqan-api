@@ -14,9 +14,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.createStudent,
         description: studentMessages.CREATE,
         tags: ["api", "student"],
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
+        auth: {
+          strategies: ["jwt"],
+        },
       },
     },
 
@@ -27,9 +27,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getAllStudents,
         description: studentMessages.LIST,
         tags: ["api", "studentlist"],
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
+        auth: {
+          strategies: ["jwt"],
+        },
       },
     },
 
@@ -41,9 +41,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getStudentRecordById,
         description: studentMessages.BYID,
         tags: ["api", "studentlist"],
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
+        auth: {
+          strategies: ["jwt"],
+        },
       },
     },
 

@@ -12,9 +12,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getAllUsers,
         description: userMessages.LIST,
         tags: ["api", "users"],
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
+        auth: {
+          strategies: ["jwt"],
+        },
       },
     },
     {
@@ -36,9 +36,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.createUser,
         description: userMessages.CREATE,
         tags: ["api", "users"],
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
+        auth: {
+          strategies: ["jwt"],
+        },
       },
     },
     {

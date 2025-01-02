@@ -26,6 +26,9 @@ const register = async (server: Server): Promise<void> => {
          handler: handler.createandUpdateSchedule,
          description: evaluationMessages.UPDATE,
          tags: ["api", "evaluation"],
+          auth: {
+            strategies: ["jwt"],
+          },
       },
       },
       
@@ -36,6 +39,9 @@ const register = async (server: Server): Promise<void> => {
          handler: handler.getAllClassShedule,
          description: ClassSchedulesMessages.LIST,
          tags: ["api", "classShedule"],
+         auth: {
+          strategies: ["jwt"],
+        },
       },
       },
 
@@ -46,6 +52,9 @@ const register = async (server: Server): Promise<void> => {
          handler: handler.getAllClassSheduleById,
          description: ClassSchedulesMessages.BYID,
          tags: ["api", "classShedule"],
+         auth: {
+          strategies: ["jwt"],
+        },
       },
       },
 

@@ -2,10 +2,12 @@ import { ResponseToolkit,Request } from "@hapi/hapi";
 import { zodClassScheduleSchema } from "../../models/classShedule";
 // import { createclassShedule } from "../../operations/classschedule"
 import { z } from "zod";
-import { getAllClassShedule, getAllClassSheduleById, updateStudentClassSchedule } from "../../operations/classschedule";
 import { ClassSchedulesMessages } from "../../config/messages";
 import { isNil } from "lodash";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
+import { notFound } from "@hapi/boom";
+import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule } from "../../operations/classschedule";
+
 
 const createInputValidation = z.object({
     payload: zodClassScheduleSchema.pick({
@@ -33,6 +35,22 @@ const getAllClassSheduleInput = z.object({
     filterValues: true,
   }),
 });
+
+const updateClassScheduleInputValidation = z.object({
+  payload: zodClassScheduleSchema.pick({
+    teacher: true,
+    classDay: true,
+    package: true,
+    preferedTeacher: true,
+    course: true,
+    totalHourse: true,
+    startDate: true,
+    endDate: true,
+    startTime: true,
+    endTime: true,
+    scheduleStatus: true,
+}).partial()
+})
 
 export default {
 
@@ -121,7 +139,37 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
         .response({ error })
         .code(500);
     }
-  }
+  },
 
+  async updateClassSheduleById(req: Request, h: ResponseToolkit){
 
+    const { payload } = updateClassScheduleInputValidation.parse({
+      payload: req.payload
+    });
+    const classDayValues = payload.classDay?.map((day: { value: string; label: string }) => day.value);
+    const startTimeValues = payload.startTime?.map((time: { value: string; label: string }) => time.value);
+    const endTimeValues = payload.endTime?.map((time: { value: string; label: string }) => time.value);
+    const result = await updateClassscheduleById(String(req.params.alstudentsId),
+    {   
+      teacher :{
+        teacherName: payload.teacher?.teacherName || "",
+        teacherEmail: payload.teacher?.teacherEmail|| ""
+      } ,
+      classDay :classDayValues ,
+      package: payload.package,
+      preferedTeacher: payload.preferedTeacher,
+      course:payload.course,
+      totalHourse: payload.totalHourse,
+      startDate: payload.startDate,
+      endDate: payload.endDate,
+      startTime: startTimeValues,
+      endTime: endTimeValues,
+      scheduleStatus: payload.scheduleStatus
+       } );
+    if (isNil(result)) {
+      return notFound(ClassSchedulesMessages.CANDIDATE_NOT_FOUND);
+    }
+  
+    return result;
+   }
 }

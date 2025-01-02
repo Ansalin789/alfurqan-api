@@ -12,9 +12,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getWidgetsCount,
         description: dashboardMessages.WIDGET_COUNT,
         tags: ["api", "dashboard"],
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
+        auth: {
+          strategies: ["jwt"],
+        },
       },
     },
   ];
