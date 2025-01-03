@@ -21,7 +21,7 @@ const register = async (server: Server): Promise<void> => {
       
       {
         method: "PUT",
-        path: "/classschedule/{studentId}",
+        path: "/createclassschedule/{studentId}",
         options: {
          handler: handler.createandUpdateSchedule,
          description: evaluationMessages.UPDATE,
@@ -56,6 +56,19 @@ const register = async (server: Server): Promise<void> => {
           strategies: ["jwt"],
         },
       },
+      },
+
+      {
+        method: "PUT",
+        path: "/classShedule/{classSheduleId}",
+        options: {
+         handler: handler.updateClassSheduleById,
+         description: evaluationMessages.UPDATE,
+         tags: ["api", "evaluation"],
+         auth: {
+          strategies: ["jwt"],
+        },
+      },  
       },
 
     ];

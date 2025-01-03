@@ -38,6 +38,7 @@ const getAllClassSheduleInput = z.object({
 
 const updateClassScheduleInputValidation = z.object({
   payload: zodClassScheduleSchema.pick({
+    student: true,
     teacher: true,
     classDay: true,
     package: true,
@@ -149,8 +150,14 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
     const classDayValues = payload.classDay?.map((day: { value: string; label: string }) => day.value);
     const startTimeValues = payload.startTime?.map((time: { value: string; label: string }) => time.value);
     const endTimeValues = payload.endTime?.map((time: { value: string; label: string }) => time.value);
-    const result = await updateClassscheduleById(String(req.params.alstudentsId),
+    const result = await updateClassscheduleById(String(req.params.classSheduleId),
     {   
+      student: {
+        studentId: payload.student?.studentId || "",
+        studentFirstName: payload.student?.studentFirstName || "",
+        studentLastName: payload.student?.studentLastName || "",
+        studentEmail:payload.student?.studentEmail|| "",
+      },
       teacher :{
         teacherName: payload.teacher?.teacherName || "",
         teacherEmail: payload.teacher?.teacherEmail|| ""

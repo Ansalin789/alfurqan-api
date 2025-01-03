@@ -449,6 +449,12 @@ export interface IClassSchedule extends Document{
 }
 
 export interface IClassScheduleCreate{
+  student: {
+    studentId?: string;
+    studentFirstName: string;
+    studentLastName: string;
+    studentEmail: string;
+  },
   teacher:{
     teacherName: string;
     teacherEmail: string;
