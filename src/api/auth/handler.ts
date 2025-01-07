@@ -19,6 +19,7 @@ import { zodAuthenticationSchema } from "../../shared/zod_schema_validation";
 import { createActiveSessionRecord, getActiveSessionRecord, updateActiveSessionRecord } from "../../operations/active_session";
 import { getActiveUserRecord, updateUser } from "../../operations/users";
 
+import AlStudentsModel from "../../models/alstudents";
 
 // Input validation for user signin
 const signInInputValidation = z.object({
@@ -34,7 +35,11 @@ const changePasswordInputValidation = z.object({
     password: true,
   }),
 });
-
+const checkEmailInputValidation = z.object({
+  payload: z.object({
+    email: z.string().email(),
+  }),
+});
 export default {
   async signIn(req: Request, h: ResponseToolkit) {
     const { payload } = signInInputValidation.parse({
@@ -42,6 +47,7 @@ export default {
     });
 
     const { username, password } = payload;
+    console.log("user>>>", username+" "+password);
 
     let user: any = await getActiveUserRecord({ userName: username });
     console.log("user>>>", user);
@@ -133,4 +139,29 @@ export default {
 
     return result;
   },
+  async checkEmail(req: Request, h: ResponseToolkit) {
+    const { payload } = checkEmailInputValidation.parse({
+      payload: req.payload,
+    });
+
+    const { email } = payload;
+
+    try {
+      const User = await AlStudentsModel.findOne({ 'student.studentEmail': email }).exec();
+      console.log("User>>",User);
+      if (isNil(User)) {
+        return h.response({
+          message: 'Email not found.',
+        }).code(404); // 404 - Not Found
+      }
+
+      return h.response({
+        message: 'Email exists.',
+      }).code(200); // 200 - OK
+    } catch (error) {
+      return h.response({
+        message: 'Internal Server Error.',
+      }).code(500); // 500 - Internal Server Error
+    }
+  }
 };

@@ -1,10 +1,10 @@
-import { Types } from "mongoose";
+import { Model, Types } from "mongoose";
 import UserModel from "../models/users";
-import { IUser, IUserCreate } from "../../types/models.types";
+import { IAlStudents, IUser, IUserCreate } from "../../types/models.types";
 import { appStatus } from "../config/messages";
 import {  isNil } from "lodash";
 import { GetAllRecordsParams, GetAlluserRecordsParams } from "../shared/enum";
-
+import alstudents from "../models/alstudents";
 /**
  * Retrieves all user records for a given tenant, with support for search, pagination, sorting, role filtering, and excluding passwords.
  *
@@ -68,20 +68,27 @@ export const getUserRecordById = async (
  * @returns {Promise<IUser | null>} - Returns a promise that resolves to the matched user record or null if no match is found.
  */
 export const getActiveUserRecord = async (
-  query: Partial<{ id: string; userName: string; tenantId: string; role: string }>
-): Promise<IUser | null> => {
-  const { id, userName, tenantId, role } = query;
+  query: Partial<{ id: string; userName: string; role: string }>
+): Promise<IUser | IAlStudents> => {
+  const { id, userName, role } = query;
 
   const dbQuery: any = {
     status: appStatus.ACTIVE,
   };
 
-  if (!isNil(id)) dbQuery._id = new Types.ObjectId(id);
-  if (!isNil(userName)) dbQuery.userName = userName;
-  if (!isNil(tenantId)) dbQuery.tenantId = tenantId;
-  if (!isNil(role)) dbQuery.role = role;
+  // if (!isNil(id)) dbQuery._id = new Types.ObjectId(id);
+  // if (!isNil(userName)) dbQuery.userName = userName;
+  // if (!isNil(userName)) dbQuery.username = userName;
+  // if (!isNil(role)) dbQuery.role = role;
 
-  return UserModel.findOne(dbQuery).lean();
+const loginStudent = await alstudents.findOne({username:userName, role: "Student"}).lean();
+const loginuser = await UserModel.findOne({userName:userName, role: "TEACHER"}).lean();
+const updatedUser = await loginuser as IUser; // Cast to expected type
+const updatedStudent = await loginStudent as IAlStudents; // Cast to expected type
+console.log("updatedUser>>>",updatedUser);
+console.log("updatedStudent>>>",updatedStudent)
+
+  return updatedUser??updatedStudent
 };
 
 /**
@@ -117,17 +124,29 @@ export const updateUser = async (
   id: string,
   payload: Partial<Omit<IUser, "password">>,
   role?: string
-): Promise<Omit<IUser, "password"> | null> => {
+): Promise<Omit<IUser, "password"> | Omit<IAlStudents, "password"> > => {
   const query: any = { _id: new Types.ObjectId(id) };
   if (!isNil(role)) query.role = role;
+  console.log("role>>",role);
 
-  return UserModel.findOneAndUpdate(
-    query,
-    { $set: payload },
-    { new: true }
-  )
-    .select("-password")
-    .lean();
+    const alstudent = await alstudents
+      .findOneAndUpdate(query, { $set: payload }, { new: true })
+      .select("-password")
+      .lean();
+    const updatedStudent = await alstudent as IAlStudents; // Cast to expected type
+console.log("student>>",updatedStudent);
+
+
+    const user =  await UserModel
+      .findOneAndUpdate(query, { $set: payload }, { new: true })
+      .select("-password")
+      .lean();
+    const updatedUser = await user as IUser; // Cast to expected type
+     console.log("user>>",updatedUser);
+
+
+      return updatedStudent??updatedUser;
+  
 };
 
 /**

@@ -38,6 +38,15 @@ const register = async (server: Server): Promise<void> => {
         },
       },
     },
+    {
+      method: "POST",
+      path: "/check-email",
+      options: {
+        handler: handler.checkEmail,  // New handler for checking email
+        description: "Check if email exists",
+        tags: ["api", "auth"],
+      },
+    },
   ];
   server.route(routes);
 };

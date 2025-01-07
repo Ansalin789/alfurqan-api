@@ -73,10 +73,10 @@ const studentsWithClassScheduleCount = await Promise.all(
     const classScheduleCount = await ClassScheduleModel.countDocuments({
       'student.studentId': student._id.toString()
     }).exec();
-
-    return {
+      return {
       ...student.toObject(),
       classScheduleCount,
+      
     };
   })
 );

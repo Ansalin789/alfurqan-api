@@ -278,7 +278,7 @@ export const updateClassscheduleById = async (
   id: string,
   payload: Partial<IClassScheduleCreate>
 ): Promise<IClassSchedule | null> => {
-  return StudentModel.findOneAndUpdate(
+  return ClassScheduleModel.findOneAndUpdate(
     { _id: new Types.ObjectId(id) },
     { $set: payload },
     { new: true }
