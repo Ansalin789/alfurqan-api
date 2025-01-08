@@ -98,6 +98,31 @@ console.log("studentsWithClassScheduleCount>>>>",studentsWithClassScheduleCount)
       _id: new Types.ObjectId(id),
     }).lean();
   };
+  
+  /**
+ * Retrieves all user records for a given tenant, with support for search, pagination, sorting, role filtering, and excluding passwords.
+ *
+ *  @param {Partial<{ id: string; username: string; role: string }>}  query - The parameters for fetching user records, including role filtering.
+ *
+ * @returns {Promise<IStudent | null>} - A promise that resolves to an object containing:
+ *  - `users`: An array of user records for the given tenant, with passwords excluded.
+ *  - `totalCount`: The total number of user records matching the query.
+ */
+ export const getActiveStudentRecord = async (
+   query: Partial<{ id: string; username: string; role: string }>
+ ): Promise<IAlStudents | null> => {
+   const { id, username, role } = query;
+ 
+   const dbQuery: any = {
+     status: "Active",
+   };
+ 
+   if (!isNil(id)) dbQuery._id = new Types.ObjectId(id);
+   if (!isNil(username)) dbQuery.username = username;
+   if (!isNil(role)) dbQuery.role = role;
+ 
+   return AlStudentsModel.findOne(dbQuery).lean();
+ };
 
   /**
  * Creates a new user.

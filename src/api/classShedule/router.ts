@@ -64,7 +64,7 @@ const register = async (server: Server): Promise<void> => {
         options: {
          handler: handler.updateClassSheduleById,
          description: evaluationMessages.UPDATE,
-         tags: ["api", "evaluation"],
+         tags: ["api", "classShedule"],
          auth: {
           strategies: ["jwt"],
         },

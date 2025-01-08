@@ -20,6 +20,7 @@ import { createActiveSessionRecord, getActiveSessionRecord, updateActiveSessionR
 import { getActiveUserRecord, updateUser } from "../../operations/users";
 
 import AlStudentsModel from "../../models/alstudents";
+import { getActiveStudentRecord } from "../../operations/alstudents";
 
 // Input validation for user signin
 const signInInputValidation = z.object({
@@ -47,40 +48,58 @@ export default {
     });
 
     const { username, password } = payload;
-    console.log("user>>>", username+" "+password);
+    console.log("user>>>", `${username} ${password}`);
 
     let user: any = await getActiveUserRecord({ userName: username });
+    let users: any = await getActiveStudentRecord({ username: username });
+
     console.log("user>>>", user);
-    // Validate the user exists in the DB
-    if (isNil(user)) {
+    console.log("student>>>", users);
+
+    // Validate the user exists in either DB
+    if (isNil(user) && isNil(users)) {
       return badRequest(userMessages.USER_NOT_FOUND);
     }
 
-    
-    if (payload.password != user.password) {
+    // Check password for `user`
+    if (user && payload.password !== user.password) {
       console.log("password>>>", password);
       return unauthorized(authMessages.INCORRECT_PASSWORD);
     }
-    const jwtPayload = {
-      userName: user.userName,
-      sub: String(user._id),
-    };
-    const accessToken = generateAuthToken(jwtPayload);
-    const userWithoutPassword = omit(user, ["password"]);
 
-    await updateUser(String(user._id), { lastLoginDate: new Date() });
-    //     // Save the session for logout activity
+    // Check password for `users`
+    if (users && payload.password !== users.password) {
+      console.log("password>>>", password);
+      return unauthorized(authMessages.INCORRECT_PASSWORD);
+    }
+
+    // Determine which record to use
+    const activeRecord = user || users;
+
+    const jwtPayload = {
+      userName: activeRecord.userName || activeRecord.username,
+      sub: String(activeRecord._id),
+    };
+
+    const accessToken = generateAuthToken(jwtPayload);
+    const userWithoutPassword = omit(activeRecord, ["password"]);
+
+    await updateUser(String(activeRecord._id), { lastLoginDate: new Date() });
+
+    // Save the session for logout activity
     await createActiveSessionRecord({
-      userId: String(user._id),
+      userId: String(activeRecord._id),
       loginDate: new Date(),
       isActive: true,
       accessToken,
     });
+
     return {
       ...userWithoutPassword,
       accessToken,
     };
   },
+
 
   async signOut(req: Request, h: ResponseToolkit) {
     const { authorization } = req.headers;

@@ -43,7 +43,7 @@ const updateClassScheduleInputValidation = z.object({
     classDay: true,
     package: true,
     preferedTeacher: true,
-    course: true,
+    // course: true,
     totalHourse: true,
     startDate: true,
     endDate: true,
@@ -76,7 +76,7 @@ export default {
     classDay :classDayValues ,
     package: payload.package,
     preferedTeacher: payload.preferedTeacher,
-    course:payload.course,
+     course:payload.course,
     totalHourse: payload.totalHourse,
     startDate: payload.startDate,
     endDate: payload.endDate,
@@ -147,6 +147,7 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
     const { payload } = updateClassScheduleInputValidation.parse({
       payload: req.payload
     });
+    console.log("Payload received:", req.payload);
     const classDayValues = payload.classDay?.map((day: { value: string; label: string }) => day.value);
     const startTimeValues = payload.startTime?.map((time: { value: string; label: string }) => time.value);
     const endTimeValues = payload.endTime?.map((time: { value: string; label: string }) => time.value);
@@ -165,7 +166,7 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
       classDay :classDayValues ,
       package: payload.package,
       preferedTeacher: payload.preferedTeacher,
-      course:payload.course,
+      // course:payload.course,
       totalHourse: payload.totalHourse,
       startDate: payload.startDate,
       endDate: payload.endDate,
