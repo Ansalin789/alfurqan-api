@@ -14,6 +14,16 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "auth"],
       },
     },
+
+    {
+      method: "POST",
+      path: "/studentsignin",
+      options: {
+        handler: handler.studentSignIn,
+        description: authMessages.SIGN_IN,
+        tags: ["api", "auth"],
+      },
+    },
     {
       method: "POST",
       path: "/signout",

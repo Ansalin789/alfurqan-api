@@ -51,13 +51,11 @@ export default {
     console.log("user>>>", `${username} ${password}`);
 
     let user: any = await getActiveUserRecord({ userName: username });
-    let users: any = await getActiveStudentRecord({ username: username });
 
     console.log("user>>>", user);
-    console.log("student>>>", users);
 
     // Validate the user exists in either DB
-    if (isNil(user) && isNil(users)) {
+    if (isNil(user)) {
       return badRequest(userMessages.USER_NOT_FOUND);
     }
 
@@ -67,6 +65,55 @@ export default {
       return unauthorized(authMessages.INCORRECT_PASSWORD);
     }
 
+
+
+    // Determine which record to use
+    const activeRecord = user;
+
+    const jwtPayload = {
+      userName: activeRecord.userName ,
+      sub: String(activeRecord._id),
+    };
+
+    const accessToken = generateAuthToken(jwtPayload);
+    const userWithoutPassword = omit(activeRecord, ["password"]);
+    console.log("accessToken:",accessToken)
+  //  await updateUser(String(activeRecord._id), { lastLoginDate: new Date() });
+
+    // Save the session for logout activity
+    await createActiveSessionRecord({
+      userId: String(activeRecord._id),
+      loginDate: new Date(),
+      isActive: true,
+      accessToken,
+    });
+
+    return {
+      ...userWithoutPassword,
+      accessToken,
+    };
+  },
+
+
+  async studentSignIn(req: Request, h: ResponseToolkit) {
+    const { payload } = signInInputValidation.parse({
+      payload: req.payload,
+    });
+
+    const { username, password } = payload;
+    console.log("user>>>", `${username} ${password}`);
+
+    let users: any = await getActiveStudentRecord({ username: username });
+
+    console.log("student>>>", users);
+
+    // Validate the user exists in either DB
+    if (isNil(users)) {
+      return badRequest(userMessages.USER_NOT_FOUND);
+    }
+
+
+
     // Check password for `users`
     if (users && payload.password !== users.password) {
       console.log("password>>>", password);
@@ -74,17 +121,17 @@ export default {
     }
 
     // Determine which record to use
-    const activeRecord = user || users;
+    const activeRecord = users;
 
     const jwtPayload = {
-      userName: activeRecord.userName || activeRecord.username,
+      userName:  activeRecord.username,
       sub: String(activeRecord._id),
     };
 
     const accessToken = generateAuthToken(jwtPayload);
     const userWithoutPassword = omit(activeRecord, ["password"]);
-
-    await updateUser(String(activeRecord._id), { lastLoginDate: new Date() });
+    console.log("accessToken:",accessToken)
+  //  await updateUser(String(activeRecord._id), { lastLoginDate: new Date() });
 
     // Save the session for logout activity
     await createActiveSessionRecord({
@@ -162,21 +209,44 @@ export default {
     const { payload } = checkEmailInputValidation.parse({
       payload: req.payload,
     });
-
+console.log(">>>>email", payload.email);
     const { email } = payload;
 
     try {
-      const User = await AlStudentsModel.findOne({ 'student.studentEmail': email }).exec();
-      console.log("User>>",User);
-      if (isNil(User)) {
+      const user = await AlStudentsModel.findOne({ 'student.studentEmail': email }).exec();
+      let users: any = await getActiveStudentRecord({ username: user?.username });
+      console.log("Users>>",users._id);
+      console.log("User>>",user);
+      if (isNil(user)) {
         return h.response({
           message: 'Email not found.',
         }).code(404); // 404 - Not Found
       }
 
-      return h.response({
-        message: 'Email exists.',
-      }).code(200); // 200 - OK
+      const activeRecord = users;
+
+    const jwtPayload = {
+      userName: activeRecord.userName ,
+      sub: String(activeRecord._id),
+    };
+
+    const accessToken = generateAuthToken(jwtPayload);
+    console.log("accessToken:",accessToken)
+  //  await updateUser(String(activeRecord._id), { lastLoginDate: new Date() });
+
+    // Save the session for logout activity
+    await createActiveSessionRecord({
+      userId: String(activeRecord._id),
+      loginDate: new Date(),
+      isActive: true,
+      accessToken,
+    });
+      
+     
+      return {
+        message: 'Email found.',
+        accessToken,
+      };// 200 - OK
     } catch (error) {
       return h.response({
         message: 'Internal Server Error.',

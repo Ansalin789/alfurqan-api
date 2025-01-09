@@ -121,6 +121,9 @@ console.log("studentsWithClassScheduleCount>>>>",studentsWithClassScheduleCount)
    if (!isNil(username)) dbQuery.username = username;
    if (!isNil(role)) dbQuery.role = role;
  
+   const result = await AlStudentsModel.findOne(dbQuery).lean();
+   console.log("result>>",result);
+
    return AlStudentsModel.findOne(dbQuery).lean();
  };
 
