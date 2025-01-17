@@ -262,6 +262,7 @@ export interface ICourseCreate {
 
 
 export interface IEvaluation extends Document {
+  academicCoachId: string;
 student: {
   studentId: string;
   studentFirstName: string;
@@ -334,9 +335,8 @@ updatedBy?: string;
 
 
 export interface IEvaluationCreate{
-
   student: {
-  studentId?: string
+  studentId?: string;
   studentFirstName: string;
   studentLastName: string;
   studentEmail: string;

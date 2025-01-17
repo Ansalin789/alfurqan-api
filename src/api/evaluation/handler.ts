@@ -13,6 +13,7 @@ import { notFound } from "@hapi/boom";
 
 const createInputValidation = z.object({
     payload: zodEvaluationSchema.pick({
+    academicCoachId: true,
     student:true,
     subscription:true,
     planTotalPrice: true,
@@ -69,6 +70,7 @@ const createInputValidation = z.object({
 
   const getEvaluationListInputValidation = z.object({
     query: zodGetAllRecordsQuerySchema.pick({
+      academicCoachId: true,
       searchText: true,
       sortBy: true,
       sortOrder: true,
@@ -152,7 +154,7 @@ export default {
     payload: req.payload,
  });
  
-  return updateStudentEvaluation(String(req.params.evaluationId),{     
+  return updateStudentEvaluation(String(req.params.evaluationId),{   
     student: { // Ensure studentId is included
       studentId: payload.student?.studentId || "", 
       studentFirstName: payload.student?.studentFirstName || "",

@@ -10,7 +10,7 @@ import { Types } from "mongoose";
 export const getAllAcademicCoach = async (
   params: GetAllRecordsParams
 ): Promise<{ totalCount: number; academicCoach: IMeetingSchedule[] }> => {
-  const { searchText, sortBy, sortOrder, offset, limit } = params;
+  const { academicCoachId, searchText, sortBy, sortOrder, offset, limit } = params;
 
   // Construct query object
   const query: any = {

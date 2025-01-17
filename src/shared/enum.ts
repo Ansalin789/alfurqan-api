@@ -58,6 +58,7 @@ export class CustomEnumerator {
 }
 
 export interface GetAllRecordsParams {
+  academicCoachId?: string;
   searchText?: string;
   sortBy: string;
   sortOrder?: "asc" | "desc";

@@ -128,7 +128,8 @@ console.log("subscriptonDetaails>>>>>>", subscriptonDetaails)
         status: createStudent.status,
         createdDate: new Date(),
         createdBy: createStudent.createdBy
-        }
+        },
+        newEvaluation.academicCoachId = createStudent.academicCoach.academicCoachId
     }
     if (subscriptonDetaails) {
         newEvaluation.subscription = {
@@ -186,9 +187,9 @@ if (shiftScheduleRecord.length > 0) {
 newEvaluation.assignedTeacher = teacherDetails.name
 newEvaluation.studentStatus = payload.studentStatus,
 newEvaluation.classStatus = payload.classStatus,
-newEvaluation.trialClassStatus = payload.trialClassStatus
- newEvaluation.assignedTeacherId = teacherDetails.teacherId
- newEvaluation.assignedTeacherEmail = teacherDetails.email
+newEvaluation.trialClassStatus = payload.trialClassStatus,
+ newEvaluation.assignedTeacherId = teacherDetails.teacherId,
+ newEvaluation.assignedTeacherEmail = teacherDetails.email,
 console.log("studentStatus", newEvaluation.studentStatus);
 console.log("class status", newEvaluation.classStatus);
 
@@ -426,9 +427,13 @@ return accessToken;
 export const getAllEvaluationRecords = async (
   params: GetAllRecordsParams
 ): Promise<{ totalCount: number; evaluation: IEvaluation[] }> => {
-  const { searchText, sortBy, sortOrder, offset, limit, filterValues } = params;
+  const { academicCoachId, searchText, sortBy, sortOrder, offset, limit, filterValues } = params;
 
-  const query: any = {};
+  const query: any = {
+    academicCoachId,
+  };
+
+   
 
   if (searchText) {
     query.$or = [
