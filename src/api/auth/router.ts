@@ -57,6 +57,15 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "auth"],
       },
     },
+    {
+      method: "POST",
+      path: "/allcheck-email",
+      options: {
+        handler: handler.allcheckEmail,  // New handler for checking email
+        description: "Check if email exists",
+        tags: ["api", "auth"],
+      },
+    },
   ];
   server.route(routes);
 };

@@ -18,7 +18,7 @@ import jwt from "jsonwebtoken";
 import { zodAuthenticationSchema } from "../../shared/zod_schema_validation";
 import { createActiveSessionRecord, getActiveSessionRecord, updateActiveSessionRecord } from "../../operations/active_session";
 import { getActiveUserRecord, updateUser } from "../../operations/users";
-
+import UserModel from "../../models/users";
 import AlStudentsModel from "../../models/alstudents";
 import { getActiveStudentRecord } from "../../operations/alstudents";
 
@@ -215,6 +215,56 @@ console.log(">>>>email", payload.email);
     try {
       const user = await AlStudentsModel.findOne({ 'student.studentEmail': email }).exec();
       let users: any = await getActiveStudentRecord({ username: user?.username });
+
+      console.log("Users>>",users._id);
+      console.log("User>>",user);
+      if (isNil(user)) {
+        return h.response({
+          message: 'Email not found.',
+        }).code(404); // 404 - Not Found
+      }
+
+      const activeRecord = users;
+
+    const jwtPayload = {
+      userName: activeRecord.userName ,
+      sub: String(activeRecord._id),
+    };
+
+    const accessToken = generateAuthToken(jwtPayload);
+    console.log("accessToken:",accessToken)
+  //  await updateUser(String(activeRecord._id), { lastLoginDate: new Date() });
+
+    // Save the session for logout activity
+    await createActiveSessionRecord({
+      userId: String(activeRecord._id),
+      loginDate: new Date(),
+      isActive: true,
+      accessToken,
+    });
+      
+     
+      return {
+        message: 'Email found.',
+        accessToken,
+      };// 200 - OK
+    } catch (error) {
+      return h.response({
+        message: 'Internal Server Error.',
+      }).code(500); // 500 - Internal Server Error
+    }
+  },
+  async allcheckEmail(req: Request, h: ResponseToolkit) {
+    const { payload } = checkEmailInputValidation.parse({
+      payload: req.payload,
+    });
+console.log(">>>>email", payload.email);
+    const { email } = payload;
+
+    try {
+      const user = await UserModel.findOne({ 'email': email }).exec();
+      let users: any = await getActiveUserRecord({ userName: user?.userName });
+      
       console.log("Users>>",users._id);
       console.log("User>>",user);
       if (isNil(user)) {
