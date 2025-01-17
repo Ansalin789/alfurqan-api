@@ -76,6 +76,7 @@ const createInputValidation = z.object({
 // Input Validations for student list
 const getStudentsListInputValidation = z.object({
   query: zodGetAllRecordsQuerySchema.pick({
+    academicCoachId: true,
     searchText: true,
     sortBy: true,
     sortOrder: true,

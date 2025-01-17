@@ -5,6 +5,10 @@ import { z } from "zod";
 import { appStatus, commonMessages, evaluationStatus, learningInterest, preferredTeacher, referenceSource } from "../config/messages";
 
 const evaluationSchema = new Schema<IEvaluation>({
+  academicCoachId: {
+    type: String,
+    required: true,
+  },
   student: {
     studentId: {
        type: String,
@@ -267,6 +271,7 @@ const evaluationSchema = new Schema<IEvaluation>({
 }
 );
 export const zodEvaluationSchema = z.object({
+    academicCoachId: z.string(),
     student: z.object({
         studentId: z.string().optional(),
         studentFirstName: z.string(),
