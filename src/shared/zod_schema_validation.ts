@@ -3,7 +3,7 @@ import { appRegexPatterns, commonMessages, userMessages, appStatus, meetingSched
 
 export const zodGetAllRecordsQuerySchema = z.object({
 
-  academicCoachId: z.string(),
+  academicCoachId: z.string().optional(),
   searchText: z.string().default(""),
   sortBy: z.string().default("lastUpdatedDate"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
