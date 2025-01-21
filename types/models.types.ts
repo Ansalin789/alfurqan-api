@@ -335,6 +335,7 @@ updatedBy?: string;
 
 
 export interface IEvaluationCreate{
+  academicCoachId: string;
   student: {
   studentId?: string;
   studentFirstName: string;

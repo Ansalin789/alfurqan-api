@@ -262,11 +262,13 @@ async function getZoomAccessToken() {
 export const getAllStudentsRecords = async (
   params: GetAllRecordsParams
 ): Promise<{ totalCount: number; students: IStudents[] }> => {
-  const { searchText,  sortBy,
+  const {academicCoachId, searchText,  sortBy,
     sortOrder,offset, limit, filterValues } = params;
 
   // Construct query object based on filters
-  const query: any = {};
+  const query: any = {
+    academicCoachId,
+  };
 
   // Add searchText to the query if provided
   if (searchText) {

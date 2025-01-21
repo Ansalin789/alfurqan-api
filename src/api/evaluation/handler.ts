@@ -87,6 +87,7 @@ export default {
             payload: req.payload,
         });
         return createEvaluationRecord({
+          academicCoachId: payload.academicCoachId || "",
             student: { // Ensure studentId is included
                 studentId: payload.student?.studentId || "", 
                 studentFirstName: payload.student?.studentFirstName || "",

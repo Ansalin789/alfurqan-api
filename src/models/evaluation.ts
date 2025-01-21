@@ -5,7 +5,7 @@ import { z } from "zod";
 import { appStatus, commonMessages, evaluationStatus, learningInterest, preferredTeacher, referenceSource } from "../config/messages";
 
 const evaluationSchema = new Schema<IEvaluation>({
-  academicCoachId: {
+academicCoachId: {
     type: String,
     required: true,
   },
