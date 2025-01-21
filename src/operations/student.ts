@@ -266,9 +266,12 @@ export const getAllStudentsRecords = async (
     sortOrder,offset, limit, filterValues } = params;
 
   // Construct query object based on filters
-  const query: any = {
-    academicCoachId,
-  };
+  const query: any = {};
+
+  if (academicCoachId) {
+    query["academicCoach.academicCoachId"] = academicCoachId;
+  }
+
 
   // Add searchText to the query if provided
   if (searchText) {
