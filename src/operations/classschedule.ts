@@ -5,10 +5,11 @@ import StudentModel from "../models/alstudents";
 import UserModel from "../models/users"
 import AppLogger from "../helpers/logging";
 import { GetAllRecordsParams } from "../shared/enum";
-import { alstudentsMessages, commonMessages } from "../config/messages";
+import { alstudentsMessages, ClassSchedulesMessages, commonMessages } from "../config/messages";
 import { isNil } from "lodash";
 import { Client } from '@microsoft/microsoft-graph-client';
 import { ClientSecretCredential } from "@azure/identity";
+import classShedule from "../models/classShedule";
 
 /**
  * Creates a new candidate record in the database.
@@ -284,3 +285,51 @@ export const updateClassscheduleById = async (
     { new: true }
   ).lean();
 };
+
+
+
+
+// Function implementation:
+export const getClassesForStudent = async (
+  params: GetAllRecordsParams
+): Promise<{ totalCount: number; classSchedule: IClassSchedule[] }> => {
+  const { studentId, sortBy, sortOrder, offset, limit } = params;
+
+  if (!studentId) {
+    throw new Error("Student ID is required");
+  }
+
+  // Query filtering
+  const query: any = { studentId };
+
+  // Sorting options
+  const sortOptions: any = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
+
+  const classesQuery = ClassScheduleModel.find(query).sort(sortOptions);
+
+  if (!isNil(offset) && !isNil(limit)) {
+    const skip = Math.max(
+      0,
+      ((Number(offset) ?? Number(commonMessages.OFFSET)) - 1) *
+        (Number(limit) ?? Number(commonMessages.LIMIT))
+    );
+    classesQuery.skip(skip).limit(Number(limit) ?? Number(commonMessages.LIMIT));
+  }
+
+  // Fetch the classes and total count
+  const [classSchedule, totalCount] = await Promise.all([
+    classesQuery.exec(),
+    ClassScheduleModel.countDocuments(query).exec(),
+  ]);
+
+  return { totalCount, classSchedule };
+};
+
+
+
+
+
+
+
+
+

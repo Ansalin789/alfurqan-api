@@ -58,6 +58,21 @@ const register = async (server: Server): Promise<void> => {
       },
       },
 
+
+
+      {
+        method: "GET",
+        path: "/classShedule/student",
+        options: {
+          handler: handler.getClassesForStudent,
+          description: ClassSchedulesMessages.LIST,
+          tags: ["api", "classShedule"],
+          auth: {
+            strategies: ["jwt"],
+          },
+        },
+      },
+      
       {
         method: "PUT",
         path: "/classShedule/{classSheduleId}",

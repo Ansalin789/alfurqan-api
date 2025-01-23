@@ -1,13 +1,13 @@
-import { ResponseToolkit,Request } from "@hapi/hapi";
-import { zodClassScheduleSchema } from "../../models/classShedule";
+import { ResponseToolkit,Request, ResponseObject } from "@hapi/hapi";
+import classShedule, { zodClassScheduleSchema } from "../../models/classShedule";
 // import { createclassShedule } from "../../operations/classschedule"
 import { z } from "zod";
 import { ClassSchedulesMessages } from "../../config/messages";
 import { isNil } from "lodash";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
-import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule } from "../../operations/classschedule";
-
+import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent} from "../../operations/classschedule";
+import { GetAllRecordsParams } from "../../shared/enum";
 
 const createInputValidation = z.object({
     payload: zodClassScheduleSchema.pick({
@@ -27,6 +27,7 @@ const createInputValidation = z.object({
 
 const getAllClassSheduleInput = z.object({
   query: zodGetAllRecordsQuerySchema.pick({
+    studentId:true,
     searchText: true,
     sortBy: true,
     sortOrder: true,
@@ -86,6 +87,37 @@ export default {
      });
   }
 ,
+
+async getClassesForStudent(req: Request, h: ResponseToolkit) {
+  try {
+    // Parse and validate the query object
+    const { query } = getAllClassSheduleInput.parse({
+      query: {
+        ...req.query,
+        filterValues: req.query?.filterValues ? JSON.parse(req.query.filterValues as string) : {},
+      },
+    });
+
+    // Ensure studentId is a direct property of the parsed query or within filterValues
+    const studentId = query.studentId 
+
+    if (!studentId) {
+      throw new Error("Missing required parameter: studentId");
+    }
+
+    // Call the service function with the query and studentId
+    const result = await getClassesForStudent({ ...query, studentId });
+
+    // Return the result with a 200 status
+    return h.response(result).code(200);
+  } catch (error) {
+    // Handle errors, including validation or missing studentId
+    return h.response({ error }).code(400);
+  }
+}
+,
+
+
 
 async getAllClassShedule(req: Request, h: ResponseToolkit) {
   try {
@@ -181,3 +213,13 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
     return result;
    }
 }
+
+
+
+
+
+
+
+
+
+
