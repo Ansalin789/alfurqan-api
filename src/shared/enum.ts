@@ -58,6 +58,7 @@ export class CustomEnumerator {
 }
 
 export interface GetAllRecordsParams {
+  studentId?: string;
   academicCoachId?: string;
   searchText?: string;
   sortBy: string;
@@ -65,7 +66,9 @@ export interface GetAllRecordsParams {
   offset?: string | null;
   limit?: string | null;
   role?: string;
+  classDay?: any;
   filterValues?: {
+    studentId?: string; // This is important if you're passing the studentId here
     course?: string;
     country?: string;
     teacher?: string;
@@ -73,9 +76,11 @@ export interface GetAllRecordsParams {
   };
 }
 
+
 export interface GetAlluserRecordsParams {
   date?: string;
   role: string;
+  studentId?:string;
   // startdate?: string;
   // enddate?: string;
 }

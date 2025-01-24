@@ -62,7 +62,7 @@ const register = async (server: Server): Promise<void> => {
 
       {
         method: "GET",
-        path: "/classShedule/student",
+        path: "/classShedule/students",
         options: {
           handler: handler.getClassesForStudent,
           description: ClassSchedulesMessages.LIST,

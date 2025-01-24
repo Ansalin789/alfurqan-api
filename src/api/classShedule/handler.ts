@@ -3,7 +3,7 @@ import classShedule, { zodClassScheduleSchema } from "../../models/classShedule"
 // import { createclassShedule } from "../../operations/classschedule"
 import { z } from "zod";
 import { ClassSchedulesMessages } from "../../config/messages";
-import { isNil } from "lodash";
+import { isNil, result } from "lodash";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
 import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent} from "../../operations/classschedule";
@@ -94,25 +94,17 @@ async getClassesForStudent(req: Request, h: ResponseToolkit) {
     const { query } = getAllClassSheduleInput.parse({
       query: {
         ...req.query,
-        filterValues: req.query?.filterValues ? JSON.parse(req.query.filterValues as string) : {},
+        filterValues: req.query?.filterValues
+          ? JSON.parse(req.query.filterValues as string)
+          : {},
       },
     });
 
-    // Ensure studentId is a direct property of the parsed query or within filterValues
-    const studentId = query.studentId 
-
-    if (!studentId) {
-      throw new Error("Missing required parameter: studentId");
-    }
-
-    // Call the service function with the query and studentId
-    const result = await getClassesForStudent({ ...query, studentId });
-
-    // Return the result with a 200 status
-    return h.response(result).code(200);
+    return getClassesForStudent(query); // Ensure a valid return statement in the try block
   } catch (error) {
-    // Handle errors, including validation or missing studentId
-    return h.response({ error }).code(400);
+    // Handle the error appropriately
+    console.error("Error in getClassesForStudent handler:", error);
+    throw error; // Re-throw the error or handle it based on your application's requirement
   }
 }
 ,

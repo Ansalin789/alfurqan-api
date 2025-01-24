@@ -10,6 +10,7 @@ import { isNil } from "lodash";
 import { Client } from '@microsoft/microsoft-graph-client';
 import { ClientSecretCredential } from "@azure/identity";
 import classShedule from "../models/classShedule";
+import student from "../models/student";
 
 /**
  * Creates a new candidate record in the database.
@@ -293,37 +294,36 @@ export const updateClassscheduleById = async (
 export const getClassesForStudent = async (
   params: GetAllRecordsParams
 ): Promise<{ totalCount: number; classSchedule: IClassSchedule[] }> => {
-  const { studentId, sortBy, sortOrder, offset, limit } = params;
+  const { studentId, sortBy = "_id", sortOrder = "asc", offset = 1, limit = 10 } = params;
 
   if (!studentId) {
     throw new Error("Student ID is required");
   }
-
-  // Query filtering
-  const query: any = { studentId };
+  // Query filtering for studentId
+  const query: any = { "student.studentId": studentId };
+  console.log(">>",query)
 
   // Sorting options
   const sortOptions: any = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
 
-  const classesQuery = ClassScheduleModel.find(query).sort(sortOptions);
+  try {
+    // Pagination calculations
+    const skip = Math.max(0, (Number(offset) - 1) * Number(limit));
 
-  if (!isNil(offset) && !isNil(limit)) {
-    const skip = Math.max(
-      0,
-      ((Number(offset) ?? Number(commonMessages.OFFSET)) - 1) *
-        (Number(limit) ?? Number(commonMessages.LIMIT))
-    );
-    classesQuery.skip(skip).limit(Number(limit) ?? Number(commonMessages.LIMIT));
+    // Execute queries
+    const [classSchedule, totalCount] = await Promise.all([
+      ClassScheduleModel.find(query).sort(sortOptions).skip(skip).limit(Number(limit)).exec(),
+      ClassScheduleModel.countDocuments(query).exec(),
+    ]);
+
+    return { totalCount, classSchedule };
+  } catch (error) {
+    console.error("Error fetching classes for student:", error);
+    throw new Error("Failed to fetch classes for the student");
   }
-
-  // Fetch the classes and total count
-  const [classSchedule, totalCount] = await Promise.all([
-    classesQuery.exec(),
-    ClassScheduleModel.countDocuments(query).exec(),
-  ]);
-
-  return { totalCount, classSchedule };
 };
+
+
 
 
 
