@@ -297,3 +297,22 @@ export const alstudentsMessages: Record<string, string> = Object.freeze({
   ENCRYPT_PASSWORD_ERROR: "Password must be an encrypted value",
   USER_PROFILE_INVALID_FILE_TYPE: "Invalid file type. Only .png , .jpg or jpeg files are allowed.",
 });
+
+export const assignemntMessages: Record<string, any> = Object.freeze({
+  ASSIGNMENT_CREATED: "Assignment has been successfully created.",
+  ASSIGNMENT_UPDATED: "Assignment has been successfully updated.",
+  ASSIGNMENT_DELETED: "Assignment has been successfully deleted.",
+  ASSIGNMENT_NOT_FOUND: "The requested assignment could not be found.",
+  INVALID_ASSIGNMENT_NAME: "Assignment name cannot be empty or null.",
+  INVALID_ASSIGNMENT_TYPE: "At least one assignment type must be selected and not empty.",
+  INVALID_DATE_RANGE: "The due date must be later than the assigned date.",
+  SERVER_ERROR: "An unexpected server error occurred. Please try again later.",
+});
+
+export const assigmentType: Record<string, any> = Object.freeze({
+  QUIZ: "quiz",
+  WRITING: "writing",
+  READING: "reading",
+  IMAGE_IDENTIFICATION: "image_identification",
+  WORD_MATCHING: "word_matching",
+  });

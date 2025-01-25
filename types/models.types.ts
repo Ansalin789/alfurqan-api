@@ -619,3 +619,63 @@ export interface CreatePaymentDetails{
   lastUpdatedDate: Date;
   lastUpdatedBy: string
 }
+
+export interface IAssignment  extends Document{
+  assignmentName: string;
+  assignedTeacher: string;
+  assignmentType: {
+    quiz?: string;
+    writing?: string;
+    reading?: string;
+    imageIdentification?: string;
+    wordMatching?: string;
+  };
+  chooseType: boolean;
+  trueorfalseType: boolean;
+  question: string;
+  hasOptions: boolean;
+  options: {
+    optionOne?: string;
+    optionTwo?: string;
+    optionThree?: string;
+    optionFour?: string;
+  };
+  audioFile?: string;
+  uploadFile?: string;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate: Date;
+  updatedBy: string;
+  level: string;
+  courses: string;
+  assignedDate: Date;
+  dueDate: Date;
+}
+
+export interface IAssignmentCreate {
+  assignmentName: string;
+  assignedTeacher: string;
+  assignmentType: { type: string; name: string }; // Change from string to object
+  chooseType: boolean;
+  trueorfalseType: boolean;
+  question: string;
+  hasOptions: boolean;
+  options: {
+    optionOne?: string;
+    optionTwo?: string;
+    optionThree?: string;
+    optionFour?: string;
+  };
+  audioFile?: string;
+  uploadFile?: string;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate: Date;
+  updatedBy: string;
+  level: string;
+  courses: string;
+  assignedDate: Date;
+  dueDate: Date;
+}

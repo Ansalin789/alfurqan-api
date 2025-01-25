@@ -54,6 +54,7 @@ export const getAllUserRecords = async (
 export const getUserRecordById = async (
   id: string,
   role?: string
+  
 ): Promise<IUser | null> => {
   const query: any = { _id: new Types.ObjectId(id) };
   if (!isNil(role)) query.role = role;

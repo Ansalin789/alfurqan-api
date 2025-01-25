@@ -2,7 +2,7 @@ import { z } from "zod";
 import { appRegexPatterns, commonMessages, userMessages, appStatus, meetingSchedulesMessages, tenantsMessages, notificationsMessages } from "../config/messages";
 
 export const zodGetAllRecordsQuerySchema = z.object({
-
+  studentId:z.string().optional(),
   academicCoachId: z.string().optional(),
   searchText: z.string().default(""),
   sortBy: z.string().default("lastUpdatedDate"),
