@@ -205,6 +205,8 @@ export default {
 
     return result;
   },
+
+
   async checkEmail(req: Request, h: ResponseToolkit) {
     const { payload } = checkEmailInputValidation.parse({
       payload: req.payload,
@@ -246,6 +248,7 @@ console.log(">>>>email", payload.email);
      
       return {
         message: 'Email found.',
+        id:users._id,
         accessToken,
       };// 200 - OK
     } catch (error) {
@@ -254,11 +257,13 @@ console.log(">>>>email", payload.email);
       }).code(500); // 500 - Internal Server Error
     }
   },
+
+
   async allcheckEmail(req: Request, h: ResponseToolkit) {
     const { payload } = checkEmailInputValidation.parse({
       payload: req.payload,
     });
-console.log(">>>>email", payload.email);
+    console.log(">>>>email", payload.email);
     const { email } = payload;
 
     try {
@@ -295,6 +300,7 @@ console.log(">>>>email", payload.email);
      
       return {
         message: 'Email found.',
+        id:users._id,
         accessToken,
       };// 200 - OK
     } catch (error) {
