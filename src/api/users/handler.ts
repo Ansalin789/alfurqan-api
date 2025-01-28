@@ -75,16 +75,7 @@ const updateInputValidation = z.object({
     .partial(), // Makes all picked fields optional
 });
 
-// export default {
-//   // Retrieve all the users list
-//   async getAllUsers(req: Request, h: ResponseToolkit) {
-//     const { query } = getUsersListInputValidation.parse({
-//       query: req.query,
-//     });
 
-//     // Fetch the user records using the validated and parsed parameters
-//     return getAllUserRecords(query);
-//   },
 
  export default {
   // // Retrieve all the users list with role and date filters

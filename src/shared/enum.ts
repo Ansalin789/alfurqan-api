@@ -76,6 +76,37 @@ export interface GetAllRecordsParams {
   };
 }
 
+export interface getAllAssignmnetParams {
+  assignmentName: string;
+  assignedTeacher: string;
+  assignmentType: {
+    type: string;
+    name: string;
+  };
+  chooseType: boolean;
+  trueorfalseType: boolean;
+  question: string;
+  hasOptions: boolean;
+  options: {
+    optionOne?: string;
+    optionTwo?: string;
+    optionThree?: string;
+    optionFour?: string;
+  };
+  audioFile?: Buffer;
+  uploadFile?: Buffer;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate: Date;
+  updatedBy: string;
+  level: string;
+  courses: string;
+  assignedDate: Date;
+  dueDate: Date;
+};
+
+
 
 export interface GetAlluserRecordsParams {
   date?: string;

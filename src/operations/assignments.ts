@@ -1,42 +1,43 @@
 import { badRequest } from "@hapi/boom";
-import { IAssignmentCreate } from "../../types/models.types";
+import { IAssignment, IAssignmentCreate } from "../../types/models.types";
 import assignment from "../models/assignments";
 import userModel from "../models/users";
+import { getAllAssignmnetParams, GetAllRecordsParams } from "../shared/enum";
 
 /**
  * Creates a new assignment record in the database.
- *
  * @param {IAssignmentCreate} payload - The data required to create a new assignment record.
- * @returns {Promise<{ totalCount: number; assignments: IAssignmentCreate[] } | { error: any }>} 
- * A promise that resolves to the created assignment record, or an error object if the creation fails.
+ * @returns {Promise<{ totalCount: number; assignments: IAssignmentCreate[] } | { error: any }>}
  */
 export const createAssignment = async (
   payload: IAssignmentCreate
 ): Promise<{ totalCount: number; assignments: IAssignmentCreate[] } | { error: any }> => {
   try {
     // Validate assignment due date
-    if (payload.dueDate && payload.dueDate.toDateString() === new Date().toDateString()) {
+    if (payload.dueDate && payload.dueDate === new Date()) {
       throw badRequest("Assignment due date cannot be today. Please select another date.");
     }
- console.log("payload>>>>", payload.assignmentType)
-    // Validate assignment type object
-    if (!payload.assignmentType || !payload.assignmentType.type || !payload.assignmentType.name) {
-      throw badRequest("Assignment type is required. Please provide a valid type.");
-    }
 
-    // Check if the assigned teacher exists
-    const assignedTeacher = await userModel.findOne({
-      userName: payload.assignedTeacher,
-      role: "TEACHER",
-    }).exec();
-    // if (!assignedTeacher) {
-    //   throw badRequest("Assigned teacher not found. Please assign a valid teacher.");
-    // }
+    // Log the incoming payload for debugging
+    console.log("Incoming Payload:", payload);
+
+   
+    const assignedTeacher = await userModel.findOne({userName: payload.assignedTeacher, role : 'TEACHER'}).exec();
+   
+    console.log("assignedTeacher>>>>", assignedTeacher);
+
+
+    // // Find the audio file by its ID or other relevant identifier
+    // const audioFile = await assignment.findOne({
+    //   audioFile: payload.audioFile,
+    // });
+
+    console.log("audioFile>>>>", payload.audioFile); // Logs the fetched audio file
 
     // Create a new assignment
     const newAssignment = new assignment({
       assignmentName: payload.assignmentName || "",
-      assignedTeacher: assignedTeacher?.userName || "",
+      assignedTeacher: assignedTeacher?.userName || "", // Save the teacher's userName in the assignment
       assignmentType: payload.assignmentType, // Use the entire object { type, name }
       chooseType: !!payload.chooseType,
       trueorfalseType: !!payload.trueorfalseType,
@@ -48,7 +49,7 @@ export const createAssignment = async (
         optionThree: payload.options?.optionThree || "",
         optionFour: payload.options?.optionFour || "",
       },
-      audioFile: payload.audioFile || "",
+      audioFile: payload.audioFile || "", // Save the audio file ID in the database
       uploadFile: payload.uploadFile || "",
       status: payload.status || "Pending",
       createdDate: new Date(),
@@ -69,6 +70,36 @@ export const createAssignment = async (
 
     return { totalCount, assignments: [assignmentRecord] };
   } catch (error) {
-    return { error };
-  }
+    return { error };
+  }
 };
+
+
+
+
+export const getAllAssignment = async (query: { assignmentType: { type: string; name: string; }; status?: string | undefined; createdDate?: Date | undefined; createdBy?: string | undefined; assignmentName?: string | undefined; assignedTeacher?: string | undefined; chooseType?: boolean | undefined; trueorfalseType?: boolean | undefined; question?: string | undefined; hasOptions?: boolean | undefined; options?: { optionOne?: string | undefined; optionTwo?: string | undefined; optionThree?: string | undefined; optionFour?: string | undefined; } | undefined; updatedDate?: Date | undefined; updatedBy?: string | undefined; level?: string | undefined; courses?: string | undefined; assignedDate?: Date | undefined; dueDate?: Date | undefined; }): Promise<{ assignments: Partial<IAssignmentCreate>[]; totalCount: number }> => {
+  try {
+    // Fetch the assignments from the database
+    const assignmentsCreate = await assignment.find().lean().exec();
+
+    // You can either return Partial<IAssignment> directly if you're not worried about the missing properties
+    const assignments: Partial<IAssignmentCreate>[] = assignmentsCreate;
+
+    // Get the total count of assignments
+    const totalCount = await assignment.countDocuments();
+
+    return { assignments, totalCount };
+  } catch (error) {
+    console.error("Error fetching assignments:", error);
+    throw new Error("Failed to fetch assignments.");
+  }
+};
+
+
+
+
+
+
+
+
+

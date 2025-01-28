@@ -656,7 +656,13 @@ export interface IAssignment  extends Document{
 export interface IAssignmentCreate {
   assignmentName: string;
   assignedTeacher: string;
-  assignmentType: { type: string; name: string }; // Change from string to object
+  assignmentType: { 
+    quiz?: string;
+    writing?: string;
+    reading?: string;
+    imageIdentification?: string;
+    wordMatching?: string;
+  }; // Aligning with IAssignment
   chooseType: boolean;
   trueorfalseType: boolean;
   question: string;
@@ -667,8 +673,8 @@ export interface IAssignmentCreate {
     optionThree?: string;
     optionFour?: string;
   };
-  audioFile?: string;
-  uploadFile?: string;
+  audioFile?: Buffer;
+  uploadFile?: Buffer;
   status: string;
   createdDate: Date;
   createdBy: string;
@@ -677,5 +683,5 @@ export interface IAssignmentCreate {
   level: string;
   courses: string;
   assignedDate: Date;
-  dueDate: Date;
+  dueDate: Date;
 }

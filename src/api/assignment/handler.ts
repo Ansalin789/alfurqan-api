@@ -1,93 +1,161 @@
 import { Request, ResponseToolkit } from "@hapi/hapi";
 import { z } from "zod";
-import { assignmentValidationSchema } from "../../models/assignments";
-import { createAssignment } from "../../operations/assignments";
+import { createAssignment, getAllAssignment } from "../../operations/assignments"; // Replace with your service logic
+import * as Stream from "stream";
 
-// Update the validation schema to expect assignmentType as an object with type and name
-const createAssignmentValidation = z.object({
-  payload: assignmentValidationSchema
-    .pick({
-      assignmentName: true,
-      assignedTeacher: true,
-      assignmentType: true, // Make sure this is being picked correctly
-      chooseType: true,
-      trueorfalseType: true,
-      question: true,
-      hasOptions: true,
-      options: true,
-      audioFile: true,
-      uploadFile: true,
-      status: true,
-      createdDate: true,
-      createdBy: true,
-      updatedDate: true,
-      updatedBy: true,
-      level: true,
-      courses: true,
-      assignedDate: true,
-      dueDate: true,
-    })
-    .partial(), // Allow partial inputs
+
+// Input Validations for student list
+const getAssignmnentListInputValidation = z.object({
+  query: z.object({
+    assignmentName: z.string().optional(),
+    assignedTeacher: z.string().optional(),
+    assignmentType: z.object({
+      type: z.string(), // Ensure `type` is required
+      name: z.string(), // Ensure `name` is required
+    }),
+    chooseType: z.boolean().optional(),
+    trueorfalseType: z.boolean().optional(),
+    question: z.string().optional(),
+    hasOptions: z.boolean().optional(),
+    options: z.object({
+      optionOne: z.string().optional(),
+      optionTwo: z.string().optional(),
+      optionThree: z.string().optional(),
+      optionFour: z.string().optional(),
+    }).optional(),
+    status: z.string().optional(),
+    createdDate: z.date().optional(),
+    createdBy: z.string().optional(),
+    updatedDate: z.date().optional(),
+    updatedBy: z.string().optional(),
+    level: z.string().optional(),
+    courses: z.string().optional(),
+    assignedDate: z.date().optional(),
+    dueDate: z.date().optional(),
+  }),
 });
 
+
+
+// Validation schema for `GET /allAssignment` (query params)
+const getAllAssignmentInputSchema = z.object({
+  assignmentName: z.string().optional(),
+  assignedTeacher: z.string().optional(),
+  assignmentType: z.object({
+    type: z.string().optional(),
+    name: z.string().optional(),
+  }).optional(),
+  chooseType: z.boolean().optional(),
+  trueorfalseType: z.boolean().optional(),
+  question: z.string().optional(),
+  hasOptions: z.boolean().optional(),
+  options: z
+    .object({
+      optionOne: z.string().optional(),
+      optionTwo: z.string().optional(),
+      optionThree: z.string().optional(),
+      optionFour: z.string().optional(),
+    })
+    .optional(),
+  status: z.string().optional(),
+  createdDate: z.date().optional(),
+  createdBy: z.string().optional(),
+  updatedDate: z.date().optional(),
+  updatedBy: z.string().optional(),
+  level: z.string().optional(),
+  courses: z.string().optional(),
+  assignedDate: z.date().optional(),
+  dueDate: z.date().optional(),
+});
+
+console.log(getAllAssignmentInputSchema);
+
+// Helper function to convert a readable stream to a buffer
+async function streamToBuffer(stream: Stream.Readable): Promise<Buffer> {
+  const chunks: Buffer[] = [];
+  return new Promise((resolve, reject) => {
+    stream.on("data", (chunk) => chunks.push(chunk));
+    stream.on("end", () => resolve(Buffer.concat(chunks)));
+    stream.on("error", (err) => reject(err));
+  });
+}
 export default {
+
+// Handler for creating assignments
   async createAssignment(req: Request, h: ResponseToolkit) {
-    // Log the incoming raw data
-    console.log("Raw payload:", req.payload);
-
     try {
-      // Parse and validate the payload
-      const { payload } = createAssignmentValidation.parse({
-        payload: req.payload,
-      });
+      console.log("Received payload:", req.payload);
 
-      // Log validated payload to ensure assignmentType is being passed
-      console.log("Validated payload:", payload);
+      const rawPayload = req.payload as any;
 
-      // Ensure assignmentType is properly processed as an object with type and name
-      const assignmentType = payload.assignmentType; // Fix the field name here
-      const type = assignmentType?.type || "";
-      const name = assignmentType?.name || "";
+      // Handle file buffers (if present)
+      const audioFileBuffer = rawPayload.audioFile
+        ? await streamToBuffer(rawPayload.audioFile)
+        : null;
+      const uploadFileBuffer = rawPayload.uploadFile
+        ? await streamToBuffer(rawPayload.uploadFile)
+        : null;
 
-      // Check if assignmentType is missing or not valid
-      if (!type || !name) {
-        throw new Error("Assignment type is required. Please provide a valid type.");
-      }
-
-      // Create the assignment record with validated data
+      // Create assignment logic
       const result = await createAssignment({
-        assignmentName: payload.assignmentName || "",
-        assignedTeacher: payload.assignedTeacher || "",
-        assignmentType: { type, name }, // Ensure it is passed as an object
-        chooseType: !!payload.chooseType, // Ensure boolean
-        trueorfalseType: !!payload.trueorfalseType, // Ensure boolean
-        question: payload.question || "",
-        hasOptions: !!payload.hasOptions, // Ensure boolean
-        options: {
-          optionOne: payload.options?.optionOne || "",
-          optionTwo: payload.options?.optionTwo || "",
-          optionThree: payload.options?.optionThree || "",
-          optionFour: payload.options?.optionFour || "",
-        },
-        audioFile: payload.audioFile || undefined,
-        uploadFile: payload.uploadFile || undefined,
-        status: payload.status || "", // Default status
-        createdDate: payload.createdDate || new Date(),
-        createdBy: payload.createdBy || "", // Default createdBy
-        updatedDate: payload.updatedDate || new Date(),
-        updatedBy: payload.updatedBy || "",
-        level: payload.level || "",
-        courses: payload.courses || "",
-        assignedDate: payload.assignedDate || new Date(),
-        dueDate: payload.dueDate || new Date(),
+        assignmentName: rawPayload.assignmentName || "",
+        assignedTeacher: rawPayload.assignedTeacher || "",
+        assignmentType: rawPayload.assignmentType || {},
+        chooseType: rawPayload.chooseType,
+        trueorfalseType: rawPayload.trueorfalseType,
+        question: rawPayload.question || "",
+        hasOptions: rawPayload.hasOptions,
+        options: rawPayload.options || {},
+        audioFile: audioFileBuffer ? Buffer.from(audioFileBuffer) : undefined,
+        uploadFile: uploadFileBuffer ? Buffer.from(uploadFileBuffer) : undefined,
+        status: rawPayload.status || "",
+        createdDate: rawPayload.createdDate || new Date(),
+        createdBy: rawPayload.createdBy || "",
+        updatedDate: rawPayload.updatedDate || new Date(),
+        updatedBy: rawPayload.updatedBy || "",
+        level: rawPayload.level || "",
+        courses: rawPayload.courses || "",
+        assignedDate: rawPayload.assignedDate || new Date(),
+        dueDate: rawPayload.dueDate || new Date(),
       });
 
-      console.log("result>>>>>>>", result);
+      console.log("Created assignment:", result);
 
       return h.response(result).code(201); // Success response
     } catch (error) {
-      console.error("Validation error:", error);
-      return h.response({ error: "Invalid payload" }).code(400); // Bad request response
-    }
-  },
-};
+      console.error("Error creating assignment:", error);
+      return h.response({ error: "Invalid payload" }).code(400);
+    }
+  },
+
+  //get all assignment
+
+  async getAllAssignment(req: Request, h: ResponseToolkit) {
+    try {
+      // Parse and validate the input
+      const { query } = getAssignmnentListInputValidation.parse({
+        query: {
+          ...req.query,
+          assignmentType: {
+            type: req.query?.assignmentType?.type || "", // Default value for `type`
+            name: req.query?.assignmentType?.name || "", // Default value for `name`
+          },
+          filterValues: req.query?.filterValues ? JSON.parse(req.query.filterValues) : {},
+        },
+      });
+  
+      // Call the function with the fully populated query object
+      const assignments = await getAllAssignment(query);
+      return h.response(assignments).code(200);
+    } catch (error) {
+      console.error("Error getting assignments:", error);
+      return h.response({ error: "Invalid query parameters" }).code(400);
+    }
+  }
+  
+  
+  
+}
+
+
+
