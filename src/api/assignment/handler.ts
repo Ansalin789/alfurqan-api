@@ -42,21 +42,19 @@ const getAllAssignmentInputSchema = z.object({
   assignmentName: z.string().optional(),
   assignedTeacher: z.string().optional(),
   assignmentType: z.object({
-    type: z.string().optional(),
-    name: z.string().optional(),
-  }).optional(),
-  chooseType: z.boolean().optional(),
-  trueorfalseType: z.boolean().optional(),
+    type: z.string(),
+    name: z.string(),
+  }),
+  chooseType: z.boolean(),
+  trueorfalseType: z.boolean(),
   question: z.string().optional(),
   hasOptions: z.boolean().optional(),
-  options: z
-    .object({
-      optionOne: z.string().optional(),
-      optionTwo: z.string().optional(),
-      optionThree: z.string().optional(),
-      optionFour: z.string().optional(),
-    })
-    .optional(),
+  options: z.object({
+    optionOne: z.string().optional(),
+    optionTwo: z.string().optional(),
+    optionThree: z.string().optional(),
+    optionFour: z.string().optional(),
+  }).optional(),
   status: z.string().optional(),
   createdDate: z.date().optional(),
   createdBy: z.string().optional(),
@@ -70,6 +68,8 @@ const getAllAssignmentInputSchema = z.object({
 
 console.log(getAllAssignmentInputSchema);
 
+
+
 // Helper function to convert a readable stream to a buffer
 async function streamToBuffer(stream: Stream.Readable): Promise<Buffer> {
   const chunks: Buffer[] = [];
@@ -79,14 +79,41 @@ async function streamToBuffer(stream: Stream.Readable): Promise<Buffer> {
     stream.on("error", (err) => reject(err));
   });
 }
+
+// Helper function to safely parse JSON
+function parseJSONSafe(input: any): any {
+  if (typeof input === "string") {
+    try {
+      return JSON.parse(input);
+    } catch (error) {
+      console.error("Invalid JSON string:", input, error);
+      return null;
+    }
+  }
+  return input;
+}
+
 export default {
 
 // Handler for creating assignments
   async createAssignment(req: Request, h: ResponseToolkit) {
     try {
-      console.log("Received payload:", req.payload);
 
       const rawPayload = req.payload as any;
+
+      console.log("Received payload:", req.payload);
+
+     // Safely parse options
+     const options = parseJSONSafe(rawPayload.options);
+     if (!options) {
+       return h.response({ error: "Invalid options format" }).code(400);
+     }
+
+
+      // Parse and process payload fields
+      const chooseType = rawPayload.chooseType === "true" || rawPayload.chooseType === true;
+      const trueorfalseType =
+        rawPayload.trueorfalseType === "true" || rawPayload.trueorfalseType === true;
 
       // Handle file buffers (if present)
       const audioFileBuffer = rawPayload.audioFile
@@ -96,16 +123,18 @@ export default {
         ? await streamToBuffer(rawPayload.uploadFile)
         : null;
 
+
+      // Create assignment logic
       // Create assignment logic
       const result = await createAssignment({
         assignmentName: rawPayload.assignmentName || "",
         assignedTeacher: rawPayload.assignedTeacher || "",
         assignmentType: rawPayload.assignmentType || {},
-        chooseType: rawPayload.chooseType,
-        trueorfalseType: rawPayload.trueorfalseType,
+        chooseType, // Parsed boolean
+        trueorfalseType, // Parsed boolean
         question: rawPayload.question || "",
         hasOptions: rawPayload.hasOptions,
-        options: rawPayload.options || {},
+        options, // Parsed options object
         audioFile: audioFileBuffer ? Buffer.from(audioFileBuffer) : undefined,
         uploadFile: uploadFileBuffer ? Buffer.from(uploadFileBuffer) : undefined,
         status: rawPayload.status || "",
@@ -118,6 +147,9 @@ export default {
         assignedDate: rawPayload.assignedDate || new Date(),
         dueDate: rawPayload.dueDate || new Date(),
       });
+      
+      console.log("correctAnswer>>>>>>", rawPayload.updatedDate)
+
 
       console.log("Created assignment:", result);
 

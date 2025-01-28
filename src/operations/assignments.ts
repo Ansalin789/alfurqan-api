@@ -2,7 +2,6 @@ import { badRequest } from "@hapi/boom";
 import { IAssignment, IAssignmentCreate } from "../../types/models.types";
 import assignment from "../models/assignments";
 import userModel from "../models/users";
-import { getAllAssignmnetParams, GetAllRecordsParams } from "../shared/enum";
 
 /**
  * Creates a new assignment record in the database.
@@ -32,23 +31,19 @@ export const createAssignment = async (
     //   audioFile: payload.audioFile,
     // });
 
-    console.log("audioFile>>>>", payload.audioFile); // Logs the fetched audio file
+    console.log("optionAnswer>>>>", payload.options); // Logs the fetched audio file
 
     // Create a new assignment
     const newAssignment = new assignment({
       assignmentName: payload.assignmentName || "",
       assignedTeacher: assignedTeacher?.userName || "", // Save the teacher's userName in the assignment
       assignmentType: payload.assignmentType, // Use the entire object { type, name }
-      chooseType: !!payload.chooseType,
-      trueorfalseType: !!payload.trueorfalseType,
+      chooseType: payload.chooseType,
+      trueorfalseType: payload.trueorfalseType,
       question: payload.question || "",
-      hasOptions: !!payload.hasOptions,
-      options: {
-        optionOne: payload.options?.optionOne || "",
-        optionTwo: payload.options?.optionTwo || "",
-        optionThree: payload.options?.optionThree || "",
-        optionFour: payload.options?.optionFour || "",
-      },
+      hasOptions: payload.hasOptions,
+      options: payload.options, // Use the entire object { type, name }
+
       audioFile: payload.audioFile || "", // Save the audio file ID in the database
       uploadFile: payload.uploadFile || "",
       status: payload.status || "Pending",

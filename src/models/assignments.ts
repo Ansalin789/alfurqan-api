@@ -38,13 +38,10 @@ const assignmentSchema = new Schema<IAssignmentCreate>(
         required: false,
       },
       options: {
-        type: {
-          optionOne: { type: String, required: false },
-          optionTwo: { type: String, required: false },
-          optionThree: { type: String, required: false },
-          optionFour: { type: String, required: false },
-        },
-        required: false,
+        optionOne: { type: String },
+        optionTwo: { type: String },
+        optionThree: { type: String },
+        optionFour: { type: String },
       },
       audioFile: {
         type: Buffer,
@@ -118,7 +115,7 @@ const assignmentSchema = new Schema<IAssignmentCreate>(
       ]),
       name: z.string(),
     }),
-    chooseType: z.boolean(),
+    chooseType: z.string(),
     trueorfalseType: z.boolean(),
     question: z.string(),
     hasOptions: z.boolean().optional(),
