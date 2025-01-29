@@ -656,7 +656,13 @@ export interface IAssignment  extends Document{
 export interface IAssignmentCreate {
   assignmentName: string;
   assignedTeacher: string;
-  assignmentType: { type: string; name: string }; // Change from string to object
+  assignmentType: { 
+    quiz?: string;
+    writing?: string;
+    reading?: string;
+    imageIdentification?: string;
+    wordMatching?: string;
+  }; // Aligning with IAssignment
   chooseType: boolean;
   trueorfalseType: boolean;
   question: string;
@@ -667,8 +673,8 @@ export interface IAssignmentCreate {
     optionThree?: string;
     optionFour?: string;
   };
-  audioFile?: string;
-  uploadFile?: string;
+  audioFile?: Buffer;
+  uploadFile?: Buffer;
   status: string;
   createdDate: Date;
   createdBy: string;
@@ -677,8 +683,9 @@ export interface IAssignmentCreate {
   level: string;
   courses: string;
   assignedDate: Date;
-  dueDate:Date;
+  dueDate: Date;
 }
+
 
 export interface IMessageCreate {
   sender: string;
@@ -754,62 +761,62 @@ export interface IMessage extends Document {
   }[];
 }
 
-// export interface IFeedbackCreate {
-//   student: {
-//     studentId: string;
-//     studentFirstName: string;
-//     studentLastName: string;
-//     studentEmail: string;
-//   },
-//   teacher:{
-//     teacherId: string;
-//     teacherName: string;
-//     teacherEmail: string;
-//   },
-//   classDay: any;
-//   preferedTeacher: string;
-//   feedbackmessage:string;
-//   course: string;
-//   ratings:number;
-//   startDate: Date;
-//   endDate: Date;
-//   startTime: any;
-//   endTime: any;
-//   createdDate: Date,
-//   createdBy: string,
-//   lastUpdatedDate: Date,
-//   lastUpdatedBy: string
-// }
+export interface IFeedbackCreate {
+  student: {
+    studentId: string;
+    studentFirstName: string;
+    studentLastName: string;
+    studentEmail: string;
+  };
+  teacher: {
+    teacherId?: string;
+    teacherName?: string;
+    teacherEmail?: string;
+  };
+  classDay?: string[];
+  preferedTeacher: string;
+  feedbackmessage?: string;
+  course: {
+    courseId?: string;
+    courseName: string;
+  };
+  ratings: number;
+  startDate: Date;
+  endDate: Date;
+  startTime?: string[];
+  endTime?: string[];
+  createdDate: Date;
+  createdBy: string;
+  lastUpdatedDate: Date;
+  lastUpdatedBy?: string;
+}
 
-
-// export interface IFeedback  extends Document{
-//   student: {
-//     studentId: string;
-//     studentFirstName: string;
-//     studentLastName: string;
-//     studentEmail: string;
-//   },
-//   teacher:{
-//     teacherId: string;
-//     teacherName: string;
-//     teacherEmail: string;
-//   },
-//   classDay: any;
-//   package: string;
-//   preferedTeacher: string;
-//   feedbackmessage:string;
-//   course: string;
-//   ratings:number;
-//   totalHourse: Number;
-//   startDate: Date;
-//   endDate: Date;
-//   startTime: any;
-//   endTime: any;
-//   scheduleStatus: string,
-//   scheduledStartDate: Date,
-//   classType: string,
-//   createdDate: Date,
-//   createdBy: string,
-//   lastUpdatedDate: Date,
-//   lastUpdatedBy: string
-// }
+export interface IFeedback  extends Document{
+  student: {
+    studentId: string;
+    studentFirstName: string;
+    studentLastName: string;
+    studentEmail: string;
+  },
+  teacher:{
+    teacherId: string;
+    teacherName: string;
+    teacherEmail: string;
+  },
+  classDay: any;
+  preferedTeacher: string;
+  feedbackmessage:string;
+  course: string;
+  ratings:number;
+  startDate: Date;
+  endDate: Date;
+  startTime: any;
+  endTime: any;
+  scheduleStatus: string,
+  scheduledStartDate: Date,
+  classType: string,
+  createdDate: Date,
+  createdBy: string,
+  lastUpdatedDate: Date,
+  lastUpdatedBy: string
+}
