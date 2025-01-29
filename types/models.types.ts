@@ -677,5 +677,139 @@ export interface IAssignmentCreate {
   level: string;
   courses: string;
   assignedDate: Date;
-  dueDate: Date;
+  dueDate:Date;
 }
+
+export interface IMessageCreate {
+  sender: string;
+  receiver: string;
+  roomId: string;
+  student: {
+    studentId: string;
+    studentFirstName: string;
+    studentLastName: string;
+    studentEmail: string;
+  };
+  teacher: {
+    teacherId: string;
+    teacherName: string;
+    teacherEmail: string;
+  };
+  timeZone: string;
+  status: string;
+  message: string;
+  assigments?: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate: Date;
+  updatedBy: string;
+  attachmentsType: {
+    fileName: string;
+    fileType: string;
+    fileUrl: string;
+  }[]; 
+  group: {
+    groupId: string;
+    groupName: string;
+    members: {
+      userId: string;
+      userName: string;
+    }[];
+  }[];
+}
+
+export interface IMessage extends Document {
+  roomId: string; // Identifier for the chat room
+  student: {
+    studentId: string; // Unique identifier for the student
+    studentFirstName: string; // Student's first name
+    studentLastName: string; // Student's last name
+    studentEmail: string; // Student's email address
+  };
+  teacher: {
+    teacherId: string; // Unique identifier for the teacher
+    teacherName: string; // Teacher's full name
+    teacherEmail: string; // Teacher's email address
+  };
+  message: string; // The content of the message
+  attachments: {
+    fileName: string;
+    fileType: string;
+    fileUrl: string;
+  };
+  sender:string;
+  timeZone: string;
+  receiver:string;
+  createdDate: Date; // Timestamp when the message was created
+  createdBy: string; // Identifier of the user who created the message
+  updatedDate: Date; // Timestamp when the message was last updated
+  updatedBy: string; // Identifier of the user who last updated the message
+  group: {
+    groupId: string;
+    groupName: string;
+    members: {
+      userId: string;
+      userName: string;
+    }[];
+  }[];
+}
+
+// export interface IFeedbackCreate {
+//   student: {
+//     studentId: string;
+//     studentFirstName: string;
+//     studentLastName: string;
+//     studentEmail: string;
+//   },
+//   teacher:{
+//     teacherId: string;
+//     teacherName: string;
+//     teacherEmail: string;
+//   },
+//   classDay: any;
+//   preferedTeacher: string;
+//   feedbackmessage:string;
+//   course: string;
+//   ratings:number;
+//   startDate: Date;
+//   endDate: Date;
+//   startTime: any;
+//   endTime: any;
+//   createdDate: Date,
+//   createdBy: string,
+//   lastUpdatedDate: Date,
+//   lastUpdatedBy: string
+// }
+
+
+// export interface IFeedback  extends Document{
+//   student: {
+//     studentId: string;
+//     studentFirstName: string;
+//     studentLastName: string;
+//     studentEmail: string;
+//   },
+//   teacher:{
+//     teacherId: string;
+//     teacherName: string;
+//     teacherEmail: string;
+//   },
+//   classDay: any;
+//   package: string;
+//   preferedTeacher: string;
+//   feedbackmessage:string;
+//   course: string;
+//   ratings:number;
+//   totalHourse: Number;
+//   startDate: Date;
+//   endDate: Date;
+//   startTime: any;
+//   endTime: any;
+//   scheduleStatus: string,
+//   scheduledStartDate: Date,
+//   classType: string,
+//   createdDate: Date,
+//   createdBy: string,
+//   lastUpdatedDate: Date,
+//   lastUpdatedBy: string
+// }
