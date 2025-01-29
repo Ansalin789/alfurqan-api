@@ -47,38 +47,46 @@ export const createMessage = async (
 export const createStudentMessageList = async (
   params: GetAllRecordsParams
 ): Promise<{ totalCount: number; Message: IMessage[] }> => {
-  const { groupId, sortBy = "_id", sortOrder = "asc", offset = 1, limit = 10 } = params;
+  const { studentId, teacherId, sortBy = "_id", sortOrder = "asc", offset = 1, limit = 10 } = params;
 
-  if (!groupId) {
-    throw new Error("Group ID is required");
+  if (!studentId || !teacherId) {
+    throw new Error("Both Student ID and Teacher ID are required");
   }
 
-  const query: any = { groupId };
-  console.log(">>", query);
+  const query = {
+    $or: [
+      { "teacher.teacherId": teacherId, "student.studentId": studentId },
+      { "teacher.teacherId": studentId, "student.studentId": teacherId }
+    ]
+  };
+
+  console.log(">> Query:", query);
 
   const sortOptions: any = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
 
   try {
     const skip = Math.max(0, (Number(offset) - 1) * Number(limit));
 
-    // Aggregating messages based on groupId
-    const [message, totalCount] = await Promise.all([
-      Message.aggregate([
-        { $match: query },
-        { $sort: sortOptions },
-        { $skip: skip },
-        { $limit: Number(limit) },
-        { $group: { _id: "$groupId", messages: { $push: "$$ROOT" } } }, // Grouping by groupId
-      ]),
-      Message.countDocuments(query).exec(),
+    // Fetching messages and counting total messages
+    const [messages, totalCount] = await Promise.all([
+      Message.find(query)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(Number(limit))
+        .lean() as Promise<IMessage[]>,
+      Message.countDocuments(query)
     ]);
 
-    return { totalCount, Message: message }; // Returns the grouped messages by groupId
+    return { totalCount, Message: messages }; 
   } catch (error) {
     console.error("Error fetching messages for student:", error);
     throw new Error("Failed to fetch messages for the student");
   }
 };
+
+
+
+
 
 
 

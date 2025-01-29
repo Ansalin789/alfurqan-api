@@ -44,18 +44,44 @@ export default {
   async createMessage(req: Request, h: ResponseToolkit) {
     try {
       const { payload } = createMessageValidation.parse({ payload: req.payload });
-
+  
       // Ensure studentId and teacherId exist
       if (!payload.student?.studentId || !payload.teacher?.teacherId) {
         return h.response({ error: "Both studentId and teacherId are required" }).code(400);
       }
-
+  
       // Generate a deterministic roomId based on studentId and teacherId
       const studentId = payload.student.studentId;
       const teacherId = payload.teacher.teacherId;
       const roomId = crypto.createHash("sha256").update(studentId + teacherId).digest("hex");
-
-      // Construct the message object
+  
+      // Create a map for groupName to groupId
+      const groupMap = new Map<string, string>();
+  
+      // Map over the groups and generate groupId for each group
+      const groupsWithIds =
+        payload.group?.map((groupItem) => {
+          // Check if groupId already exists in the map
+          let groupId = groupMap.get(groupItem.groupName);
+  
+          // If groupId doesn't exist, generate one and store it in the map
+          if (!groupId) {
+            groupId = crypto.createHash("sha256").update(groupItem.groupName).digest("hex");
+            groupMap.set(groupItem.groupName, groupId); // Store the groupId for future use
+          }
+  
+          return {
+            groupId, // Use the same groupId for all students in the group
+            groupName: groupItem.groupName || "",
+            members:
+              groupItem.members?.map((member) => ({
+                userId: member?.userId || "",
+                userName: member?.userName || "",
+              })) || [],
+          };
+        }) || [];
+  
+      // Construct the message object with separate roomId and groupId
       const result = await createMessage({
         teacher: {
           teacherId: payload.teacher.teacherId,
@@ -76,16 +102,7 @@ export default {
           })) || [],
         sender: payload.sender || "",
         receiver: payload.receiver || "",
-        group:
-          payload.group?.map((groupItem) => ({
-            groupId: groupItem?.groupId || "",
-            groupName: groupItem?.groupName || "",
-            members:
-              groupItem?.members?.map((member) => ({
-                userId: member?.userId || "",
-                userName: member?.userName || "",
-              })) || [],
-          })) || [],
+        group: groupsWithIds, // Updated group with groupId
         status: payload.status || "",
         createdDate: new Date(),
         createdBy: payload.createdBy || "system",
@@ -95,9 +112,9 @@ export default {
         timeZone: payload.timeZone || "",
         message: payload.message || "",
       });
-
+  
       console.log(">> Created Message:", result);
-
+  
       return h.response({ message: "Message created successfully", roomId }).code(201);
     } catch (error) {
       console.error(error);
@@ -106,8 +123,8 @@ export default {
       }
       return h.response({ error: "Internal server error" }).code(500);
     }
-  
-  },
+  }
+,  
 
 
 
