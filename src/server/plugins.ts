@@ -14,6 +14,8 @@ import paymentAPI from "../api/payment/router";
 import classScheduleAPI from "../api/classShedule/router";
 import alstudentsAPI from "../api/alstudents/router"
 import assignmentAPI from "../api/assignment/router";
+import messageAPI from "../api/message/router";
+import feedbackAPI  from "../api/feedback/router"
 export const appPlugins = [
   {
     plugin: systemLifeCycle,
@@ -59,6 +61,11 @@ export const appPlugins = [
   },
   {
     plugin: assignmentAPI,
-  }
-
+  },
+  {
+    plugin: messageAPI,
+  },
+  {
+    plugin: feedbackAPI,
+  },
 ];
