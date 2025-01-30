@@ -91,6 +91,65 @@ academicCoachId: {
         required: false,
     }
   },
+//   teacher: {
+//     teacherId: {
+//        type: String,
+//        required: false,
+//     },
+//     teacherName: {
+//         type: String,
+//         required: false,
+//     },
+   
+//     teacherEmail: {
+//         type: String,
+//         required: false,
+//     }
+   
+//   },
+//   classDay:{
+//     type: Array,
+//     required: false,
+//   },
+//   package: {
+//     type: String,
+//     required: true,
+//   },
+//   preferedTeacher:{
+//     type: String,
+//     required: true,
+//   },
+//   course:{
+//     courseId:{
+//       type: String,
+//       required: false,
+//     },
+//     courseName:{
+//       type: String,
+//       required: false,
+//     }
+  
+//   },
+//   totalHourse:{
+//     type: Number,
+//     required: true,
+//   },
+//   startDate:{
+//     type: Date,
+//     required: true,
+//   },
+//   endDate:{
+//     type: Date,
+//     required: true,
+//   },
+//   startTime:{
+//     type: Array,
+//     required: false,
+//   },
+//   endTime:{
+//     type: Array,
+//     required: false,
+//   },
     isLanguageLevel: {
         type: Boolean,
         required: true,
@@ -299,6 +358,43 @@ export const zodEvaluationSchema = z.object({
         createdBy: z.string().optional(),
       
     }),
+
+    // teacher:z.object ({
+    //     teacherId: z.string().optional(),
+    //     teacherName: z.string().optional(),
+    //     teacherEmail:z.string().optional()
+    //   }),
+    //   classDay:z.array(
+    //     z.object({
+    //         label: z.string(),
+    //         value: z.string(),
+    //     })
+    // ),
+    //   package: z.string().optional(),
+    //   preferedTeacher:z.string().optional(),
+    //   course:z.object ({
+    //     courseId:z.string().optional(),
+    //     courseName:z.string().optional(), 
+    //   }),
+    //   totalHourse:z.number().optional(),
+    //   startDate:z.string().refine((val) => !isNaN(Date.parse(val)), {
+    //     message: commonMessages.INVALID_DATE_FORMAT,
+    //   }).transform((val) => new Date(val)),
+    //   endDate:z.string().refine((val) => !isNaN(Date.parse(val)), {
+    //     message: commonMessages.INVALID_DATE_FORMAT,
+    //   }).transform((val) => new Date(val)),
+    //   startTime:z.array(
+    //     z.object({
+    //         label: z.string(),
+    //         value: z.string(),
+    //     })
+    // ),
+    //   endTime:z.array(
+    //     z.object({
+    //         label: z.string(),
+    //         value: z.string(),
+    //     })
+    // ),
     isLanguageLevel: z.boolean(),
     languageLevel: z.string(),
     isReadingLevel: z.boolean(),

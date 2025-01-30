@@ -15,6 +15,16 @@ const createInputValidation = z.object({
     payload: zodEvaluationSchema.pick({
     academicCoachId: true,
     student:true,
+    // teacher: true,
+    // classDay: true,
+    // package: true,
+    // preferedTeacher: true,
+    // course:true,
+    // totalHourse:true,
+    // startDate:true,
+    // endDate:true,
+    // startTime:true,
+    // endTime:true,
     subscription:true,
     planTotalPrice: true,
     isLanguageLevel:true,
@@ -86,6 +96,11 @@ export default {
         const { payload } = createInputValidation.parse({
             payload: req.payload,
         });
+
+        // const classDayValues = payload.classDay?.map((day: { value: string; label: string }) => day.value);
+        // const startTimeValues = payload.startTime?.map((time: { value: string; label: string }) => time.value);
+        // const endTimeValues = payload.endTime?.map((time: { value: string; label: string }) => time.value);
+
         return createEvaluationRecord({
           academicCoachId: payload.academicCoachId || "",
             student: { // Ensure studentId is included
@@ -109,6 +124,18 @@ export default {
                 createdDate: new Date(),
                 createdBy: payload.student?.createdBy || "",
             },
+            // teacher:{
+            //   teacherName: payload.teacher?.teacherName  || ""
+            // },
+            // classDay : classDayValues || undefined,
+            // package: payload.package || "",
+            // preferedTeacher: payload.preferedTeacher || "",
+            // course: payload.student?.learningInterest || "",
+            // totalHourse: payload.totalHourse || 0,
+            // startDate:payload.startDate || new Date() ,
+            // endDate:payload.endDate || new Date(),
+            // startTime:startTimeValues,
+            // endTime:endTimeValues,
             isLanguageLevel: payload.isLanguageLevel || false,
             languageLevel: payload.languageLevel || "",
             isReadingLevel: payload.isReadingLevel || false,

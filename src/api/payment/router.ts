@@ -1,6 +1,6 @@
 
 import { Server, ServerRoute } from "@hapi/hapi";
-import { createPaymentIntent } from "./handler";  // Import the function correctly
+import { createPaymentIntent, createStudentPaymentIntent } from "./handler";  // Import the function correctly
 
 const register = async (server: Server): Promise<void> => {
   // Define the routes for this module
@@ -10,6 +10,17 @@ const register = async (server: Server): Promise<void> => {
       path: "/create-payment-intent",
       options: {
         handler: createPaymentIntent,  
+        tags: ["api", "payment"],  
+        auth: {
+          strategies: ["jwt"],
+        },
+      },
+    },
+    {
+      method: "POST",
+      path: "/student/create-payment-intent",
+      options: {
+        handler: createStudentPaymentIntent,  
         tags: ["api", "payment"],  
         auth: {
           strategies: ["jwt"],
