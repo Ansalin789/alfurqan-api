@@ -115,7 +115,7 @@ const assignmentSchema = new Schema<IAssignmentCreate>(
  
 
   export const assignmentValidationSchema = z.object({
-    studentId: z.string(),
+    studentId: z.string().optional(), // Make it optional if it's not always required
     assignmentName: z.string(),
     assignedTeacher: z.string(),
     assignmentType: z.object({
@@ -172,8 +172,8 @@ const assignmentSchema = new Schema<IAssignmentCreate>(
     dueDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
       message: assignemntMessages.INVALID_DATE_FORMAT,
     }).transform((val) => new Date(val)),
-    answer: z.string(),
-    answerValidation: z.string(),
+    answer: z.string().optional(), // Make it optional if it's not always required
+    answerValidation: z.string().optional(), // Make it optional if it's not always required
 
   });
   

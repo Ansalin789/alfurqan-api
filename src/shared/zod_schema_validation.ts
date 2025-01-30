@@ -127,3 +127,10 @@ export const zodAuthenticationSchema = z.object({
   username: z.string().min(3),
   password: z.string().min(8),
 });
+
+export  const zodAlStudentInvoiceSchemaValidation = z.object({
+  sortBy: z.string().default("lastUpdatedDate"),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+  offset: z.string().nullable().default(null),
+  limit: z.string().nullable().default(null),
+})
