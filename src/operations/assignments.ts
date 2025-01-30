@@ -1,5 +1,5 @@
 import { badRequest } from "@hapi/boom";
-import { IAssignment, IAssignmentCreate } from "../../types/models.types";
+import { IallAssignment, IAssignment, IAssignmentCreate } from "../../types/models.types";
 import assignment from "../models/assignments";
 import userModel from "../models/users";
 import alstudents from "../models/alstudents";
@@ -180,7 +180,7 @@ export const getAllAssignment = async (query: { assignmentType: { type: string; 
     const assignmentsCreate = await assignment.find().lean().exec();
 
     // You can either return Partial<IAssignment> directly if you're not worried about the missing properties
-    const assignments: Partial<IAssignmentCreate>[] = assignmentsCreate;
+    const assignments: Partial<IallAssignment>[] = assignmentsCreate;
 
     // Get the total count of assignments
     const totalCount = await assignment.countDocuments();

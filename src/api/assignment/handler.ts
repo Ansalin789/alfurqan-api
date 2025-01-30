@@ -7,7 +7,7 @@ import * as Stream from "stream";
 // Input Validations for student list
 const getAssignmnentListInputValidation = z.object({
   query: z.object({
-    studentId: z.string(),
+    studentId: z.string().optional(),
     assignmentName: z.string().optional(),
     assignedTeacher: z.string().optional(),
     assignmentType: z.object({
@@ -33,8 +33,8 @@ const getAssignmnentListInputValidation = z.object({
     courses: z.string().optional(),
     assignedDate: z.date().optional(),
     dueDate: z.date().optional(),
-    answer:z.string(),
-    answerValidation: z.string(),
+    answer:z.string().optional(),
+    answerValidation: z.string().optional(),
 
   }),
 });
@@ -218,12 +218,16 @@ async updateAssignment(req: Request, h: ResponseToolkit) {
         },
       });
   
-      // Call the function with the fully populated query object
-      const assignments = await getAllAssignment(query);
-      return h.response(assignments).code(200);
+      // Call the function with the validated query object
+      const { assignments, totalCount } = await getAllAssignment(query);
+  
+      // Return the assignments and the total count
+      return h.response({ assignments, totalCount }).code(200);
+  
     } catch (error) {
       console.error("Error getting assignments:", error);
-      return h.response({ error: "Invalid query parameters" }).code(400);
+
+      return h.response({ error: error || "Invalid query parameters" }).code(400);
     }
-  }
+}
 }
