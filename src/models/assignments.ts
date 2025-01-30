@@ -7,6 +7,10 @@ import { assigmentType, assignemntMessages } from "../config/messages";
 
 const assignmentSchema = new Schema<IAssignmentCreate>(
     {
+      studentId:{
+        type: String,
+        required: false,
+      },
       assignmentName: {
         type: String,
         required: false,
@@ -94,6 +98,14 @@ const assignmentSchema = new Schema<IAssignmentCreate>(
         type: Date,
         required: false,
       },
+      answer: {
+        type: String,
+        required: false,
+      },
+      answerValidation: {
+        type: String,
+        required: false,
+      },
     },
     {
       timestamps: false,
@@ -103,6 +115,7 @@ const assignmentSchema = new Schema<IAssignmentCreate>(
  
 
   export const assignmentValidationSchema = z.object({
+    studentId: z.string(),
     assignmentName: z.string(),
     assignedTeacher: z.string(),
     assignmentType: z.object({
@@ -159,6 +172,9 @@ const assignmentSchema = new Schema<IAssignmentCreate>(
     dueDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
       message: assignemntMessages.INVALID_DATE_FORMAT,
     }).transform((val) => new Date(val)),
+    answer: z.string(),
+    answerValidation: z.string(),
+
   });
   
   
