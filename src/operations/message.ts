@@ -47,31 +47,47 @@ export const createMessage = async (
 export const createStudentMessageList = async (
   params: GetAllRecordsParams
 ): Promise<{ totalCount: number; Message: IMessage[] }> => {
-  const { studentId, sortBy = "_id", sortOrder = "asc", offset = 1, limit = 10 } = params;
+  const { studentId, teacherId, sortBy = "_id", sortOrder = "asc", offset = 1, limit = 10 } = params;
 
-  if (!studentId) {
-    throw new Error("Student ID is required");
+  if (!studentId || !teacherId) {
+    throw new Error("Both Student ID and Teacher ID are required");
   }
 
-  const query: any = { "student": studentId };
-  console.log(">>", query);
+  const query = {
+    $or: [
+      { "teacher.teacherId": teacherId, "student.studentId": studentId },
+      { "teacher.teacherId": studentId, "student.studentId": teacherId }
+    ]
+  };
+
+  console.log(">> Query:", query);
 
   const sortOptions: any = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
 
   try {
     const skip = Math.max(0, (Number(offset) - 1) * Number(limit));
 
-    const [message, totalCount] = await Promise.all([
-      Message.find(query).sort(sortOptions).skip(skip).limit(Number(limit)).lean<IMessage[]>().exec(), // Use .lean()
-      Message.countDocuments(query).exec(),
+    // Fetching messages and counting total messages
+    const [messages, totalCount] = await Promise.all([
+      Message.find(query)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(Number(limit))
+        .lean() as Promise<IMessage[]>,
+      Message.countDocuments(query)
     ]);
 
-    return { totalCount, Message: message }; // Ensure property name matches type
+    return { totalCount, Message: messages }; 
   } catch (error) {
-    console.error("Error fetching classes for student:", error);
-    throw new Error("Failed to fetch classes for the student");
+    console.error("Error fetching messages for student:", error);
+    throw new Error("Failed to fetch messages for the student");
   }
 };
+
+
+
+
+
 
 
 
@@ -109,6 +125,5 @@ export const createTeacherMessageList = async (
   } catch (error) {
     console.error("Error fetching messages for teacher:", error);
     throw new Error("Failed to fetch messages for the teacher");
-  }
+  }
 };
-

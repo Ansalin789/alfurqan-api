@@ -249,6 +249,7 @@ console.log(">>>>email", payload.email);
       return {
         message: 'Email found.',
         id:users._id,
+        username1:user.username,
         accessToken,
       };// 200 - OK
     } catch (error) {
@@ -301,6 +302,7 @@ console.log(">>>>email", payload.email);
       return {
         message: 'Email found.',
         id:users._id,
+        username1:activeRecord.userName,
         accessToken,
       };// 200 - OK
     } catch (error) {

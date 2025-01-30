@@ -101,7 +101,7 @@ export const zodMessageSchema = z.object({
   receiver: z.string(),
 
   // Group information
-  group: z.array(  
+  group: z.array(
     z.object({
       groupId: z.string(),
       groupName: z.string(),
@@ -113,6 +113,7 @@ export const zodMessageSchema = z.object({
       ),
     })
   ),
+  
 
   // Metadata
   createdBy: z.string().optional(),
@@ -121,4 +122,4 @@ export const zodMessageSchema = z.object({
   updatedDate: z.date().optional(),
 });
 
-export default mongoose.model<IMessageCreate>("Message", messageSchema);
+export default mongoose.model<IMessageCreate>("Message", messageSchema);

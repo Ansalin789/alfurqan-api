@@ -58,6 +58,9 @@ export class CustomEnumerator {
 }
 
 export interface GetAllRecordsParams {
+  groupId?:string;
+  roomId?:string;
+  teacherId?:string;
   studentId?: string;
   academicCoachId?: string;
   searchText?: string;
@@ -75,37 +78,6 @@ export interface GetAllRecordsParams {
     status?: string;
   };
 }
-
-export interface getAllAssignmnetParams {
-  assignmentName: string;
-  assignedTeacher: string;
-  assignmentType: {
-    type: string;
-    name: string;
-  };
-  chooseType: boolean;
-  trueorfalseType: boolean;
-  question: string;
-  hasOptions: boolean;
-  options: {
-    optionOne?: string;
-    optionTwo?: string;
-    optionThree?: string;
-    optionFour?: string;
-  };
-  audioFile?: Buffer;
-  uploadFile?: Buffer;
-  status: string;
-  createdDate: Date;
-  createdBy: string;
-  updatedDate: Date;
-  updatedBy: string;
-  level: string;
-  courses: string;
-  assignedDate: Date;
-  dueDate: Date;
-};
-
 
 
 export interface GetAlluserRecordsParams {

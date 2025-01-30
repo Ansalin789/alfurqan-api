@@ -1,6 +1,7 @@
 import { Server, ServerRoute } from "@hapi/hapi";
 import Inert from "@hapi/inert";
 import handler from "./handler";
+import { assignemntMessages } from "../../config/messages";
 
 const register = async (server: Server): Promise<void> => {
   await server.register(Inert);
@@ -35,13 +36,33 @@ const register = async (server: Server): Promise<void> => {
         // },
       },
     },
-  ];
 
+ {
+      method: "PUT",
+      path: "/assignments/{assinmentId}",
+      options: {
+       handler: handler.updateAssignment,
+       description: assignemntMessages.UPDATE,
+       tags: ["api", "assignment"],
+       payload: {
+        output: "stream",
+        parse: true,
+        maxBytes: 10 * 1024 * 1024,
+        multipart: true,
+        allow: "multipart/form-data",
+      },
+      //  auth: {
+      //   strategies: ["jwt"],
+      // },
+    },  
+    },
+
+    
+  ];
   server.route(routes);
 };
-
 export = {
   name: "api-assignment",
   version: "1.0.0",
-  register,
+  register,
 };

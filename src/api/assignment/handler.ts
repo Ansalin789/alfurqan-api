@@ -1,17 +1,18 @@
 import { Request, ResponseToolkit } from "@hapi/hapi";
 import { z } from "zod";
-import { createAssignment, getAllAssignment } from "../../operations/assignments"; // Replace with your service logic
+import { createAssignment, getAllAssignment, updateStudentAssignment } from "../../operations/assignments"; // Replace with your service logic
 import * as Stream from "stream";
 
 
 // Input Validations for student list
 const getAssignmnentListInputValidation = z.object({
   query: z.object({
+    studentId: z.string(),
     assignmentName: z.string().optional(),
     assignedTeacher: z.string().optional(),
     assignmentType: z.object({
-      type: z.string(), // Ensure `type` is required
-      name: z.string(), // Ensure `name` is required
+      type: z.string(), // Ensure type is required
+      name: z.string(), // Ensure name is required
     }),
     chooseType: z.boolean().optional(),
     trueorfalseType: z.boolean().optional(),
@@ -32,41 +33,13 @@ const getAssignmnentListInputValidation = z.object({
     courses: z.string().optional(),
     assignedDate: z.date().optional(),
     dueDate: z.date().optional(),
+    answer:z.string(),
+    answerValidation: z.string(),
+
   }),
 });
 
 
-
-// Validation schema for `GET /allAssignment` (query params)
-const getAllAssignmentInputSchema = z.object({
-  assignmentName: z.string().optional(),
-  assignedTeacher: z.string().optional(),
-  assignmentType: z.object({
-    type: z.string(),
-    name: z.string(),
-  }),
-  chooseType: z.boolean(),
-  trueorfalseType: z.boolean(),
-  question: z.string().optional(),
-  hasOptions: z.boolean().optional(),
-  options: z.object({
-    optionOne: z.string().optional(),
-    optionTwo: z.string().optional(),
-    optionThree: z.string().optional(),
-    optionFour: z.string().optional(),
-  }).optional(),
-  status: z.string().optional(),
-  createdDate: z.date().optional(),
-  createdBy: z.string().optional(),
-  updatedDate: z.date().optional(),
-  updatedBy: z.string().optional(),
-  level: z.string().optional(),
-  courses: z.string().optional(),
-  assignedDate: z.date().optional(),
-  dueDate: z.date().optional(),
-});
-
-console.log(getAllAssignmentInputSchema);
 
 
 
@@ -124,9 +97,10 @@ export default {
         : null;
 
 
-      // Create assignment logic
+  
       // Create assignment logic
       const result = await createAssignment({
+        studentId :rawPayload.studentId || "",
         assignmentName: rawPayload.assignmentName || "",
         assignedTeacher: rawPayload.assignedTeacher || "",
         assignmentType: rawPayload.assignmentType || {},
@@ -146,6 +120,8 @@ export default {
         courses: rawPayload.courses || "",
         assignedDate: rawPayload.assignedDate || new Date(),
         dueDate: rawPayload.dueDate || new Date(),
+        answer: rawPayload.answer || "",
+        answerValidation: rawPayload.answerValidation || "" ,
       });
       
       console.log("correctAnswer>>>>>>", rawPayload.updatedDate)
@@ -160,6 +136,72 @@ export default {
     }
   },
 
+
+  // Update an Assignment
+async updateAssignment(req: Request, h: ResponseToolkit) {
+  try {
+    // Ensure the payload is valid
+    const rawPayload = req.payload as any;
+    if (!rawPayload || Object.keys(rawPayload).length === 0) {
+      return h.response({ error: "Missing or empty payload" }).code(400);
+    }
+    console.log("Received payload:", rawPayload);
+
+    // Parse and handle boolean fields
+    const chooseType = rawPayload.chooseType === "true" || rawPayload.chooseType === true;
+    const trueorfalseType = rawPayload.trueorfalseType === "true" || rawPayload.trueorfalseType === true;
+
+    // Handle file buffers (if present)
+    const audioFileBuffer = rawPayload.audioFile ? await streamToBuffer(rawPayload.audioFile) : null;
+    const uploadFileBuffer = rawPayload.uploadFile ? await streamToBuffer(rawPayload.uploadFile) : null;
+
+    // Ensure options are parsed correctly
+    const options = parseJSONSafe(rawPayload.options);
+    if (!options) {
+      return h.response({ error: "Invalid options format" }).code(400);
+    }
+   
+    return  updateStudentAssignment(String(req.params.assinmentId),{
+      
+      studentId :rawPayload.studentId || "",
+      assignmentName: rawPayload.assignmentName || "",
+      assignedTeacher: rawPayload.assignedTeacher || "",
+      assignmentType: rawPayload.assignmentType || {},
+      chooseType, // Parsed boolean
+      trueorfalseType, // Parsed boolean
+      question: rawPayload.question || "",
+      hasOptions: rawPayload.hasOptions,
+      options, // Parsed options object
+      audioFile: audioFileBuffer ? Buffer.from(audioFileBuffer) : undefined,
+      uploadFile: uploadFileBuffer ? Buffer.from(uploadFileBuffer) : undefined,
+      status: rawPayload.status || "",
+      createdDate: rawPayload.createdDate || new Date(),
+      createdBy: rawPayload.createdBy || "",
+      updatedDate: rawPayload.updatedDate || new Date(),
+      updatedBy: rawPayload.updatedBy || "",
+      level: rawPayload.level || "",
+      courses: rawPayload.courses || "",
+      assignedDate: rawPayload.assignedDate || new Date(),
+      dueDate: rawPayload.dueDate || new Date(),
+      answer: rawPayload.answer || "",
+      answerValidation: rawPayload.answerValidation || "",
+    });
+  
+    
+  } 
+  
+  catch (error) {
+  console.error("Error updating assignment:", error);
+
+
+    console.log("Answer>>>", updateStudentAssignment);
+
+    return h.response({ error: "Internal Server Error" }).code(500);
+  }
+},
+
+
+
   //get all assignment
 
   async getAllAssignment(req: Request, h: ResponseToolkit) {
@@ -169,8 +211,8 @@ export default {
         query: {
           ...req.query,
           assignmentType: {
-            type: req.query?.assignmentType?.type || "", // Default value for `type`
-            name: req.query?.assignmentType?.name || "", // Default value for `name`
+            type: req.query?.assignmentType?.type || "", // Default value for type
+            name: req.query?.assignmentType?.name || "", // Default value for name
           },
           filterValues: req.query?.filterValues ? JSON.parse(req.query.filterValues) : {},
         },
@@ -183,11 +225,5 @@ export default {
       console.error("Error getting assignments:", error);
       return h.response({ error: "Invalid query parameters" }).code(400);
     }
-  }
-  
-  
-  
+  }
 }
-
-
-
