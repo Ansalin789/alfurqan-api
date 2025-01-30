@@ -17,6 +17,36 @@ const register = async (server: Server): Promise<void> => {
         },
       },
     },
+
+
+    {
+      method: "GET",
+      path: "/dashboard/student/counts",
+      options: {
+        handler: handler.getWidgetStudentCount,
+        description: dashboardMessages.WIDGET_COUNT,
+        tags: ["api", "dashboard"],
+        // auth: {
+        //   strategies: ["jwt"],
+        // },
+      },
+    },
+
+    {
+      method: "GET",
+      path: "/dashboard/teacher/counts",
+      options: {
+        handler: handler.getWidgetTeacherCount,
+        description: dashboardMessages.WIDGET_COUNT,
+        tags: ["api", "dashboard"],
+        // auth: {
+        //   strategies: ["jwt"],
+        // },
+      },
+    },
+
+
+
   ];
   server.route(routes);
 };
