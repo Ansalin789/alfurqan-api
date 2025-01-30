@@ -682,6 +682,40 @@ export interface IAssignment  extends Document{
   answerValidation: string;
 
 }
+export interface IallAssignment {
+  studentId: string;
+  assignmentName: string;
+  assignedTeacher: string;
+  assignmentType: { 
+    quiz?: string;
+    writing?: string;
+    reading?: string;
+    imageIdentification?: string;
+    wordMatching?: string;
+  }; // Aligning with IAssignment
+  chooseType: boolean;
+  trueorfalseType: boolean;
+  question: string;
+  hasOptions: boolean;
+  options: {
+    optionOne?: string;
+    optionTwo?: string;
+    optionThree?: string;
+    optionFour?: string;
+  };
+  audioFile?: Buffer;
+  uploadFile?: Buffer;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate: Date;
+  updatedBy: string;
+  level: string;
+  courses: string;
+  assignedDate: Date;
+  dueDate: Date;
+
+}
 
 export interface IAssignmentCreate {
   studentId: string;
