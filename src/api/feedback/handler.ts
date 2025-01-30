@@ -48,6 +48,6 @@ export default {
     } catch (error) {
       console.error("Error creating feedback:", error);
       return h.response({ error: "Failed to create feedback" }).code(500);
-    }
-  },
+    }
+  },
 };

@@ -122,4 +122,4 @@ export const zodMessageSchema = z.object({
   updatedDate: z.date().optional(),
 });
 
-export default mongoose.model<IMessageCreate>("Message", messageSchema);
+export default mongoose.model<IMessageCreate>("Message", messageSchema);

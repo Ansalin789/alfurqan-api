@@ -29,6 +29,6 @@ export const createFeedback = async (
     return { totalCount, feedback: feedbackRecord };
   } catch (error) {
     console.error("Error creating feedback:", error);
-    return { error };
-  }
+    return { error };
+  }
 };

@@ -167,9 +167,9 @@ export default {
       // Handle the error appropriately
       console.error("Error in getClassesForStudent handler:", error);
       throw error; // Re-throw the error or handle it based on your application's requirement
-    }
-  }
-  ,
+    }
+  }
+  ,
 
 
 };

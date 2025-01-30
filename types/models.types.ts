@@ -757,8 +757,8 @@ export interface IMessage extends Document {
     members: {
       userId: string;
       userName: string;
-    }[];
-  }[];
+    }[];
+  }[];
 }
 
 export interface IFeedbackCreate {

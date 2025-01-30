@@ -3,30 +3,26 @@ import { model, Schema } from "mongoose";
 import { IAssignmentCreate } from "../../types/models.types";
 import { assigmentType, assignemntMessages } from "../config/messages";
 
+
+
 const assignmentSchema = new Schema<IAssignmentCreate>(
     {
       assignmentName: {
         type: String,
-        required: true,
+        required: false,
       },
       assignedTeacher: {
         type: String,
-        required: true,
+        required: false,
       },
       assignmentType: {
-        type: {
-          type: String,
-          required: true,
-        },
-        name: {
-          type: String,
-          required: true,
-        },
-      },
+        type: String,
+        required: true,
+    },
       
       chooseType: {
         type: Boolean,
-        required: true,
+        required: false,
       },
       trueorfalseType: {
         type: Boolean,
@@ -34,39 +30,36 @@ const assignmentSchema = new Schema<IAssignmentCreate>(
       },
       question: {
         type: String,
-        required: true,
+        required: false,
         trim: true,
       },
       hasOptions: {
         type: Boolean,
-        required: true,
-      },
-      options: {
-        type: {
-          optionOne: { type: String, required: false },
-          optionTwo: { type: String, required: false },
-          optionThree: { type: String, required: false },
-          optionFour: { type: String, required: false },
-        },
         required: false,
       },
+      options: {
+        optionOne: { type: String },
+        optionTwo: { type: String },
+        optionThree: { type: String },
+        optionFour: { type: String },
+      },
       audioFile: {
-        type: String,
+        type: Buffer,
         required: false,
         trim: true,
       },
       uploadFile: {
-        type: String,
+        type: Buffer,
         required: false,
       },
       status: {
         type: String,
-        required: true,
+        required: false,
         trim: true,
       },
       createdDate: {
         type: Date,
-        required: true,
+        required: false,
         
       },
       createdBy: {
@@ -85,25 +78,25 @@ const assignmentSchema = new Schema<IAssignmentCreate>(
       },
       level: {
         type: String,
-        required: true,
+        required: false,
         trim: true,
       },
       courses: {
         type: String,
-        required: true,
+        required: false,
         trim: true,
       },
       assignedDate: {
         type: Date,
-        required: true,
+        required: false,
       },
       dueDate: {
         type: Date,
-        required: true,
+        required: false,
       },
     },
     {
-      timestamps: true,
+      timestamps: false,
     }
   );
   
@@ -122,19 +115,34 @@ const assignmentSchema = new Schema<IAssignmentCreate>(
       ]),
       name: z.string(),
     }),
-    chooseType: z.boolean(),
+    chooseType: z.string(),
     trueorfalseType: z.boolean(),
     question: z.string(),
-    hasOptions: z.boolean(),
+    hasOptions: z.boolean().optional(),
     options: z.object({
       optionOne: z.string().optional(),
       optionTwo: z.string().optional(),
       optionThree: z.string().optional(),
       optionFour: z.string().optional(),
     }),
-    audioFile: z.string().nullable().optional(),
-    uploadFile: z.string().nullable().optional(),
-    status: z.string(),
+    audioFile: z
+    .union([z.string().nullable(), z.instanceof(Buffer)])
+    .optional()
+    .refine(
+      (val) => val === null || typeof val === "string" || Buffer.isBuffer(val),
+      {
+        message: "audioFile must be a Buffer, a base64 string, or null",
+      }
+    ),
+    uploadFile: z
+    .union([z.string().nullable(), z.instanceof(Buffer)])
+    .optional()
+    .refine(
+      (val) => val === null || typeof val === "string" || Buffer.isBuffer(val),
+      {
+        message: "uploadFile must be a Buffer, a base64 string, or null",
+      }
+    ),    status: z.string(),
     createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
       message: assignemntMessages.INVALID_DATE_FORMAT,
     }).transform((val) => new Date(val)),

@@ -1,27 +1,58 @@
 import { Server, ServerRoute } from "@hapi/hapi";
-import handler from "./handler"
+import Inert from "@hapi/inert";
+import handler from "./handler";
 
 const register = async (server: Server): Promise<void> => {
+  await server.register(Inert);
+
   const routes: ServerRoute[] = [
     {
       method: "POST",
       path: "/assignments",
       options: {
         handler: handler.createAssignment,
-        description: "Fetch all assignments",
+        description: "Create an assignment",
         tags: ["api", "student"],
-        auth: {
-          strategies: ["jwt"],
+        payload: {
+          output: "stream",
+          parse: true,
+          maxBytes: 10 * 1024 * 1024,
+          multipart: true,
+          allow: "multipart/form-data",
         },
       },
     },
-   
-  ];
+    {
+      method: "GET",
+      path: "/allAssignment",
+      options: {
+        handler: handler.getAllAssignment,
+        description: "Get all assignments",
+        tags: ["api", "assignment"],
+        // auth: {
+        //   strategies: ["jwt"], // Assuming you want authenticate
+        // d access
+        // },
+      },
+    },
 
+//  {
+//       method: "PUT",
+//       path: "/assignments/{studentID}",
+//       options: {
+//        handler: handler.updateAssignment,
+//        description: assignemntMessages.UPDATE,
+//        tags: ["api", "assignment"],
+//       //  auth: {
+//       //   strategies: ["jwt"],
+//       // },
+//     },  
+//     },
+  ];
   server.route(routes);
 };
-
 export = {
   name: "api-assignment",
+  version: "1.0.0",
   register,
 };

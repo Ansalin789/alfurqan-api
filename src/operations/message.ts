@@ -125,6 +125,5 @@ export const createTeacherMessageList = async (
   } catch (error) {
     console.error("Error fetching messages for teacher:", error);
     throw new Error("Failed to fetch messages for the teacher");
-  }
+  }
 };
-
