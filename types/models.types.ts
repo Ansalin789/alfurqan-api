@@ -621,6 +621,7 @@ export interface CreatePaymentDetails{
 }
 
 export interface IAssignment  extends Document{
+  studentId: string;
   assignmentName: string;
   assignedTeacher: string;
   assignmentType: {
@@ -651,9 +652,13 @@ export interface IAssignment  extends Document{
   courses: string;
   assignedDate: Date;
   dueDate: Date;
+  answer: string;
+  answerValidation: string;
+
 }
 
 export interface IAssignmentCreate {
+  studentId: string;
   assignmentName: string;
   assignedTeacher: string;
   assignmentType: { 
@@ -684,6 +689,8 @@ export interface IAssignmentCreate {
   courses: string;
   assignedDate: Date;
   dueDate: Date;
+  answer: string;
+  answerValidation: string;
 }
 
 
