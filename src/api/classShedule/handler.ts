@@ -6,7 +6,7 @@ import { ClassSchedulesMessages } from "../../config/messages";
 import { isNil, result } from "lodash";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
-import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent} from "../../operations/classschedule";
+import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher} from "../../operations/classschedule";
 import { GetAllRecordsParams } from "../../shared/enum";
 
 const createInputValidation = z.object({
@@ -28,6 +28,7 @@ const createInputValidation = z.object({
 const getAllClassSheduleInput = z.object({
   query: zodGetAllRecordsQuerySchema.pick({
     studentId:true,
+    teacherId:true,
     searchText: true,
     sortBy: true,
     sortOrder: true,
@@ -65,10 +66,6 @@ export default {
    const startTimeValues = payload.startTime?.map((time: { value: string; label: string }) => time.value);
    const endTimeValues = payload.endTime?.map((time: { value: string; label: string }) => time.value);
 
-   console.log("classDayValues>>",classDayValues);
-   console.log("startTimeValues>>",startTimeValues);
-   console.log("endTimeValues>>",endTimeValues);
-
    return await updateStudentClassSchedule(String(req.params.studentId),{ 
     teacher :{
       teacherName: payload.teacher?.teacherName || "",
@@ -87,6 +84,62 @@ export default {
      });
   }
 ,
+
+
+ async getAllClassSchedule(req: Request, h: ResponseToolkit) {
+    try {
+      // Explicitly parse and validate the query using zod
+      const parsedQuery = createInputValidation.parse({
+        query: {
+          ...req.query,
+          filterValues: req.query?.filterValues
+            ? JSON.parse(req.query.filterValues)
+            : {},
+        },
+      });
+
+      // Get the validated query (parsedQuery.query will have the validated data)
+      const query = parsedQuery.query;
+
+      // Fetch records from the database using the validated query
+      const academicCoaches = await getAllAcademicCoach(query);
+      return academicCoaches;
+    } catch (error) {
+      // Return a 400 error if validation fails
+      return h.response({ error: "Invalid query parameters" }).code(400);
+    }
+  },
+  
+  async getAcademicCoachId(req: Request, h: ResponseToolkit) {
+    console.log("id>>",req.params.academicCoachId);
+    const result = await getAcademicCoachId(String(req.params.academicCoachId));
+  // console.log("id>>",req.params.academicCoachId)
+    if (isNil(result)) {
+      return notFound(meetingSchedulesMessages.BYID);
+    }
+  
+    return result;
+  },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 async getClassesForStudent(req: Request, h: ResponseToolkit) {
   try {
@@ -109,6 +162,29 @@ async getClassesForStudent(req: Request, h: ResponseToolkit) {
 }
 ,
 
+
+
+
+async getClassesForTeacher(req: Request, h: ResponseToolkit) {
+  try {
+    // Parse and validate the query object
+    const { query } = getAllClassSheduleInput.parse({
+      query: {
+        ...req.query,
+        filterValues: req.query?.filterValues
+          ? JSON.parse(req.query.filterValues as string)
+          : {},
+      },
+    });
+
+    // ✅ Correctly call the database function (not the handler itself)
+    return await getClassesForTeacher(query); // Call the actual function fetching data
+  } catch (error) {
+    console.error("Error in getClassesForTeacher handler:", error);
+    throw error; // Handle the error appropriately
+  }
+}
+,
 
 
 async getAllClassShedule(req: Request, h: ResponseToolkit) {

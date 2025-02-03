@@ -287,9 +287,6 @@ export const updateClassscheduleById = async (
   ).lean();
 };
 
-
-
-
 // Function implementation:
 export const getClassesForStudent = async (
   params: GetAllRecordsParams
@@ -323,7 +320,37 @@ export const getClassesForStudent = async (
   }
 };
 
+export const getClassesForTeacher = async (
+  params: GetAllRecordsParams
+): Promise<{ totalCount: number; classSchedule: IClassSchedule[] }> => {
+  const { teacherId, sortBy = "_id", sortOrder = "asc", offset = 1, limit = 10 } = params;
 
+  if (!teacherId) {
+    throw new Error("Teacher ID is required");
+  }
+  // Query filtering for studentId
+  const query: any = { "teacher.teacherId": teacherId };
+  console.log(">>",query)
+
+  // Sorting options
+  const sortOptions: any = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
+
+  try {
+    // Pagination calculations
+    const skip = Math.max(0, (Number(offset) - 1) * Number(limit));
+
+    // Execute queries
+    const [classSchedule, totalCount] = await Promise.all([
+      ClassScheduleModel.find(query).sort(sortOptions).skip(skip).limit(Number(limit)).exec(),
+      ClassScheduleModel.countDocuments(query).exec(),
+    ]);
+
+    return { totalCount, classSchedule };
+  } catch (error) {
+    console.error("Error fetching classes for student:", error);
+    throw new Error("Failed to fetch classes for the student");
+  }
+};
 
 
 
