@@ -77,6 +77,7 @@ export const updateStudentClassSchedule = async (
 
       // Generate class dates within the range
       const classDates = getDatesForWeekdays(new Date(startDate), new Date(endDate), dayIndex);
+      const meetingId = `alfregularclass-${studentDetails?._id}`;
 
       for (const classDate of classDates) {
         const newClassSchedule = new ClassScheduleModel({
@@ -91,6 +92,7 @@ export const updateStudentClassSchedule = async (
             teacherName: teacherDetails?.userName,
             teacherEmail: teacherDetails?.email
           },
+          classLink:meetingId, 
           classDay: day,
           startTime: start,
           endTime: end,
@@ -229,11 +231,11 @@ async function createEvent(newClassSchedule: any): Promise<void> {
           content: 'Discuss project updates and next steps.',
       },
       start: {
-          dateTime: newClassSchedule.startDate.toString(),
+          dateTime: new Date(newClassSchedule.startDate).toISOString(),
           timeZone: 'Asia/Kolkata',
       },
       end: {
-          dateTime: newClassSchedule.endDate.toString(),
+          dateTime: new Date(newClassSchedule.endDate).toISOString(),
           timeZone: 'Asia/Kolkata',
       },
       location: {
@@ -263,6 +265,8 @@ async function createEvent(newClassSchedule: any): Promise<void> {
   try {
       const userId = 'tech@alfurqan.academy';
       const response = await client.api(`/users/${userId}/calendar/events`).post(event);
+      console.log('Event created successfully:', response.id);
+
       console.log('Event created successfully:', response.id);
   } catch (error: any) {
       console.error('Error creating event:', error);
