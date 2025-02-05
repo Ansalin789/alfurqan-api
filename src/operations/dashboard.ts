@@ -109,123 +109,60 @@ export const dashboardWidgetStudentCounts = async (studentId: string): Promise<{
     totalhours: number;
     totalearnings: number;
   }> => {
-    try {      
-    //  const count = await classShedule.countDocuments( {'teacher.teacherId': teacherId }).exec();
-    //  const students = await classShedule.distinct('student.studentId', { 'teacher.teacherId': teacherId }).exec();
-
-      // console.log("students",students.length);
-    
-const totalhours = await   usershiftschedule.aggregate([
-  { $match: { 'teacher.teacherId': teacherId  } },
-  { 
-    $project: { 
-      totalWorkingHours: { 
-        $multiply: [ 
-          { 
-            $subtract: [ 
-              { 
-                $toDate: { 
-                  $concat: [ 
-                    { $substr: ["$startdate", 0, 10] }, 
-                    " ", 
-                    "$fromtime" 
-                  ] 
-                } 
-              }, 
-              { 
-                $toDate: { 
-                  $concat: [ 
-                    { $substr: ["$startdate", 0, 10] }, 
-                    " ", 
-                    "$totime" 
-                  ] 
-                } 
-              }
-            ] 
-          },
-          { 
-            $divide: [ 
-              { $subtract: ["$enddate", "$startdate"] }, 
-              86400000 
-            ] 
-          }
-        ] 
-      }
-    }
-  },
-  
-  { $group: { _id: null, totalHours: { $sum: "$duration" } } }
-]).exec();
- console.log(totalhours)
-
-
+    try {
       // Execute all count queries in parallel
-      const [
-        classesCount,
-        studentsCount,
-        hoursCount,
-        earnings
-      ] = await Promise.all([
+      const [classesCount, studentsCount, hoursCount, earnings] = await Promise.all([
         // Count total classes conducted by the teacher
-        classShedule.countDocuments({ 'teacher.teacherId': teacherId }).exec(),
+        classShedule.countDocuments({ "teacher.teacherId": teacherId }).exec(),
   
         // Count unique students taught by the teacher
-     classShedule.distinct('student.studentId', { 'teacher.teacherId': teacherId}).then(students => {
-          return students.length; // Return the length of unique students
+        classShedule.distinct("student.studentId", { "teacher.teacherId": teacherId }).then(
+          (students) => students.length
+        ),
+  
+        // Find total hours taught by the teacher
+        usershiftschedule.findOne({ teacherId: teacherId }).then((totalhours) => {
+          if (!totalhours) return 0;
+  
+          const fromTime = totalhours.fromtime; // e.g., "09:00"
+          const toTime = totalhours.totime; // e.g., "12:30"
+  
+          // Convert time string to minutes
+          const timeToMinutes = (timeStr: string) => {
+            const [hours, minutes] = timeStr.split(":").map(Number);
+            return hours * 60 + minutes;
+          };
+  
+          // Calculate work hours per day
+          const workMinutes = timeToMinutes(toTime) - timeToMinutes(fromTime);
+          let workHours = workMinutes / 60;
+  
+          console.log(`Total Work Hours: ${workHours} hours`);
+  
+          // Calculate total working days
+          const fromDate = new Date(totalhours.startdate);
+          const toDate = new Date(totalhours.enddate);
+  
+          const totalDays =
+            Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  
+          console.log("Total Working Days:", totalDays);
+  
+          return workHours * totalDays; // Return total working hours
         }),
   
-        // Calculate total hours taught by the teacher (sum of 'duration' field)
-        usershiftschedule.aggregate([
-          { $match: { 'teacher.teacherId': teacherId  } },
-          {
-            $project: { 
-              totalWorkingHours: { 
-                $multiply: [ 
-                  { 
-                    $subtract: [ 
-                      { 
-                        $toDate: { 
-                          $concat: [ 
-                            { $substr: ["$startdate", 0, 10] }, 
-                            " ", 
-                            "$fromtime" 
-                          ] 
-                        } 
-                      }, 
-                      { 
-                        $toDate: { 
-                          $concat: [ 
-                            { $substr: ["$startdate", 0, 10] }, 
-                            " ", 
-                            "$totime" 
-                          ] 
-                        } 
-                      }
-                    ] 
-                  },
-                  { 
-                    $divide: [ 
-                      { $subtract: ["$enddate", "$startdate"] }, 
-                      86400000 
-                    ] 
-                  }
-                ] 
-              }
-            }
-          },
-          { $group: { _id: null, totalHours: { $sum: "$duration" } } }
-        ]).exec(),
-  
         // Calculate total earnings (sum of 'earnings' field)
-        classShedule.aggregate([
-          { $match: { teacherId: teacherId } },
-          { $group: { _id: null, totalEarnings: { $sum: "$earnings" } } }
-        ]).exec()
+        classShedule
+          .aggregate([
+            { $match: { teacherId: teacherId } },
+            { $group: { _id: null, totalEarnings: { $sum: "$earnings" } } },
+          ])
+          .then((result) => (result.length > 0 ? result[0].totalEarnings : 0)),
       ]);
   
       // Ensure valid values from aggregation (if no result, set to 0)
-      const totalHoursValue = hoursCount?.[0]?.totalHours || 0;
-      const totalEarningsValue = earnings?.[0]?.totalEarnings || 0;
+      const totalHoursValue = hoursCount || 0;
+      const totalEarningsValue = earnings || 0;
   
       // Log results for debugging purposes
       console.log("totalclasses:", classesCount);
@@ -234,10 +171,10 @@ const totalhours = await   usershiftschedule.aggregate([
       console.log("totalearnings:", totalEarningsValue);
   
       return {
-        totalclasses: classesCount, // Total number of classes
-        totalstudents: studentsCount, // Total number of unique students
-        totalhours: totalHoursValue, // Total hours taught by the teacher
-        totalearnings: totalEarningsValue || 0 // Total earnings (default to 0 if no earnings)
+        totalclasses: classesCount,
+        totalstudents: studentsCount,
+        totalhours: totalHoursValue,
+        totalearnings: totalEarningsValue,
       };
     } catch (error) {
       console.error("Error calculating teacher dashboard data:", error);

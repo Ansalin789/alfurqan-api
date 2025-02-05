@@ -39,9 +39,9 @@ const register = async (server: Server): Promise<void> => {
          handler: handler.getAllClassShedule,
          description: ClassSchedulesMessages.LIST,
          tags: ["api", "classShedule"],
-         auth: {
-          strategies: ["jwt"],
-        },
+        //  auth: {
+        //   strategies: ["jwt"],
+        // },
       },
       },
 
