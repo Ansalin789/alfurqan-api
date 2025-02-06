@@ -460,6 +460,7 @@ export interface IClassSchedule extends Document{
   endTime: any;
   scheduleStatus: string,
   scheduledStartDate: Date,
+  classStatus:string,
   classType: string,
   classLink: string,
   isScheduledMeeting: boolean,
@@ -487,6 +488,7 @@ export interface IClassScheduleCreate{
     teacherEmail: string;
   },
   classDay: string[];
+  classStatus:string;
   package: string;
   preferedTeacher: string;
   course: string;
@@ -859,20 +861,40 @@ export interface IFeedbackCreate {
   classDay?: string[];
   preferedTeacher: string;
   feedbackmessage?: string;
+  
   course: {
     courseId?: string;
     courseName: string;
   };
-  ratings: number;
+
   startDate: Date;
   endDate: Date;
   startTime?: string[];
   endTime?: string[];
+
+  // ✅ NEW: Student Level
+  level: number;
+
+  // ✅ NEW: Ratings for Teacher Assessment
+  teacherRatings: {
+    listeningAbility?: number;
+    readingAbility? : number;
+    overallPerformance?: number;
+  };
+
+  // ✅ NEW: Student-Specific Ratings
+  studentsRating: {
+    classUnderstanding?: number;
+    engagement?: number;
+    homeworkCompletion?: number;
+  };
+
   createdDate: Date;
   createdBy: string;
   lastUpdatedDate: Date;
   lastUpdatedBy?: string;
 }
+
 
 export interface IFeedback  extends Document{
   student: {
@@ -880,26 +902,45 @@ export interface IFeedback  extends Document{
     studentFirstName: string;
     studentLastName: string;
     studentEmail: string;
-  },
-  teacher:{
-    teacherId: string;
-    teacherName: string;
-    teacherEmail: string;
-  },
-  classDay: any;
+  };
+  teacher: {
+    teacherId?: string;
+    teacherName?: string;
+    teacherEmail?: string;
+  };
+  classDay?: string[];
   preferedTeacher: string;
-  feedbackmessage:string;
-  course: string;
-  ratings:number;
+  feedbackmessage?: string;
+  
+  course: {
+    courseId?: string;
+    courseName: string;
+  };
+
   startDate: Date;
   endDate: Date;
-  startTime: any;
-  endTime: any;
-  scheduleStatus: string,
-  scheduledStartDate: Date,
-  classType: string,
-  createdDate: Date,
-  createdBy: string,
-  lastUpdatedDate: Date,
-  lastUpdatedBy: string
+  startTime?: string[];
+  endTime?: string[];
+
+  // ✅ NEW: Student Level
+  level: number;
+
+  // ✅ NEW: Ratings for Teacher Assessment
+  teacherRatings: {
+    listeningAbility?: number;
+    readingAbility? : number;
+    overallPerformance?: number;
+  };
+
+  // ✅ NEW: Student-Specific Ratings
+  studentsRating: {
+    classUnderstanding?: number;
+    engagement?: number;
+    homeworkCompletion?: number;
+  };
+
+  createdDate: Date;
+  createdBy: string;
+  lastUpdatedDate: Date;
+  lastUpdatedBy?: string;
 }
