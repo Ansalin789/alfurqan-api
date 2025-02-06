@@ -32,7 +32,7 @@ export default {
       const result = await createFeedback({
         student: payload.student!,
         teacher: payload.teacher || {},
-        classDay: payload.classDay || [],
+        classDay: payload.classDay || "",
         preferedTeacher: payload.preferedTeacher!,
         course: payload.course!,
 
@@ -46,8 +46,8 @@ export default {
 
         startDate: new Date(payload.startDate!),
         endDate: new Date(payload.endDate!),
-        startTime: payload.startTime || [],
-        endTime: payload.endTime || [],
+        startTime: payload.startTime || "",
+        endTime: payload.endTime || "",
         feedbackmessage: payload.feedbackmessage || "",
         createdDate: new Date(),
         createdBy: payload.createdBy || "System",
@@ -77,7 +77,7 @@ export default {
       const result = await createTeacherFeedback({
         student: payload.student!,
         teacher: payload.teacher || {},
-        classDay: payload.classDay || [],
+        classDay: payload.classDay || '',
         preferedTeacher: payload.preferedTeacher!,
         course: payload.course!,
 
@@ -95,8 +95,8 @@ export default {
         endDate: payload.endDate ? new Date(payload.endDate) : new Date(),
 
         // Handle times, setting empty arrays if they are missing
-        startTime: payload.startTime || [],
-        endTime: payload.endTime || [],
+        startTime: payload.startTime || '',
+        endTime: payload.endTime || '',
 
         // Feedback message with fallback if missing
         feedbackmessage: payload.feedbackmessage || "",

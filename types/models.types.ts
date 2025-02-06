@@ -858,7 +858,7 @@ export interface IFeedbackCreate {
     teacherName?: string;
     teacherEmail?: string;
   };
-  classDay?: string[];
+  classDay?: string;
   preferedTeacher: string;
   feedbackmessage?: string;
   
@@ -869,8 +869,8 @@ export interface IFeedbackCreate {
 
   startDate: Date;
   endDate: Date;
-  startTime?: string[];
-  endTime?: string[];
+  startTime?: string;
+  endTime?: string;
 
   // ✅ NEW: Student Level
   level: number;
