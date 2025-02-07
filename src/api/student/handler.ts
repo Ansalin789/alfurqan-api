@@ -100,6 +100,7 @@ export default {
   lastName: payload.lastName,
   email: payload.email,
   phoneNumber: payload.phoneNumber,
+  city: payload.city,
   country: payload.country,
   countryCode: payload.countryCode,
   learningInterest: payload.learningInterest || "defaultLearningInterest" ,

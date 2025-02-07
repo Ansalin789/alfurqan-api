@@ -11,9 +11,9 @@ const register = async (server: Server): Promise<void> => {
       options: {
         handler: createPaymentIntent,  
         tags: ["api", "payment"],  
-        auth: {
-          strategies: ["jwt"],
-        },
+        // auth: {
+        //   strategies: ["jwt"],
+        // },
       },
     },
     {
@@ -22,9 +22,9 @@ const register = async (server: Server): Promise<void> => {
       options: {
         handler: createStudentPaymentIntent,  
         tags: ["api", "payment"],  
-        auth: {
-          strategies: ["jwt"],
-        },
+        // auth: {
+        //   strategies: ["jwt"],
+        // },
       },
     },
   ];

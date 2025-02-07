@@ -39,7 +39,7 @@ export const createStudent = async (
             error: badRequest('Evaluation class is not allowed to current date. Select another date'),
         };
     }
-
+    console.log("newUser>>>>", newUser.preferredToTime)
     const shiftScheduleRecord = await UserShiftSchedule.find({
       role: "ACADEMICCOACH",
     });
@@ -132,6 +132,7 @@ console.log("newUser academicCoach>>>>",newUser);
             studentId: savedUser._id,
             name: savedUser.firstName + ' ' + savedUser.lastName,
             email: savedUser.email
+
           },
           subject: "Student Evaluation",
           meetingLocation: 'Zoom',

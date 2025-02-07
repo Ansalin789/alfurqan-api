@@ -18,6 +18,24 @@ student: {
     studentPhone: {
         type: Number,
         required: true,
+    },
+    course:{
+        type: String,
+        required: true,
+    },
+    package:
+    {
+        type: String,
+        required: true,
+    },
+    city:{
+        type: String,
+        required: true,
+    },
+    country:
+    {
+        type: String,
+        required: true,
     }
 },
 username: {
@@ -72,6 +90,10 @@ export const zodAlStudentSchema = z.object({
       studentId: z.string().optional(),
       studentEmail: z.string(),
       studentPhone: z.number(),
+      course: z.string(),
+      package: z.string(),
+      city: z.string(),
+      country: z.string()
     }),
     username: z.string().min(3),
     password: z.string().min(8),

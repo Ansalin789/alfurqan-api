@@ -1,5 +1,4 @@
 import { model, Schema } from "mongoose";
-
 import { IEvaluation } from "../../types/models.types";
 import { z } from "zod";
 import { appStatus, commonMessages, evaluationStatus, learningInterest, preferredTeacher, referenceSource } from "../config/messages";
@@ -32,7 +31,7 @@ academicCoachId: {
     },
     studentCity:{
         type: String,
-        required: false,
+        required: true,
     },
     studentCountry: {
         type: String,
@@ -337,7 +336,7 @@ export const zodEvaluationSchema = z.object({
         studentLastName: z.string(),
         studentEmail: z.string(),
         studentPhone: z.number(),
-        studentCity: z.string().optional(),
+        studentCity: z.string(),
         studentCountry: z.string(),
         studentCountryCode: z.string(),
         learningInterest: z.enum([learningInterest.QURAN, learningInterest.ISLAMIC, learningInterest.ARABIC]),

@@ -173,7 +173,11 @@ export interface IMeetingSchedule extends Document {
     studentId: string;
     name: string;
     email: string;
+    city: string;
+    country: string;
   };
+  trialId: string;
+  classStatus: string;
   subject: string;
   meetingLocation: string;
   course: {
@@ -215,7 +219,11 @@ export interface IMeetingScheduleCreate {
     studentId: string;
     name: string;
     email: string;
+    city: string;
+    country: string;
   };
+  trialId: string;
+  classStatus: string;
   subject: string;
   meetingLocation: string;
   course: {
@@ -595,6 +603,10 @@ export interface IAlStudents extends Document{
     studentId: string;
     studentEmail: string;
     studentPhone: Number;
+    course: string;
+    package: string;
+    city:string;
+    country: string;
   };
   username: string,
   password: string;

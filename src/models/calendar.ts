@@ -47,7 +47,23 @@ const meetingScheduleSchema = new Schema<IMeetingSchedule>(
       email: {
         type: String,
         required: false,
+      },
+      city: {
+        type: String,
+        required: false,
+      },
+      country:{
+        type: String,
+        required: false,
       }
+    },
+    trialId:{
+      type: String,
+      required: false,
+    },
+    classStatus:{
+      type: String,
+      required: false,
     },
     subject: {
       type: String,
@@ -150,47 +166,30 @@ const meetingScheduleSchema = new Schema<IMeetingSchedule>(
 
 
 export const scheduleSchema = z.object({
-  tenantId: z.string(),
-  organizer: z.object({
-    userId: z.string(),
-    name: z.string(),
-    email: z.string().email()
+  academicCoach: z.object({
+    academicCoachId: z.string().optional(),
+    name: z.string().optional(),
+    email: z.string().email().optional()
   }),
-  candidates: z.array(
-    z.object({
-      id: z.string(),
-      candidateId: z.number(),
-      candidateName: z.string(),
-      jobProfilingCandidateDataId: z.string().optional(),
-      email: z.string()
-    })
-  ).nonempty(),
-  users: z.array(
-    z.object({
-      userId: z.string().optional(),
-      userName: z.string().optional(),
-      email: z.string().email().optional()
-    })
-  ).optional(),
+
+  student: z.object({
+      studentId: z.string().optional(),
+      name: z.string().optional(),
+      email: z.string().email().optional(),
+      city: z.string().optional(),
+      country: z.string().optional()
+    }),
+  trialId: z.string().optional(),
   subject: z.string(),
-  jobId: z.string(),
-  jobName: z.string(),
   meetingLocation: z.string().optional(),
-  interviewRoundType: z.string().optional(),
-  isAssessment: z.boolean().default(false),
-  assessmentType: z.string().optional(),
-  assessmentTenantSettingId: z.string().optional(),
-  assessmentLink: z.string().optional(),
-  isInterviewScheduled: z.boolean().default(false),
-  isAiVideoEnabled: z.boolean().default(false),
-  keyFocusedArea: z.array(z.string()).default([]),
-  additionalDetails: z.string().optional(),
+  course: z.object({
+    courseId: z.string().optional(),
+    courseName:z.string().optional()
+  }),
+  classType: z.string().optional(),
+  meetingType : z.string().optional(),
+  meetingLink: z.string().optional(),
   isScheduledMeeting: z.boolean(),
-  tenantSettingId: z.string().optional(),
-  externalSourceType: z.string().optional(),
-  externalMeetingReferenceId: z.string().optional(),
-  meetingStatus: z.string().optional(),
-  candidateResponse: z.string().optional(),
   scheduledStartDate: z.string().transform((val) => new Date(val)).optional(),
   scheduledEndDate: z.string().transform((val) => new Date(val)).optional(),
   scheduledFrom: z.string().optional(),
@@ -198,16 +197,15 @@ export const scheduleSchema = z.object({
   timeZone: z.string().optional(),
   remainderInMinutes: z.number().optional(),
   description: z.string().optional(),
-  meetingLink: z.string().optional().nullable(),
-  createdBy: z.string(),
-  lastUpdatedBy: z.string().optional(),
-  referenceId: z.string(),
-  referenceType: z.string(),
-  remarks: z.string(),
+  meetingStatus: z.string().optional(),
+  studentResponse: z.string().optional(),
   status: z.string(z.enum([
     appStatus.ACTIVE,
     appStatus.IN_ACTIVE,
   ])).default(appStatus.ACTIVE),
+  createdBy: z.string(),
+  lastUpdatedBy: z.string().optional(),
+ 
 });
 
 export default mongoose.model<IMeetingSchedule>(
