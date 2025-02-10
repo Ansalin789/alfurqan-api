@@ -2,6 +2,7 @@ import { z } from "zod";
 import { model, Schema } from "mongoose";
 import { IAssignmentCreate } from "../../types/models.types";
 import { assigmentType, assignemntMessages } from "../config/messages";
+import { required } from "joi";
 
 
 
@@ -42,10 +43,11 @@ const assignmentSchema = new Schema<IAssignmentCreate>(
         required: false,
       },
       options: {
-        optionOne: { type: String },
-        optionTwo: { type: String },
-        optionThree: { type: String },
-        optionFour: { type: String },
+        
+        optionOne: { type: String, required: false, },
+        optionTwo: { type: String, required: false, },
+        optionThree: { type: String, required: false, },
+        optionFour: { type: String, required: false, },
       },
       audioFile: {
         type: Buffer,
@@ -106,6 +108,10 @@ const assignmentSchema = new Schema<IAssignmentCreate>(
         type: String,
         required: false,
       },
+      assignmentStatus:{
+        type: String,
+        required: false,
+      }
     },
     {
       timestamps: false,
