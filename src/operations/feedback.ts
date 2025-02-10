@@ -8,7 +8,7 @@ export const createFeedback = async (
     const newFeedback = new feedback({
       student: payload.student!,
         teacher: payload.teacher || {},
-        classDay: payload.classDay || [],
+        classDay: payload.classDay || "",
         preferedTeacher: payload.preferedTeacher!,
         course: payload.course!,
         
@@ -20,8 +20,8 @@ export const createFeedback = async (
         },
         startDate: new Date(payload.startDate!),
         endDate: new Date(payload.endDate!),
-        startTime: payload.startTime || [],
-        endTime: payload.endTime || [],
+        startTime: payload.startTime || "",
+        endTime: payload.endTime || "",
         feedbackmessage: payload.feedbackmessage || "",
         createdDate: new Date(),
         createdBy: payload.createdBy || "System",

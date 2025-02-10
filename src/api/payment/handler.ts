@@ -55,7 +55,7 @@ if(paymentIntentResponse){
 
 
  async function createStudentPortal(updatedEvaluation:any) {
- 
+ console.log("updatedEvaluation>>", updatedEvaluation);
     const specialChars = '@#$%&*!';
     const randomNum = Math.floor(Math.random() * 1000); // Random number between 0-999
     const randomSpecial = specialChars[Math.floor(Math.random() * specialChars.length)]; // Random special character
@@ -70,7 +70,11 @@ if(paymentIntentResponse){
     student : {
       studentId : updatedEvaluation.student.studentId,
       studentEmail: updatedEvaluation.student.studentEmail,
-      studentPhone: updatedEvaluation.student.studentPhone
+      studentPhone: updatedEvaluation.student.studentPhone,
+      course: updatedEvaluation.student.learningInterest,
+      package: updatedEvaluation.subscription.subscriptionName,
+      city: updatedEvaluation.student.studentCity,
+      country: updatedEvaluation.student.studentCountry
     },
     username: updatedEvaluation.student.studentFirstName,
     password: password,
@@ -83,6 +87,8 @@ if(paymentIntentResponse){
    )
 
 const saveStudent = createStudentPortal.save()
+console.log("Student portal",saveStudent )
+
   return saveStudent;
 }
 

@@ -3,6 +3,7 @@ import { IallAssignment, IAssignmentCreate } from "../../types/models.types";
 import assignment from "../models/assignments";
 import userModel from "../models/users";
 import alstudents from "../models/alstudents";
+import { Types } from "mongoose";
 
 /**
  * Creates a new assignment record in the database.
@@ -199,3 +200,13 @@ export const getAllAssignment = async (query: { assignmentType: { type: string; 
     throw new Error("Failed to fetch assignments.");
   }
 };
+
+
+
+  export const getAssignmentsById = async (
+    id: string
+  ): Promise<IAssignment | null> => {
+    return assignment.findOne({
+      _id: new Types.ObjectId(id),
+    }).lean();
+  };

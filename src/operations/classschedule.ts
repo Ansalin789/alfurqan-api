@@ -96,14 +96,14 @@ export const updateStudentClassSchedule = async (
           classDay: day,
           startTime: start,
           endTime: end,
-          package: payload.package,
+          course:studentDetails?.student?.course,
+          package: studentDetails?.student?.package,
           startDate: classDate,
           endDate: classDate,
           createdBy: new Date(),
           status: "Active",
           scheduleStatus: "Active",
           totalHourse: payload.totalHourse,
-          course: payload.course,
           preferedTeacher: payload.preferedTeacher,
         });
 

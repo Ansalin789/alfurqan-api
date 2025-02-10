@@ -114,6 +114,7 @@ console.log("subscriptonDetaails>>>>>>", subscriptonDetaails)
         studentLastName: createStudent.lastName,
         studentEmail: createStudent.email,
         studentPhone: createStudent.phoneNumber,
+        studentCity: createStudent.city,
         studentCountry: createStudent.country,
         studentCountryCode: createStudent.countryCode,
         learningInterest: createStudent.learningInterest,
@@ -218,28 +219,29 @@ console.log("createEvaluation>>>",createEvaluation)
 ): Promise<IEvaluation |  null> => {
 
 
-  const updateEvaluations = EvaluationModel.findOneAndUpdate(
+  let updateEvaluations = EvaluationModel.findOneAndUpdate(
       { _id: new Types.ObjectId(id) },
      { $set: payload },
       { new: true }
     ).lean();
-//console.log("updateEvaluations>>>",updateEvaluations);
+
+    console.log("updateEvaluations>>>", updateEvaluations);
+
     const shiftScheduleRecord = await UserShiftSchedule.find({
       role: 'TEACHER'
 }).exec();
 let teacherDetails: any = null;
 if (shiftScheduleRecord.length > 0) {
-        
   for (const shiftSchedule of shiftScheduleRecord) { // Use for...of instead of forEach
        const meetingAvailability = await MeetingSchedule.findOne({
-          teacherId: shiftSchedule.teacherId,
+        teacherId: shiftSchedule.teacherId,
        }) 
 
        if(!meetingAvailability){
         teacherDetails = {
         teacherId: shiftSchedule.teacherId,
         name: shiftSchedule.name,
-       role: shiftSchedule.role,
+        role: shiftSchedule.role,
         email: shiftSchedule.email
     };
      }
@@ -261,8 +263,9 @@ if (shiftScheduleRecord.length > 0) {
 const evaluation = await EvaluationModel.findOne({
  _id: new Types.ObjectId(id)
 }).exec();
-console.log("payload.trialClassStatus>>>", payload.trialClassStatus);
 
+console.log("evaluation>>>", evaluation);
+const updatedEvaluation = await updateEvaluations as IEvaluation; // Cast to expected type
 if(payload.trialClassStatus == "COMPLETED" && payload.studentStatus == "JOINED"){
   const emailTemplate = await EmailTemplate.findOne({
     templateKey: 'Invoice',
@@ -278,7 +281,7 @@ if(emailTemplate && payload.student && payload.subscription && evaluation ){
     .replace('<address>', payload.student.studentCity? payload.student.studentCity: " ").replace('<phonenumber>', payload.student.studentPhone.toString())
     .replace('<email>', payload.student.studentEmail ).replace('<plan>', payload.subscription.subscriptionName).replace('<coursename>', payload.student.learningInterest)
     .replace('<amount>', evaluation.planTotalPrice.toString()).replace('<adjustamount>', evaluation.planTotalPrice.toString()).replace('<subtotal>',evaluation.planTotalPrice.toString())
-    .replace('<total>',evaluation.planTotalPrice.toString()).replace('<paymentLink>',evaluation.paymentLink
+    .replace('<total>',evaluation.planTotalPrice.toString()).replace('<paymentLink>',updatedEvaluation.paymentLink
   );
    await sendEmailClient(emailTo, subject,htmlPart);
   const email = await sendEmailClient(emailTo, subject,htmlPart);
@@ -286,7 +289,6 @@ console.log("email>>>>",email);
 }
 }
 
-    const updatedEvaluation = await updateEvaluations as IEvaluation; // Cast to expected type
     console.log("updatedEvaluation>>>",updatedEvaluation);
     return updatedEvaluation;
    
@@ -323,20 +325,23 @@ console.log("emailTemplate>>>>",zoomMailTemplate);
         {
           academicCoach: {
           academicCoachId: null,
-         name: null,
+          name: null,
           role: null,
           email: null
           },
         teacher: {
-          teacherId: teacherDetails.id,
+          teacherId: teacherDetails.teacherId,
           name: teacherDetails.name,
           email: teacherDetails.email,
         },
         student: {
-          studentId: newEvaluation.student.id,
-          name: newEvaluation.student.firstName + ' ' + newEvaluation.student.lastName,
-         email: newEvaluation.student.email
+          studentId: newEvaluation.student.studentId,
+          name: newEvaluation.student.studentFirstName + ' ' + newEvaluation.student.studentLastName,
+          email: newEvaluation.student.email,
+          city : newEvaluation.student.studentCity,
+          country: newEvaluation.student.studentCountry
         },
+        trialId: newEvaluation._id,
         subject: "Student First class",
         meetingLocation: 'Zoom',
         course: {
@@ -514,41 +519,41 @@ export const updateStudentInvoice = async (
 
   console.log("updatedEvaluation>>>>>>>>>",updatedEvaluation);
   if(updatedEvaluation.invoiceStatus == "Completed" && updatedEvaluation.paymentStatus == "Paid"){
-    createStudentPortal(updatedEvaluation);
+  //  createStudentPortal(updatedEvaluation);
   }
 
   return updatedEvaluation
 }
 
- async function createStudentPortal(updatedEvaluation:any) {
+//  async function createStudentPortal(updatedEvaluation:any) {
  
-    const specialChars = '@#$%&*!';
-    const randomNum = Math.floor(Math.random() * 1000); // Random number between 0-999
-    const randomSpecial = specialChars[Math.floor(Math.random() * specialChars.length)]; // Random special character
+//     const specialChars = '@#$%&*!';
+//     const randomNum = Math.floor(Math.random() * 1000); // Random number between 0-999
+//     const randomSpecial = specialChars[Math.floor(Math.random() * specialChars.length)]; // Random special character
   
-    // Generate password
-    const firstThreeChars = updatedEvaluation.student.studentFirstName.substring(0, 3); // First 3 characters of the username
-    const reversedUsername = updatedEvaluation.student.studentFirstName.split('').reverse().join(''); // Reverse the username
+//     // Generate password
+//     const firstThreeChars = updatedEvaluation.student.studentFirstName.substring(0, 3); // First 3 characters of the username
+//     const reversedUsername = updatedEvaluation.student.studentFirstName.split('').reverse().join(''); // Reverse the username
   
-    const password = `${firstThreeChars}${randomSpecial}${randomNum}${reversedUsername}`;
+//     const password = `${firstThreeChars}${randomSpecial}${randomNum}${reversedUsername}`;
 
-  const createStudentPortal = await StudentPortModel.create({
-    student : {
-      studentId : updatedEvaluation.student.studentId,
-      studentEmail: updatedEvaluation.student.studentEmail,
-      studentPhone: updatedEvaluation.student.studentPhone
-    },
-    username: updatedEvaluation.student.studentFirstName,
-    password: password,
-    role: "Student",
-    status: "Active",
-    createdDate: new Date,
-    createdBy: updatedEvaluation.createdBy,
-    updatedDate: new Date
-  }
-   )
+//   const createStudentPortal = await StudentPortModel.create({
+//     student : {
+//       studentId : updatedEvaluation.student.studentId,
+//       studentEmail: updatedEvaluation.student.studentEmail,
+//       studentPhone: updatedEvaluation.student.studentPhone
+//     },
+//     username: updatedEvaluation.student.studentFirstName,
+//     password: password,
+//     role: "Student",
+//     status: "Active",
+//     createdDate: new Date,
+//     createdBy: updatedEvaluation.createdBy,
+//     updatedDate: new Date
+//   }
+//    )
 
-const saveStudent = createStudentPortal.save()
-  return saveStudent;
-}
+// const saveStudent = createStudentPortal.save()
+//   return saveStudent;
+// }
   

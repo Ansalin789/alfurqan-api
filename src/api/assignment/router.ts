@@ -17,7 +17,7 @@ const register = async (server: Server): Promise<void> => {
         payload: {
           output: "stream",
           parse: true,
-          maxBytes: 10 * 1024 * 1024,
+          maxBytes: 50 * 1024 * 1024,
           multipart: true,
           allow: "multipart/form-data",
         },
@@ -36,6 +36,19 @@ const register = async (server: Server): Promise<void> => {
         // },
       },
     },
+
+    {
+            method: "GET",
+            path: "/assignments/{assignmentsId}",
+            options: {
+             handler: handler.getAssignmentsById,
+             description: "Get assignment details",
+             tags: ["api", "assignment"],
+             auth: {
+              strategies: ["jwt"],
+            },
+          },
+          },
 
  {
       method: "PUT",

@@ -15,7 +15,7 @@ const FeedbackSchema = new Schema<IFeedbackCreate>(
       teacherName: { type: String, required: false },
       teacherEmail: { type: String, required: false },
     },
-    classDay: [{ type: String, required: false }],
+    classDay: { type: String, required: false },
     preferedTeacher: { type: String, required: true },
     course: {
       courseId: { type: String, required: false },
@@ -40,8 +40,8 @@ const FeedbackSchema = new Schema<IFeedbackCreate>(
 
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
-    startTime: [{ type: String, required: false }],
-    endTime: [{ type: String, required: false }],
+    startTime: { type: String, required: false },
+    endTime: { type: String, required: false },
     feedbackmessage: { type: String, required: false },
 
     createdDate: { type: Date, required: true, default: Date.now },
@@ -68,7 +68,7 @@ export const zodFeedbackSchema = z.object({
     teacherName: z.string().optional(),
     teacherEmail: z.string().optional(),
   }),
-  classDay: z.array(z.string()).optional(),
+  classDay: z.string().optional(),
   preferedTeacher: z.string(),
 
   level: z.number().optional(),
@@ -92,8 +92,8 @@ export const zodFeedbackSchema = z.object({
     })
     .transform((val) => new Date(val)),
 
-  startTime: z.array(z.string()).optional(),
-  endTime: z.array(z.string()).optional(),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
   feedbackmessage: z.string().optional(),
 
   teacherRatings: z.object({
