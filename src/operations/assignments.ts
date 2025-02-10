@@ -1,5 +1,5 @@
 import { badRequest } from "@hapi/boom";
-import { IallAssignment, IAssignmentCreate } from "../../types/models.types";
+import { IallAssignment, IAssignment, IAssignmentCreate } from "../../types/models.types";
 import assignment from "../models/assignments";
 import userModel from "../models/users";
 import alstudents from "../models/alstudents";
