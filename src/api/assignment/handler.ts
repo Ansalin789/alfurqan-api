@@ -1,7 +1,9 @@
 import { Request, ResponseToolkit } from "@hapi/hapi";
 import { z } from "zod";
-import { createAssignment, getAllAssignment, updateStudentAssignment } from "../../operations/assignments"; // Replace with your service logic
+import { createAssignment, getAllAssignment, getAssignmentsById, updateStudentAssignment } from "../../operations/assignments"; // Replace with your service logic
 import * as Stream from "stream";
+import { isNil } from "lodash";
+import { notFound } from "@hapi/boom";
 
 
 // Input Validations for student list
@@ -229,5 +231,17 @@ async updateAssignment(req: Request, h: ResponseToolkit) {
 
       return h.response({ error: error || "Invalid query parameters" }).code(400);
     }
-}
+},
+
+
+ async getAssignmentsById(req: Request, h: ResponseToolkit) {
+    const result = await getAssignmentsById(String(req.params.assignmentsId));
+  
+    if (isNil(result)) {
+      return notFound("Assignment not found");
+    }
+  
+    return result;
+  },
+
 }

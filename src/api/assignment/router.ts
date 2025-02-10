@@ -37,6 +37,19 @@ const register = async (server: Server): Promise<void> => {
       },
     },
 
+    {
+            method: "GET",
+            path: "/assignments/{assignmentsId}",
+            options: {
+             handler: handler.getAssignmentsById,
+             description: "Get assignment details",
+             tags: ["api", "assignment"],
+             auth: {
+              strategies: ["jwt"],
+            },
+          },
+          },
+
  {
       method: "PUT",
       path: "/assignments/{assinmentId}",
