@@ -32,5 +32,16 @@ export interface Config {
         microsoft_team_access_token_url :string;
         microsoft_team_cancel_url:string;
         microsoft_team_calender_update_event_url:string;
-      }
+      },
+
+      stripeKey: {
+        stripesecretkey:string;
+    },
+
+    zoomConfig:{
+        zoom_client_id:string;
+        zoom_client_secret:string;
+        zoom_account_id:string;
+    }
+   
 }

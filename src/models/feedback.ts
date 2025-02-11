@@ -1,0 +1,119 @@
+import mongoose, { Schema } from "mongoose";
+import { IFeedbackCreate } from "../../types/models.types";
+import { z } from "zod";
+
+const FeedbackSchema = new Schema<IFeedbackCreate>(
+  {
+    student: {
+      studentId: { type: String, required: true },
+      studentFirstName: { type: String, required: true },
+      studentLastName: { type: String, required: true },
+      studentEmail: { type: String, required: true },
+    },
+    teacher: {
+      teacherId: { type: String, required: false },
+      teacherName: { type: String, required: false },
+      teacherEmail: { type: String, required: false },
+    },
+    classDay: { type: String, required: false },
+    preferedTeacher: { type: String, required: true },
+    course: {
+      courseId: { type: String, required: false },
+      courseName: { type: String, required: false },
+    },
+
+    // ✅ Ratings related to performance
+    teacherRatings: {
+      listening: { type: Number, required: false, min: 0, max: 5 },
+      reading: { type: Number, required: false, min: 0, max: 5 },
+      overall: { type: Number, required: false, min: 0, max: 5 },
+    },
+
+    // ✅ NEW: Separate Student-Specific Ratings
+    studentsRating: {
+      classUnderstanding: { type: Number, required: false, min: 0, max: 5 },
+      engagement: { type: Number, required: false, min: 0, max: 5 },
+      homeworkCompletion: { type: Number, required: false, min: 0, max: 5 },
+    },
+
+    level: { type: Number, required: false },
+
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true },
+    startTime: { type: String, required: false },
+    endTime: { type: String, required: false },
+    feedbackmessage: { type: String, required: false },
+
+    createdDate: { type: Date, required: true, default: Date.now },
+    createdBy: { type: String, required: true },
+    lastUpdatedDate: { type: Date, required: true, default: Date.now },
+    lastUpdatedBy: { type: String, required: false },
+  },
+  {
+    collection: "feedback",
+    timestamps: false,
+  }
+);
+
+
+export const zodFeedbackSchema = z.object({
+  student: z.object({
+    studentId: z.string(),
+    studentFirstName: z.string(),
+    studentLastName: z.string(),
+    studentEmail: z.string().email(),
+  }),
+  teacher: z.object({
+    teacherId: z.string().optional(),
+    teacherName: z.string().optional(),
+    teacherEmail: z.string().optional(),
+  }),
+  classDay: z.string().optional(),
+  preferedTeacher: z.string(),
+
+  level: z.number().optional(),
+
+  course: z.object({
+    courseId: z.string().optional(),
+    courseName: z.string(),
+  }),
+
+  startDate: z
+    .string()
+    .refine((val) => !isNaN(Date.parse(val)), {
+      message: "Invalid date format",
+    })
+    .transform((val) => new Date(val)),
+    
+  endDate: z
+    .string()
+    .refine((val) => !isNaN(Date.parse(val)), {
+      message: "Invalid date format",
+    })
+    .transform((val) => new Date(val)),
+
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
+  feedbackmessage: z.string().optional(),
+
+  teacherRatings: z.object({
+    listeningAbility: z.number().min(0).max(5).optional(),
+    readingAbility: z.number().min(0).max(5).optional(),
+    overallPerformance: z.number().min(0).max(5).optional(),
+  }),
+
+  studentsRating: z.object({
+    classUnderstanding: z.number().min(0).max(5).optional(),
+    engagement: z.number().min(0).max(5).optional(),
+    homeworkCompletion: z.number().min(0).max(5).optional(),
+  }),
+
+  createdDate: z.string().optional(),
+  createdBy: z.string().optional(),
+  lastUpdatedDate: z.string().optional(),
+  lastUpdatedBy: z.string().optional(),
+});
+
+
+export default mongoose.model<IFeedbackCreate>("Feedback", FeedbackSchema);
+

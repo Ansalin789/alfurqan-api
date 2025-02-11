@@ -1,15 +1,20 @@
 /* eslint-disable */
 import { Config } from "../../types/config.types";
+import { config as dotenvConfig } from 'dotenv';
+dotenvConfig(); // Load environment variables from .env file
 
 export const config: Config = {
   server: {
     port: 5001,
-    host: process.env.SERVER_HOST ?? "localhost",
+    host: "localhost",
   },
   mongo: {
-    url: "mongodb://localhost:27017/alfurqan"  // First let's test without authentication
+    url:  "mongodb://alfurqan:Blackstone%232024@88.222.215.48:27017"
+    //"mongodb://alfurqan:Blackstone%232024@88.222.215.48:27017"  // First let's test without authentication
   },
- 
+  // mongo: {
+  //   url: "mongodb://alfurqan:Blackstone%232024@88.222.215.48:27017" // Changed to use IPv4
+  // },
   // sentry: {
   //   dsn: process.env.SENTRY_DSN ?? "",
   //   env: process.env.SENTRY_ENVIRONMENT!,
@@ -38,6 +43,15 @@ export const config: Config = {
     microsoft_team_access_token_url :process.env.MICROSOFT_TEAM_ACCESS_TOKEN_URL!,
     microsoft_team_cancel_url:process.env.MICROSOFT_TEAM_CANCEL_EVENT_URL!,
     microsoft_team_calender_update_event_url:process.env.MICROSOFT_TEAM_CALENDER_UPDATE_EVENT_URL!
+  },
+
+  zoomConfig:{
+    zoom_client_id:process.env.ZOOM_CLIENT_ID!,
+    zoom_client_secret:process.env.ZOOM_CLIENT_SECRET!,
+    zoom_account_id:process.env.ZOOM_ACCOUNT_ID!  
+  },
+  stripeKey: {
+    stripesecretkey:process.env.STRIPE_SECRET_KEY!
   }
 };
 

@@ -10,7 +10,7 @@ import {
   userMessages,
 } from "../../config/messages";
 import { zodUserSchema } from "../../models/users";
-import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
+import { zodGetAllRecordsQuerySchema, zodGetAllUserRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import {
   bulkDeleteUsers,
   createUser,
@@ -19,18 +19,18 @@ import {
   getUserRecordById,
   updateUser,
 } from "../../operations/users";
+import { GetAlluserRecordsParams } from "../../shared/enum";
+
+
 
 // Input Validations for users list
-const getUsersListInputValidation = z.object({
-  query: zodGetAllRecordsQuerySchema.pick({
-    tenantId: true,
-    searchText: true,
-    sortBy: true,
-    sortOrder: true,
-    offset: true,
-    limit: true,
-  }),
+let getUsersListInputValidation = z.object({
+  query: zodGetAllUserRecordsQuerySchema.pick({
+    role: true,
+    date: true
+  })
 });
+
 
 const getUsersBulkDeleteInputValidation = z.object({
   payload: z.object({
@@ -75,16 +75,47 @@ const updateInputValidation = z.object({
     .partial(), // Makes all picked fields optional
 });
 
-export default {
-  // Retrieve all the users list
-  async getAllUsers(req: Request, h: ResponseToolkit) {
-    const { query } = getUsersListInputValidation.parse({
-      query: req.query,
-    });
+// export default {
+//   // Retrieve all the users list
+//   async getAllUsers(req: Request, h: ResponseToolkit) {
+//     const { query } = getUsersListInputValidation.parse({
+//       query: req.query,
+//     });
 
-    // Fetch the user records using the validated and parsed parameters
-    return getAllUserRecords(query);
+//     // Fetch the user records using the validated and parsed parameters
+//     return getAllUserRecords(query);
+//   },
+
+ export default {
+  // // Retrieve all the users list with role and date filters
+  async getAllUsers(req: Request, h: ResponseToolkit) {
+    try {
+      // Parse and validate the query parameters
+      const { query } = getUsersListInputValidation.parse({
+        query: req.query,
+      });
+
+      const { role, date } = query;
+
+      // Build the filter object
+      const filter: GetAlluserRecordsParams = {
+        role,
+        date: ""
+      };
+      if (date) {
+        filter.date = date;
+      }
+
+      // Fetch user records using the filter
+      const result = await getAllUserRecords(filter);
+
+      return result;
+    } catch (error) {
+      console.error("Validation Error:", error);
+      return badRequest("Validation error: ");
+    }
   },
+
 
   // Retrieve user details by userId
   async getUserRecordById(req: Request, h: ResponseToolkit) {
@@ -186,6 +217,4 @@ export default {
 
     return result;
   },
-
-
 };

@@ -14,6 +14,16 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "auth"],
       },
     },
+
+    {
+      method: "POST",
+      path: "/studentsignin",
+      options: {
+        handler: handler.studentSignIn,
+        description: authMessages.SIGN_IN,
+        tags: ["api", "auth"],
+      },
+    },
     {
       method: "POST",
       path: "/signout",
@@ -36,6 +46,24 @@ const register = async (server: Server): Promise<void> => {
         auth: {
           strategies: ["jwt"],
         },
+      },
+    },
+    {
+      method: "POST",
+      path: "/check-email",
+      options: {
+        handler: handler.checkEmail,  // New handler for checking email
+        description: "Check if email exists",
+        tags: ["api", "auth"],
+      },
+    },
+    {
+      method: "POST",
+      path: "/allcheck-email",
+      options: {
+        handler: handler.allcheckEmail,  // New handler for checking email
+        description: "Check if email exists",
+        tags: ["api", "auth"],
       },
     },
   ];
