@@ -75,7 +75,7 @@
   },
   "engineStrict": true,
   "engines": {
-    "node": ">=18 && <21",
+    "node": "20.x",
     "npm": "please-use-yarn",
     "yarn": ">=1.22.x"
   }
