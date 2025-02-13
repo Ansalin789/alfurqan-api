@@ -696,6 +696,8 @@ export interface IAssignment  extends Document{
   dueDate: Date;
   answer: string;
   answerValidation: string;
+  assignmentStatus: string;
+
 
 }
 export interface IallAssignment {
@@ -730,6 +732,8 @@ export interface IallAssignment {
   courses: string;
   assignedDate: Date;
   dueDate: Date;
+  assignmentStatus: string;
+
 
 }
 
@@ -767,6 +771,7 @@ export interface IAssignmentCreate {
   dueDate: Date;
   answer: string;
   answerValidation: string;
+  assignmentStatus: string;
 }
 
 export interface IStudentInvoice extends Document{

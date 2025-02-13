@@ -39,6 +39,6 @@ export const getAllStudetnInVoiceList = async (
    AppLogger.info(evaluationMessages.GET_ALL_LIST_SUCCESS, {
     totalCount: totalCount,
   });
-  
+  console.log(invoice);
     return { totalCount, invoice };
   };
