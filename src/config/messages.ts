@@ -58,6 +58,11 @@ export const appStatus: Record<string, any> = Object.freeze({
   NEW: "New"
 });
 
+export const classStatus: Record<string, any> = Object.freeze({
+  COMPLETED: "completed",
+  PENDING: "pending",
+});
+
 export const learningInterest: Record<string, any> = Object.freeze({
   QURAN :"Quran",
   ISLAMIC: "Islamic Studies",
