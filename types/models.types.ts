@@ -125,6 +125,7 @@ export interface IStudentCreate {
 export interface IUsershiftschedule extends Document{
   academicCoachId: string;
   teacherId: string;
+  supervisorId: string;
   name: string;
   email: string;
   role: string;
@@ -143,6 +144,7 @@ export interface IUsershiftschedule extends Document{
 export interface IUsershiftscheduleCreate{
   academicCoachId: string;
   teacherId: string;
+  supervisorId: string;
   name: string;
   email: string;
   role: string;
@@ -956,3 +958,73 @@ export interface IFeedback  extends Document{
   lastUpdatedDate: Date;
   lastUpdatedBy?: string;
 }
+
+export interface IRecruitment extends Document{
+  candidateFirstName: string;
+  candidateLastName : string;
+  supervisor:{
+    supervisorId?: string;
+    supervisorName?: string;
+    supervisorEmail?: string;
+    supervisorRole?: string;
+  };
+  applicationDate : Date;
+  candidateEmail : string;
+  candidatePhoneNumber : number;
+  candidateCountry : string;
+  candidateCity : string;
+  positionApplied : string;
+  currency: string;
+  expectedSalary : number;
+  preferedWorkingHours: string;
+  uploadResume?: Buffer;
+  comments: string;
+  applicationStatus: string;
+  level?: string;
+  quranReading? : string;
+  tajweed? : string;
+  arabicWriting?: string;
+  arabicSpeaking?: string;
+  preferedWorkingDays?: number;
+  overallRating?: number;
+  professionalExperience?: string;
+  skills?: string;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+}
+
+export interface IRecruitmentCreate{
+
+  candidateFirstName: string;
+  candidateLastName : string;
+  applicationDate : Date;
+  candidateEmail : string;
+  candidatePhoneNumber : number;
+  candidateCountry : string;
+  candidateCity : string;
+  positionApplied : string;
+  currency: string;
+  expectedSalary : number;
+  preferedWorkingHours: string;
+  uploadResume?: Buffer;
+  comments: string;
+  applicationStatus: string;
+  level? : string;
+  quranReading? : string;
+  tajweed? : string;
+  arabicWriting?: string;
+  arabicSpeaking?: string;
+  preferedWorkingDays?: number;
+  overallRating?: number;
+  professionalExperience?: string;
+  skills?: string;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate?: Date;
+}
+
+

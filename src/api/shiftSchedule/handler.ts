@@ -12,6 +12,7 @@ import { getAllTeachers } from "../../operations/shiftshedule";
 interface ShiftSchedulePayload {
     academicCoachId: string;
     teacherId: string;
+    supervisorId:string;
     name: string;
     email: string;
     role: string;
@@ -85,6 +86,7 @@ async getAllUsers(req: Request, h: ResponseToolkit) {
     const {
     academicCoachId,
     teacherId,
+    supervisorId,
     name,
     email,
     role,
@@ -103,6 +105,7 @@ async getAllUsers(req: Request, h: ResponseToolkit) {
     return createShiftschedule({
       academicCoachId,
       teacherId,
+      supervisorId,
       name,
       email,
       role,
@@ -123,7 +126,7 @@ async getAllUsers(req: Request, h: ResponseToolkit) {
 
 
 };
-async function createShiftschedule(arg0: { academicCoachId: string; teacherId: string; name: string; email: string; role: string; workhrs: number; startdate: string; enddate: string; fromtime: string; totime: string; createdDate: string; createdBy: string; lastUpdatedBy: string; }) {
+async function createShiftschedule(arg0: { academicCoachId: string; teacherId: string; supervisorId:string; name: string; email: string; role: string; workhrs: number; startdate: string; enddate: string; fromtime: string; totime: string; createdDate: string; createdBy: string; lastUpdatedBy: string; }) {
 const shiftScheduleRecord = await UserShiftSchedule.create(arg0);
 console.log(shiftScheduleRecord);
 return shiftScheduleRecord;
