@@ -80,6 +80,18 @@ export interface GetAllRecordsParams {
 }
 
 
+export interface GetAllApplicationsRecordsParams {
+  searchText?: string;
+  sortBy: string;
+  sortOrder?: "asc" | "desc";
+  offset?: string | null;
+  limit?: string | null;
+  filterValues?: {
+    applicationStatus?: string;
+  };
+}
+
+
 export interface GetAlluserRecordsParams {
   date?: string;
   role: string;

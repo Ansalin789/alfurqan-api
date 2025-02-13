@@ -1,9 +1,10 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodRecruitmentSchema } from "../../models/recruitment";
-import { createRecruitment } from "../../operations/recruitment";
+import { createRecruitment, getAllApplicantsRecords } from "../../operations/recruitment";
 import { Readable } from "stream";
 import * as Stream from "stream";
+import { zodGetAllApplicantsRecordsQuerySchema, zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 
 
 const createInputValidation = z.object({
@@ -37,9 +38,19 @@ const createInputValidation = z.object({
   }),
 });
 
+const getApplicantsInputValidation = z.object({
+  query: zodGetAllApplicantsRecordsQuerySchema.pick({
+    searchText: true,
+    sortBy: true,
+    sortOrder: true,
+    offset: true,
+    limit: true,
+    filterValues: true
+  }),
+});
 
 export default{
-  async createRecruitement (req: Request, h: ResponseToolkit){
+   async createRecruitement (req: Request, h: ResponseToolkit){
        const { payload } = createInputValidation.parse({
              payload: req.payload,
            });
@@ -55,7 +66,7 @@ export default{
                 
           console.log("Resume",uploadFileBuffer)
 
-           return createRecruitment({     
+           return await createRecruitment({     
         candidateFirstName: payload.candidateFirstName,
         candidateLastName: payload.candidateLastName,
         applicationDate: payload.applicationDate || new Date(),
@@ -84,7 +95,18 @@ export default{
         createdBy: payload.createdBy || payload.candidateFirstName,
         updatedDate: payload.updatedDate
          }) 
+    },
+
+    async getAllApplicants (req: Request, h: ResponseToolkit){
+      const { query } = getApplicantsInputValidation.parse({
+      query: {
+      ...req.query,
+      filterValues: req.query?.filterValues ? JSON.parse(req.query.filterValues) : {},
+      },
+  });
+  return getAllApplicantsRecords(query);
     }
+    
 }
 
 
@@ -98,10 +120,5 @@ async function streamToBuffer(stream: Stream.Readable): Promise<Buffer> {
   });
 }
 
-function toReadableStream(data: string | Buffer): Readable {
-  if (typeof data === "string" || Buffer.isBuffer(data)) {
-    return Readable.from(data);
-  }
-  throw new Error("Invalid type, expected string or Buffer");
-}
+
 

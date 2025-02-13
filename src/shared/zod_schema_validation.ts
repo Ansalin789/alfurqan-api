@@ -133,4 +133,18 @@ export  const zodAlStudentInvoiceSchemaValidation = z.object({
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
   offset: z.string().nullable().default(null),
   limit: z.string().nullable().default(null),
-})
+});
+
+export const zodGetAllApplicantsRecordsQuerySchema = z.object({
+
+  searchText: z.string().default(""),
+  sortBy: z.string().default("positionApplied"),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+  offset: z.string().nullable().default(null),
+  limit: z.string().nullable().default(null),
+  filterValues : z.object({
+    // Filter for status: Array of enums, optional, with default values
+    applicationStatus: z.string()
+    .optional()
+  })
+ });
