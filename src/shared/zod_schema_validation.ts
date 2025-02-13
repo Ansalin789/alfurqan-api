@@ -5,6 +5,7 @@ export const zodGetAllRecordsQuerySchema = z.object({
   roomId:z.string().optional(),
   teacherId:z.string().optional(),
   studentId:z.string().optional(),
+  supervisorId:z.string().optional(),
   academicCoachId: z.string().optional(),
   searchText: z.string().default(""),
   sortBy: z.string().default("lastUpdatedDate"),
