@@ -48,6 +48,7 @@ export enum ReferralSource {
 }
 
 export class CustomEnumerator {
+  static readonly classStatus = classStatus;
   static readonly Status = Status;
   static readonly EventType = EventType;
   static readonly LearningInterest = LearningInterest;
