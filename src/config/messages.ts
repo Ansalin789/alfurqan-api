@@ -47,6 +47,18 @@ export const authMessages: Record<string, string> = Object.freeze({
   TOKEN_NO_LONGER_VALID: "Token is no longer valid",
 });
 
+export const recruitmentMessages: Record<string, string> = Object.freeze({
+  LIST: "Retrieve all the candidate list",
+  BYID: "Retrieve candidate details by userId",
+  CREATE: "Create a new candidate",
+  UPDATE: "Update a existing candidate",
+  DELETE: "Delete candidates by candidateId",
+  BULK_DELETE: "Bulk Delete candidates by candidateIds",
+  USER_NOT_FOUND: "Your account is not found or active, contact admin",
+  ENCRYPT_PASSWORD_ERROR: "Password must be an encrypted value",
+  USER_PROFILE_INVALID_FILE_TYPE: "Invalid file type. Only .png , .jpg or jpeg files are allowed.",
+});
+
 
 
 
@@ -104,6 +116,13 @@ export const evaluationStatus: Record<string, any> = Object.freeze({
     ACADEMICCOACH: "ACADEMICCOACH",
     TEACHER: "Teacher",
   });
+
+  export const applicationStatus: Record<string, any> = Object.freeze({
+    NEWAPPLICATION:"NEWAPPLICATION",
+    SHORTLISTED:"SHORTLISTED",
+    RIJECTED:"RIJECTED",
+    WAITING:"WAITING",
+    });
 
 export const eventType: Record<string, any> = Object.freeze({
   MEETING_SCHEDULED: "MEETING_SCHEDULED",

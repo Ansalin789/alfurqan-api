@@ -14,9 +14,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.createStudent,
         description: studentMessages.CREATE,
         tags: ["api", "student"],
-        auth: {
-          strategies: ["jwt"],
-        },
+        // auth: {
+        //   strategies: ["jwt"],
+        // },
       },
     },
 

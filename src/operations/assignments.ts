@@ -20,7 +20,7 @@ export const createAssignment = async (
     }
 
     // Log the incoming payload for debugging
-    console.log("Incoming Payload:", payload);
+    console.log("Incoming Payload:", payload.options);
 
     const studentDetails = await alstudents.findOne({_id: payload.studentId}).exec();
    
@@ -31,14 +31,8 @@ export const createAssignment = async (
    
     console.log("assignedTeacher>>>>", assignedTeacher);
 
-
-    // // Find the audio file by its ID or other relevant identifier
-    // const audioFile = await assignment.findOne({
-    //   audioFile: payload.audioFile,
-    // });
-
     console.log("optionAnswer>>>>", payload.options); // Logs the fetched audio file
-
+    
     // Create a new assignment
     const newAssignment = new assignment({
 
@@ -50,7 +44,12 @@ export const createAssignment = async (
       trueorfalseType: payload.trueorfalseType,
       question: payload.question || "",
       hasOptions: payload.hasOptions,
-      options: payload.options, // Use the entire object { type, name }
+      options:{
+        optionOne: payload.options?.optionOne || "",
+        optionTwo: payload.options?.optionTwo || "",
+        optionThree:  payload.options?.optionThree || "",
+        optionFour:  payload.options?.optionFour || "",
+      } ,
       audioFile: payload.audioFile || "", // Save the audio file ID in the database
       uploadFile: payload.uploadFile || "",
       status: payload.status || "Pending",
@@ -64,7 +63,11 @@ export const createAssignment = async (
       dueDate: payload.dueDate || new Date(),
       answer:payload.answer || "",
       answerValidation: payload.answerValidation || "",
+      assignmentStatus: payload.assignmentStatus || "Not Assigned",
     });
+
+    console.log(newAssignment.options.optionOne);
+ 
 
     // Save the new assignment to the database
     const assignmentRecord = await newAssignment.save();
@@ -130,7 +133,12 @@ export const updateStudentAssignment = async (
         trueorfalseType: payload.trueorfalseType,
         question: payload.question || "",
         hasOptions: payload.hasOptions,
-        options: payload.options,
+        options:{
+          optionOne: payload.options?.optionOne,
+          optionTwo: payload.options?.optionTwo,
+          optionThree: payload.options?.optionThree,
+          optionFour: payload.options?.optionFour,
+        } ,
         audioFile,
         uploadFile,
         status: payload.status || "Pending",

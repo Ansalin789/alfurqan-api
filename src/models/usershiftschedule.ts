@@ -11,6 +11,10 @@ const usershiftscheduleSchema = new Schema<IUsershiftschedule>({
             type: String,
             required: false,
         },
+        supervisorId: {
+            type: String,
+            required: false,
+        },
     name: {
         type: String,
         required: true,
