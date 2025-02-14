@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { zodFeedbackSchema } from "../../models/feedback";
-import { createFeedback, createTeacherFeedback } from "../../operations/feedback";
+import { createFeedback, createSupervisorFeedback, createTeacherFeedback, getAllSupervisorRecords, getcreateAllTeacherFeedback } from "../../operations/feedback";
+import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 
 const createFeedbackValidation = z.object({
   payload: zodFeedbackSchema.pick({
@@ -14,15 +15,30 @@ const createFeedbackValidation = z.object({
     level: true,
     startDate: true,
     endDate: true,
-    studentsRating: true, // Keep this for createFeedback only
+    studentsRating: true,
+    supervisorRating:true, 
     startTime: true,
     endTime: true,
     feedbackmessage: true,
     createdBy: true,
     lastUpdatedBy: true,
+    supervisor: true
   }).partial(),
 });
-
+// Define your Zod validation schema
+const createInputFeedbackValidation = z.object({
+  query: zodGetAllRecordsQuerySchema.pick({
+    studentId:true,
+    supervisorId:true,
+    teacherId:true,
+    searchText: true,
+    sortBy: true,
+    sortOrder: true,
+    offset: true,
+    limit: true,
+    filterValues: true,
+  }),
+});
 export default {
   async createFeedback(req: Request, h: ResponseToolkit) {
     try {
@@ -41,7 +57,6 @@ export default {
           classUnderstanding: payload.studentsRating?.classUnderstanding ?? 0,
           engagement: payload.studentsRating?.engagement ?? 0,
           homeworkCompletion: payload.studentsRating?.homeworkCompletion ?? 0,
-          
         },
 
         startDate: new Date(payload.startDate!),
@@ -55,10 +70,11 @@ export default {
         lastUpdatedBy: payload.lastUpdatedBy || "System",
         level: 0,
         teacherRatings: {
-          listeningAbility: payload.teacherRatings?.listeningAbility|| 0,
+          listeningAbility: payload.teacherRatings?.listeningAbility || 0,
           readingAbility: payload.teacherRatings?.readingAbility || 0,
-          overallPerformance:payload.teacherRatings?.overallPerformance|| 0,
-        }
+          overallPerformance: payload.teacherRatings?.overallPerformance || 0,
+        },
+      
       });
 
       return h.response({ message: "Feedback created successfully", data: result }).code(201);
@@ -110,6 +126,95 @@ export default {
           classUnderstanding: 0,
           engagement: 0,
           homeworkCompletion: 0
+        },
+       
+      });
+
+      return h.response({ message: "Feedback created successfully", data: result }).code(201);
+    } catch (error) {
+      console.error("Error creating feedback:", error);
+      return h.response({ error: "Failed to create feedback" }).code(500);
+    }
+  },
+
+  async createAllTeacherFeedback(req: Request, h: ResponseToolkit) {
+    try {
+      // Ensure req.query is treated as an object
+      const queryParams = req.query as Record<string, any>;
+  
+      // Parse and validate the request query using zod
+      const parsedQuery = createInputFeedbackValidation.parse({
+        query: {
+          ...queryParams,
+          filterValues: (() => {
+            try {
+              return queryParams?.filterValues
+                ? JSON.parse(queryParams.filterValues as string)
+                : {};
+            } catch {
+              throw new Error("Invalid filterValues JSON format.");
+            }
+          })(),
+        },
+      });
+  
+      const query = parsedQuery.query;
+  
+      // Call your service or database function to fetch data
+      const result = await getcreateAllTeacherFeedback(query);
+  
+      // Return the response
+      return h.response(result).code(200);
+    } catch (error) {
+      // Handle errors (validation or other errors)
+      return h.response({ error }).code(400);
+    }
+  },
+  
+
+
+
+
+
+  /////////////////////SUPERVISOR///////////////////////
+  async createSupervisorFeedback(req: Request, h: ResponseToolkit) {
+    try {
+      const { payload } = createFeedbackValidation.parse({ payload: req.payload });
+
+      // Ensure studentsRating is always set
+      const result = await createSupervisorFeedback({
+        supervisor: payload.supervisor!,
+        teacher: payload.teacher || {},
+        classDay: payload.classDay || "",
+        preferedTeacher: payload.preferedTeacher!,
+        course: payload.course!,
+
+        // Ensure studentsRating is set with default values if not provided
+        supervisorRating: {
+          knowledgeofstudentsandcontent: payload.supervisorRating?.knowledgeofstudentsandcontent ?? 0,
+          assessmentofstudents: payload.supervisorRating?.assessmentofstudents ?? 0,
+          communicationandcollaboration: payload.supervisorRating?.communicationandcollaboration ?? 0,
+          professionalism: payload.supervisorRating?.professionalism ?? 0,
+        },
+        startDate: new Date(payload.startDate!),
+        endDate: new Date(payload.endDate!),
+        startTime: payload.startTime || "",
+        endTime: payload.endTime || "",
+        feedbackmessage: payload.feedbackmessage || "",
+        createdDate: new Date(),
+        createdBy: payload.createdBy || "System",
+        lastUpdatedDate: new Date(),
+        lastUpdatedBy: payload.lastUpdatedBy || "System",
+        level: 0,
+        teacherRatings: {
+          listeningAbility: 0,
+          readingAbility:0,
+          overallPerformance: 0
+        },
+        studentsRating: {
+          classUnderstanding: 0,
+          engagement: 0,
+          homeworkCompletion: 0
         }
       });
 
@@ -118,5 +223,42 @@ export default {
       console.error("Error creating feedback:", error);
       return h.response({ error: "Failed to create feedback" }).code(500);
     }
-  }
+  },
+
+
+
+  async getAllSupervisorRecords(req: Request, h: ResponseToolkit) {
+    try {
+        // ✅ Ensure supervisorId is included in the query
+        const supervisorId = req.query?.supervisorId as string;
+        if (!supervisorId) {
+            return h.response({ error: "Supervisor ID is required" }).code(400);
+        }
+
+        // ✅ Safely parse additional filters if provided
+        const filterValues = req.query?.filterValues 
+            ? JSON.parse(req.query.filterValues as string)
+            : {};
+
+        // ✅ Merge supervisorId into the filterValues
+        const parsedQuery = {
+            ...req.query,
+            filterValues: {
+                ...filterValues,
+                supervisorId, // Ensure supervisorId is always included
+            },
+        };
+
+        // ✅ Validate query parameters using Zod
+        const { query } = createInputFeedbackValidation.parse({ query: parsedQuery });
+
+        // ✅ Fetch records using the validated query
+        return getAllSupervisorRecords(query);
+    } catch (error) {
+        console.error("Error fetching supervisor records:", error);
+        return h.response({ error: "Invalid request" }).code(400);
+    }
+}
+
+
 };
