@@ -1,4 +1,4 @@
-import { appStatus, learningInterest, numberOfStudents, preferredTeacher, eventType, referenceSource } from "../config/messages";
+import { appStatus, learningInterest, numberOfStudents, preferredTeacher, eventType, referenceSource, classStatus } from "../config/messages";
 
 // Use an enum for better type safety
 export enum Status {

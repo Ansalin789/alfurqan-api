@@ -1032,4 +1032,38 @@ export interface IRecruitmentCreate{
   updatedDate?: Date;
 }
 
+export interface IMeetingCreate {
 
+  meetingName: string;
+  selectedDate: Date;
+  startTime: string;
+  endTime: string;
+  teacher: any;
+  description: string;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+}
+
+export interface IMeeting extends Document{
+  
+  meetingName: string;
+  supervisor:{
+    supervisorId?: string;
+    supervisorName?: string;
+    supervisorEmail?: string;
+    supervisorRole?: string;
+  };
+  selectedDate: Date;
+  startTime: string;
+  endTime: string;
+  teacher: any;
+  description: string;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+}
