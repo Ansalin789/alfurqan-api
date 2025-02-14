@@ -265,3 +265,59 @@ export const getAllSupervisorRecords = async (
 };
 
 
+export const getAllFeedbackRecords = async (
+  params: GetAllRecordsParams
+): Promise<{ totalCount: number; feedbackRecords: IFeedbackCreate[] }> => {
+  const {
+    searchText,
+    sortBy,
+    sortOrder,
+    offset,
+    limit,
+  } = params;
+
+  // ✅ Construct a query object that EXCLUDES supervisors
+  const query: any = {
+    supervisor: { $exists: false } // ✅ Ensures records with supervisors are excluded
+  };
+
+  // ✅ Allow searching by student or teacher name/email
+  if (searchText) {
+    query.$or = [
+      { 'student.studentFirstName': { $regex: searchText, $options: "i" } },
+      { 'student.studentLastName': { $regex: searchText, $options: "i" } },
+      { 'student.studentEmail': { $regex: searchText, $options: "i" } },
+      { 'teacher.teacherName': { $regex: searchText, $options: "i" } },
+      { 'teacher.teacherEmail': { $regex: searchText, $options: "i" } },
+    ];
+  }
+
+  console.log("Constructed Query:", JSON.stringify(query, null, 2)); // ✅ Log the constructed query
+
+  // ✅ Sorting options (default: createdDate descending)
+  const sortOptions: any = { [sortBy || "createdDate"]: sortOrder === "asc" ? 1 : -1 };
+
+  // ✅ Create query to fetch feedback (excluding supervisors)
+  const feedbackQuery = feedback.find(query).sort(sortOptions);
+
+  // ✅ Apply pagination if provided
+  if (offset !== undefined && limit !== undefined) {
+    const skip = Math.max(
+      0,
+      ((Number(offset) ?? Number(commonMessages.OFFSET)) - 1) *
+        (Number(limit) ?? Number(commonMessages.LIMIT))
+    );
+    feedbackQuery.skip(skip).limit(Number(limit) ?? Number(commonMessages.LIMIT));
+  }
+
+  // ✅ Execute both query and count concurrently
+  const [feedbackRecords, totalCount] = await Promise.all([
+    feedbackQuery.exec(),
+    feedback.countDocuments(query).exec(),
+  ]);
+
+  // ✅ Log success
+  AppLogger.info(commonMessages.GET_ALL_LIST_SUCCESS, { totalCount });
+
+  return { totalCount, feedbackRecords };
+};

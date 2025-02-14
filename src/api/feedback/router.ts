@@ -68,6 +68,19 @@ const register = async (server: Server): Promise<void> => {
     },
   },
 
+  {
+    method: "GET",
+    path: "/allfeedback",
+    options: {
+      handler:handler.getAllStudentTeacherFeedback,  
+      tags: ["api", "feedback"],  
+      // auth: {
+      //   strategies: ["jwt"],
+      // },
+    },
+  },
+
+
   ];
 
  

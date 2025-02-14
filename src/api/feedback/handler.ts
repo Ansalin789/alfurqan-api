@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { zodFeedbackSchema } from "../../models/feedback";
-import { createFeedback, createSupervisorFeedback, createTeacherFeedback, getAllSupervisorRecords, getcreateAllTeacherFeedback } from "../../operations/feedback";
+import { createFeedback, createSupervisorFeedback, createTeacherFeedback, getAllFeedbackRecords, getAllSupervisorRecords, getcreateAllTeacherFeedback } from "../../operations/feedback";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 
 const createFeedbackValidation = z.object({
@@ -258,6 +258,30 @@ export default {
         console.error("Error fetching supervisor records:", error);
         return h.response({ error: "Invalid request" }).code(400);
     }
+}
+,
+
+async getAllStudentTeacherFeedback(req: Request, h: ResponseToolkit) {
+  try {
+      // ✅ Ensure query parameters are parsed safely
+      const parsedQuery = {
+          ...req.query,
+          filterValues: req.query?.filterValues 
+              ? JSON.parse(req.query.filterValues as string)
+              : {},
+      };
+
+      // ✅ Validate the query parameters using Zod
+      const { query } = createInputFeedbackValidation.parse({ query: parsedQuery });
+
+      // ✅ Fetch feedback records (excluding supervisors)
+      const feedbackData = await getAllFeedbackRecords(query);
+
+      return h.response({ message: "Feedback retrieved successfully", data: feedbackData }).code(200);
+  } catch (error) {
+      console.error("Error fetching student and teacher feedback:", error);
+      return h.response({ error: "Invalid request" }).code(400);
+  }
 }
 
 
