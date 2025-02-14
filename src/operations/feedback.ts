@@ -10,7 +10,8 @@ export const createFeedback = async (
 ): Promise<{ totalCount: number; feedback: IFeedbackCreate } | { error: any }> => {
   try {
     const newFeedback = new feedback({
-      student: payload.student!,
+        sessionId:payload.sessionId!,
+        student: payload.student!,
         teacher: payload.teacher || {},
         classDay: payload.classDay || "",
         preferedTeacher: payload.preferedTeacher!,
@@ -49,6 +50,7 @@ export const createTeacherFeedback = async (
 ): Promise<{ totalCount: number; feedback: IFeedbackCreate } | { error: any }> => {
   try {
     const newFeedback = new feedback({
+        sessionId:payload.sessionId!,      
         student: payload.student!,
         teacher: payload.teacher || {},
         classDay: payload.classDay || [],
@@ -174,6 +176,7 @@ export const createSupervisorFeedback = async (
 ): Promise<{ totalCount: number; feedback: IFeedbackCreate } | { error: any }> => {
   try {
     const newFeedback = new feedback({
+      sessionId:payload.sessionId!,
       supervisor: payload.supervisor!,
       teacher: payload.teacher || {},
       classDay: payload.classDay || "",

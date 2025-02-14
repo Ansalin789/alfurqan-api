@@ -878,24 +878,31 @@ export interface IMessage extends Document {
 }
 
 export interface IFeedbackCreate {
-  student: {
-    studentId: string;
-    studentFirstName: string;
-    studentLastName: string;
-    studentEmail: string;
+  sessionId?:string;
+  student?: {
+    studentId?: string;
+    studentFirstName?: string;
+    studentLastName?: string;
+    studentEmail?: string;
   };
-  teacher: {
+  supervisor?: {
+    supervisorId?: string;
+    supervisorFirstName?: string;
+    supervisorLastName?: string;
+    supervisorEmail?: string;
+  };
+  teacher?: {
     teacherId?: string;
     teacherName?: string;
     teacherEmail?: string;
   };
   classDay?: string;
-  preferedTeacher: string;
+  preferedTeacher?: string;
   feedbackmessage?: string;
   
-  course: {
-    courseId?: string;
-    courseName: string;
+  course?: {
+    courseId?: string;  // Ensure a valid course ID
+    courseName?: string;
   };
 
   startDate: Date;
@@ -903,38 +910,50 @@ export interface IFeedbackCreate {
   startTime?: string;
   endTime?: string;
 
-  // ✅ NEW: Student Level
-  level: number;
+  level?: number;
 
-  // ✅ NEW: Ratings for Teacher Assessment
-  teacherRatings: {
+  teacherRatings?: {  // ✅ Made optional
     listeningAbility?: number;
-    readingAbility? : number;
+    readingAbility?: number;
     overallPerformance?: number;
   };
 
-  // ✅ NEW: Student-Specific Ratings
-  studentsRating: {
+  studentsRating?: {  // ✅ Made optional
     classUnderstanding?: number;
     engagement?: number;
     homeworkCompletion?: number;
   };
 
-  createdDate: Date;
-  createdBy: string;
-  lastUpdatedDate: Date;
+  supervisorRating?: {  // ✅ Made optional
+    knowledgeofstudentsandcontent?: number;
+    assessmentofstudents?: number;
+    communicationandcollaboration?: number;
+    professionalism?: number;
+  };
+
+  createdDate?: Date;  // ✅ Made optional if handled in backend
+  createdBy?: string;  // ✅ Made optional if handled in backend
+  lastUpdatedDate?: Date;  // ✅ Made optional
   lastUpdatedBy?: string;
 }
 
 
+
 export interface IFeedback  extends Document{
-  student: {
-    studentId: string;
-    studentFirstName: string;
-    studentLastName: string;
-    studentEmail: string;
+  sessionId?:string;
+  student?: {
+    studentId?: string;
+    studentFirstName?: string;
+    studentLastName?: string;
+    studentEmail?: string;
   };
-  teacher: {
+  supervisorRating?: {
+    knowledgeofstudentsandcontent?:number;
+    assessmentofstudents?: number;
+    communicationandcollaboration?: number;
+    professionalism?: number;
+  },
+  teacher?: {
     teacherId?: string;
     teacherName?: string;
     teacherEmail?: string;

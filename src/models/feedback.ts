@@ -5,10 +5,16 @@ import { z } from "zod";
 const FeedbackSchema = new Schema<IFeedbackCreate>(
   {
     student: {
-      studentId: { type: String, required: true },
-      studentFirstName: { type: String, required: true },
-      studentLastName: { type: String, required: true },
-      studentEmail: { type: String, required: true },
+      studentId: { type: String, required: false },
+      studentFirstName: { type: String, required: false },
+      studentLastName: { type: String, required: false },
+      studentEmail: { type: String, required: false },
+    },
+    supervisor: {
+      supervisorId: { type: String, required: false },
+      supervisorFirstName: { type: String, required: false },
+      supervisorLastName: { type: String, required: false },
+      supervisorEmail: { type: String, required: false },
     },
     teacher: {
       teacherId: { type: String, required: false },
@@ -16,7 +22,7 @@ const FeedbackSchema = new Schema<IFeedbackCreate>(
       teacherEmail: { type: String, required: false },
     },
     classDay: { type: String, required: false },
-    preferedTeacher: { type: String, required: true },
+    preferedTeacher: { type: String, required: false },
     course: {
       courseId: { type: String, required: false },
       courseName: { type: String, required: false },
@@ -35,9 +41,14 @@ const FeedbackSchema = new Schema<IFeedbackCreate>(
       engagement: { type: Number, required: false, min: 0, max: 5 },
       homeworkCompletion: { type: Number, required: false, min: 0, max: 5 },
     },
-
+    supervisorRating: {
+      knowledgeofstudentsandcontent:{ type: Number, required: false, min: 0, max: 5 },
+      assessmentofstudents: { type: Number, required: false, min: 0, max: 5 },
+      communicationandcollaboration: { type: Number, required: false, min: 0, max: 5 } ,
+      professionalism: { type: Number, required: false, min: 0, max: 5 },
+    },
     level: { type: Number, required: false },
-
+      sessionId :{ type: String, required: false},
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
     startTime: { type: String, required: false },
@@ -62,14 +73,27 @@ export const zodFeedbackSchema = z.object({
     studentFirstName: z.string(),
     studentLastName: z.string(),
     studentEmail: z.string().email(),
-  }),
+  }).optional(),
+  supervisor: z.object({
+    supervisorId: z.string(),
+    supervisorFirstName: z.string(),
+    supervisorLastName: z.string(),
+    supervisorEmail: z.string().email(),
+  }).optional(),
   teacher: z.object({
     teacherId: z.string().optional(),
     teacherName: z.string().optional(),
     teacherEmail: z.string().optional(),
-  }),
+  }).optional(),
+  supervisorRating: z.object({
+    knowledgeofstudentsandcontent: z.number().optional(),
+    assessmentofstudents: z.number().optional(),
+    communicationandcollaboration: z.number().optional(),
+    professionalism: z.number().optional(),
+  }).optional(),
+  sessionId: z.string().optional(),
   classDay: z.string().optional(),
-  preferedTeacher: z.string(),
+  preferedTeacher: z.string().optional(),
 
   level: z.number().optional(),
 
