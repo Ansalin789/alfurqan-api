@@ -19,6 +19,12 @@ const messageSchema = new Schema<IMessageCreate>(
       studentLastName: { type: String, required: false },
       studentEmail: { type: String, required: false },
     },
+    supervisor: {
+      supervisorId: { type: String, required: false },
+      supervisorFirstName: { type: String, required: false },
+      supervisorLastName: { type: String, required: false },
+      supervisorEmail: { type: String, required: false },
+    },
     message: { type: String, required: false },
     attachmentsType: {
       type: [
@@ -82,6 +88,15 @@ export const zodMessageSchema = z.object({
     createdBy: z.string(),
   }).optional(),
 
+   // Supervisor info
+  supervisor: z.object({
+    supervisorId: z.string(),
+    supervisorFirstName: z.string(),
+    supervisorLastName: z.string(),
+    supervisorEmail: z.string(),
+    supervisorPhone: z.number(),
+    createdBy: z.string(),
+  }).optional(),
   // Message information
   message: z.string(),
   status: z.string().optional(),

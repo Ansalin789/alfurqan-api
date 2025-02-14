@@ -1,4 +1,4 @@
-import { appStatus, learningInterest, numberOfStudents, preferredTeacher, eventType, referenceSource } from "../config/messages";
+import { appStatus, learningInterest, numberOfStudents, preferredTeacher, eventType, referenceSource, classStatus } from "../config/messages";
 
 // Use an enum for better type safety
 export enum Status {
@@ -61,6 +61,7 @@ export class CustomEnumerator {
 export interface GetAllRecordsParams {
   groupId?:string;
   roomId?:string;
+  supervisorId?:string;
   teacherId?:string;
   studentId?: string;
   academicCoachId?: string;
