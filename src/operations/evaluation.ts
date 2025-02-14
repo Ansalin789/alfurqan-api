@@ -55,16 +55,16 @@ export const createEvaluationRecord = async (
     const loginUser = await User.findOne({userName: payload.createdBy,role : 'ACADEMICCOACH'}).exec();
    
     console.log("loginUser>>>>", loginUser);
- let teacherDetails: any = null;
-if(loginUser){
-     newStudent.academicCoach = {
+    let teacherDetails: any = null;
+      if(loginUser){
+          newStudent.academicCoach = {
 
-        academicCoachId: loginUser._id.toString(), // Provide a default value if undefined
-        name: loginUser?.userName,                       // Provide a default value if undefined
-        role: 'ACADEMICCOACH', // Provide a default value if undefined
-        email: loginUser?.email // Provide a default value if undefined
-     };
-}
+              academicCoachId: loginUser._id.toString(), // Provide a default value if undefined
+              name: loginUser?.userName,                       // Provide a default value if undefined
+              role: 'ACADEMICCOACH', // Provide a default value if undefined
+              email: loginUser?.email // Provide a default value if undefined
+          };
+      }
     newStudent.firstName = payload.student.studentFirstName;
     newStudent.lastName = payload.student.studentLastName;
     newStudent.email =   payload.student.studentEmail;
