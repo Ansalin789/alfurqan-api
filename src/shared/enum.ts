@@ -1,4 +1,4 @@
-import { appStatus, learningInterest, numberOfStudents, preferredTeacher, eventType, referenceSource } from "../config/messages";
+import { appStatus, learningInterest, numberOfStudents, preferredTeacher, eventType, referenceSource, classStatus } from "../config/messages";
 
 // Use an enum for better type safety
 export enum Status {
@@ -48,6 +48,7 @@ export enum ReferralSource {
 }
 
 export class CustomEnumerator {
+  static readonly classStatus = classStatus;
   static readonly Status = Status;
   static readonly EventType = EventType;
   static readonly LearningInterest = LearningInterest;
@@ -60,6 +61,7 @@ export class CustomEnumerator {
 export interface GetAllRecordsParams {
   groupId?:string;
   roomId?:string;
+  supervisorId?:string;
   teacherId?:string;
   studentId?: string;
   academicCoachId?: string;
@@ -76,6 +78,18 @@ export interface GetAllRecordsParams {
     country?: string;
     teacher?: string;
     status?: string;
+  };
+}
+
+
+export interface GetAllApplicationsRecordsParams {
+  searchText?: string;
+  sortBy: string;
+  sortOrder?: "asc" | "desc";
+  offset?: string | null;
+  limit?: string | null;
+  filterValues?: {
+    applicationStatus?: string;
   };
 }
 

@@ -25,24 +25,76 @@ const register = async (server: Server): Promise<void> => {
       options: {
         handler:handler.createTeacherFeedback ,  
         tags: ["api", "feedback"],  
+        auth: {
+          strategies: ["jwt"],
+        },
+      },
+    },
+
+    {
+      method: "GET",
+      path: "/teacherfeedback",
+      options: {
+        handler:handler.createAllTeacherFeedback,  
+        tags: ["api", "feedback"],  
         // auth: {
         //   strategies: ["jwt"],
         // },
       },
     },
 
-    // {
-    //   method: "GET",
-    //   path: "/message/teachermessage",
-    //   options: {
-    //     handler:handler.createTeacherMessageList ,  
-    //     tags: ["api", "message"],  
-    //     // auth: {
-    //     //   strategies: ["jwt"],
-    //     // },
-    //   },
-    // },
+    //////SUPERVISOR////////
+  {
+    method: "POST",
+    path: "/supervisorfeedback",
+    options: {
+      handler:handler.createSupervisorFeedback ,  
+      tags: ["api", "feedback"],  
+      // auth: {
+      //   strategies: ["jwt"],
+      // },
+    },
+  },
+
+  {
+    method: "GET",
+    path: "/supervisorfeedback",
+    options: {
+      handler:handler.getAllSupervisorRecords,  
+      tags: ["api", "feedback"],  
+      // auth: {
+      //   strategies: ["jwt"],
+      // },
+    },
+  },
+
+  {
+    method: "GET",
+    path: "/allfeedback",
+    options: {
+      handler:handler.getAllStudentTeacherFeedback,  
+      tags: ["api", "feedback"],  
+      // auth: {
+      //   strategies: ["jwt"],
+      // },
+    },
+  },
+
+
   ];
+
+ 
+
+
+
+
+
+
+
+
+
+
+
 
   // Register the defined routes with the Hapi server
   server.route(routes);

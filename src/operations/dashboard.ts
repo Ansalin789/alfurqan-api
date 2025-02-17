@@ -3,6 +3,8 @@ import StudentModel from "../models/student";
 import CalendarModel from "../models/calendar";
 import classShedule from "../models/classShedule";
 import usershiftschedule from "../models/usershiftschedule";
+import recruitment from "../models/recruitment";
+
 
 
 export interface Dashboard {
@@ -55,50 +57,6 @@ export const dashboardWidgetCounts = async (p0: string
       totalActive: 10
     };
   };
-
-
-
-
-
- //Student dashboard
-export const dashboardWidgetStudentCounts = async (studentId: string): Promise<{
-  totalLevel: number;
-  totalAttendance: number;
-  totalClasses: number;
-  totalDuration: number;
-}> => {
-  // Fetch counts in parallel
-  const [levelCount, attendanceCount, classCount, totalDuration] = await Promise.all([
-    classShedule.countDocuments({ studentId: studentId }).exec(),
-    classShedule.countDocuments({ studentId: studentId }).exec(),
-    classShedule.countDocuments({ 'studentId.studentId': studentId }).exec(),
-    classShedule.aggregate([
-      { $match: { studentId: studentId } }, 
-      { $group: { _id: null, totalDuration: { $sum: '$duration' } } }
-    ]).exec(),
-  ]);
-
-  // Extract total duration value
-  const totalDurationValue = totalDuration?.[0]?.totalDuration || 0;
-
-  // Total sum excluding levelCount (since we fix it at 10%)
-  const remainingTotal = attendanceCount + classCount + totalDurationValue;
-
-  // Avoid division by zero
-  const distributePercentage = (value: number) => (remainingTotal > 0 ? (value / remainingTotal) * 90 : 0);
-
-  return {
-    totalLevel: 10, // Fixed at 10%
-    totalAttendance: distributePercentage(attendanceCount),
-    totalClasses: distributePercentage(classCount),
-    totalDuration: 20,
-  };
-};
-
-
-
-
-
 
 
 
@@ -181,4 +139,63 @@ export const dashboardWidgetStudentCounts = async (studentId: string): Promise<{
       throw new Error("Unable to fetch teacher dashboard data.");
     }
   };
-  
+
+
+ //Student dashboard
+export const dashboardWidgetStudentCounts = async (studentId: string): Promise<{
+  totalLevel: number;
+  totalAttendance: number;
+  totalClasses: number;
+  totalDuration: number;
+}> => {
+  // Fetch counts in parallel
+  const [levelCount, attendanceCount, classCount, totalDuration] = await Promise.all([
+    classShedule.countDocuments({ studentId: studentId }).exec(),
+    classShedule.countDocuments({ studentId: studentId }).exec(),
+    classShedule.countDocuments({ 'studentId.studentId': studentId }).exec(),
+    classShedule.aggregate([
+      { $match: { studentId: studentId } }, 
+      { $group: { _id: null, totalDuration: { $sum: '$duration' } } }
+    ]).exec(),
+  ]);
+
+  // Extract total duration value
+  const totalDurationValue = totalDuration?.[0]?.totalDuration || 0;
+
+  // Total sum excluding levelCount (since we fix it at 10%)
+  const remainingTotal = attendanceCount + classCount + totalDurationValue;
+
+  // Avoid division by zero
+  const distributePercentage = (value: number) => (remainingTotal > 0 ? (value / remainingTotal) * 90 : 0);
+
+  return {
+    totalLevel: 10, // Fixed at 10%
+    totalAttendance: distributePercentage(attendanceCount),
+    totalClasses: distributePercentage(classCount),
+    totalDuration: 20,
+  };
+};
+
+
+
+
+
+export const dashboardWidgetSupervisorCounts = async (supervisorId: string): Promise<{
+  totalApplication: number;
+  shortlisted: number;
+  rejected: number;
+}> => {
+  // Fetch counts in parallel
+  const [shortlisted, rejected, totalApplication] = await Promise.all([
+    recruitment.countDocuments({ supervisorId, applicationStatus: "SHORTLISTED" }).exec(),
+    recruitment.countDocuments({ supervisorId, applicationStatus: "REJECTED" }).exec(),
+    recruitment.countDocuments({ supervisorId }).exec(),
+  ]);
+
+  return {
+    totalApplication,
+    shortlisted,
+    rejected,
+  };
+};
+

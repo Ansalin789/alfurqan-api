@@ -125,6 +125,7 @@ export interface IStudentCreate {
 export interface IUsershiftschedule extends Document{
   academicCoachId: string;
   teacherId: string;
+  supervisorId: string;
   name: string;
   email: string;
   role: string;
@@ -143,6 +144,7 @@ export interface IUsershiftschedule extends Document{
 export interface IUsershiftscheduleCreate{
   academicCoachId: string;
   teacherId: string;
+  supervisorId: string;
   name: string;
   email: string;
   role: string;
@@ -793,11 +795,17 @@ export interface IMessageCreate {
   sender: string;
   receiver: string;
   roomId: string;
-  student: {
+  student?: { // <-- Made student optional
     studentId: string;
     studentFirstName: string;
     studentLastName: string;
     studentEmail: string;
+  };
+  supervisor?: {
+    supervisorId: string;
+    supervisorFirstName: string;
+    supervisorLastName: string;
+    supervisorEmail: string;
   };
   teacher: {
     teacherId: string;
@@ -835,6 +843,12 @@ export interface IMessage extends Document {
     studentLastName: string; // Student's last name
     studentEmail: string; // Student's email address
   };
+  supervisor: {
+    supervisorId: string; // Unique identifier for the student
+    supervisorFirstName: string; // Student's first name
+    supervisorLastName: string; // Student's last name
+    supervisorEmail: string; // Student's email address
+  };
   teacher: {
     teacherId: string; // Unique identifier for the teacher
     teacherName: string; // Teacher's full name
@@ -864,24 +878,31 @@ export interface IMessage extends Document {
 }
 
 export interface IFeedbackCreate {
-  student: {
-    studentId: string;
-    studentFirstName: string;
-    studentLastName: string;
-    studentEmail: string;
+  sessionId?:string;
+  student?: {
+    studentId?: string;
+    studentFirstName?: string;
+    studentLastName?: string;
+    studentEmail?: string;
   };
-  teacher: {
+  supervisor?: {
+    supervisorId?: string;
+    supervisorFirstName?: string;
+    supervisorLastName?: string;
+    supervisorEmail?: string;
+  };
+  teacher?: {
     teacherId?: string;
     teacherName?: string;
     teacherEmail?: string;
   };
   classDay?: string;
-  preferedTeacher: string;
+  preferedTeacher?: string;
   feedbackmessage?: string;
   
-  course: {
-    courseId?: string;
-    courseName: string;
+  course?: {
+    courseId?: string;  // Ensure a valid course ID
+    courseName?: string;
   };
 
   startDate: Date;
@@ -889,38 +910,50 @@ export interface IFeedbackCreate {
   startTime?: string;
   endTime?: string;
 
-  // ✅ NEW: Student Level
-  level: number;
+  level?: number;
 
-  // ✅ NEW: Ratings for Teacher Assessment
-  teacherRatings: {
+  teacherRatings?: {  // ✅ Made optional
     listeningAbility?: number;
-    readingAbility? : number;
+    readingAbility?: number;
     overallPerformance?: number;
   };
 
-  // ✅ NEW: Student-Specific Ratings
-  studentsRating: {
+  studentsRating?: {  // ✅ Made optional
     classUnderstanding?: number;
     engagement?: number;
     homeworkCompletion?: number;
   };
 
-  createdDate: Date;
-  createdBy: string;
-  lastUpdatedDate: Date;
+  supervisorRating?: {  // ✅ Made optional
+    knowledgeofstudentsandcontent?: number;
+    assessmentofstudents?: number;
+    communicationandcollaboration?: number;
+    professionalism?: number;
+  };
+
+  createdDate?: Date;  // ✅ Made optional if handled in backend
+  createdBy?: string;  // ✅ Made optional if handled in backend
+  lastUpdatedDate?: Date;  // ✅ Made optional
   lastUpdatedBy?: string;
 }
 
 
+
 export interface IFeedback  extends Document{
-  student: {
-    studentId: string;
-    studentFirstName: string;
-    studentLastName: string;
-    studentEmail: string;
+  sessionId?:string;
+  student?: {
+    studentId?: string;
+    studentFirstName?: string;
+    studentLastName?: string;
+    studentEmail?: string;
   };
-  teacher: {
+  supervisorRating?: {
+    knowledgeofstudentsandcontent?:number;
+    assessmentofstudents?: number;
+    communicationandcollaboration?: number;
+    professionalism?: number;
+  },
+  teacher?: {
     teacherId?: string;
     teacherName?: string;
     teacherEmail?: string;
@@ -960,4 +993,108 @@ export interface IFeedback  extends Document{
   createdBy: string;
   lastUpdatedDate: Date;
   lastUpdatedBy?: string;
+}
+
+export interface IRecruitment extends Document{
+  candidateFirstName: string;
+  candidateLastName : string;
+  supervisor:{
+    supervisorId?: string;
+    supervisorName?: string;
+    supervisorEmail?: string;
+    supervisorRole?: string;
+  };
+  applicationDate : Date;
+  candidateEmail : string;
+  candidatePhoneNumber : number;
+  candidateCountry : string;
+  candidateCity : string;
+  positionApplied : string;
+  currency: string;
+  expectedSalary : number;
+  preferedWorkingHours: string;
+  uploadResume?: Buffer;
+  comments: string;
+  applicationStatus: string;
+  level?: string;
+  quranReading? : string;
+  tajweed? : string;
+  arabicWriting?: string;
+  arabicSpeaking?: string;
+  preferedWorkingDays?: number;
+  overallRating?: number;
+  professionalExperience?: string;
+  skills?: string;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+}
+
+export interface IRecruitmentCreate{
+
+  candidateFirstName: string;
+  candidateLastName : string;
+  applicationDate : Date;
+  candidateEmail : string;
+  candidatePhoneNumber : number;
+  candidateCountry : string;
+  candidateCity : string;
+  positionApplied : string;
+  currency: string;
+  expectedSalary : number;
+  preferedWorkingHours: string;
+  uploadResume?: Buffer;
+  comments: string;
+  applicationStatus: string;
+  level? : string;
+  quranReading? : string;
+  tajweed? : string;
+  arabicWriting?: string;
+  arabicSpeaking?: string;
+  preferedWorkingDays?: number;
+  overallRating?: number;
+  professionalExperience?: string;
+  skills?: string;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate?: Date;
+}
+
+export interface IMeetingCreate {
+
+  meetingName: string;
+  selectedDate: Date;
+  startTime: string;
+  endTime: string;
+  teacher: any;
+  description: string;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+}
+
+export interface IMeeting extends Document{
+  
+  meetingName: string;
+  supervisor:{
+    supervisorId?: string;
+    supervisorName?: string;
+    supervisorEmail?: string;
+    supervisorRole?: string;
+  };
+  selectedDate: Date;
+  startTime: string;
+  endTime: string;
+  teacher: any;
+  description: string;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate?: Date;
+  updatedBy?: string;
 }

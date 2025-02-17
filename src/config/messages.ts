@@ -47,6 +47,34 @@ export const authMessages: Record<string, string> = Object.freeze({
   TOKEN_NO_LONGER_VALID: "Token is no longer valid",
 });
 
+export const recruitmentMessages: Record<string, string> = Object.freeze({
+  LIST: "Retrieve all the candidate list",
+  BYID: "Retrieve candidate details by userId",
+  CREATE: "Create a new candidate",
+  UPDATE: "Update a existing candidate",
+  DELETE: "Delete candidates by candidateId",
+  BULK_DELETE: "Bulk Delete candidates by candidateIds",
+  USER_NOT_FOUND: "Your account is not found or active, contact admin",
+  ENCRYPT_PASSWORD_ERROR: "Password must be an encrypted value",
+  USER_PROFILE_INVALID_FILE_TYPE: "Invalid file type. Only .png , .jpg or jpeg files are allowed.",
+});
+
+export const addMeetingMessages: Record<string, string> = Object.freeze({
+  LIST: "Retrieve all meetings",
+  BYID: "Retrieve meeting details by meetingId",
+  CREATE: "Create a new meeting",
+  UPDATE: "Update an existing meeting",
+  DELETE: "Delete a meeting by meetingId",
+  BULK_DELETE: "Bulk delete meetings by meetingIds",
+  USER_NOT_FOUND: "User not found or inactive, contact admin",
+  INVALID_DATE_FORMAT: "Invalid date format. Please provide a valid date.",
+  INVALID_TIME_FORMAT: "Invalid time format. Please use HH:MM format.",
+  MEETING_TITLE_REQUIRED: "Meeting title is required",
+  MEETING_DATE_REQUIRED: "Meeting date is required",
+  MEETING_TIME_REQUIRED: "Meeting start and end time are required",
+  TEACHER_REQUIRED: "At least one teacher must be assigned",
+  INVALID_STATUS: "Invalid meeting status",
+});
 
 
 
@@ -56,6 +84,11 @@ export const appStatus: Record<string, any> = Object.freeze({
   DELETED: "Deleted",
   ARCHIVED: "Archived",
   NEW: "New"
+});
+
+export const classStatus: Record<string, any> = Object.freeze({
+  COMPLETED: "completed",
+  PENDING: "pending",
 });
 
 export const learningInterest: Record<string, any> = Object.freeze({
@@ -99,6 +132,13 @@ export const evaluationStatus: Record<string, any> = Object.freeze({
     ACADEMICCOACH: "ACADEMICCOACH",
     TEACHER: "Teacher",
   });
+
+  export const applicationStatus: Record<string, any> = Object.freeze({
+    NEWAPPLICATION:"NEWAPPLICATION",
+    SHORTLISTED:"SHORTLISTED",
+    RIJECTED:"RIJECTED",
+    WAITING:"WAITING",
+    });
 
 export const eventType: Record<string, any> = Object.freeze({
   MEETING_SCHEDULED: "MEETING_SCHEDULED",
