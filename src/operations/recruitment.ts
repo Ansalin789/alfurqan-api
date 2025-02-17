@@ -100,3 +100,21 @@ export const getApplicantRecordById = async (
     _id: new Types.ObjectId(id),
   }).lean();
 };
+
+/**
+ * Updates a candidate record in the database by its ID.
+ *
+ * @param {string} id - The unique ID of the candidate to update.
+ * @param {Partial<IRecruitmentCreate>} payload - The fields to update in the candidate record. Only provided fields will be updated.
+ * @returns {Promise<IRecruitment | null>} A promise that resolves to the updated candidate record, or null if no candidate was found.
+ */
+export const updateApplicantById = async (
+  id: string,
+  payload: Partial<IRecruitmentCreate>
+): Promise<IRecruitment | null> => {
+  return RecruitModel.findOneAndUpdate(
+    { _id: new Types.ObjectId(id) },
+    { $set: payload },
+    { new: true }
+  ).lean();
+};

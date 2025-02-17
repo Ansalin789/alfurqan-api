@@ -33,7 +33,10 @@ supervisor:{
         required: false,
     }
 },
-
+gender: {
+    type: String,
+    required: false
+},
 applicationDate:{
     type: Date,
     required: true,
@@ -153,6 +156,7 @@ export const zodRecruitmentSchema = z.object({
         supervisorEmail:z.string().email().optional(),
         supervisorRole:z.string().optional(),
     }),
+    gender: z.string().optional(),
     applicationDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
         message: commonMessages.INVALID_DATE_FORMAT,
       }).transform((val) => new Date(val)).optional(),
