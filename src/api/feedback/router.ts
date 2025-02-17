@@ -11,9 +11,9 @@ const register = async (server: Server): Promise<void> => {
       options: {
         handler:handler.createFeedback ,  
         tags: ["api", "feedback"],  
-        auth: {
-          strategies: ["jwt"],
-        },
+        // auth: {
+        //   strategies: ["jwt"],
+        // },
       },
     },
 
