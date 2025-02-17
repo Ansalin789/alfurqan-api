@@ -33,6 +33,18 @@ const register = async (server: Server): Promise<void> => {
             handler: handler.getAllApplicants,
             description: recruitmentMessages.LIST,
             tags: ["api", "recruitment"],
+            auth: {
+              strategies: ["jwt"],
+            },
+          },
+        },
+        {
+          method: "GET",
+          path: "/applicants/{applicantId}",
+          options: {
+            handler: handler.getAllApplicantRecordById,
+            description: recruitmentMessages.LIST,
+            tags: ["api", "recruitment"],
             // auth: {
             //   strategies: ["jwt"],
             // },

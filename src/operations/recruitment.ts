@@ -1,13 +1,13 @@
 
 
 
-import { badRequest } from "@hapi/boom";
 import { IRecruitment, IRecruitmentCreate } from "../../types/models.types";
 import RecruitModel from "../models/recruitment"
 import { GetAllApplicationsRecordsParams } from "../shared/enum";
 import { isNil } from "lodash";
 import { commonMessages, recruitmentMessages, studentMessages } from "../config/messages";
 import AppLogger from "../helpers/logging";
+import { Types } from "mongoose";
 
 /**
  * Creates a new user.
@@ -19,11 +19,11 @@ export const createRecruitment = async (  payload: IRecruitmentCreate
 
      const newRecruit = new RecruitModel(payload);
 
-        if (newRecruit.applicationDate?.toDateString() === new Date().toDateString()) {
-             return {
-                 error: badRequest('Evaluation class is not allowed to current date. Select another date'),
-             };
-         }
+        // if (newRecruit.applicationDate?.toDateString() === new Date().toDateString()) {
+        //      return {
+        //          error: badRequest('Evaluation class is not allowed to current date. Select another date'),
+        //      };
+        //  }
        
 
      // Convert file to string (Base64 encoding)
@@ -93,3 +93,10 @@ export const getAllApplicantsRecords = async (
   return { totalCount, applicants };
 };
 
+export const getApplicantRecordById = async (
+  id: string
+): Promise<IRecruitment | null> => {
+  return RecruitModel.findOne({
+    _id: new Types.ObjectId(id),
+  }).lean();
+};
