@@ -6,6 +6,7 @@ import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation"
 
 const createFeedbackValidation = z.object({
   payload: zodFeedbackSchema.pick({
+    sessionId:true,
     student: true,
     teacher: true,
     classDay: true,
@@ -46,6 +47,7 @@ export default {
 
       // Ensure studentsRating is always set
       const result = await createFeedback({
+        sessionId:payload.sessionId!,
         student: payload.student!,
         teacher: payload.teacher || {},
         classDay: payload.classDay || "",
@@ -91,6 +93,7 @@ export default {
 
       // Ensure necessary attributes, using defaults if they are missing
       const result = await createTeacherFeedback({
+        sessionId:payload.sessionId!,
         student: payload.student!,
         teacher: payload.teacher || {},
         classDay: payload.classDay || '',
@@ -183,6 +186,7 @@ export default {
 
       // Ensure studentsRating is always set
       const result = await createSupervisorFeedback({
+        sessionId:payload.sessionId!,
         supervisor: payload.supervisor!,
         teacher: payload.teacher || {},
         classDay: payload.classDay || "",
