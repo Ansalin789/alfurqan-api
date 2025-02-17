@@ -1063,13 +1063,19 @@ export interface IRecruitmentCreate{
   updatedDate?: Date;
 }
 
-export interface IMeetingCreate {
+export interface ITeacher {
+  teacherId: string;
+  teacherName: string;
+  teacherEmail: string;
+}
 
+export interface IMeetingCreate {
   meetingName: string;
+  meetingId: string;
   selectedDate: Date;
   startTime: string;
   endTime: string;
-  teacher: any;
+  teacher: ITeacher[];  // Array of teacher objects
   description: string;
   status: string;
   createdDate: Date;
@@ -1078,9 +1084,12 @@ export interface IMeetingCreate {
   updatedBy?: string;
 }
 
+
 export interface IMeeting extends Document{
   
   meetingName: string;
+  meetingId: string;
+
   supervisor:{
     supervisorId?: string;
     supervisorName?: string;
@@ -1090,7 +1099,7 @@ export interface IMeeting extends Document{
   selectedDate: Date;
   startTime: string;
   endTime: string;
-  teacher: any;
+  teacher:  string[];
   description: string;
   status: string;
   createdDate: Date;
