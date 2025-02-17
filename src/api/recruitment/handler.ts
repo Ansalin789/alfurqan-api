@@ -1,10 +1,15 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodRecruitmentSchema } from "../../models/recruitment";
-import { createRecruitment, getAllApplicantsRecords } from "../../operations/recruitment";
+import { createRecruitment, getAllApplicantsRecords, getApplicantRecordById } from "../../operations/recruitment";
 import { Readable } from "stream";
 import * as Stream from "stream";
 import { zodGetAllApplicantsRecordsQuerySchema, zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
+import { isNil } from "lodash";
+import { notFound } from "@hapi/boom";
+import { recruitmentMessages } from "../../config/messages";
+import pdfParse from "pdf-parse";
+import fs from 'fs';
 
 
 const createInputValidation = z.object({
@@ -59,12 +64,12 @@ export default{
 
            const rawPayload = req.payload as any;
     
-          console.log("rawPayload.uploadResume", rawPayload.uploadResume)
            const uploadFileBuffer = rawPayload.uploadResume
            ? await streamToBuffer(rawPayload.uploadResume)
            : null;
                 
-          console.log("Resume",uploadFileBuffer)
+           const  experience = rawPayload.uploadResume? await extractResumeDetails(uploadFileBuffer) :  null
+          //console.log("Resume",uploadFileBuffer)
 
            return await createRecruitment({     
         candidateFirstName: payload.candidateFirstName,
@@ -88,8 +93,8 @@ export default{
         arabicSpeaking: payload.arabicSpeaking,
         preferedWorkingDays: payload.preferedWorkingDays,
         overallRating: payload.overallRating,
-        professionalExperience:payload.professionalExperience,
-        skills: payload.skills,
+        professionalExperience:experience?.workExperience || " ",
+        skills:experience?.skills || " ",
         status:payload.status,
         createdDate: payload.createdDate || new Date(),
         createdBy: payload.createdBy || payload.candidateFirstName,
@@ -105,9 +110,19 @@ export default{
       },
   });
   return getAllApplicantsRecords(query);
-    }
+    },
     
-}
+    async getAllApplicantRecordById(req: Request, h: ResponseToolkit){
+      const result = await getApplicantRecordById(String(req.params.applicantId));
+
+      if (isNil(result)) {
+           return notFound(recruitmentMessages.USER_NOT_FOUND);
+           }
+
+  return result;
+    }
+};
+
 
 
 
@@ -118,7 +133,35 @@ async function streamToBuffer(stream: Stream.Readable): Promise<Buffer> {
     stream.on("end", () => resolve(Buffer.concat(chunks)));
     stream.on("error", (err) => reject(err));
   });
-}
+};
 
 
+const 
+extractResumeDetails = async (fileStream: any) => {
+  try {
+    // Convert stream to buffer
+   // const dataBuffer = await streamToBuffer(fileStream);
 
+    // Extract text using pdf-parse
+    const data = await pdfParse(fileStream);
+    const text = data.text;
+
+    
+    // Extract Skills
+    const skillsMatch = text.match(/Skills([\s\S]*?)(?=(Education|Experience|Projects|$))/i);
+    const skills = skillsMatch ? skillsMatch[1].trim() : 'Not found';
+
+    // Extract Work Experience
+    const workExpMatch = text.match(/EXPERIENCE([\s\S]*?)(?=(Education|Skills|Projects|$))/i);
+    const workExperience = workExpMatch ? workExpMatch[1].trim() : 'Not found';
+
+
+    return {
+      workExperience,
+      skills,
+    };
+  } catch (error) {
+    console.error('Error extracting resume details:', error);
+    throw error;
+  }
+};
