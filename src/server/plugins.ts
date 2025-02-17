@@ -18,6 +18,7 @@ import studentInvoiceAPI from "../api/invoice/router"
 import messageAPI from "../api/message/router";
 import feedbackAPI  from "../api/feedback/router";
 import recruitmentAPI from "../api/recruitment/router";
+import addMeetingAPI from "../api/addMeeting/router";
 export const appPlugins = [
   {
     plugin: systemLifeCycle,
@@ -76,5 +77,8 @@ export const appPlugins = [
   },
   {
     plugin: recruitmentAPI,
+  },
+  {
+    plugin: addMeetingAPI,
   }
 ];

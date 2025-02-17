@@ -795,11 +795,17 @@ export interface IMessageCreate {
   sender: string;
   receiver: string;
   roomId: string;
-  student: {
+  student?: { // <-- Made student optional
     studentId: string;
     studentFirstName: string;
     studentLastName: string;
     studentEmail: string;
+  };
+  supervisor?: {
+    supervisorId: string;
+    supervisorFirstName: string;
+    supervisorLastName: string;
+    supervisorEmail: string;
   };
   teacher: {
     teacherId: string;
@@ -836,6 +842,12 @@ export interface IMessage extends Document {
     studentFirstName: string; // Student's first name
     studentLastName: string; // Student's last name
     studentEmail: string; // Student's email address
+  };
+  supervisor: {
+    supervisorId: string; // Unique identifier for the student
+    supervisorFirstName: string; // Student's first name
+    supervisorLastName: string; // Student's last name
+    supervisorEmail: string; // Student's email address
   };
   teacher: {
     teacherId: string; // Unique identifier for the teacher
@@ -1032,4 +1044,38 @@ export interface IRecruitmentCreate{
   updatedDate?: Date;
 }
 
+export interface IMeetingCreate {
 
+  meetingName: string;
+  selectedDate: Date;
+  startTime: string;
+  endTime: string;
+  teacher: any;
+  description: string;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+}
+
+export interface IMeeting extends Document{
+  
+  meetingName: string;
+  supervisor:{
+    supervisorId?: string;
+    supervisorName?: string;
+    supervisorEmail?: string;
+    supervisorRole?: string;
+  };
+  selectedDate: Date;
+  startTime: string;
+  endTime: string;
+  teacher: any;
+  description: string;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+}

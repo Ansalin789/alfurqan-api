@@ -61,6 +61,7 @@ export class CustomEnumerator {
 export interface GetAllRecordsParams {
   groupId?:string;
   roomId?:string;
+  supervisorId?:string;
   teacherId?:string;
   studentId?: string;
   academicCoachId?: string;
