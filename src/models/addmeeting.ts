@@ -93,7 +93,7 @@ export const zodAddMeetingSchema = z.object({
     endTime: z.string().regex(/^\d{2}:\d{2}$/, "End time must be in HH:MM format"),
     teacher: z.array(z.string()),
     description: z.string().min(5, "Description must be at least 5 characters"),
-    status: z.enum([appStatus.ACTIVE, appStatus.IN_ACTIVE, appStatus.DELETED]),
+    status: z.enum([appStatus.ACTIVE, appStatus.IN_ACTIVE, appStatus.DELETED, appStatus.RESCHEDULE]),
     createdDate: z
       .string()
       .refine((val) => !isNaN(Date.parse(val)), {

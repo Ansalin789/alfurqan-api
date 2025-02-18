@@ -83,7 +83,8 @@ export const appStatus: Record<string, any> = Object.freeze({
   IN_ACTIVE: "Inactive",
   DELETED: "Deleted",
   ARCHIVED: "Archived",
-  NEW: "New"
+  NEW: "New",
+  RESCHEDULE: "Reschedule"
 });
 
 export const classStatus: Record<string, any> = Object.freeze({

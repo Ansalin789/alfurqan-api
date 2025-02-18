@@ -2,14 +2,12 @@ import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodRecruitmentSchema } from "../../models/recruitment";
 import { createRecruitment, getAllApplicantsRecords, getApplicantRecordById } from "../../operations/recruitment";
-import { Readable } from "stream";
 import * as Stream from "stream";
-import { zodGetAllApplicantsRecordsQuerySchema, zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
+import { zodGetAllApplicantsRecordsQuerySchema} from "../../shared/zod_schema_validation";
 import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
 import { recruitmentMessages } from "../../config/messages";
 import pdfParse from "pdf-parse";
-import fs from 'fs';
 
 
 const createInputValidation = z.object({
