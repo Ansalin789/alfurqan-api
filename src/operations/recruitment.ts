@@ -9,6 +9,21 @@ import { commonMessages, recruitmentMessages, studentMessages } from "../config/
 import AppLogger from "../helpers/logging";
 import { Types } from "mongoose";
 
+
+export interface IRecruitmentUpdate{
+comments?: string,
+applicationStatus: any,
+level?: string,
+quranReading?: string,
+tajweed?: string,
+arabicWriting?: string,
+arabicSpeaking?: string,
+englishSpeaking?: string,
+preferedWorkingDays?: string,
+overallRating?: number,
+updatedDate?: Date,
+}
+
 /**
  * Creates a new user.
  *
@@ -99,4 +114,22 @@ export const getApplicantRecordById = async (
   return RecruitModel.findOne({
     _id: new Types.ObjectId(id),
   }).lean();
+};
+
+/**
+ * Updates a candidate record in the database by its ID.
+ *
+ * @param {string} id - The unique ID of the candidate to update.
+ * @param {Partial<IRecruitmentCreate>} payload - The fields to update in the candidate record. Only provided fields will be updated.
+ * @returns {Promise<IRecruitment | null>} A promise that resolves to the updated candidate record, or null if no candidate was found.
+ */
+export const updateApplicantById = async (
+  id: string,
+  payload: Partial<IRecruitmentUpdate>
+): Promise<IRecruitment | null> => {
+  return RecruitModel.findOneAndUpdate(
+    { _id: new Types.ObjectId(id) },
+    { $set: payload },
+    { new: true }
+  ).lean();
 };

@@ -1004,6 +1004,7 @@ export interface IRecruitment extends Document{
     supervisorEmail?: string;
     supervisorRole?: string;
   };
+  gender?: string;
   applicationDate : Date;
   candidateEmail : string;
   candidatePhoneNumber : number;
@@ -1021,7 +1022,8 @@ export interface IRecruitment extends Document{
   tajweed? : string;
   arabicWriting?: string;
   arabicSpeaking?: string;
-  preferedWorkingDays?: number;
+  englishSpeaking?: string;
+  preferedWorkingDays?: string;
   overallRating?: number;
   professionalExperience?: string;
   skills?: string;
@@ -1036,6 +1038,7 @@ export interface IRecruitmentCreate{
 
   candidateFirstName: string;
   candidateLastName : string;
+  gender?:  string;
   applicationDate : Date;
   candidateEmail : string;
   candidatePhoneNumber : number;
@@ -1053,7 +1056,8 @@ export interface IRecruitmentCreate{
   tajweed? : string;
   arabicWriting?: string;
   arabicSpeaking?: string;
-  preferedWorkingDays?: number;
+  englishSpeaking?: string;
+  preferedWorkingDays?: string;
   overallRating?: number;
   professionalExperience?: string;
   skills?: string;
