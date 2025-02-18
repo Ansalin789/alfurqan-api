@@ -33,6 +33,7 @@ const createInputValidation = z.object({
     tajweed: true,
     arabicWriting: true,
     arabicSpeaking: true,
+    englishSpeaking: true,
     preferedWorkingDays: true,
     overallRating: true,
     professionalExperience: true,
@@ -43,6 +44,22 @@ const createInputValidation = z.object({
     updatedDate: true,
   }),
 });
+
+ const updateInputValidation = z.object({
+  payload: zodRecruitmentSchema.pick({
+    comments: true,
+    applicationStatus: true,
+    level: true,
+    quranReading: true,
+    tajweed: true,
+    arabicWriting: true,
+    arabicSpeaking: true,
+    englishSpeaking: true,
+    preferedWorkingDays: true,
+    overallRating: true,
+    updatedDate: true,
+  }),
+ })
 
 const getApplicantsInputValidation = z.object({
   query: zodGetAllApplicantsRecordsQuerySchema.pick({
@@ -93,6 +110,7 @@ export default{
         tajweed: payload.tajweed, // Use a valid EvaluationStatus value
         arabicWriting: payload.arabicWriting, // Provide a default value for status
         arabicSpeaking: payload.arabicSpeaking,
+        englishSpeaking: payload.englishSpeaking,
         preferedWorkingDays: payload.preferedWorkingDays,
         overallRating: payload.overallRating,
         professionalExperience:experience?.workExperience || " ",
@@ -126,7 +144,7 @@ export default{
 
     async updateApplicantRecordById(req: Request, h: ResponseToolkit) {
 
-      const { payload } = createInputValidation.parse({
+      const { payload } = updateInputValidation.parse({
         payload: req.payload
       });
    

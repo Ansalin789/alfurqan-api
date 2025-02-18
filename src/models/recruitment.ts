@@ -105,8 +105,12 @@ arabicSpeaking:{
     type: String,
     required: false,
 },
+englishSpeaking:{
+    type: String,
+    required: false, 
+},
 preferedWorkingDays:{
-    type: Number,
+    type: String,
     required: false,
 },
 overallRating:{
@@ -182,8 +186,12 @@ export const zodRecruitmentSchema = z.object({
       tajweed: z.string().optional(),
       arabicWriting: z.string().optional(),
       arabicSpeaking: z.string().optional(),
-      preferedWorkingDays: z.number().optional(),
-      overallRating: z.number().optional(),
+      englishSpeaking: z.string().optional(),
+      preferedWorkingDays: z.string().optional(),
+      overallRating: z.preprocess(
+        (val) => (typeof val === "string" ? parseInt(val, 10) : val), 
+        z.number()
+      ),
       professionalExperience: z.string().optional(),
       skills: z.string().optional(),
       status: z.enum([appStatus.ACTIVE, appStatus.IN_ACTIVE, appStatus.DELETED]),

@@ -9,6 +9,21 @@ import { commonMessages, recruitmentMessages, studentMessages } from "../config/
 import AppLogger from "../helpers/logging";
 import { Types } from "mongoose";
 
+
+export interface IRecruitmentUpdate{
+comments?: string,
+applicationStatus: any,
+level?: string,
+quranReading?: string,
+tajweed?: string,
+arabicWriting?: string,
+arabicSpeaking?: string,
+englishSpeaking?: string,
+preferedWorkingDays?: string,
+overallRating?: number,
+updatedDate?: Date,
+}
+
 /**
  * Creates a new user.
  *
@@ -110,7 +125,7 @@ export const getApplicantRecordById = async (
  */
 export const updateApplicantById = async (
   id: string,
-  payload: Partial<IRecruitmentCreate>
+  payload: Partial<IRecruitmentUpdate>
 ): Promise<IRecruitment | null> => {
   return RecruitModel.findOneAndUpdate(
     { _id: new Types.ObjectId(id) },

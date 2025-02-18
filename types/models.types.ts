@@ -1022,7 +1022,8 @@ export interface IRecruitment extends Document{
   tajweed? : string;
   arabicWriting?: string;
   arabicSpeaking?: string;
-  preferedWorkingDays?: number;
+  englishSpeaking?: string;
+  preferedWorkingDays?: string;
   overallRating?: number;
   professionalExperience?: string;
   skills?: string;
@@ -1055,7 +1056,8 @@ export interface IRecruitmentCreate{
   tajweed? : string;
   arabicWriting?: string;
   arabicSpeaking?: string;
-  preferedWorkingDays?: number;
+  englishSpeaking?: string;
+  preferedWorkingDays?: string;
   overallRating?: number;
   professionalExperience?: string;
   skills?: string;
