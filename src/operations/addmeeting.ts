@@ -1,11 +1,23 @@
 import { IMeeting, IMeetingCreate } from "../../types/models.types";
-import { badRequest } from "@hapi/boom";
+
 import Meeting from "../models/addmeeting";
 import User from "../models/users";
 import cron from "node-cron";
-import moment from "moment"; 
-import { error } from "console";
 
+import addmeeting from "../models/addmeeting";
+import { Types } from "mongoose";
+
+
+export interface IMeetingUpdate{
+    meetingName:string,
+    selectedDate: Date,
+    status?:string,
+    startTime:string,
+    endTime:string,
+    updatedDate?:Date,
+    updatedBy?:string,
+    description:string,
+    }
 
 /**
  * Creates a new meeting.
@@ -170,7 +182,7 @@ const autoScheduleMeeting = async () => {
         const supervisor = await User.findOne({ role: "SUPERVISOR" });
 
         if (!supervisor) {
-            console.log("❌ No supervisor found. Cannot schedule a meeting.");
+            console.log(" No supervisor found. Cannot schedule a meeting.");
             return;
         }
 
@@ -230,9 +242,31 @@ const autoScheduleMeeting = async () => {
 };
 
 // Schedule the job to auto-schedule meetings every 15 days
-cron.schedule("0 10 */1 * *", async () => {
+cron.schedule("0 0 * * *", async () => {
     console.log(" Running the auto-scheduling job...");
     await autoScheduleMeeting();
 });
 
+//Get by ID
 
+export const getMeetingRecordById = async (
+  id: string
+): Promise<IMeeting | null> => {
+  return addmeeting.findOne({
+    _id: new Types.ObjectId(id),
+  }).lean();
+};
+
+
+//Update
+
+export const updateMeetingById = async (
+  id: string,
+  payload: Partial<IMeetingUpdate>
+): Promise<IMeeting | null> => {
+  return addmeeting.findOneAndUpdate(
+    { _id: new Types.ObjectId(id) },
+    { $set: payload },
+    { new: true }
+  ).lean();
+}

@@ -33,6 +33,36 @@ const register = async (server: Server): Promise<void> => {
           },
         },
 
+        {
+          method: "GET",
+          path: "/allMeetings/{meetingId}",
+          options: {
+            handler: handler.getMeetingRecordById,
+            description: addMeetingMessages.LIST,
+            tags: ["api", "recruitment"],
+            // auth: {
+            //   strategies: ["jwt"],
+            // },
+          },
+        },
+        
+
+        {
+          method: "PUT",
+          path: "/meeting/{meetingId}",
+          options: {
+              handler: handler.updateMeetingRecordById,
+              description: addMeetingMessages.LIST,
+              tags: ["api", "recruitment"],
+              payload: {
+                  output: "data",  // Ensure payload is treated as parsed data
+                  parse: true,
+                  allow: "application/json", // Ensure JSON is allowed
+                  maxBytes: 50 * 1024 * 1024,
+              },
+          },
+      }
+       
 
   ];
   server.route(routes);
