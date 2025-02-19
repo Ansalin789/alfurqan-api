@@ -42,7 +42,20 @@ const register = async (server: Server): Promise<void> => {
           method: "GET",
           path: "/applicants/{applicantId}",
           options: {
-            handler: handler.getAllApplicantRecordById,
+            handler: handler.getApplicantRecordById,
+            description: recruitmentMessages.LIST,
+            tags: ["api", "recruitment"],
+            // auth: {
+            //   strategies: ["jwt"],
+            // },
+          },
+        },
+
+        {
+          method: "PUT",
+          path: "/applicants/{applicantId}",
+          options: {
+            handler: handler.updateApplicantRecordById,
             description: recruitmentMessages.LIST,
             tags: ["api", "recruitment"],
             // auth: {

@@ -1,7 +1,7 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodRecruitmentSchema } from "../../models/recruitment";
-import { createRecruitment, getAllApplicantsRecords, getApplicantRecordById } from "../../operations/recruitment";
+import { createRecruitment, getAllApplicantsRecords, getApplicantRecordById, updateApplicantById } from "../../operations/recruitment";
 import { Readable } from "stream";
 import * as Stream from "stream";
 import { zodGetAllApplicantsRecordsQuerySchema, zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
@@ -16,6 +16,7 @@ const createInputValidation = z.object({
   payload: zodRecruitmentSchema.pick({
     candidateFirstName: true,
     candidateLastName: true,
+    gender: true,
     applicationDate: true,
     candidateEmail: true,
     candidatePhoneNumber: true,
@@ -32,6 +33,7 @@ const createInputValidation = z.object({
     tajweed: true,
     arabicWriting: true,
     arabicSpeaking: true,
+    englishSpeaking: true,
     preferedWorkingDays: true,
     overallRating: true,
     professionalExperience: true,
@@ -42,6 +44,22 @@ const createInputValidation = z.object({
     updatedDate: true,
   }),
 });
+
+ const updateInputValidation = z.object({
+  payload: zodRecruitmentSchema.pick({
+    comments: true,
+    applicationStatus: true,
+    level: true,
+    quranReading: true,
+    tajweed: true,
+    arabicWriting: true,
+    arabicSpeaking: true,
+    englishSpeaking: true,
+    preferedWorkingDays: true,
+    overallRating: true,
+    updatedDate: true,
+  }),
+ })
 
 const getApplicantsInputValidation = z.object({
   query: zodGetAllApplicantsRecordsQuerySchema.pick({
@@ -74,6 +92,7 @@ export default{
            return await createRecruitment({     
         candidateFirstName: payload.candidateFirstName,
         candidateLastName: payload.candidateLastName,
+        gender: payload.gender || undefined,
         applicationDate: payload.applicationDate || new Date(),
         candidateEmail: payload.candidateEmail,
         candidatePhoneNumber: payload.candidatePhoneNumber,
@@ -91,6 +110,7 @@ export default{
         tajweed: payload.tajweed, // Use a valid EvaluationStatus value
         arabicWriting: payload.arabicWriting, // Provide a default value for status
         arabicSpeaking: payload.arabicSpeaking,
+        englishSpeaking: payload.englishSpeaking,
         preferedWorkingDays: payload.preferedWorkingDays,
         overallRating: payload.overallRating,
         professionalExperience:experience?.workExperience || " ",
@@ -112,7 +132,7 @@ export default{
   return getAllApplicantsRecords(query);
     },
     
-    async getAllApplicantRecordById(req: Request, h: ResponseToolkit){
+    async getApplicantRecordById(req: Request, h: ResponseToolkit){
       const result = await getApplicantRecordById(String(req.params.applicantId));
 
       if (isNil(result)) {
@@ -120,6 +140,20 @@ export default{
            }
 
   return result;
+    },
+
+    async updateApplicantRecordById(req: Request, h: ResponseToolkit) {
+
+      const { payload } = updateInputValidation.parse({
+        payload: req.payload
+      });
+   
+      const result = await updateApplicantById(String(req.params.applicantId), payload);
+      if (isNil(result)) {
+        return notFound(recruitmentMessages.USER_NOT_FOUND);
+      }
+  
+      return result;
     }
 };
 
@@ -136,8 +170,7 @@ async function streamToBuffer(stream: Stream.Readable): Promise<Buffer> {
 };
 
 
-const 
-extractResumeDetails = async (fileStream: any) => {
+const extractResumeDetails = async (fileStream: any) => {
   try {
     // Convert stream to buffer
    // const dataBuffer = await streamToBuffer(fileStream);
@@ -164,4 +197,6 @@ extractResumeDetails = async (fileStream: any) => {
     console.error('Error extracting resume details:', error);
     throw error;
   }
+
+   
 };
