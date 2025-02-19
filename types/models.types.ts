@@ -1093,16 +1093,15 @@ export interface IMeeting extends Document{
   
   meetingName: string;
   meetingId: string;
-
-  supervisor:{
+   supervisor:{
     supervisorId?: string;
     supervisorName?: string;
     supervisorEmail?: string;
     supervisorRole?: string;
   };
   selectedDate: Date;
-  startTime: string;
-  endTime: string;
+  startTime: any;
+  endTime: any;
   teacher:  string[];
   description: string;
   status: string;
