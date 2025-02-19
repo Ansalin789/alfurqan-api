@@ -45,6 +45,10 @@ const addMeetingSchema = new Schema<IMeeting>(
       type: String,
       required: true,
     },
+    meetingStatus: {
+      type: String,
+      required: true,
+    },
     status: {
       type: String,
       required: false,
@@ -85,13 +89,19 @@ export const zodAddMeetingSchema = z.object({
       supervisorEmail: z.string().email().optional(),
       supervisorRole: z.string().optional(),
     })
-    .optional(), // ✅ Make the supervisor field optional
+    .optional(),
 
-    selectedDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
-      message: commonMessages.INVALID_DATE_FORMAT,
-    }).transform((val) => new Date(val)),
-    startTime: z.string().regex(/^\d{2}:\d{2}$/, "Start time must be in HH:MM format"),
-    endTime: z.string().regex(/^\d{2}:\d{2}$/, "End time must be in HH:MM format"),
+  selectedDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: commonMessages.INVALID_DATE_FORMAT,
+  }).transform((val) => new Date(val)),
+
+  startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, {
+    message: "Start time must be in HH:MM (24-hour) format",
+  }),
+
+  endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, {
+    message: "End time must be in HH:MM (24-hour) format",
+  }),
 
   teacher: z
     .array(
@@ -101,26 +111,31 @@ export const zodAddMeetingSchema = z.object({
         teacherEmail: z.string().email(),
       })
     )
-    .optional(), // ✅ Make teacher array optional
+    .optional(),
 
   description: z.string().min(5, "Description must be at least 5 characters"),
 
-  status: z
-    .enum([appStatus.ACTIVE, appStatus.IN_ACTIVE, appStatus.DELETED])
-    .optional(), // ✅ Optional for flexibility
+  meetingStatus: z.string(),
 
-  createdDate: z
-    .string()
-    .refine((val) => !isNaN(Date.parse(val)), {
-      message: commonMessages.INVALID_DATE_FORMAT,
-    })
-    .transform((val) => new Date(val)),
+  status: z.enum([
+    appStatus.ACTIVE,
+    appStatus.IN_ACTIVE,
+    appStatus.DELETED,
+    "Scheduled", // ✅ ADDED "Scheduled" to fix validation error
+  ]).optional(),
 
-    createdBy: z.string(),
-    updatedDate: z.string().optional().refine((val) => val ? !isNaN(Date.parse(val)) : true, {
-      message: commonMessages.INVALID_DATE_FORMAT,
-    }).transform((val) => val ? new Date(val) : undefined),
-    updatedBy: z.string().optional(),
+  createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: commonMessages.INVALID_DATE_FORMAT,
+  }).transform((val) => new Date(val)),
+
+  createdBy: z.string(),
+
+  updatedDate: z.string().optional().refine((val) => val ? !isNaN(Date.parse(val)) : true, {
+    message: commonMessages.INVALID_DATE_FORMAT,
+  }).transform((val) => val ? new Date(val) : undefined),
+
+  updatedBy: z.string().optional(),
 });
+
 
 export default mongoose.model<IMeeting>("addMeeting", addMeetingSchema);

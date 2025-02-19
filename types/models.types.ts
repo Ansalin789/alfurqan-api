@@ -1082,6 +1082,7 @@ export interface IMeetingCreate {
   teacher: ITeacher[];  // Array of teacher objects
   description: string;
   status: string;
+  meetingStatus: string;
   createdDate: Date;
   createdBy: string;
   updatedDate?: Date;
@@ -1105,6 +1106,7 @@ export interface IMeeting extends Document{
   teacher:  string[];
   description: string;
   status: string;
+  meetingStatus: string;
   createdDate: Date;
   createdBy: string;
   updatedDate?: Date;

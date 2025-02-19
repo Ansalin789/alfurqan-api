@@ -25,7 +25,7 @@ export function mergeMeetingPayload(payload: any, existingMeeting: any) {
     startTime: payload.startTime ?? existingMeeting.startTime,
     endTime: payload.endTime ?? existingMeeting.endTime,
     description: payload.description ?? existingMeeting.description,
-    status: payload.status ?? existingMeeting.status,
+    meetingStatus: payload.meetingStatus ?? existingMeeting.meetingStatus,
     updatedDate: new Date(),
     updatedBy: payload.updatedBy ?? existingMeeting.updatedBy,
   };

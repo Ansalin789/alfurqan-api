@@ -12,6 +12,7 @@ export interface IMeetingUpdate{
     meetingName:string,
     selectedDate: Date,
     status?:string,
+    meetingStatus?: string,
     startTime:string,
     endTime:string,
     updatedDate?:Date,
@@ -228,7 +229,7 @@ const autoScheduleMeeting = async () => {
                         supervisorEmail: supervisor.email,
                         supervisorRole: Array.isArray(supervisor.role) ? supervisor.role[0] : supervisor.role,
                     },
-                    status: "Scheduled",
+                    meetingStatus: "Scheduled",
                 });
 
                 // Save the new meeting
