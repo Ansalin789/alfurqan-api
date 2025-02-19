@@ -45,6 +45,19 @@ const register = async (server: Server): Promise<void> => {
       },
     },
 
+    {
+      method: "GET",
+      path: "/dashboard/supervisor/counts",
+      options: {
+        handler: handler.getWidgetSupervisorCount,
+        description: dashboardMessages.WIDGET_COUNT,
+        tags: ["api", "dashboard"],
+        // auth: {
+        //   strategies: ["jwt"],
+        // },
+      },
+    },
+
 
 
   ];

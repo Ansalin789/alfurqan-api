@@ -11,9 +11,9 @@ const register = async (server: Server): Promise<void> => {
       options: {
         handler:handler.createMessage ,  
         tags: ["api", "message"],  
-        auth: {
-          strategies: ["jwt"],
-        },
+        // auth: {
+        //   strategies: ["jwt"],
+        // },
       },
     },
 
@@ -43,6 +43,57 @@ const register = async (server: Server): Promise<void> => {
         },
       },
     },
+
+
+
+//SUPERVISOR MODEL/////////////////////////////////////
+
+
+{
+  method: "POST",
+  path: "/supervisormessage",
+  options: {
+    handler:handler.createSupervisorMessage ,  
+    tags: ["api", "message"],  
+    // auth: {
+    //   strategies: ["jwt"],
+    // },
+  },
+},
+
+
+
+{
+  method: "GET",
+  path: "/message/supervisormessage",
+  options: {
+    handler:handler.createSupervisorMessageList ,  
+    tags: ["api", "message"],  
+    // auth: {
+    //   strategies: ["jwt"],
+    // },
+  },
+},
+
+
+{
+  method: "GET",
+  path: "/message/getteachermessage",
+  options: {
+    handler:handler.createGetTeacherMessageList ,  
+    tags: ["api", "message"],  
+    // auth: {
+    //   strategies: ["jwt"],
+    // },
+  },
+},
+
+
+
+
+
+
+
   ];
 
   // Register the defined routes with the Hapi server
