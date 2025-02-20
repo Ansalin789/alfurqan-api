@@ -1075,7 +1075,6 @@ export interface ITeacher {
 
 export interface IMeetingCreate {
   meetingName: string;
-  meetingId: string;
   selectedDate: Date;
   startTime: string;
   endTime: string;

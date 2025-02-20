@@ -6,6 +6,7 @@ import cron from "node-cron";
 
 import addmeeting from "../models/addmeeting";
 import { Types } from "mongoose";
+import { badRequest } from "@hapi/boom";
 
 
 export interface IMeetingUpdate{
@@ -25,58 +26,85 @@ export interface IMeetingUpdate{
  *
  * @param {IMeetingCreate} payload - The data for the new meeting.
  */
-// export const createMeeting = async (payload: IMeetingCreate): Promise<IMeeting | { error: any }> => {
-//     try {
-//         // Find the supervisor details from User model
-//         const supervisor = await User.findOne({
-//             userName: payload.createdBy,
-//             role: "SUPERVISOR",
-//         }).exec();
+export const createMeeting = async (payload: IMeetingCreate): Promise<IMeeting | { error: any }> => {
+    try {
+        // Find the supervisor details from User model
+        let supervisor = await User.findOne({
+            userName: payload.createdBy,
+            role: "SUPERVISOR",
+        }).exec();
 
-//         console.log("Supervisor Details >>>>", supervisor);
+        console.log("Supervisor Details >>>>", supervisor);
 
-//         // Convert selectedDate to a Date object
-//         const meetingDate = new Date(payload.selectedDate);
-//         const startTime = payload.startTime;
-//         const endTime = payload.endTime;
+        // Convert selectedDate to a Date object
+        const meetingDate = new Date(payload.selectedDate);
+        const startTime = payload.startTime;
+        const endTime = payload.endTime;
 
-//         // Check for existing meetings that overlap with the new meeting
-//         const conflictingMeeting = await Meeting.findOne({
-//             selectedDate: meetingDate, // Same date
-//             $or: [
-//                 { startTime: { $lt: endTime }, endTime: { $gt: startTime } } // Overlapping time
-//             ]
-//         });
+        // Check for existing meetings that overlap with the new meeting
+        const conflictingMeeting = await Meeting.findOne({
+            selectedDate: meetingDate, // Same date
+            $or: [
+                { startTime: { $lt: endTime }, endTime: { $gt: startTime } } // Overlapping time
+            ]
+        });
 
-//         if (conflictingMeeting) {
-//             return { error: badRequest("A meeting is already scheduled at this time. Please choose a different time slot.") };
-//         }
+        if (conflictingMeeting) {
+            return { error: badRequest("A meeting is already scheduled at this time. Please choose a different time slot.") };
+        }
 
-//         // Create a new meeting instance
-//         const newMeeting = new Meeting({
-//             ...payload,
-//             supervisor: supervisor
-//                 ? {
-//                       supervisorId: supervisor._id.toString(),
-//                       supervisorName: supervisor.userName,
-//                       supervisorEmail: supervisor.email,
-//                       supervisorRole: Array.isArray(supervisor.role) ? supervisor.role[0] : supervisor.role, // Ensure it's a string
-//                   }
-//                 : null, // If no supervisor found, keep it null
-//         });
+        // Create a new meeting instance
+        // const newMeeting = new Meeting({
+        //     ...payload,
+        //     supervisor: supervisor
+        //         ? {
+        //               supervisorId: supervisor._id.toString(),
+        //               supervisorName: supervisor.userName,
+        //               supervisorEmail: supervisor.email,
+        //               supervisorRole: Array.isArray(supervisor.role) ? supervisor.role[0] : supervisor.role, // Ensure it's a string
+        //           }
+        //         : null, // If no supervisor found, keep it null
+        // });
 
-//         // Ensure selectedDate is in the future
-//         if (newMeeting.selectedDate < new Date()) {
-//             return { error: badRequest("Meeting date cannot be in the past. Please select a future date.") };
-//         }
+      const teachers = payload.teacher
+      let meeting
+        for (const teacher of teachers) {
+            console.log(" Scheduling meeting for teacher:", teacher.teacherName);
+            const meetingNames = `${payload.meetingName}-${supervisor?._id}`;
+            const newMeeting = new Meeting({
+                meetingId: meetingNames,
+                meetingName: payload.meetingName,
+                description: payload.description,
+                createdDate: new Date(),
+                selectedDate: payload.selectedDate,
+                startTime: startTime,
+                endTime: endTime,
+                createdBy: supervisor?.userName,
+                teacher: {
+                    teacherId: teacher.teacherId,
+                    teacherName: teacher.teacherName,
+                    teacherEmail: teacher.teacherEmail,
+                },
+                supervisor: {
+                    supervisorId: supervisor?._id.toString(),
+                    supervisorName: supervisor?.userName,
+                    supervisorEmail: supervisor?.email,
+                    supervisorRole: Array.isArray(supervisor?.role) ? supervisor.role[0] : supervisor?.role,
+                },
+                meetingStatus: "Scheduled",
+            });
 
-//         // Save the new meeting
-//         const savedMeeting = await newMeeting.save();
-//         return savedMeeting;
-//     } catch (error) {
-//         return { error };
-//     }
-// };
+
+            // Save the new meeting
+     meeting = await newMeeting.save();
+            console.log(`✅ New meeting scheduled for ${teacher.teacherName} on ${payload.selectedDate.toDateString()} from ${startTime} to ${endTime}`);
+        }
+       
+        return meeting as IMeeting ;
+    } catch (error) {
+        return { error };
+    }
+};
 
   
 
@@ -97,67 +125,7 @@ export const getAllMeetingRecords = async (): Promise<{ totalCount: number; meet
 
 
 
-export const createMeeting = async (payload: IMeetingCreate): Promise<IMeeting | { error: any }> => {
-    try {
-        // Find the supervisor details from User model
-        const supervisor = await User.findOne({
-            userName: payload.createdBy,
-            role: "SUPERVISOR",
-        }).exec();
 
-        console.log("Supervisor Details >>>>", supervisor);
-
-        if (!supervisor) {
-            return { error: "No supervisor found." };
-        }
-
-        // Convert selectedDate to a Date object
-        const meetingDate = new Date(payload.selectedDate);
-        const startTime = payload.startTime;
-        const endTime = payload.endTime;
-
-        // Check for existing meetings that overlap with the new meeting
-        const conflictingMeeting = await Meeting.findOne({
-            selectedDate: meetingDate, // Ensure date format matches
-            $or: [
-                { startTime: { $lt: endTime }, endTime: { $gt: startTime } } // Overlapping time
-            ]
-        });
-
-        if (conflictingMeeting) {
-            return { error: "A meeting is already scheduled at this time. Please choose a different time slot." };
-        }
-
-        // Generate meeting name dynamically
-        const meetingNames = `weeklymeeting-${supervisor._id}`;
-        console.log("meetingNames>>>",meetingNames);
-        // Create the meeting object with supervisor details
-        let newMeeting = await new Meeting({
-            ...payload,
-            supervisor: {
-                supervisorId: supervisor._id.toString(),
-                supervisorName: supervisor.userName,
-                supervisorEmail: supervisor.email,
-                supervisorRole: Array.isArray(supervisor.role) ? supervisor.role[0] : supervisor.role, // Ensure it's a string
-            },
-            meetingId: meetingNames,
-        });
-
-      
-
-        // Ensure selectedDate is in the future
-        if (newMeeting.selectedDate < new Date()) {
-            return { error: "Meeting date cannot be in the past. Please select a future date." };
-        }
-
-        // Save the new meeting
-        const savedMeeting = await newMeeting.save();
-        return savedMeeting;
-    } catch (error) {
-        console.error("Error creating meeting:", error);
-        return { error };
-    }
-};
 
 const autoScheduleMeeting = async () => {
     

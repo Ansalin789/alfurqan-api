@@ -56,7 +56,6 @@ export default {
         createdDate: payload.createdDate || new Date(),
         createdBy: payload.createdBy,
         updatedDate: payload.updatedDate || new Date(),
-        meetingId: ""
       });
 
       return h.response({ message: "Meeting created successfully", data: meeting }).code(201);
