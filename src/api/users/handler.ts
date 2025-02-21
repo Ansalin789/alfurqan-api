@@ -49,6 +49,7 @@ const createInputValidation = z.object({
   payload: zodUserSchema.pick({
     userName: true,
     email: true,
+    gender: true,
     password: true,
     role: true,
     profileImage: true,
@@ -64,6 +65,7 @@ const updateInputValidation = z.object({
     .pick({
       userName: true,
       email: true,
+      
       password: true,
       role: true,
       profileImage: true,
@@ -137,6 +139,7 @@ const updateInputValidation = z.object({
     const {
       userName,
       email,
+      gender,
       password,
       role,
       profileImage,
@@ -150,6 +153,7 @@ const updateInputValidation = z.object({
     return createUser({
       userName,
       email,
+      gender,
       password,
       role,
       profileImage: profileImage ?? null,
