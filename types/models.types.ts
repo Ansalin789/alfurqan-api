@@ -40,6 +40,7 @@ enum EvaluationStatus{
 export interface IUser extends Document {
   userId?: string;
   userName: string;
+  gender: string;
   email: string;
   password: string;
   role: string[];
@@ -55,6 +56,7 @@ export interface IUser extends Document {
 export interface IUserCreate {
   userId?: string;
   userName: string;
+  gender: string;
   email: string;
   password: string;
   role: string[];
@@ -928,6 +930,126 @@ export interface IFeedbackCreate {
 
 
 export interface IFeedback  extends Document{
+  sessionId?:string;
+  student?: {
+    studentId?: string;
+    studentFirstName?: string;
+    studentLastName?: string;
+    studentEmail?: string;
+  };
+  supervisorRating?: {
+    knowledgeofstudentsandcontent?:number;
+    assessmentofstudents?: number;
+    communicationandcollaboration?: number;
+    professionalism?: number;
+  },
+  teacher?: {
+    teacherId?: string;
+    teacherName?: string;
+    teacherEmail?: string;
+  };
+  classDay?: string[];
+  preferedTeacher: string;
+  feedbackmessage?: string;
+  
+  course: {
+    courseId?: string;
+    courseName: string;
+  };
+
+  startDate: Date;
+  endDate: Date;
+  startTime?: string[];
+  endTime?: string[];
+
+  // ✅ NEW: Student Level
+  level: number;
+
+  // ✅ NEW: Ratings for Teacher Assessment
+  teacherRatings: {
+    listeningAbility?: number;
+    readingAbility? : number;
+    overallPerformance?: number;
+  };
+
+  // ✅ NEW: Student-Specific Ratings
+  studentsRating: {
+    classUnderstanding?: number;
+    engagement?: number;
+    homeworkCompletion?: number;
+  };
+
+  createdDate: Date;
+  createdBy: string;
+  lastUpdatedDate: Date;
+  lastUpdatedBy?: string;
+}
+
+
+
+export interface ISupervisorFeedbackCreate {
+  sessionId?:string;
+  student?: {
+    studentId?: string;
+    studentFirstName?: string;
+    studentLastName?: string;
+    studentEmail?: string;
+  };
+  supervisor?: {
+    supervisorId?: string;
+    supervisorFirstName?: string;
+    supervisorLastName?: string;
+    supervisorEmail?: string;
+  };
+  teacher?: {
+    teacherId?: string;
+    teacherName?: string;
+    teacherEmail?: string;
+  };
+  classDay?: string;
+  preferedTeacher?: string;
+  feedbackmessage?: string;
+  
+  course?: {
+    courseId?: string;  // Ensure a valid course ID
+    courseName?: string;
+  };
+
+  startDate: Date;
+  endDate: Date;
+  startTime?: string;
+  endTime?: string;
+
+  level?: number;
+
+  teacherRatings?: {  // ✅ Made optional
+    listeningAbility?: number;
+    readingAbility?: number;
+    overallPerformance?: number;
+  };
+
+  studentsRating?: {  // ✅ Made optional
+    classUnderstanding?: number;
+    engagement?: number;
+    homeworkCompletion?: number;
+  };
+
+  supervisorRating?: {  // ✅ Made optional
+    knowledgeofstudentsandcontent?: number;
+    assessmentofstudents?: number;
+    communicationandcollaboration?: number;
+    professionalism?: number;
+  };
+
+  createdDate?: Date;  // ✅ Made optional if handled in backend
+  createdBy?: string;  // ✅ Made optional if handled in backend
+  lastUpdatedDate?: Date;  // ✅ Made optional
+  lastUpdatedBy?: string;
+}
+
+
+
+export interface ISuperviosrFeedback  extends Document{
   sessionId?:string;
   student?: {
     studentId?: string;

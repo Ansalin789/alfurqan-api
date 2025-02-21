@@ -8,6 +8,8 @@ import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation"
 import { notFound } from "@hapi/boom";
 import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher} from "../../operations/classschedule";
 import { GetAllRecordsParams } from "../../shared/enum";
+import userModel from "../../models/users";
+
 
 const createInputValidation = z.object({
     payload: zodClassScheduleSchema.pick({
@@ -132,6 +134,9 @@ async getClassesForTeacher(req: Request, h: ResponseToolkit) {
 ,
 
 
+
+
+
 async getAllClassShedule(req: Request, h: ResponseToolkit) {
   try {
     // Cast `req` to `Request` with query properties
@@ -224,8 +229,47 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
     }
   
     return result;
-   }
+   },
+
+
+   
+//teacher-student count
+
+async getTeacherStudentCount(req: Request, h: ResponseToolkit) {
+  try {
+    console.log("Query parameters received:", req.query);
+
+    // Fetch all unique teachers from the class schedule
+    const teachers = await classShedule.aggregate([
+      {
+        $group: {
+          _id: "$teacher.teacherEmail", // Group by teacherEmail to remove duplicates
+          teacherId: { $first: "$teacher.teacherId" },
+          teacherName: { $first: "$teacher.teacherName" },
+          teacherEmail: { $first: "$teacher.teacherEmail" },
+          studentCount: { $sum: 1 }, // Sum of student assignments for unique teachers
+        },
+      },
+    ]);
+
+    return h.response({
+      success: true,
+      data: teachers,
+    }).code(200);
+  } catch (error) {
+    console.error("Error fetching teacher-student count:", error);
+    return h.response({ success: false, message: "Internal Server Error" }).code(500);
+  }
 }
+
+
+
+
+
+
+}
+
+
 
 
 
