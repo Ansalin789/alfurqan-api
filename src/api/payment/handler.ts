@@ -45,6 +45,14 @@ if(paymentIntentResponse){
     }
   //  console.log("paymentIntent>>>",paymentIntent);
 
+await EvaluationModel.findByIdAndUpdate(
+    evaluationDetails?._id, // Pass the correct ID here
+    { 
+      paymentStatus: paymentIntentResponse.status === 'succeeded' ? "Paid" : "Faild" 
+    },
+    { new: true } // Return the updated document
+);
+
     return h.response({
       clientSecret: paymentIntent.client_secret,
     });

@@ -66,6 +66,7 @@ const createInputValidation = z.object({
     referralSource: true,
     startDate: true,
     evaluationStatus: true,
+    refernceId:true,
     status: true,
     createdBy: true,
     lastUpdatedBy: true,
@@ -112,6 +113,7 @@ export default {
   referralSource: payload.referralSource || "defaultReferralSource", 
   startDate: payload.startDate || new Date(), // Provide a default value for startDate
   evaluationStatus: payload.evaluationStatus || EvaluationStatus.PENDING, // Use a valid EvaluationStatus value
+  refernceId: payload.refernceId || " ",
   status: payload.status || "defaultStatus", // Provide a default value for status
   createdDate: new Date(),
   createdBy: payload.createdBy,
