@@ -295,20 +295,14 @@ student: {
   createdDate: Date;
   createdBy: string;
 };
-// teacher:{
-//   teacherId: string;
-//   teacherName: string;
-//   teacherEmail: string;
-// },
-// classDay: any;
-// package: string;
-// preferedTeacher: string;
-// course: string;
-// totalHourse: Number;
-// startDate: Date;
-// endDate: Date;
-// startTime: any;
-// endTime: any;
+teacher:{
+  teacherId: string;
+  teacherName: string;
+  teacherEmail: string;
+},
+classDay: any;
+startTime: any;
+endTime: any;
 isLanguageLevel: boolean;
 languageLevel: string;
 isReadingLevel: boolean;
@@ -382,18 +376,12 @@ export interface IEvaluationCreate{
   createdDate: Date;
   createdBy?: string;
 };
-// teacher:{
-//   teacherName: string;
-// },
-// classDay?: string[];
-// package: string;
-// preferedTeacher: string;
-// course: string;
-// totalHourse: Number;
-// startDate: Date;
-// endDate: Date;
-// startTime?: string[];
-// endTime?: string[];
+teacher:{
+  teacherName: string;
+},
+classDay?: string[];
+startTime?: string[];
+endTime?: string[];
 isLanguageLevel: boolean;
 languageLevel: string;
 isReadingLevel: boolean;
