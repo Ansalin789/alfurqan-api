@@ -21,6 +21,10 @@ const userSchema = new Schema<IUser>(
       maxlength: 50,
       unique: true,
     },
+    gender:{
+      type: String,
+      required: true,
+    },
     email: {
       type: String,
       required: true,
@@ -77,6 +81,7 @@ const userSchema = new Schema<IUser>(
 export const zodUserSchema = z.object({
   userName: z.string().min(3),
   email: z.string().email(),
+  gender: z.string().email(),
   password: z
     .string()
     .min(8),
