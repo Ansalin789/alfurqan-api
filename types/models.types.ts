@@ -93,6 +93,7 @@ export interface IStudents extends Document {
   referralSource: ReferalResource;
   startDate : Date;
   evaluationStatus: EvaluationStatus;
+  refernceId: string,
   status: Status;
   createdDate: Date;
   createdBy: string;
@@ -117,6 +118,7 @@ export interface IStudentCreate {
   referralSource: ReferalResource;
   startDate : Date;
   evaluationStatus: EvaluationStatus;
+  refernceId: string,
   status: Status;
   createdDate: Date;
   createdBy: string;
