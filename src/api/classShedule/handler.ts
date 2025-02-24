@@ -208,6 +208,7 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
         studentFirstName: payload.student?.studentFirstName || "",
         studentLastName: payload.student?.studentLastName || "",
         studentEmail:payload.student?.studentEmail|| "",
+        gender: payload.student?.gender || "",
       },
       teacher :{
         teacherName: payload.teacher?.teacherName || "",
@@ -235,21 +236,87 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
    
 //teacher-student count
 
+// async getTeacherStudentCount(req: Request, h: ResponseToolkit) {
+//   try {
+//     console.log("Query parameters received:", req.query);
+
+
+
+//     const teachers = await classShedule.aggregate([
+//       {
+//         $group: {
+//           _id: "$teacher.teacherEmail", // Group by teacherEmail
+//           teacherId: { $first: "$teacher.teacherId" },
+//           teacherName: { $first: "$teacher.teacherName" },
+//           teacherEmail: { $first: "$teacher.teacherEmail" },
+//           uniqueStudents: { $addToSet: "$student.studentId" } // Collect unique student IDs
+//         }
+//       },
+//       {
+//         $project: {
+//           teacherId: 1,
+//           teacherName: 1,
+//           teacherEmail: 1,
+//           studentCount: { $size: "$uniqueStudents" } // Count unique student IDs
+//         }
+//       }
+//     ]);
+
+//     return h.response({
+//       success: true,
+//       data: teachers,
+//     }).code(200);
+//   } catch (error) {
+//     console.error("Error fetching teacher-student count:", error);
+//     return h.response({ success: false, message: "Internal Server Error" }).code(500);
+//   }
+// }
+
 async getTeacherStudentCount(req: Request, h: ResponseToolkit) {
   try {
     console.log("Query parameters received:", req.query);
 
-    // Fetch all unique teachers from the class schedule
     const teachers = await classShedule.aggregate([
       {
         $group: {
-          _id: "$teacher.teacherEmail", // Group by teacherEmail to remove duplicates
-          teacherId: { $first: "$teacher.teacherId" },
+          _id: "$teacher.teacherEmail", // Group by teacherEmail
+          teacherId: { $first: req.query },
           teacherName: { $first: "$teacher.teacherName" },
           teacherEmail: { $first: "$teacher.teacherEmail" },
-          studentCount: { $sum: 1 }, // Sum of student assignments for unique teachers
-        },
+          uniqueStudents: { 
+            $addToSet: { 
+              studentId: "$student.studentId", 
+              gender: "$student.gender" 
+            } 
+          } // Collect unique student IDs and gender
+        }
       },
+      {
+        $project: {
+          teacherId: 1,
+          teacherName: 1,
+          teacherEmail: 1,
+          studentCount: { $size: "$uniqueStudents" }, // Total unique students
+          maleCount: {
+            $size: {
+              $filter: {
+                input: "$uniqueStudents",
+                as: "student",
+                cond: { $eq: ["$$student.gender", "MALE"] }
+              }
+            }
+          }, // Count only male students
+          femaleCount: {
+            $size: {
+              $filter: {
+                input: "$uniqueStudents",
+                as: "student",
+                cond: { $eq: ["$$student.gender", "FEMALE"] }
+              }
+            }
+          }, // Count only female students
+        }
+      }
     ]);
 
     return h.response({
@@ -261,7 +328,6 @@ async getTeacherStudentCount(req: Request, h: ResponseToolkit) {
     return h.response({ success: false, message: "Internal Server Error" }).code(500);
   }
 }
-
 
 
 

@@ -36,6 +36,10 @@ student: {
     {
         type: String,
         required: true,
+    },
+    gender:{
+        type: String,
+        required: true, 
     }
 },
 username: {
@@ -93,7 +97,8 @@ export const zodAlStudentSchema = z.object({
       course: z.string(),
       package: z.string(),
       city: z.string(),
-      country: z.string()
+      country: z.string(),
+      gender: z.string()
     }),
     username: z.string().min(3),
     password: z.string().min(8),
