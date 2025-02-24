@@ -40,6 +40,7 @@ enum EvaluationStatus{
 export interface IUser extends Document {
   userId?: string;
   userName: string;
+  gender: string;
   email: string;
   password: string;
   role: string[];
@@ -55,6 +56,7 @@ export interface IUser extends Document {
 export interface IUserCreate {
   userId?: string;
   userName: string;
+  gender: string;
   email: string;
   password: string;
   role: string[];
@@ -91,6 +93,7 @@ export interface IStudents extends Document {
   referralSource: ReferalResource;
   startDate : Date;
   evaluationStatus: EvaluationStatus;
+  refernceId: string,
   status: Status;
   createdDate: Date;
   createdBy: string;
@@ -115,6 +118,7 @@ export interface IStudentCreate {
   referralSource: ReferalResource;
   startDate : Date;
   evaluationStatus: EvaluationStatus;
+  refernceId: string,
   status: Status;
   createdDate: Date;
   createdBy: string;
@@ -295,20 +299,14 @@ student: {
   createdDate: Date;
   createdBy: string;
 };
-// teacher:{
-//   teacherId: string;
-//   teacherName: string;
-//   teacherEmail: string;
-// },
-// classDay: any;
-// package: string;
-// preferedTeacher: string;
-// course: string;
-// totalHourse: Number;
-// startDate: Date;
-// endDate: Date;
-// startTime: any;
-// endTime: any;
+teacher:{
+  teacherId: string;
+  teacherName: string;
+  teacherEmail: string;
+},
+classDay: any;
+startTime: any;
+endTime: any;
 isLanguageLevel: boolean;
 languageLevel: string;
 isReadingLevel: boolean;
@@ -382,18 +380,12 @@ export interface IEvaluationCreate{
   createdDate: Date;
   createdBy?: string;
 };
-// teacher:{
-//   teacherName: string;
-// },
-// classDay?: string[];
-// package: string;
-// preferedTeacher: string;
-// course: string;
-// totalHourse: Number;
-// startDate: Date;
-// endDate: Date;
-// startTime?: string[];
-// endTime?: string[];
+teacher:{
+  teacherName: string;
+},
+classDay?: string[];
+startTime?: string[];
+endTime?: string[];
 isLanguageLevel: boolean;
 languageLevel: string;
 isReadingLevel: boolean;
@@ -453,6 +445,7 @@ export interface IClassSchedule extends Document{
     studentFirstName: string;
     studentLastName: string;
     studentEmail: string;
+    gender: string;
   },
   teacher:{
     teacherId: string;
@@ -492,6 +485,7 @@ export interface IClassScheduleCreate{
     studentFirstName: string;
     studentLastName: string;
     studentEmail: string;
+    gender: string;
   },
   teacher:{
     teacherName: string;
@@ -604,7 +598,8 @@ export interface IAlStudents extends Document{
   student:{
     studentId: string;
     studentEmail: string;
-    studentPhone: Number;
+    studentPhone: number;
+    gender: string;
     course: string;
     package: string;
     city:string;
@@ -627,7 +622,8 @@ export interface IAlStudentCreate{
   student:{
     studentId: string;
     studentEmail: string;
-    studentPhone: Number;
+    studentPhone: number;
+    gender: string;
   };
   username: string,
   role: string;
@@ -995,6 +991,126 @@ export interface IFeedback  extends Document{
   lastUpdatedBy?: string;
 }
 
+
+
+export interface ISupervisorFeedbackCreate {
+  sessionId?:string;
+  student?: {
+    studentId?: string;
+    studentFirstName?: string;
+    studentLastName?: string;
+    studentEmail?: string;
+  };
+  supervisor?: {
+    supervisorId?: string;
+    supervisorFirstName?: string;
+    supervisorLastName?: string;
+    supervisorEmail?: string;
+  };
+  teacher?: {
+    teacherId?: string;
+    teacherName?: string;
+    teacherEmail?: string;
+  };
+  classDay?: string;
+  preferedTeacher?: string;
+  feedbackmessage?: string;
+  
+  course?: {
+    courseId?: string;  // Ensure a valid course ID
+    courseName?: string;
+  };
+
+  startDate: Date;
+  endDate: Date;
+  startTime?: string;
+  endTime?: string;
+
+  level?: number;
+
+  teacherRatings?: {  // ✅ Made optional
+    listeningAbility?: number;
+    readingAbility?: number;
+    overallPerformance?: number;
+  };
+
+  studentsRating?: {  // ✅ Made optional
+    classUnderstanding?: number;
+    engagement?: number;
+    homeworkCompletion?: number;
+  };
+
+  supervisorRating?: {  // ✅ Made optional
+    knowledgeofstudentsandcontent?: number;
+    assessmentofstudents?: number;
+    communicationandcollaboration?: number;
+    professionalism?: number;
+  };
+
+  createdDate?: Date;  // ✅ Made optional if handled in backend
+  createdBy?: string;  // ✅ Made optional if handled in backend
+  lastUpdatedDate?: Date;  // ✅ Made optional
+  lastUpdatedBy?: string;
+}
+
+
+
+export interface ISuperviosrFeedback  extends Document{
+  sessionId?:string;
+  student?: {
+    studentId?: string;
+    studentFirstName?: string;
+    studentLastName?: string;
+    studentEmail?: string;
+  };
+  supervisorRating?: {
+    knowledgeofstudentsandcontent?:number;
+    assessmentofstudents?: number;
+    communicationandcollaboration?: number;
+    professionalism?: number;
+  },
+  teacher?: {
+    teacherId?: string;
+    teacherName?: string;
+    teacherEmail?: string;
+  };
+  classDay?: string[];
+  preferedTeacher: string;
+  feedbackmessage?: string;
+  
+  course: {
+    courseId?: string;
+    courseName: string;
+  };
+
+  startDate: Date;
+  endDate: Date;
+  startTime?: string[];
+  endTime?: string[];
+
+  // ✅ NEW: Student Level
+  level: number;
+
+  // ✅ NEW: Ratings for Teacher Assessment
+  teacherRatings: {
+    listeningAbility?: number;
+    readingAbility? : number;
+    overallPerformance?: number;
+  };
+
+  // ✅ NEW: Student-Specific Ratings
+  studentsRating: {
+    classUnderstanding?: number;
+    engagement?: number;
+    homeworkCompletion?: number;
+  };
+
+  createdDate: Date;
+  createdBy: string;
+  lastUpdatedDate: Date;
+  lastUpdatedBy?: string;
+}
+
 export interface IRecruitment extends Document{
   candidateFirstName: string;
   candidateLastName : string;
@@ -1082,6 +1198,7 @@ export interface IMeetingCreate {
   teacher: ITeacher[];  // Array of teacher objects
   description: string;
   status: string;
+  meetingStatus: string;
   createdDate: Date;
   createdBy: string;
   updatedDate?: Date;
@@ -1105,6 +1222,7 @@ export interface IMeeting extends Document{
   teacher:  string[];
   description: string;
   status: string;
+  meetingStatus: string;
   createdDate: Date;
   createdBy: string;
   updatedDate?: Date;

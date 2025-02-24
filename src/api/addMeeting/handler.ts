@@ -17,6 +17,7 @@ const createInputValidation = z.object({
     teacher: true,
     description: true,
     status: true,
+    meetingStatus: true,
     createdDate: true,
     createdBy: true,
     updatedDate: true,
@@ -31,6 +32,7 @@ const createInputValidation = z.object({
     endTime: true,
     description: true,
     status: true,
+    meetingStatus: true,
     updatedDate: true,
     updatedBy:true,
   }),
@@ -49,7 +51,8 @@ export default {
         endTime: payload.endTime,
         teacher: Array.isArray(payload.teacher) ? payload.teacher : [],
         description: payload.description,
-        status: payload.status ?? "Scheduled",
+        status: payload.status,
+        meetingStatus: payload.meetingStatus ?? "Scheduled",
         createdDate: payload.createdDate || new Date(),
         createdBy: payload.createdBy,
         updatedDate: payload.updatedDate || new Date(),
@@ -137,7 +140,7 @@ async updateMeetingRecordById(req: Request, h: ResponseToolkit) {
         return h.response({ message: "Reschedule failed: Time slot already occupied" }).code(400);
       }
 
-      updatedPayload.status = "rescheduled";
+      updatedPayload.meetingStatus = "rescheduled";
     }
 
     // Update meeting in the database

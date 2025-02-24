@@ -6,8 +6,10 @@ import { ClassSchedulesMessages } from "../../config/messages";
 import { isNil, result } from "lodash";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
-import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher} from "../../operations/classschedule";
+import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity} from "../../operations/classschedule";
 import { GetAllRecordsParams } from "../../shared/enum";
+import userModel from "../../models/users";
+
 
 const createInputValidation = z.object({
     payload: zodClassScheduleSchema.pick({
@@ -132,6 +134,9 @@ async getClassesForTeacher(req: Request, h: ResponseToolkit) {
 ,
 
 
+
+
+
 async getAllClassShedule(req: Request, h: ResponseToolkit) {
   try {
     // Cast `req` to `Request` with query properties
@@ -203,6 +208,7 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
         studentFirstName: payload.student?.studentFirstName || "",
         studentLastName: payload.student?.studentLastName || "",
         studentEmail:payload.student?.studentEmail|| "",
+        gender: payload.student?.gender || "",
       },
       teacher :{
         teacherName: payload.teacher?.teacherName || "",
@@ -224,8 +230,186 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
     }
   
     return result;
-   }
+   },
+
+
+   
+//teacher-student count
+
+// async getTeacherStudentCount(req: Request, h: ResponseToolkit) {
+//   try {
+//     console.log("Query parameters received:", req.query);
+
+
+
+//     const teachers = await classShedule.aggregate([
+//       {
+//         $group: {
+//           _id: "$teacher.teacherEmail", // Group by teacherEmail
+//           teacherId: { $first: "$teacher.teacherId" },
+//           teacherName: { $first: "$teacher.teacherName" },
+//           teacherEmail: { $first: "$teacher.teacherEmail" },
+//           uniqueStudents: { $addToSet: "$student.studentId" } // Collect unique student IDs
+//         }
+//       },
+//       {
+//         $project: {
+//           teacherId: 1,
+//           teacherName: 1,
+//           teacherEmail: 1,
+//           studentCount: { $size: "$uniqueStudents" } // Count unique student IDs
+//         }
+//       }
+//     ]);
+
+//     return h.response({
+//       success: true,
+//       data: teachers,
+//     }).code(200);
+//   } catch (error) {
+//     console.error("Error fetching teacher-student count:", error);
+//     return h.response({ success: false, message: "Internal Server Error" }).code(500);
+//   }
+// }
+
+async getTeacherStudentCount(req: Request, h: ResponseToolkit) {
+  try {
+    console.log("Query parameters received:", req.query);
+
+    const teachers = await classShedule.aggregate([
+      {
+        $group: {
+          _id: "$teacher.teacherEmail", // Group by teacherEmail
+          teacherId: { $first: req.query },
+          teacherName: { $first: "$teacher.teacherName" },
+          teacherEmail: { $first: "$teacher.teacherEmail" },
+          uniqueStudents: { 
+            $addToSet: { 
+              studentId: "$student.studentId", 
+              gender: "$student.gender" 
+            } 
+          } // Collect unique student IDs and gender
+        }
+      },
+      {
+        $project: {
+          teacherId: 1,
+          teacherName: 1,
+          teacherEmail: 1,
+          studentCount: { $size: "$uniqueStudents" }, // Total unique students
+          maleCount: {
+            $size: {
+              $filter: {
+                input: "$uniqueStudents",
+                as: "student",
+                cond: { $eq: ["$$student.gender", "MALE"] }
+              }
+            }
+          }, // Count only male students
+          femaleCount: {
+            $size: {
+              $filter: {
+                input: "$uniqueStudents",
+                as: "student",
+                cond: { $eq: ["$$student.gender", "FEMALE"] }
+              }
+            }
+          }, // Count only female students
+        }
+      }
+    ]);
+
+    return h.response({
+      success: true,
+      data: teachers,
+    }).code(200);
+  } catch (error) {
+    console.error("Error fetching teacher-student count:", error);
+    return h.response({ success: false, message: "Internal Server Error" }).code(500);
+  }
 }
+
+,
+
+
+async totalhours(req: Request, h: ResponseToolkit) {
+  try {
+    // Parse and validate request query
+    const parsedQuery = getAllClassSheduleInput.parse({
+      query: {
+        ...((req as any).query), // Casting req.query to 'any' for flexibility
+        filterValues: (() => {
+          try {
+            return req.query?.filterValues
+              ? JSON.parse(req.query.filterValues as string)
+              : {};
+          } catch {
+            throw new Error("Invalid filterValues JSON format.");
+          }
+        })(),
+      },
+    });
+
+    const { studentId } = parsedQuery.query;
+
+    if (!studentId) {
+      throw new Error("Student ID is required.");
+    }
+
+    // Fetch student class schedule and calculate percentages
+    const result = await getStudentClassHours(studentId);
+
+    // Return the response
+    return h.response(result).code(200);
+  } catch (error) {
+    console.error("Error in totalhours:", error);
+
+    // Handle errors properly
+    return h.response({ error }).code(400);
+  }
+},
+
+
+async teachingActivity(req: Request, h: ResponseToolkit) {
+  try {
+    // Parse and validate request query
+    const parsedQuery = getAllClassSheduleInput.parse({
+      query: {
+        ...((req as any).query), // Casting req.query to 'any' for flexibility
+        filterValues: (() => {
+          try {
+            return req.query?.filterValues
+              ? JSON.parse(req.query.filterValues as string)
+              : {};
+          } catch {
+            throw new Error("Invalid filterValues JSON format.");
+          }
+        })(),
+      },
+    });
+
+    const { studentId } = parsedQuery.query;
+
+    if (!studentId) {
+      throw new Error("Student ID is required.");
+    }
+
+    // Fetch student class schedule and calculate percentages
+    const result = await teachingActivity(studentId);
+
+    // Return the response
+    return h.response(result).code(200);
+  } catch (error) {
+    console.error("Error in totalhours:", error);
+
+    // Handle errors properly
+    return h.response({ error }).code(400);
+  }
+}
+
+}
+
+
 
 
 
