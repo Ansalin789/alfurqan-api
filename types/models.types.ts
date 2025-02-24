@@ -445,6 +445,7 @@ export interface IClassSchedule extends Document{
     studentFirstName: string;
     studentLastName: string;
     studentEmail: string;
+    gender: string;
   },
   teacher:{
     teacherId: string;
@@ -484,6 +485,7 @@ export interface IClassScheduleCreate{
     studentFirstName: string;
     studentLastName: string;
     studentEmail: string;
+    gender: string;
   },
   teacher:{
     teacherName: string;
@@ -596,7 +598,8 @@ export interface IAlStudents extends Document{
   student:{
     studentId: string;
     studentEmail: string;
-    studentPhone: Number;
+    studentPhone: number;
+    gender: string;
     course: string;
     package: string;
     city:string;
@@ -619,7 +622,8 @@ export interface IAlStudentCreate{
   student:{
     studentId: string;
     studentEmail: string;
-    studentPhone: Number;
+    studentPhone: number;
+    gender: string;
   };
   username: string,
   role: string;

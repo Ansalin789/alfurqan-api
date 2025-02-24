@@ -4,6 +4,7 @@ import CalendarModel from "../models/calendar";
 import classShedule from "../models/classShedule";
 import usershiftschedule from "../models/usershiftschedule";
 import recruitment from "../models/recruitment";
+import feedback from "../models/feedback";
 
 
 
@@ -141,40 +142,40 @@ export const dashboardWidgetCounts = async (p0: string
   };
 
 
- //Student dashboard
-export const dashboardWidgetStudentCounts = async (studentId: string): Promise<{
-  totalLevel: number;
-  totalAttendance: number;
-  totalClasses: number;
-  totalDuration: number;
-}> => {
-  // Fetch counts in parallel
-  const [levelCount, attendanceCount, classCount, totalDuration] = await Promise.all([
-    classShedule.countDocuments({ studentId: studentId }).exec(),
-    classShedule.countDocuments({ studentId: studentId }).exec(),
-    classShedule.countDocuments({ 'studentId.studentId': studentId }).exec(),
-    classShedule.aggregate([
-      { $match: { studentId: studentId } }, 
-      { $group: { _id: null, totalDuration: { $sum: '$duration' } } }
-    ]).exec(),
-  ]);
-
-  // Extract total duration value
-  const totalDurationValue = totalDuration?.[0]?.totalDuration || 0;
-
-  // Total sum excluding levelCount (since we fix it at 10%)
-  const remainingTotal = attendanceCount + classCount + totalDurationValue;
-
-  // Avoid division by zero
-  const distributePercentage = (value: number) => (remainingTotal > 0 ? (value / remainingTotal) * 90 : 0);
-
-  return {
-    totalLevel: 10, // Fixed at 10%
-    totalAttendance: distributePercentage(attendanceCount),
-    totalClasses: distributePercentage(classCount),
-    totalDuration: 20,
+  export const dashboardWidgetStudentCounts = async (studentId: string): Promise<{
+    totalLevel: number;
+    totalAttendance: number;
+    totalClasses: number;
+    totalDuration: number;
+  }> => {
+    // Fetch counts in parallel
+    const [levelCount, attendanceCount, classCount, totalHours] = await Promise.all([
+      feedback.countDocuments({ studentId: studentId }).exec(), // Fetch level count from feedback
+      classShedule.countDocuments({ studentId: studentId }).exec(),
+      classShedule.countDocuments({ 'studentId.studentId': studentId }).exec(),
+      classShedule.aggregate([
+        { $match: { studentId: studentId } }, 
+        { $group: { _id: null, totalHourse: { $sum: '$totalHourse' } } } // Summing totalHourse instead of duration
+      ]).exec(),
+    ]);
+  
+    // Extract total hours value (fallback to 0 if undefined)
+    const totalHoursValue = totalHours?.[0]?.totalHourse || 0;
+  
+    // Compute total sum of all categories
+    const totalSum = levelCount + attendanceCount + classCount + totalHoursValue;
+  
+    // Avoid division by zero
+    const calculatePercentage = (value: number) => (totalSum > 0 ? (value / totalSum) * 100 : 0);
+  
+    return {
+      totalLevel: calculatePercentage(levelCount),
+      totalAttendance: calculatePercentage(attendanceCount),
+      totalClasses: calculatePercentage(classCount),
+      totalDuration: calculatePercentage(totalHoursValue),
+    };
   };
-};
+  
 
 
 
