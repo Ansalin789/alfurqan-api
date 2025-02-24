@@ -76,6 +76,7 @@ const handler = {
       const studentDetails = await getalstudentsById(String(req.params.alstudentsId));
 
       console.log(">>>",studentDetails?.student.studentId);
+      
       const studentEvaluationDetails = await EvaluationModel.findOne({
         'student.studentId': studentDetails?.student?.studentId
     }).exec();
@@ -110,7 +111,8 @@ const handler = {
         student:{
         studentId: payload.student?.studentId || "",
         studentEmail: payload.student?.studentEmail|| "",
-        studentPhone: payload.student?.studentPhone || 0
+        studentPhone: payload.student?.studentPhone || 0,
+        gender: payload.student.gender || "",
         },
         username: payload.username || " ",
         role: payload.role|| " "

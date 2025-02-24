@@ -11,6 +11,7 @@ import { Client } from '@microsoft/microsoft-graph-client';
 import { ClientSecretCredential } from "@azure/identity";
 import classShedule from "../models/classShedule";
 import student from "../models/student";
+import moment from "moment";
 
 /**
  * Creates a new candidate record in the database.
@@ -361,6 +362,122 @@ export const getClassesForTeacher = async (
 
 
 
+export const getStudentClassHours = async (
+  studentId: string
+): Promise<{ pendingPercentage: number; completedPercentage: number; totalHours: number }> => {
+  if (!studentId) {
+    throw new Error("Student ID is required");
+  }
 
+  try {
+    // Query for fetching class schedules of the student
+    const query: any = { "student.studentId": studentId };
+
+    // Fetch student class schedule
+    const classSchedule = await ClassScheduleModel.find(query).exec();
+
+    if (!classSchedule || classSchedule.length === 0) {
+      console.warn(`No class schedule found for student: ${studentId}`);
+      return { pendingPercentage: 0, completedPercentage: 0, totalHours: 0 };
+    }
+
+    // Debug: Log data to inspect issues
+    console.log("Fetched class schedules:", classSchedule);
+
+    // Normalize and calculate completed & pending hours
+    let completedHours = 0;
+    let pendingHours = 0;
+
+    classSchedule.forEach(event => {
+      const status = event.classStatus?.trim().toLowerCase(); // Normalize
+      const hours = Number(event.totalHourse) || 0; // Ensure it's a number
+
+      if (status === "completed") {
+        completedHours += hours;
+      } else if (status === "pending") {
+        pendingHours += hours;
+      } else {
+        console.warn(`Unexpected classStatus "${event.classStatus}" for event:`, event);
+      }
+    });
+
+    const totalHours = completedHours + pendingHours;
+
+    // Calculate percentage values
+    const pendingPercentage = totalHours > 0 ? (pendingHours / totalHours) * 100 : 0;
+    const completedPercentage = totalHours > 0 ? (completedHours / totalHours) * 100 : 0;
+
+    console.log(`Completed: ${completedHours}, Pending: ${pendingHours}, Total: ${totalHours}`);
+
+    return { pendingPercentage, completedPercentage, totalHours };
+  } catch (error) {
+    console.error("Error fetching class hours for student:", error);
+    throw new Error("Failed to fetch class hours for the student");
+  }
+};
+
+
+export const teachingActivity = async (
+  studentId: string
+): Promise<{ month: string; completedHours: number; pendingHours: number; totalHours: number }[]> => {
+  if (!studentId) {
+    throw new Error("Student ID is required");
+  }
+
+  try {
+    // Fetch all class schedules for the student
+    const classSchedule = await ClassScheduleModel.find({ "student.studentId": studentId }).exec();
+
+    if (!classSchedule || classSchedule.length === 0) {
+      console.warn(`No class schedule found for student: ${studentId}`);
+      return [];
+    }
+
+    // Debugging logs
+    console.log("Fetched class schedules:", classSchedule);
+
+    // Initialize an object to group hours by month
+    const monthlyData: Record<
+      string,
+      { completedHours: number; pendingHours: number; totalHours: number }
+    > = {};
+
+    classSchedule.forEach((event) => {
+      const month = moment(event.startDate).format("YYYY-MM"); // Get month in "YYYY-MM" format
+      const hours = Number(event.totalHourse) || 0;
+      const status = event.classStatus?.trim().toLowerCase();
+
+      // Initialize month if not present
+      if (!monthlyData[month]) {
+        monthlyData[month] = { completedHours: 0, pendingHours: 0, totalHours: 0 };
+      }
+
+      // Categorize hours
+      if (status === "completed") {
+        monthlyData[month].completedHours += hours;
+      } else if (status === "pending") {
+        monthlyData[month].pendingHours += hours;
+      } else {
+        console.warn(`Unexpected classStatus "${event.classStatus}" for event:`, event);
+      }
+
+      // Update total hours
+      monthlyData[month].totalHours += hours;
+    });
+
+    // Convert object to an array for frontend use
+    const result = Object.keys(monthlyData).map((month) => ({
+      month,
+      ...monthlyData[month],
+    }));
+
+    console.log("Processed monthly teaching activity:", result);
+
+    return result;
+  } catch (error) {
+    console.error("Error fetching class hours for student:", error);
+    throw new Error("Failed to fetch class hours for the student");
+  }
+};
 
 
