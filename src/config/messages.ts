@@ -136,8 +136,10 @@ export const evaluationStatus: Record<string, any> = Object.freeze({
   export const applicationStatus: Record<string, any> = Object.freeze({
     NEWAPPLICATION:"NEWAPPLICATION",
     SHORTLISTED:"SHORTLISTED",
-    RIJECTED:"RIJECTED",
+    RIJECTED:"REJECTED",
     WAITING:"WAITING",
+    SENDAPPROVAL: "SENDAPPROVAL",
+    APPROVED: "SENDAPPROVAL"
     });
 
 export const eventType: Record<string, any> = Object.freeze({
