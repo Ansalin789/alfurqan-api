@@ -366,14 +366,15 @@ export const getStudentClassHours = async (
   studentId: string
 ): Promise<{ pendingPercentage: number; completedPercentage: number; totalHours: number }> => {
   if (!studentId) {
+    console.error("Student ID is missing");
     throw new Error("Student ID is required");
   }
 
   try {
-    // Query for fetching class schedules of the student
-    const query: any = { "student.studentId": studentId };
+    console.log(`Fetching class hours for student: ${studentId}`);
 
-    // Fetch student class schedule
+    // Query for the student schedule
+    const query: any = { "student.studentId": studentId };
     const classSchedule = await ClassScheduleModel.find(query).exec();
 
     if (!classSchedule || classSchedule.length === 0) {
@@ -381,33 +382,39 @@ export const getStudentClassHours = async (
       return { pendingPercentage: 0, completedPercentage: 0, totalHours: 0 };
     }
 
-    // Debug: Log data to inspect issues
-    console.log("Fetched class schedules:", classSchedule);
+    console.log("Fetched class schedules:", JSON.stringify(classSchedule, null, 2));
 
-    // Normalize and calculate completed & pending hours
     let completedHours = 0;
     let pendingHours = 0;
 
     classSchedule.forEach(event => {
-      const status = event.classStatus?.trim().toLowerCase(); // Normalize
+      console.log("Raw event data:", JSON.stringify(event, null, 2));
+
+      // Ensure `classStatus` exists and normalize case
+      const status = event.classStatus ? event.classStatus.trim().toLowerCase() : "unknown";
       const hours = Number(event.totalHourse) || 0; // Ensure it's a number
 
-      if (status === "completed") {
-        completedHours += hours;
-      } else if (status === "pending") {
-        pendingHours += hours;
+      if (hours > 0) {
+        if (status === "completed") {
+          completedHours += hours;
+          console.log(`Adding ${hours} hours to Completed (${completedHours} total)`);
+        } else if (status === "pending") {
+          pendingHours += hours;
+          console.log(`Adding ${hours} hours to Pending (${pendingHours} total)`);
+        } else {
+          console.warn(`Skipping event with unknown status: "${status}"`, event);
+        }
       } else {
-        console.warn(`Unexpected classStatus "${event.classStatus}" for event:`, event);
+        console.warn(`Skipping event with zero or invalid hours: ${hours}`);
       }
     });
 
     const totalHours = completedHours + pendingHours;
-
-    // Calculate percentage values
     const pendingPercentage = totalHours > 0 ? (pendingHours / totalHours) * 100 : 0;
     const completedPercentage = totalHours > 0 ? (completedHours / totalHours) * 100 : 0;
 
-    console.log(`Completed: ${completedHours}, Pending: ${pendingHours}, Total: ${totalHours}`);
+    console.log(`Final Totals -> Completed: ${completedHours}, Pending: ${pendingHours}, Total: ${totalHours}`);
+    console.log(`Final Percentages -> Pending: ${pendingPercentage.toFixed(2)}%, Completed: ${completedPercentage.toFixed(2)}%`);
 
     return { pendingPercentage, completedPercentage, totalHours };
   } catch (error) {
@@ -415,6 +422,11 @@ export const getStudentClassHours = async (
     throw new Error("Failed to fetch class hours for the student");
   }
 };
+
+
+
+
+
 
 
 export const teachingActivity = async (

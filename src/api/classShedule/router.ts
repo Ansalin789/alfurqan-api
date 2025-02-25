@@ -58,9 +58,7 @@ const register = async (server: Server): Promise<void> => {
       },
       },
 
-
-
-      {
+ {
         method: "GET",
         path: "/classShedule/students",
         options: {
@@ -80,9 +78,9 @@ const register = async (server: Server): Promise<void> => {
           handler: handler.getClassesForTeacher,
           description: ClassSchedulesMessages.LIST,
           tags: ["api", "classShedule"],
-          auth: {
-            strategies: ["jwt"],
-          },
+          // auth: {
+          //   strategies: ["jwt"],
+          // },
         },
       },
 

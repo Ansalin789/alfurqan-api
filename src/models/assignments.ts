@@ -1,12 +1,11 @@
 import { z } from "zod";
 import { model, Schema } from "mongoose";
-import { IAssignmentCreate } from "../../types/models.types";
+import { IAssignment } from "../../types/models.types";
 import { assigmentType, assignemntMessages } from "../config/messages";
-import { required } from "joi";
 
 
 
-const assignmentSchema = new Schema<IAssignmentCreate>(
+const assignmentSchema = new Schema<IAssignment>(
     {
       studentId:{
         type: String,
@@ -17,6 +16,10 @@ const assignmentSchema = new Schema<IAssignmentCreate>(
         required: false,
       },
       assignedTeacher: {
+        type: String,
+        required: false,
+      },
+      assignedTeacherId: {
         type: String,
         required: false,
       },
@@ -183,8 +186,4 @@ const assignmentSchema = new Schema<IAssignmentCreate>(
 
   });
   
-  
-  
-
-
-export default model<IAssignmentCreate>("Assignment", assignmentSchema);
+export default model<IAssignment>("Assignment", assignmentSchema);
