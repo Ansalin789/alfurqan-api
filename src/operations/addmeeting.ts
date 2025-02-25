@@ -1,12 +1,12 @@
 import { IMeeting, IMeetingCreate } from "../../types/models.types";
 
 import Meeting from "../models/addmeeting";
+
 import User from "../models/users";
 import cron from "node-cron";
 
-import addmeeting from "../models/addmeeting";
 import { Types } from "mongoose";
-
+const addmeeting = Meeting;
 
 export interface IMeetingUpdate{
     meetingName:string,
@@ -25,58 +25,7 @@ export interface IMeetingUpdate{
  *
  * @param {IMeetingCreate} payload - The data for the new meeting.
  */
-// export const createMeeting = async (payload: IMeetingCreate): Promise<IMeeting | { error: any }> => {
-//     try {
-//         // Find the supervisor details from User model
-//         const supervisor = await User.findOne({
-//             userName: payload.createdBy,
-//             role: "SUPERVISOR",
-//         }).exec();
 
-//         console.log("Supervisor Details >>>>", supervisor);
-
-//         // Convert selectedDate to a Date object
-//         const meetingDate = new Date(payload.selectedDate);
-//         const startTime = payload.startTime;
-//         const endTime = payload.endTime;
-
-//         // Check for existing meetings that overlap with the new meeting
-//         const conflictingMeeting = await Meeting.findOne({
-//             selectedDate: meetingDate, // Same date
-//             $or: [
-//                 { startTime: { $lt: endTime }, endTime: { $gt: startTime } } // Overlapping time
-//             ]
-//         });
-
-//         if (conflictingMeeting) {
-//             return { error: badRequest("A meeting is already scheduled at this time. Please choose a different time slot.") };
-//         }
-
-//         // Create a new meeting instance
-//         const newMeeting = new Meeting({
-//             ...payload,
-//             supervisor: supervisor
-//                 ? {
-//                       supervisorId: supervisor._id.toString(),
-//                       supervisorName: supervisor.userName,
-//                       supervisorEmail: supervisor.email,
-//                       supervisorRole: Array.isArray(supervisor.role) ? supervisor.role[0] : supervisor.role, // Ensure it's a string
-//                   }
-//                 : null, // If no supervisor found, keep it null
-//         });
-
-//         // Ensure selectedDate is in the future
-//         if (newMeeting.selectedDate < new Date()) {
-//             return { error: badRequest("Meeting date cannot be in the past. Please select a future date.") };
-//         }
-
-//         // Save the new meeting
-//         const savedMeeting = await newMeeting.save();
-//         return savedMeeting;
-//     } catch (error) {
-//         return { error };
-//     }
-// };
 
   
 
@@ -132,7 +81,7 @@ export const createMeeting = async (payload: IMeetingCreate): Promise<IMeeting |
         const meetingNames = `weeklymeeting-${supervisor._id}`;
         console.log("meetingNames>>>",meetingNames);
         // Create the meeting object with supervisor details
-        let newMeeting = await new Meeting({
+        let newMeeting = new Meeting({
             ...payload,
             supervisor: {
                 supervisorId: supervisor._id.toString(),
@@ -164,7 +113,7 @@ const autoScheduleMeeting = async () => {
     try {
         // Get the current date
         let currentDate = new Date();
-        // currentDate.setHours(17, 47, 0, 0); // Set time to 17:47
+      
       
         const existingMeeting = await Meeting.findOne({ selectedDate: { $eq: currentDate } });
 
