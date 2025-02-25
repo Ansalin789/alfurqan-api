@@ -6,7 +6,7 @@ import { ClassSchedulesMessages } from "../../config/messages";
 import { isNil, result } from "lodash";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
-import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher} from "../../operations/classschedule";
+import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity} from "../../operations/classschedule";
 import { GetAllRecordsParams } from "../../shared/enum";
 import userModel from "../../models/users";
 
@@ -334,9 +334,83 @@ async getTeacherStudentCount(req: Request, h: ResponseToolkit) {
   }
 }
 
+,
 
 
+async totalhours(req: Request, h: ResponseToolkit) {
+  try {
+    // Parse and validate request query
+    const parsedQuery = getAllClassSheduleInput.parse({
+      query: {
+        ...((req as any).query), // Casting req.query to 'any' for flexibility
+        filterValues: (() => {
+          try {
+            return req.query?.filterValues
+              ? JSON.parse(req.query.filterValues as string)
+              : {};
+          } catch {
+            throw new Error("Invalid filterValues JSON format.");
+          }
+        })(),
+      },
+    });
 
+    const { studentId } = parsedQuery.query;
+
+    if (!studentId) {
+      throw new Error("Student ID is required.");
+    }
+
+    // Fetch student class schedule and calculate percentages
+    const result = await getStudentClassHours(studentId);
+
+    // Return the response
+    return h.response(result).code(200);
+  } catch (error) {
+    console.error("Error in totalhours:", error);
+
+    // Handle errors properly
+    return h.response({ error }).code(400);
+  }
+},
+
+
+async teachingActivity(req: Request, h: ResponseToolkit) {
+  try {
+    // Parse and validate request query
+    const parsedQuery = getAllClassSheduleInput.parse({
+      query: {
+        ...((req as any).query), // Casting req.query to 'any' for flexibility
+        filterValues: (() => {
+          try {
+            return req.query?.filterValues
+              ? JSON.parse(req.query.filterValues as string)
+              : {};
+          } catch {
+            throw new Error("Invalid filterValues JSON format.");
+          }
+        })(),
+      },
+    });
+
+    const { studentId } = parsedQuery.query;
+
+    if (!studentId) {
+      throw new Error("Student ID is required.");
+    }
+
+    // Fetch student class schedule and calculate percentages
+    const result = await teachingActivity(studentId);
+
+    // Return the response
+    return h.response(result).code(200);
+  } catch (error) {
+    console.error("Error in totalhours:", error);
+
+    // Handle errors properly
+    return h.response({ error }).code(400);
+  }
+}
 
 }
 

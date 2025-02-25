@@ -11,6 +11,7 @@ import { Client } from '@microsoft/microsoft-graph-client';
 import { ClientSecretCredential } from "@azure/identity";
 import classShedule from "../models/classShedule";
 import student from "../models/student";
+import moment from "moment";
 
 /**
  * Creates a new candidate record in the database.
@@ -361,6 +362,134 @@ export const getClassesForTeacher = async (
 
 
 
+export const getStudentClassHours = async (
+  studentId: string
+): Promise<{ pendingPercentage: number; completedPercentage: number; totalHours: number }> => {
+  if (!studentId) {
+    console.error("Student ID is missing");
+    throw new Error("Student ID is required");
+  }
 
+  try {
+    console.log(`Fetching class hours for student: ${studentId}`);
+
+    // Query for the student schedule
+    const query: any = { "student.studentId": studentId };
+    const classSchedule = await ClassScheduleModel.find(query).exec();
+
+    if (!classSchedule || classSchedule.length === 0) {
+      console.warn(`No class schedule found for student: ${studentId}`);
+      return { pendingPercentage: 0, completedPercentage: 0, totalHours: 0 };
+    }
+
+    console.log("Fetched class schedules:", JSON.stringify(classSchedule, null, 2));
+
+    let completedHours = 0;
+    let pendingHours = 0;
+
+    classSchedule.forEach(event => {
+      console.log("Raw event data:", JSON.stringify(event, null, 2));
+
+      // Ensure `classStatus` exists and normalize case
+      const status = event.classStatus ? event.classStatus.trim().toLowerCase() : "unknown";
+      const hours = Number(event.totalHourse) || 0; // Ensure it's a number
+
+      if (hours > 0) {
+        if (status === "completed") {
+          completedHours += hours;
+          console.log(`Adding ${hours} hours to Completed (${completedHours} total)`);
+        } else if (status === "pending") {
+          pendingHours += hours;
+          console.log(`Adding ${hours} hours to Pending (${pendingHours} total)`);
+        } else {
+          console.warn(`Skipping event with unknown status: "${status}"`, event);
+        }
+      } else {
+        console.warn(`Skipping event with zero or invalid hours: ${hours}`);
+      }
+    });
+
+    const totalHours = completedHours + pendingHours;
+    const pendingPercentage = totalHours > 0 ? (pendingHours / totalHours) * 100 : 0;
+    const completedPercentage = totalHours > 0 ? (completedHours / totalHours) * 100 : 0;
+
+    console.log(`Final Totals -> Completed: ${completedHours}, Pending: ${pendingHours}, Total: ${totalHours}`);
+    console.log(`Final Percentages -> Pending: ${pendingPercentage.toFixed(2)}%, Completed: ${completedPercentage.toFixed(2)}%`);
+
+    return { pendingPercentage, completedPercentage, totalHours };
+  } catch (error) {
+    console.error("Error fetching class hours for student:", error);
+    throw new Error("Failed to fetch class hours for the student");
+  }
+};
+
+
+
+
+
+
+
+export const teachingActivity = async (
+  studentId: string
+): Promise<{ month: string; completedHours: number; pendingHours: number; totalHours: number }[]> => {
+  if (!studentId) {
+    throw new Error("Student ID is required");
+  }
+
+  try {
+    // Fetch all class schedules for the student
+    const classSchedule = await ClassScheduleModel.find({ "student.studentId": studentId }).exec();
+
+    if (!classSchedule || classSchedule.length === 0) {
+      console.warn(`No class schedule found for student: ${studentId}`);
+      return [];
+    }
+
+    // Debugging logs
+    console.log("Fetched class schedules:", classSchedule);
+
+    // Initialize an object to group hours by month
+    const monthlyData: Record<
+      string,
+      { completedHours: number; pendingHours: number; totalHours: number }
+    > = {};
+
+    classSchedule.forEach((event) => {
+      const month = moment(event.startDate).format("YYYY-MM"); // Get month in "YYYY-MM" format
+      const hours = Number(event.totalHourse) || 0;
+      const status = event.classStatus?.trim().toLowerCase();
+
+      // Initialize month if not present
+      if (!monthlyData[month]) {
+        monthlyData[month] = { completedHours: 0, pendingHours: 0, totalHours: 0 };
+      }
+
+      // Categorize hours
+      if (status === "completed") {
+        monthlyData[month].completedHours += hours;
+      } else if (status === "pending") {
+        monthlyData[month].pendingHours += hours;
+      } else {
+        console.warn(`Unexpected classStatus "${event.classStatus}" for event:`, event);
+      }
+
+      // Update total hours
+      monthlyData[month].totalHours += hours;
+    });
+
+    // Convert object to an array for frontend use
+    const result = Object.keys(monthlyData).map((month) => ({
+      month,
+      ...monthlyData[month],
+    }));
+
+    console.log("Processed monthly teaching activity:", result);
+
+    return result;
+  } catch (error) {
+    console.error("Error fetching class hours for student:", error);
+    throw new Error("Failed to fetch class hours for the student");
+  }
+};
 
 
