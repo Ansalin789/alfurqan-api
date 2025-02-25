@@ -4,7 +4,7 @@ import { IClassSchedule } from "../../types/models.types";
 
 import CustomEnumerator from "../shared/enum";
 import { z } from "zod";
-import { appStatus, commonMessages } from "../config/messages";
+import { appStatus, attendeeStatus, commonMessages } from "../config/messages";
 
 const classScheduleSchema = new Schema<IClassSchedule>(
   {
@@ -153,6 +153,14 @@ const classScheduleSchema = new Schema<IClassSchedule>(
       type: String,
       required: false
     },
+    teacherAttendee: {
+      type: String,
+      required: false
+    },
+    studentAttendee: {
+      type: String,
+      required: false
+    }
   },
   {
     collection: "classschedule",
@@ -210,6 +218,10 @@ export const zodClassScheduleSchema = z.object({
     message: commonMessages.INVALID_DATE_FORMAT,
   }).transform((val) => new Date(val)).optional(),
   lastUpdatedBy: z.string().optional(),
+  studentAttendee: z.enum([attendeeStatus.PRESENT, attendeeStatus.ABSENT]),
+  teacherAttendee: z.enum([attendeeStatus.PRESENT, attendeeStatus.ABSENT]),
+
+
 })
 
 

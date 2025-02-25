@@ -24,6 +24,8 @@ const createInputValidation = z.object({
         startTime: true,
         endTime: true,
         scheduleStatus: true,
+        studentAttendee:true,
+        teacherAttendee: true,
     }).partial()
   });
 
@@ -82,7 +84,10 @@ export default {
     endDate: payload.endDate,
     startTime: startTimeValues,
     endTime: endTimeValues,
-    scheduleStatus: payload.scheduleStatus
+    scheduleStatus: payload.scheduleStatus,
+    studentAttendee: payload.studentAttendee,
+    teacherAttendee:payload.teacherAttendee,
+   
      });
   }
 ,

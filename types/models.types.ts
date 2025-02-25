@@ -477,6 +477,8 @@ export interface IClassSchedule extends Document{
   createdBy: string,
   lastUpdatedDate: Date,
   lastUpdatedBy: string
+  teacherAttendee: string;
+  studentAttendee: string;
 }
 
 export interface IClassScheduleCreate{
@@ -502,6 +504,8 @@ export interface IClassScheduleCreate{
   startTime: string[];
   endTime: string[];
   scheduleStatus: string,
+  teacherAttendee: string;
+  studentAttendee: string;
 }
 
 export interface IActiveSession extends Document {
