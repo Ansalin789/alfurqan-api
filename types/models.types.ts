@@ -662,6 +662,7 @@ export interface IAssignment  extends Document{
   studentId: string;
   assignmentName: string;
   assignedTeacher: string;
+  assignedTeacherId: string;
   assignmentType: {
     quiz?: string;
     writing?: string;
@@ -679,8 +680,8 @@ export interface IAssignment  extends Document{
     optionThree?: string;
     optionFour?: string;
   };
-  audioFile?: string;
-  uploadFile?: string;
+  audioFile?: Buffer;
+  uploadFile?: Buffer;
   status: string;
   createdDate: Date;
   createdBy: string;
@@ -700,6 +701,7 @@ export interface IallAssignment {
   studentId: string;
   assignmentName: string;
   assignedTeacher: string;
+  assignedTeacherId: string;
   assignmentType: { 
     quiz?: string;
     writing?: string;
@@ -729,7 +731,6 @@ export interface IallAssignment {
   assignedDate: Date;
   dueDate: Date;
   assignmentStatus: string;
-
 
 }
 

@@ -4,7 +4,6 @@ import assignment from "../models/assignments";
 import userModel from "../models/users";
 import alstudents from "../models/alstudents";
 import { Types } from "mongoose";
-
 /**
  * Creates a new assignment record in the database.
  * @param {IAssignmentCreate} payload - The data required to create a new assignment record.
@@ -12,7 +11,7 @@ import { Types } from "mongoose";
  */
 export const createAssignment = async (
   payload: IAssignmentCreate
-): Promise<{ totalCount: number; assignments: IAssignmentCreate[] } | { error: any }> => {
+): Promise<{ totalCount: number; assignments: IAssignment[] } | { error: any }> => {
   try {
     // Validate assignment due date
     if (payload.dueDate && payload.dueDate === new Date()) {
@@ -39,6 +38,7 @@ export const createAssignment = async (
       studentId:studentDetails?._id || "",
       assignmentName: payload.assignmentName || "",
       assignedTeacher: assignedTeacher?.userName || "", // Save the teacher's userName in the assignment
+      assignedTeacherId:assignedTeacher?._id,
       assignmentType: payload.assignmentType, // Use the entire object { type, name }
       chooseType: payload.chooseType,
       trueorfalseType: payload.trueorfalseType,
@@ -87,7 +87,7 @@ export const createAssignment = async (
 export const updateStudentAssignment = async (
   id: string,
   payload: IAssignmentCreate | null
-): Promise<{ totalCount: number; assignments: IAssignmentCreate[] } | { error: any }> => {
+): Promise<{ totalCount: number; assignments: IAssignment[] } | { error: any }> => {
   try {
     console.log("Received payload:", payload);
     console.log("AssignmentID>>>>", id);
