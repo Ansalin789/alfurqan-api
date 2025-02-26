@@ -63,7 +63,7 @@ export const createPaymentIntent = async (request: Request, h: ResponseToolkit) 
     await EvaluationModel.findByIdAndUpdate(
       evaluationDetails?._id,
       {
-        paymentStatus: paymentIntentResponse.status === "succeeded" ? "Paid" : "Failed",
+        paymentStatus: paymentIntentResponse.status === "succeeded" ? "PAID" : "FAILED",
       },
       { new: true }
     );
