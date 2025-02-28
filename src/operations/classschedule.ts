@@ -42,6 +42,7 @@ export const updateStudentClassSchedule = async (
   const { classDay, startTime, endTime, startDate, endDate } = payload;
 
   const results: (IClassSchedule | { error: any })[] = [];
+  const resultss: (IClassScheduleCreate | { error: any })[] = [];
 
   // Validate inputs
   if (!classDay || !startTime || !endTime || !startDate || !endDate || 

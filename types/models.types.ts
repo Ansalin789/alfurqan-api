@@ -1120,10 +1120,10 @@ export interface IRecruitment extends Document{
   candidateFirstName: string;
   candidateLastName : string;
   supervisor:{
-    supervisorId?: string;
-    supervisorName?: string;
-    supervisorEmail?: string;
-    supervisorRole?: string;
+    supervisorId: string;
+    supervisorName: string;
+    supervisorEmail: string;
+    supervisorRole: string;
   };
   gender?: string;
   applicationDate : Date;
@@ -1137,7 +1137,7 @@ export interface IRecruitment extends Document{
   preferedWorkingHours: string;
   uploadResume?: Buffer;
   comments: string;
-  applicationStatus: string;
+  applicationStatus?: string;
   level?: string;
   quranReading? : string;
   tajweed? : string;
@@ -1156,7 +1156,12 @@ export interface IRecruitment extends Document{
 }
 
 export interface IRecruitmentCreate{
-
+  supervisor:{
+    supervisorId?: string,
+    supervisorName?: string,
+    supervisorEmail?: string,
+    supervisorRole?: string
+  }  ,
   candidateFirstName: string;
   candidateLastName : string;
   gender?:  string;
@@ -1170,7 +1175,7 @@ export interface IRecruitmentCreate{
   expectedSalary : number;
   preferedWorkingHours: string;
   uploadResume?: Buffer;
-  comments: string;
+  comments?: string;
   applicationStatus: string;
   level? : string;
   quranReading? : string;
@@ -1182,7 +1187,7 @@ export interface IRecruitmentCreate{
   overallRating?: number;
   professionalExperience?: string;
   skills?: string;
-  status: string;
+  status?: string;
   createdDate: Date;
   createdBy: string;
   updatedDate?: Date;

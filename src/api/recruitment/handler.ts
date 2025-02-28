@@ -1,19 +1,18 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodRecruitmentSchema } from "../../models/recruitment";
-import { createRecruitment, getAllApplicantsRecords, getApplicantRecordById, updateApplicantById } from "../../operations/recruitment";
+import { createRecruitment, getAllApplicantsRecords, getApplicantRecordById, updateApplicantByAdminId, updateApplicantById } from "../../operations/recruitment";
 import { Readable } from "stream";
 import * as Stream from "stream";
 import { zodGetAllApplicantsRecordsQuerySchema, zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
-import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
 import { recruitmentMessages } from "../../config/messages";
 import pdfParse from "pdf-parse";
-import fs from 'fs';
-
+import { isNil } from "lodash";
 
 const createInputValidation = z.object({
   payload: zodRecruitmentSchema.pick({
+    supervisor: true,
     candidateFirstName: true,
     candidateLastName: true,
     gender: true,
@@ -47,6 +46,7 @@ const createInputValidation = z.object({
 
  const updateInputValidation = z.object({
   payload: zodRecruitmentSchema.pick({
+    supervisor: true,
     comments: true,
     applicationStatus: true,
     level: true,
@@ -57,6 +57,16 @@ const createInputValidation = z.object({
     englishSpeaking: true,
     preferedWorkingDays: true,
     overallRating: true,
+    status:true,
+    updatedDate: true,
+  }),
+ })
+
+ const updateAdminInputValidation = z.object({
+  payload: zodRecruitmentSchema.pick({
+    supervisor: true,
+    applicationStatus: true,
+    status:true,
     updatedDate: true,
   }),
  })
@@ -89,7 +99,13 @@ export default{
            const  experience = rawPayload.uploadResume? await extractResumeDetails(uploadFileBuffer) :  null
           //console.log("Resume",uploadFileBuffer)
 
-           return await createRecruitment({     
+           return await createRecruitment({  
+            supervisor:{
+              supervisorId: payload.supervisor?.supervisorId || " ",
+              supervisorName: payload.supervisor?.supervisorName || " ",
+              supervisorEmail: payload.supervisor?.supervisorEmail || " ",
+              supervisorRole: payload.supervisor?.supervisorRole || " "
+            }  , 
         candidateFirstName: payload.candidateFirstName,
         candidateLastName: payload.candidateLastName,
         gender: payload.gender || undefined,
@@ -103,7 +119,7 @@ export default{
         expectedSalary: payload.expectedSalary, 
         preferedWorkingHours: payload.preferedWorkingHours,
         uploadResume: uploadFileBuffer ? Buffer.from(uploadFileBuffer) : undefined ,
-        comments: payload.comments,
+        comments: payload.comments || "",
         applicationStatus: payload.applicationStatus,
         level: payload.level, 
         quranReading: payload.quranReading, // Provide a default value for startDate
@@ -154,7 +170,24 @@ export default{
       }
   
       return result;
+    },
+
+    async updateAdminApplicantRecordById(req: Request, h: ResponseToolkit) {
+
+      const { payload } = updateAdminInputValidation.parse({
+        payload: req.payload
+      });
+   console.log(">>>>>",payload.applicationStatus);
+      const result = await updateApplicantByAdminId(String(req.params.id), payload);
+      if (isNil(result)) {
+        return notFound(recruitmentMessages.USER_NOT_FOUND);
+      }
+  
+      return result;
     }
+
+
+
 };
 
 
