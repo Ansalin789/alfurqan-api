@@ -76,7 +76,10 @@ export const addMeetingMessages: Record<string, string> = Object.freeze({
   INVALID_STATUS: "Invalid meeting status",
 });
 
-
+export const attendeeStatus: Record<string, any> = Object.freeze({
+   PRESENT:"present",
+   ABSENT: "absent"
+});
 
 export const appStatus: Record<string, any> = Object.freeze({
   ACTIVE: "Active",
@@ -136,8 +139,10 @@ export const evaluationStatus: Record<string, any> = Object.freeze({
   export const applicationStatus: Record<string, any> = Object.freeze({
     NEWAPPLICATION:"NEWAPPLICATION",
     SHORTLISTED:"SHORTLISTED",
-    RIJECTED:"RIJECTED",
+    RIJECTED:"REJECTED",
     WAITING:"WAITING",
+    SENDAPPROVAL: "SENDAPPROVAL",
+    APPROVED: "APPROVED"
     });
 
 export const eventType: Record<string, any> = Object.freeze({

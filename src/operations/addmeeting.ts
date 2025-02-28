@@ -1,12 +1,12 @@
 import { IMeeting, IMeetingCreate } from "../../types/models.types";
 
 import Meeting from "../models/addmeeting";
+
 import User from "../models/users";
 import cron from "node-cron";
 
-import addmeeting from "../models/addmeeting";
 import { Types } from "mongoose";
-
+const addmeeting = Meeting;
 
 export interface IMeetingUpdate{
     meetingName:string,
@@ -25,58 +25,7 @@ export interface IMeetingUpdate{
  *
  * @param {IMeetingCreate} payload - The data for the new meeting.
  */
-// export const createMeeting = async (payload: IMeetingCreate): Promise<IMeeting | { error: any }> => {
-//     try {
-//         // Find the supervisor details from User model
-//         const supervisor = await User.findOne({
-//             userName: payload.createdBy,
-//             role: "SUPERVISOR",
-//         }).exec();
 
-//         console.log("Supervisor Details >>>>", supervisor);
-
-//         // Convert selectedDate to a Date object
-//         const meetingDate = new Date(payload.selectedDate);
-//         const startTime = payload.startTime;
-//         const endTime = payload.endTime;
-
-//         // Check for existing meetings that overlap with the new meeting
-//         const conflictingMeeting = await Meeting.findOne({
-//             selectedDate: meetingDate, // Same date
-//             $or: [
-//                 { startTime: { $lt: endTime }, endTime: { $gt: startTime } } // Overlapping time
-//             ]
-//         });
-
-//         if (conflictingMeeting) {
-//             return { error: badRequest("A meeting is already scheduled at this time. Please choose a different time slot.") };
-//         }
-
-//         // Create a new meeting instance
-//         const newMeeting = new Meeting({
-//             ...payload,
-//             supervisor: supervisor
-//                 ? {
-//                       supervisorId: supervisor._id.toString(),
-//                       supervisorName: supervisor.userName,
-//                       supervisorEmail: supervisor.email,
-//                       supervisorRole: Array.isArray(supervisor.role) ? supervisor.role[0] : supervisor.role, // Ensure it's a string
-//                   }
-//                 : null, // If no supervisor found, keep it null
-//         });
-
-//         // Ensure selectedDate is in the future
-//         if (newMeeting.selectedDate < new Date()) {
-//             return { error: badRequest("Meeting date cannot be in the past. Please select a future date.") };
-//         }
-
-//         // Save the new meeting
-//         const savedMeeting = await newMeeting.save();
-//         return savedMeeting;
-//     } catch (error) {
-//         return { error };
-//     }
-// };
 
   
 
@@ -132,7 +81,7 @@ export const createMeeting = async (payload: IMeetingCreate): Promise<IMeeting |
         const meetingNames = `weeklymeeting-${supervisor._id}`;
         console.log("meetingNames>>>",meetingNames);
         // Create the meeting object with supervisor details
-        let newMeeting = await new Meeting({
+        let newMeeting = new Meeting({
             ...payload,
             supervisor: {
                 supervisorId: supervisor._id.toString(),
@@ -159,14 +108,64 @@ export const createMeeting = async (payload: IMeetingCreate): Promise<IMeeting |
     }
 };
 
+
+
+
+///auto schedule cron job
+
+
+
 const autoScheduleMeeting = async () => {
-    
     try {
-        // Get the current date
         let currentDate = new Date();
-        // currentDate.setHours(17, 47, 0, 0); // Set time to 17:47
-      
-        const existingMeeting = await Meeting.findOne({ selectedDate: { $eq: currentDate } });
+        let currentMonth = currentDate.getMonth() + 1; // Months are zero-based
+        let currentYear = currentDate.getFullYear();
+        let currentDay = currentDate.getDate();
+        let totalDaysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+
+        let firstHalfDays, secondHalfDays;
+        if (currentMonth === 2) {
+            firstHalfDays = Array.from({ length: 14 }, (_, i) => i + 1);
+            secondHalfDays = Array.from({ length: totalDaysInMonth - 14 }, (_, i) => i + 15);
+        } else {
+            firstHalfDays = Array.from({ length: 15 }, (_, i) => i + 1);
+            secondHalfDays = Array.from({ length: totalDaysInMonth - 15 }, (_, i) => i + 16);
+        }
+
+        let firstMeetingDay = firstHalfDays[firstHalfDays.length - 1];
+        let secondMeetingDay = secondHalfDays[secondHalfDays.length - 1];
+
+        // Format dates as DD-MM-YYYY
+        let firstMeetingDate = `${String(firstMeetingDay).padStart(2, '0')}-${String(currentMonth).padStart(2, '0')}-${currentYear}`;
+        let secondMeetingDate = `${String(secondMeetingDay).padStart(2, '0')}-${String(currentMonth).padStart(2, '0')}-${currentYear}`;
+
+    
+        
+        console.log("currentDate:", currentDate);
+        console.log("Current Month:", currentMonth);
+        console.log("Current Day:", currentDay);
+        console.log("Total Days in Month:", totalDaysInMonth);
+        console.log("First Half Days:", firstHalfDays);
+        console.log("Second Half Days:", secondHalfDays);
+        console.log("First Meeting Date:", firstMeetingDate);
+        console.log("Second Meeting Date:", secondMeetingDate);
+
+        // Adjust if meeting day is a Sunday
+        if (new Date(currentYear, currentMonth - 1, firstMeetingDay).getDay() === 0) {
+            firstMeetingDay -= 1;
+        }
+        if (new Date(currentYear, currentMonth - 1, secondMeetingDay).getDay() === 0) {
+            secondMeetingDay -= 1;
+        }
+
+        let meetingDays = [firstMeetingDay, secondMeetingDay];
+
+        if (!meetingDays.includes(currentDay)) {
+            console.log("✅ Today is not a scheduled meeting day. No meetings will be created.");
+            return;
+        }
+
+        const existingMeeting = await Meeting.findOne({ selectedDate: currentDate });
 
         if (existingMeeting) {
             console.log(`✅ A meeting is already scheduled on ${currentDate.toDateString()}. No new meeting will be created.`);
@@ -175,78 +174,88 @@ const autoScheduleMeeting = async () => {
 
         console.log("✅ No meeting found on this date. Proceeding to schedule a new one...");
 
-        // Meeting details
         const startTime = "10:00 AM";
         const endTime = "10:30 AM";
 
-        // Select a random supervisor
         const supervisor = await User.findOne({ role: "SUPERVISOR" });
 
         if (!supervisor) {
-            console.log(" No supervisor found. Cannot schedule a meeting.");
+            console.log("No supervisor found. Cannot schedule a meeting.");
             return;
         }
 
-        // Select all teachers
-        const teachers = await User.find({ role: "TEACHER" }).exec();
+        //const teachers = await User.find({ lastLoginDate: currentDate, role: "TEACHER" }).exec();
+
+       //currentDate = 2025-02-25T09:13:00Z
+       //lastLoginDate = 2025-02-25T07:11:38.665+00:00
+
+
+       const currentDatee = new Date().toISOString().split('T')[0]; // Extracts only YYYY-MM-DD
+
+const teachers = await User.find({
+  lastLoginDate: {
+    $gte: new Date(currentDatee), // Start of the day (00:00:00)
+    $lt: new Date(new Date(currentDatee).setDate(new Date(currentDatee).getDate() + 1)) // Start of the next day
+  },
+  role: "TEACHER"
+}).exec();
+
+console.log(teachers);
 
         if (teachers.length === 0) {
-            console.log(" No teachers found.");
+            console.log("No teachers found.");
             return;
         }
 
         const meetingNames = `weeklymeeting-${supervisor._id}`;
-        // If today is Sunday, log an error and exit
-        if (currentDate.getDay() === 0) {
-            console.log(" Today is Sunday. No meetings available. Moving meeting to Monday.");
-            
-            // Assigning meeting to Monday (which is 1)
-            currentDate.setDate(currentDate.getDate() + 1); // Move the date to Monday
-            console.log(`➡️ Meeting rescheduled to Monday, ${currentDate.toDateString()}`);
-        }
-         else {
-           
-            for (const teacher of teachers) {
-                console.log(" Scheduling meeting for teacher:", teacher.userName);
 
-                const newMeeting = new Meeting({
-                    meetingId: meetingNames,
-                    meetingName: "Auto-Scheduled Meeting",
-                    description: "This is an automatically scheduled meeting.",
-                    createdDate: new Date(),
-                    selectedDate: currentDate,
-                    startTime: startTime,
-                    endTime: endTime,
-                    createdBy: supervisor.userName,
-                    teacher: {
-                        teacherId: teacher._id.toString(),
-                        teacherName: teacher.userName,
-                        teacherEmail: teacher.email,
-                    },
-                    supervisor: {
-                        supervisorId: supervisor._id.toString(),
-                        supervisorName: supervisor.userName,
-                        supervisorEmail: supervisor.email,
-                        supervisorRole: Array.isArray(supervisor.role) ? supervisor.role[0] : supervisor.role,
-                    },
-                    meetingStatus: "Scheduled",
-                });
+        for (const teacher of teachers) {
+            console.log("Scheduling meeting for teacher:", teacher.userName);
 
-                // Save the new meeting
-                await newMeeting.save();
-                console.log(`✅ New meeting scheduled for ${teacher.userName} on ${currentDate.toDateString()} from ${startTime} to ${endTime}`);
-            }
+            const newMeeting = new Meeting({
+                meetingId: meetingNames,
+                meetingName: "Auto-Scheduled Meeting",
+                description: "This is an automatically scheduled meeting.",
+                createdDate: new Date(),
+                selectedDate: currentDate,
+                startTime: startTime,
+                endTime: endTime,
+                createdBy: supervisor.userName,
+                teacher: {
+                    teacherId: teacher._id.toString(),
+                    teacherName: teacher.userName,
+                    teacherEmail: teacher.email,
+                },
+                supervisor: {
+                    supervisorId: supervisor._id.toString(),
+                    supervisorName: supervisor.userName,
+                    supervisorEmail: supervisor.email,
+                    supervisorRole: Array.isArray(supervisor.role) ? supervisor.role[0] : supervisor.role,
+                },
+                meetingStatus: "Scheduled",
+            });
+
+            await newMeeting.save();
+            console.log(`✅ New meeting scheduled for ${teacher.userName} on ${currentDate.toDateString()} from ${startTime} to ${endTime}`);
         }
     } catch (error) {
-        console.error(" Error auto-scheduling meeting:", error);
+        console.error("Error auto-scheduling meeting:", error);
     }
 };
 
-// Schedule the job to auto-schedule meetings every 15 days
-cron.schedule("0 0 * * *", async () => {
-    console.log(" Running the auto-scheduling job...");
+// Schedule the job to auto-schedule meetings every minute
+cron.schedule("55 23 * * *", async () => {
+    console.log("Running the auto-scheduling job at 23:55 PM...");
     await autoScheduleMeeting();
 });
+
+
+
+
+
+
+
+//test the 
 
 //Get by ID
 

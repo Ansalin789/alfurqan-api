@@ -5,12 +5,17 @@ import { IRecruitment, IRecruitmentCreate } from "../../types/models.types";
 import RecruitModel from "../models/recruitment"
 import { GetAllApplicationsRecordsParams } from "../shared/enum";
 import { isNil } from "lodash";
-import { commonMessages, recruitmentMessages, studentMessages } from "../config/messages";
+import { applicationStatus, commonMessages, recruitmentMessages } from "../config/messages";
 import AppLogger from "../helpers/logging";
 import { Types } from "mongoose";
-
+import User from "../models/users";
+import EmailTemplate from "../models/emailTemplate";
+import { sendEmailClient } from "../shared/email";
 
 export interface IRecruitmentUpdate{
+  supervisor:{
+    supervisorId?: string;
+  };
 comments?: string,
 applicationStatus: any,
 level?: string,
@@ -21,8 +26,19 @@ arabicSpeaking?: string,
 englishSpeaking?: string,
 preferedWorkingDays?: string,
 overallRating?: number,
+status: string,
 updatedDate?: Date,
 }
+
+
+export interface IRecruitmentAdminUpdate{
+  supervisor:{
+    supervisorId?: string;
+  };
+    applicationStatus: string,
+    status:string,
+    updatedDate?: Date
+ }
 
 /**
  * Creates a new user.
@@ -127,9 +143,110 @@ export const updateApplicantById = async (
   id: string,
   payload: Partial<IRecruitmentUpdate>
 ): Promise<IRecruitment | null> => {
+
   return RecruitModel.findOneAndUpdate(
     { _id: new Types.ObjectId(id) },
     { $set: payload },
     { new: true }
   ).lean();
 };
+
+
+
+/**
+ * Updates a candidate record in the database by its ID.
+ *
+ * @param {string} id - The unique ID of the candidate to update.
+ * @param {Partial<IRecruitmentCreate>} payload - The fields to update in the candidate record. Only provided fields will be updated.
+ * @returns {Promise<IRecruitment | null>} A promise that resolves to the updated candidate record, or null if no candidate was found.
+ */
+export const updateApplicantByAdminId = async (
+  id: string,
+  payload: Partial<IRecruitmentAdminUpdate>
+): Promise<IRecruitment | null> => {
+
+let getSupervisor = await User.findOne({
+_id: payload.supervisor?.supervisorId,
+}).exec();
+
+  let approvalData = await RecruitModel.findOne(
+    { _id: new Types.ObjectId(id) },
+  ).lean();
+  let approvedData;
+if(getSupervisor &&approvalData && approvalData.applicationStatus == applicationStatus.NEWAPPLICATION){
+  approvalData = {
+    ...approvalData,
+    supervisor: {
+      supervisorId: getSupervisor._id.toString(),
+      supervisorName: getSupervisor.userName,
+      supervisorEmail: getSupervisor.email,
+      supervisorRole: getSupervisor.role[0]
+    },
+    status: "Active"
+  }
+  approvedData = await RecruitModel.findOneAndUpdate(
+    { _id: new Types.ObjectId(id) },
+    { $set: approvalData },
+    { new: true }
+  ).lean();
+  
+}
+else if(approvalData &&  approvalData.applicationStatus == applicationStatus.SHORTLISTED || applicationStatus.SENDAPPROVAL){
+    approvedData = await RecruitModel.findOneAndUpdate(
+      { _id: new Types.ObjectId(id) },
+      { $set: payload },
+      { new: true }
+    ).lean();
+  } 
+  const updateData = approvedData as IRecruitment;
+  if(updateData.applicationStatus == "APPROVED"){
+    await createTeacherPortalPortal(updateData)
+  }
+  console.log("updateData", updateData);
+  return updateData;
+};
+
+ async function createTeacherPortalPortal(updateData:any) {
+ console.log("updateData>>", updateData);
+    const specialChars = '@#$%&*!';
+    const randomNum = Math.floor(Math.random() * 1000); // Random number between 0-999
+    const randomSpecial = specialChars[Math.floor(Math.random() * specialChars.length)]; // Random special character
+  
+    // Generate password
+    const firstThreeChars = updateData.candidateFirstName.substring(0, 3); // First 3 characters of the username
+    const reversedUsername = updateData.candidateFirstName.split('').reverse().join(''); // Reverse the username
+  
+    const password = `${firstThreeChars}${randomSpecial}${randomNum}${reversedUsername}`;
+
+  let createStudentPortal = await User.create({
+    userName: updateData.candidateFirstName,
+    email:updateData.candidateEmail,
+    password: password,
+    profileImage: null,
+    role: "TEACHER",
+    gender: updateData.gender,
+    status: "Active",
+    createdBy: "Admin",
+    createdDate: new Date,
+    lastUpdatedBy: "Admin" ,   
+    updatedDate: new Date
+  }
+   )
+
+    const emailTemplate = await EmailTemplate.findOne({
+           templateKey: 'Teacher Portal',
+       }).exec();
+       if(emailTemplate){
+           const emailTo = [
+               { email: createStudentPortal.email, name: createStudentPortal.userName  }
+           ];
+           const subject = "Welcome To Alfurqan Team";
+           const htmlPart = emailTemplate.templateContent.replace('<username>', createStudentPortal.userName).replace('<password>',createStudentPortal.password );
+         //  console.log("emailTemplate>>>>",emailTemplate);
+           sendEmailClient(emailTo, subject,htmlPart);
+       }
+
+const saveStudent = createStudentPortal.save()
+console.log("Student portal",saveStudent )
+  return saveStudent;
+}

@@ -4,7 +4,7 @@ import { IClassSchedule } from "../../types/models.types";
 
 import CustomEnumerator from "../shared/enum";
 import { z } from "zod";
-import { appStatus, commonMessages } from "../config/messages";
+import { appStatus, attendeeStatus, commonMessages } from "../config/messages";
 
 const classScheduleSchema = new Schema<IClassSchedule>(
   {
@@ -57,7 +57,7 @@ const classScheduleSchema = new Schema<IClassSchedule>(
       },
       preferedTeacher:{
         type: String,
-        required: true,
+        required: false,
       },
       course:{
         courseId:{
@@ -72,7 +72,7 @@ const classScheduleSchema = new Schema<IClassSchedule>(
       },
       totalHourse:{
         type: Number,
-        required: true,
+        required: false,
       },
       startDate:{
         type: Date,
@@ -96,6 +96,10 @@ const classScheduleSchema = new Schema<IClassSchedule>(
       },
     scheduledStartDate: {
       type: Date,
+      required: false,
+    },
+    classStatus:{
+      type: String,
       required: false,
     },
     classType:{
@@ -153,6 +157,14 @@ const classScheduleSchema = new Schema<IClassSchedule>(
       type: String,
       required: false
     },
+    teacherAttendee: {
+      type: String,
+      required: false
+    },
+    studentAttendee: {
+      type: String,
+      required: false
+    }
   },
   {
     collection: "classschedule",
@@ -179,9 +191,9 @@ export const zodClassScheduleSchema = z.object({
         })
     ),
     package:z.string(),
-    preferedTeacher:z.string(),
+    preferedTeacher:z.string().optional(),
     course:z.string(),
-    totalHourse: z.number(),
+    totalHourse: z.number().optional(),
     startDate:z.string().refine((val) => !isNaN(Date.parse(val)), {
         message: commonMessages.INVALID_DATE_FORMAT,
       }).transform((val) => new Date(val)),
@@ -201,6 +213,7 @@ export const zodClassScheduleSchema = z.object({
       })
   ),
     scheduleStatus: z.string(),
+    classStatus: z.string(),
   status: z.enum([appStatus.ACTIVE, appStatus.IN_ACTIVE, appStatus.DELETED]),
   createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: commonMessages.INVALID_DATE_FORMAT,
@@ -210,6 +223,10 @@ export const zodClassScheduleSchema = z.object({
     message: commonMessages.INVALID_DATE_FORMAT,
   }).transform((val) => new Date(val)).optional(),
   lastUpdatedBy: z.string().optional(),
+  studentAttendee: z.enum([attendeeStatus.PRESENT, attendeeStatus.ABSENT]),
+  teacherAttendee: z.enum([attendeeStatus.PRESENT, attendeeStatus.ABSENT]),
+
+
 })
 
 

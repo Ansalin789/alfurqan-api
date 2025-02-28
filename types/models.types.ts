@@ -477,6 +477,8 @@ export interface IClassSchedule extends Document{
   createdBy: string,
   lastUpdatedDate: Date,
   lastUpdatedBy: string
+  teacherAttendee: string;
+  studentAttendee: string;
 }
 
 export interface IClassScheduleCreate{
@@ -502,6 +504,8 @@ export interface IClassScheduleCreate{
   startTime: string[];
   endTime: string[];
   scheduleStatus: string,
+  teacherAttendee: string;
+  studentAttendee: string;
 }
 
 export interface IActiveSession extends Document {
@@ -662,6 +666,7 @@ export interface IAssignment  extends Document{
   studentId: string;
   assignmentName: string;
   assignedTeacher: string;
+  assignedTeacherId: string;
   assignmentType: {
     quiz?: string;
     writing?: string;
@@ -679,8 +684,8 @@ export interface IAssignment  extends Document{
     optionThree?: string;
     optionFour?: string;
   };
-  audioFile?: string;
-  uploadFile?: string;
+  audioFile?: Buffer;
+  uploadFile?: Buffer;
   status: string;
   createdDate: Date;
   createdBy: string;
@@ -700,6 +705,7 @@ export interface IallAssignment {
   studentId: string;
   assignmentName: string;
   assignedTeacher: string;
+  assignedTeacherId: string;
   assignmentType: { 
     quiz?: string;
     writing?: string;
@@ -729,7 +735,6 @@ export interface IallAssignment {
   assignedDate: Date;
   dueDate: Date;
   assignmentStatus: string;
-
 
 }
 
@@ -1115,10 +1120,10 @@ export interface IRecruitment extends Document{
   candidateFirstName: string;
   candidateLastName : string;
   supervisor:{
-    supervisorId?: string;
-    supervisorName?: string;
-    supervisorEmail?: string;
-    supervisorRole?: string;
+    supervisorId: string;
+    supervisorName: string;
+    supervisorEmail: string;
+    supervisorRole: string;
   };
   gender?: string;
   applicationDate : Date;
@@ -1132,7 +1137,7 @@ export interface IRecruitment extends Document{
   preferedWorkingHours: string;
   uploadResume?: Buffer;
   comments: string;
-  applicationStatus: string;
+  applicationStatus?: string;
   level?: string;
   quranReading? : string;
   tajweed? : string;
@@ -1151,7 +1156,12 @@ export interface IRecruitment extends Document{
 }
 
 export interface IRecruitmentCreate{
-
+  supervisor:{
+    supervisorId?: string,
+    supervisorName?: string,
+    supervisorEmail?: string,
+    supervisorRole?: string
+  }  ,
   candidateFirstName: string;
   candidateLastName : string;
   gender?:  string;
@@ -1165,7 +1175,7 @@ export interface IRecruitmentCreate{
   expectedSalary : number;
   preferedWorkingHours: string;
   uploadResume?: Buffer;
-  comments: string;
+  comments?: string;
   applicationStatus: string;
   level? : string;
   quranReading? : string;
@@ -1177,7 +1187,7 @@ export interface IRecruitmentCreate{
   overallRating?: number;
   professionalExperience?: string;
   skills?: string;
-  status: string;
+  status?: string;
   createdDate: Date;
   createdBy: string;
   updatedDate?: Date;
