@@ -223,7 +223,7 @@ else if(approvalData &&  approvalData.applicationStatus == applicationStatus.SHO
     email:updateData.candidateEmail,
     password: password,
     profileImage: null,
-    role: "SUPERVISOR",
+    role: "TEACHER",
     gender: updateData.gender,
     status: "Active",
     createdBy: "Admin",
