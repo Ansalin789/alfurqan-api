@@ -57,7 +57,7 @@ const classScheduleSchema = new Schema<IClassSchedule>(
       },
       preferedTeacher:{
         type: String,
-        required: true,
+        required: false,
       },
       course:{
         courseId:{
@@ -72,7 +72,7 @@ const classScheduleSchema = new Schema<IClassSchedule>(
       },
       totalHourse:{
         type: Number,
-        required: true,
+        required: false,
       },
       startDate:{
         type: Date,
@@ -191,9 +191,9 @@ export const zodClassScheduleSchema = z.object({
         })
     ),
     package:z.string(),
-    preferedTeacher:z.string(),
+    preferedTeacher:z.string().optional(),
     course:z.string(),
-    totalHourse: z.number(),
+    totalHourse: z.number().optional(),
     startDate:z.string().refine((val) => !isNaN(Date.parse(val)), {
         message: commonMessages.INVALID_DATE_FORMAT,
       }).transform((val) => new Date(val)),

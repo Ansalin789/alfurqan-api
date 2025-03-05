@@ -142,7 +142,7 @@ export const evaluationStatus: Record<string, any> = Object.freeze({
     RIJECTED:"REJECTED",
     WAITING:"WAITING",
     SENDAPPROVAL: "SENDAPPROVAL",
-    APPROVED: "SENDAPPROVAL"
+    APPROVED: "APPROVED"
     });
 
 export const eventType: Record<string, any> = Object.freeze({

@@ -83,7 +83,7 @@ comments:{
 },
 applicationStatus:{
     type: String,
-    required: true,
+    required: false,
 },
 level:{
     type: String,
@@ -157,9 +157,9 @@ export const zodRecruitmentSchema = z.object({
     supervisor:z.object({
         supervisorId:z.string().optional(),
         supervisorName:z.string().optional(),
-        supervisorEmail:z.string().email().optional(),
+        supervisorEmail:z.string().optional(),
         supervisorRole:z.string().optional(),
-    }),
+    }).optional(),
     gender: z.string().optional(),
     applicationDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
         message: commonMessages.INVALID_DATE_FORMAT,
@@ -179,8 +179,8 @@ export const zodRecruitmentSchema = z.object({
       ),
       preferedWorkingHours: z.string(),
    
-      comments: z.string(),
-      applicationStatus: z.enum([applicationStatus.NEWAPPLICATION, applicationStatus.SHORTLISTED, applicationStatus.RIJECTED, applicationStatus.WAITING ]),
+      comments: z.string().optional(),
+      applicationStatus: z.enum([applicationStatus.NEWAPPLICATION, applicationStatus.SHORTLISTED, applicationStatus.REJECTED, applicationStatus.WAITING, applicationStatus.SENDAPPROVAL, applicationStatus.APPROVED ]).optional(),
       level: z.string().optional(),
       quranReading: z.string().optional(),
       tajweed: z.string().optional(),
@@ -191,10 +191,10 @@ export const zodRecruitmentSchema = z.object({
       overallRating: z.preprocess(
         (val) => (typeof val === "string" ? parseInt(val, 10) : val), 
         z.number()
-      ),
+      ).optional(),
       professionalExperience: z.string().optional(),
       skills: z.string().optional(),
-      status: z.enum([appStatus.ACTIVE, appStatus.IN_ACTIVE, appStatus.DELETED]),
+      status: z.enum([appStatus.ACTIVE, appStatus.IN_ACTIVE, appStatus.DELETED]).optional(),
       createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
         message: commonMessages.INVALID_DATE_FORMAT,
       }).transform((val) => new Date(val)).optional(),

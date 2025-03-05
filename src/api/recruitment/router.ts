@@ -48,6 +48,7 @@ const register = async (server: Server): Promise<void> => {
             // auth: {
             //   strategies: ["jwt"],
             // },
+        
           },
         },
 
@@ -58,11 +59,39 @@ const register = async (server: Server): Promise<void> => {
             handler: handler.updateApplicantRecordById,
             description: recruitmentMessages.LIST,
             tags: ["api", "recruitment"],
+            payload: {
+              output: "stream",
+              parse: true,
+              maxBytes: 50 * 1024 * 1024,
+              multipart: true,
+              allow: "multipart/form-data",
+            },
+            // auth: {
+            //   strategies: ["jwt"],
+            // },
+
+          },
+        },
+        {
+          method: "PUT",
+          path: "/admin/{id}",
+          options: {
+            handler: handler.updateAdminApplicantRecordById,
+            description: recruitmentMessages.LIST,
+            tags: ["api", "recruitment"],
+            // payload: {
+            //   output: "stream",
+            //   parse: true,
+            //   maxBytes: 50 * 1024 * 1024,
+            //   multipart: true,
+            //  // allow: "multipart/form-data",
+            // },
             // auth: {
             //   strategies: ["jwt"],
             // },
           },
         },
+
 ];
 server.route(routes);
 };
