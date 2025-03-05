@@ -12,6 +12,10 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getWidgetsCount,
         description: dashboardMessages.WIDGET_COUNT,
         tags: ["api", "dashboard"],
+          cors: {
+            origin: ['https://web.alfurqanacademy.tech'], // Specific origin
+            credentials: true, // Allow credentials
+          },
         auth: {
           strategies: ["jwt"],
         },

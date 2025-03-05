@@ -11,6 +11,10 @@ const register = async (server: Server): Promise<void> => {
       options: {
         handler: handler.signIn,
         description: authMessages.SIGN_IN,
+          cors: {
+            origin: ['https://web.alfurqanacademy.tech'], // Specific origin
+            credentials: true, // Allow credentials
+          },
         tags: ["api", "auth"],
       },
     },
