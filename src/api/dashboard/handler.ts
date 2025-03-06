@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ResponseToolkit, Request } from "@hapi/hapi";
-import { dashboardWidgetCounts, dashboardWidgetStudentCounts, dashboardWidgetSupervisorCounts, dashboardWidgetTeacherCounts } from "../../operations/dashboard";
+import {dashboardWidgetCounts, dashboardWidgetStudentCounts, dashboardWidgetSupervisorCounts, dashboardWidgetTeacherCounts } from "../../operations/dashboard";
 
 export default {
   // Get widget counts for academic coach
@@ -46,6 +46,19 @@ export default {
     }
   },
 
+  // async getSupervisorApplicationCount (req: Request, h: ResponseToolkit) {
+  //   return await dashboardSupervisorApplicationCount(req.headers.supervisor as string);
+  // }
+
+  //  getAllEvaluationList(req: Request, h: ResponseToolkit) {
+  //     const { query } = getEvaluationListInputValidation.parse({
+  //       query: {
+  //         ...req.query,
+  //         filterValues: req.query?.filterValues ? JSON.parse(req.query.filterValues) : {},
+  //       },
+  //     });
+  //     return getAllEvaluationRecords(query);
+  //   },
 
 };
 
