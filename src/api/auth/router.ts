@@ -11,10 +11,6 @@ const register = async (server: Server): Promise<void> => {
       options: {
         handler: handler.signIn,
         description: authMessages.SIGN_IN,
-          cors: {
-            origin: ['https://web.alfurqanacademy.tech'], // Specific origin
-            credentials: true, // Allow credentials
-          },
         tags: ["api", "auth"],
       },
     },
@@ -35,9 +31,6 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.signOut,
         description: authMessages.SIGN_OUT,
         tags: ["api", "auth"],
-        auth: {
-          strategies: ["jwt"],
-        },
       },
     },
     {
@@ -47,9 +40,6 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.changePassword,
         description: authMessages.CHANGE_PASSWORD,
         tags: ["api", "auth"],
-        auth: {
-          strategies: ["jwt"],
-        },
       },
     },
     {
