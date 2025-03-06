@@ -30,9 +30,9 @@ const FeedbackSchema = new Schema<IFeedbackCreate>(
 
     // ✅ Ratings related to performance
     teacherRatings: {
-      listening: { type: Number, required: false, min: 0, max: 5 },
-      reading: { type: Number, required: false, min: 0, max: 5 },
-      overall: { type: Number, required: false, min: 0, max: 5 },
+      listeningAbility: { type: Number, required: false, min: 0, max: 5 },
+      readingAbility: { type: Number, required: false, min: 0, max: 5 },
+      overallPerformance: { type: Number, required: false, min: 0, max: 5 },
     },
 
     // ✅ NEW: Separate Student-Specific Ratings
