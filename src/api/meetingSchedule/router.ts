@@ -12,9 +12,6 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getAllAcademicCoach,
         description: meetingSchedulesMessages.LIST,
         tags: ["api", "meetingSchedulelist"],
-        auth: {
-          strategies: ["jwt"],
-        },
       },
     },
     
@@ -25,9 +22,6 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getAcademicCoachId,
         description: meetingSchedulesMessages.LIST,
         tags: ["api", "meetingSchedulelist"],
-        auth: {
-          strategies: ["jwt"],
-        },
       },
     },
     

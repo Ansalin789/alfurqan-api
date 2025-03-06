@@ -14,9 +14,6 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getAllStudetnInVoiceList,
         description: evaluationMessages.LIST,
         tags: ["api", "evaluationlist"],
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
       },
     },
          

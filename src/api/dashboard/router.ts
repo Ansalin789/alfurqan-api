@@ -12,9 +12,6 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getWidgetsCount,
         description: dashboardMessages.WIDGET_COUNT,
         tags: ["api", "dashboard"],
-        auth: {
-          strategies: ["jwt"],
-        },
       },
     },
 
@@ -26,9 +23,6 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getWidgetStudentCount,
         description: dashboardMessages.WIDGET_COUNT,
         tags: ["api", "dashboard"],
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
       },
     },
 
@@ -39,9 +33,6 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getWidgetTeacherCount,
         description: dashboardMessages.WIDGET_COUNT,
         tags: ["api", "dashboard"],
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
       },
     },
 
@@ -52,11 +43,20 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getWidgetSupervisorCount,
         description: dashboardMessages.WIDGET_COUNT,
         tags: ["api", "dashboard"],
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
       },
     },
+    // {
+    //   method: "GET",
+    //   path: "/dashboard/supervisor/application",
+    //   options: {
+    //     handler: handler.getSupervisorApplicationCount,
+    //     description: dashboardMessages.WIDGET_COUNT,
+    //     tags: ["api", "dashboard"],
+    //     // auth: {
+    //     //   strategies: ["jwt"],
+    //     // },
+    //   },
+    // },
 
 
 

@@ -13,9 +13,6 @@ const register = async (server: Server): Promise<void> => {
             handler: handler.getAllalstudentsList,
             description: alstudentsMessages.LIST,
             tags: ["api", "alstudents"],
-            // auth: {
-            //   strategies: ["jwt"],
-            // },
           },
         },
 
@@ -27,9 +24,6 @@ const register = async (server: Server): Promise<void> => {
              handler: handler.getalstudentsById,
              description: alstudentsMessages.BYID,
              tags: ["api", "alstudents"],
-             // auth: {
-             //   strategies: ["jwt"],
-             // },
            },
          },   
 

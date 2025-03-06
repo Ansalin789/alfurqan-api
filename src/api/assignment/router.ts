@@ -30,10 +30,6 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getAllAssignment,
         description: "Get all assignments",
         tags: ["api", "assignment"],
-        // auth: {
-        //   strategies: ["jwt"], // Assuming you want authenticate
-        // d access
-        // },
       },
     },
 
@@ -44,9 +40,6 @@ const register = async (server: Server): Promise<void> => {
              handler: handler.getAssignmentsById,
              description: "Get assignment details",
              tags: ["api", "assignment"],
-             auth: {
-              strategies: ["jwt"],
-            },
           },
           },
 
@@ -64,9 +57,6 @@ const register = async (server: Server): Promise<void> => {
         multipart: true,
         allow: "multipart/form-data",
       },
-      //  auth: {
-      //   strategies: ["jwt"],
-      // },
     },  
     },
 

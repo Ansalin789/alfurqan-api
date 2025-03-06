@@ -12,9 +12,6 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getAllUsers,
         description: userMessages.LIST,
         tags: ["api", "shiftschedule"],
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
       },
     },
     // {
@@ -36,9 +33,6 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.createShiftschedule,
         description: userMessages.CREATE,
         tags: ["api", "shiftschedule"],
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
       },
     },
     // {

@@ -13,9 +13,6 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.createEvaluation,
         description: evaluationMessages.CREATE,
         tags: ["api", "student"],
-        auth: {
-          strategies: ["jwt"],
-        },
       },
     },
 
@@ -26,9 +23,6 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getAllEvaluationList,
         description: evaluationMessages.LIST,
         tags: ["api", "evaluationlist"],
-        auth: {
-          strategies: ["jwt"],
-        },
       },
     },
     {
@@ -38,9 +32,6 @@ const register = async (server: Server): Promise<void> => {
        handler: handler.updateEvaluation,
        description: evaluationMessages.UPDATE,
        tags: ["api", "evaluation"],
-       auth: {
-        strategies: ["jwt"],
-      },
     },
     },
   
@@ -51,9 +42,6 @@ const register = async (server: Server): Promise<void> => {
        handler: handler.updateInvoice,
        description: evaluationMessages.UPDATE,
        tags: ["api", "evaluation"],
-       auth: {
-        strategies: ["jwt"],
-      },
     },  
     },
 
@@ -64,9 +52,6 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getEvaluationRecordById,
         description: evaluationMessages.BYID,
         tags: ["api", "evaluationlist"],
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
       },
     },
 

@@ -12,9 +12,6 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getAllUsers,
         description: userMessages.LIST,
         tags: ["api", "users"],
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
       },
     },
     {
@@ -24,9 +21,6 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getUserRecordById,
         description: userMessages.BYID,
         tags: ["api", "users"],
-        auth: {
-          strategies: ["jwt"],
-        },
       },
     },
     {
@@ -36,9 +30,6 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.createUser,
         description: userMessages.CREATE,
         tags: ["api", "users"],
-        auth: {
-          strategies: ["jwt"],
-        },
       },
     },
     {
@@ -48,9 +39,6 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.updateUser,
         description: userMessages.UPDATE,
         tags: ["api", "users"],
-        auth: {
-          strategies: ["jwt"],
-        },
       },
     },
   ];

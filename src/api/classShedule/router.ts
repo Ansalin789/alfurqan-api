@@ -65,9 +65,6 @@ const register = async (server: Server): Promise<void> => {
           handler: handler.getClassesForStudent,
           description: ClassSchedulesMessages.LIST,
           tags: ["api", "classShedule"],
-          // auth: {
-          //   strategies: ["jwt"],
-          // },
         },
       },
 
@@ -78,9 +75,6 @@ const register = async (server: Server): Promise<void> => {
           handler: handler.getClassesForTeacher,
           description: ClassSchedulesMessages.LIST,
           tags: ["api", "classShedule"],
-          // auth: {
-          //   strategies: ["jwt"],
-          // },
         },
       },
 
@@ -99,9 +93,6 @@ const register = async (server: Server): Promise<void> => {
          handler: handler.updateClassSheduleById,
          description: evaluationMessages.UPDATE,
          tags: ["api", "classShedule"],
-         auth: {
-          strategies: ["jwt"],
-        },
       },  
       },
 
@@ -112,9 +103,6 @@ const register = async (server: Server): Promise<void> => {
          handler: handler.totalhours,
          description: evaluationMessages.GET,
          tags: ["api", "classShedule"],
-        //  auth: {
-        //   strategies: ["jwt"],
-        // },
       },  
       },
       {
@@ -124,9 +112,6 @@ const register = async (server: Server): Promise<void> => {
          handler: handler.teachingActivity,
          description: evaluationMessages.GET,
          tags: ["api", "classShedule"],
-        //  auth: {
-        //   strategies: ["jwt"],
-        // },
       },  
       },
 

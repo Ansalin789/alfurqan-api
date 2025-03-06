@@ -11,9 +11,6 @@ const register = async (server: Server): Promise<void> => {
       options: {
         handler:handler.createFeedback ,  
         tags: ["api", "feedback"],  
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
       },
     },
 
@@ -25,9 +22,6 @@ const register = async (server: Server): Promise<void> => {
       options: {
         handler:handler.createTeacherFeedback ,  
         tags: ["api", "feedback"],  
-        auth: {
-          strategies: ["jwt"],
-        },
       },
     },
 
@@ -37,9 +31,6 @@ const register = async (server: Server): Promise<void> => {
       options: {
         handler:handler.createAllTeacherFeedback,  
         tags: ["api", "feedback"],  
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
       },
     },
 
@@ -50,9 +41,6 @@ const register = async (server: Server): Promise<void> => {
     options: {
       handler:handler.createSupervisorFeedback ,  
       tags: ["api", "feedback"],  
-      // auth: {
-      //   strategies: ["jwt"],
-      // },
     },
   },
 
@@ -62,9 +50,6 @@ const register = async (server: Server): Promise<void> => {
     options: {
       handler:handler.getAllSupervisorRecords,  
       tags: ["api", "feedback"],  
-      // auth: {
-      //   strategies: ["jwt"],
-      // },
     },
   },
 
@@ -74,9 +59,6 @@ const register = async (server: Server): Promise<void> => {
     options: {
       handler:handler.getAllStudentTeacherFeedback,  
       tags: ["api", "feedback"],  
-      // auth: {
-      //   strategies: ["jwt"],
-      // },
     },
   },
 

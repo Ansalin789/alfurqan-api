@@ -1,5 +1,5 @@
 import { Server, ServerRoute } from "@hapi/hapi";
-import { fileMessages, recruitmentMessages, studentMessages } from "../../config/messages";
+import {  recruitmentMessages } from "../../config/messages";
 import handler from "./handler";
 
 
@@ -21,9 +21,6 @@ const register = async (server: Server): Promise<void> => {
           multipart: true,
           allow: "multipart/form-data",
         },
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
       },
     },
      {
@@ -45,9 +42,6 @@ const register = async (server: Server): Promise<void> => {
             handler: handler.getApplicantRecordById,
             description: recruitmentMessages.LIST,
             tags: ["api", "recruitment"],
-            // auth: {
-            //   strategies: ["jwt"],
-            // },
         
           },
         },
@@ -66,9 +60,6 @@ const register = async (server: Server): Promise<void> => {
               multipart: true,
               allow: "multipart/form-data",
             },
-            // auth: {
-            //   strategies: ["jwt"],
-            // },
 
           },
         },
