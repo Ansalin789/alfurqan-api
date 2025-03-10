@@ -91,13 +91,29 @@ console.log("studentsWithClassScheduleCount>>>>",studentsWithClassScheduleCount)
   return { totalCount, students: studentsWithClassScheduleCount };
 };
 
- export const getalstudentsById = async (
-    id: string
-  ): Promise<IAlStudents | null> => {
-    return AlStudentsModel.findOne({
-      _id: new Types.ObjectId(id),
+
+export const getalstudentsById = async (studentId: string): Promise<IAlStudents | null> => {
+  if (!studentId) {
+    console.log("Invalid student ID: ID is missing or undefined");
+    return null;
+  }
+
+  console.log(`Searching for student with studentId: ${studentId}`);
+
+  try {
+    // Query using student.studentId
+    const student: IAlStudents | null = await AlStudentsModel.findOne({
+      "student.studentId": studentId,
     }).lean();
-  };
+
+    console.log("Fetched student details:", student);
+    return student ? student : null;
+  } catch (error) {
+    console.error("Error fetching student by studentId:", error);
+    return null;
+  }
+};
+
   
   /**
  * Retrieves all user records for a given tenant, with support for search, pagination, sorting, role filtering, and excluding passwords.
