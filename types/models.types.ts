@@ -457,6 +457,9 @@ export interface IClassSchedule extends Document{
   preferedTeacher: string;
   course: string;
   totalHourse: Number;
+  classhour:string;
+  amount:string;
+  currency:string;
   startDate: Date;
   endDate: Date;
   startTime: any;
