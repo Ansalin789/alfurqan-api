@@ -89,6 +89,13 @@ export const appStatus: Record<string, any> = Object.freeze({
   NEW: "New"
 });
 
+export const classType: Record<string, any> = Object.freeze({
+  REGULARCLASS: "REGULARCLASS",
+  GROUPCLASS: "GROUPCLASS",
+  TRIALCLASS: "TRIALCLASS",
+  EVALUATIONCLASS: "EVALUATIONCLASS",
+});
+
 export const classStatus: Record<string, any> = Object.freeze({
   COMPLETED: "completed",
   PENDING: "pending",
@@ -99,7 +106,7 @@ export const learningInterest: Record<string, any> = Object.freeze({
   ISLAMIC: "Islamic Studies",
   ARABIC : "Arabic",
 });
-export const numberOfStudents: Record<string, any> = Object.freeze({
+export const numberOfStudents: Record<string, number> = Object.freeze({
   ONE: 1,
   TWO: 2,
   THREE: 3,
@@ -120,7 +127,7 @@ export const referenceSource: Record<string, any> = Object.freeze({
   OTHER: "Other"  
 });
 
-export const appPlatforms: Record<string, string> = Object.freeze({
+export const appPlatforms: Record<string, any> = Object.freeze({
   WEB: "Web",
   ONLINE: "Online"
 })
@@ -131,7 +138,7 @@ export const evaluationStatus: Record<string, any> = Object.freeze({
   COMPLETED:"COMPLETED"
   });
 
-  export const role: Record<string, any> = Object.freeze({
+  export const role: Record<string, string> = Object.freeze({
     ACADEMICCOACH: "ACADEMICCOACH",
     TEACHER: "Teacher",
   });
@@ -145,7 +152,7 @@ export const evaluationStatus: Record<string, any> = Object.freeze({
     APPROVED: "APPROVED"
     });
 
-export const eventType: Record<string, any> = Object.freeze({
+export const eventType: Record<string, string> = Object.freeze({
   MEETING_SCHEDULED: "MEETING_SCHEDULED",
   MEETING_CANCELLED: "MEETING_CANCELLED",
   MEETING_UPDATED: "MEETING_UPDATED",

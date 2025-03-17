@@ -1,14 +1,11 @@
-import { ResponseToolkit,Request, ResponseObject } from "@hapi/hapi";
+import { ResponseToolkit,Request } from "@hapi/hapi";
 import classShedule, { zodClassScheduleSchema } from "../../models/classShedule";
-// import { createclassShedule } from "../../operations/classschedule"
 import { z } from "zod";
 import { ClassSchedulesMessages } from "../../config/messages";
-import { isNil, result } from "lodash";
+import { isNil } from "lodash";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
 import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity} from "../../operations/classschedule";
-import { GetAllRecordsParams } from "../../shared/enum";
-import userModel from "../../models/users";
 
 
 const createInputValidation = z.object({
@@ -80,10 +77,10 @@ async createandUpdateSchedule(req: Request, h: ResponseToolkit){
 
    return await updateStudentClassSchedule(String(req.params.studentId),{ 
     teacher :{
-      teacherName: payload.teacher?.teacherName || "",
-      teacherEmail: payload.teacher?.teacherEmail|| ""
+      teacherName: payload.teacher?.teacherName ?? "",
+      teacherEmail: payload.teacher?.teacherEmail ?? ""
     } ,
-    classDay :classDayValues ,
+    classDay :classDayValues,
     package: payload.package,
     preferedTeacher: payload.preferedTeacher,
      course:payload.course,
@@ -223,15 +220,15 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
     const result = await updateClassscheduleById(String(req.params.classSheduleId),
     {   
       student: {
-        studentId: payload.student?.studentId || "",
-        studentFirstName: payload.student?.studentFirstName || "",
-        studentLastName: payload.student?.studentLastName || "",
-        studentEmail:payload.student?.studentEmail|| "",
-        gender: payload.student?.gender || "",
+        studentId: payload.student?.studentId ?? "",
+        studentFirstName: payload.student?.studentFirstName ?? "",
+        studentLastName: payload.student?.studentLastName ?? "",
+        studentEmail:payload.student?.studentEmail ?? "",
+        gender: payload.student?.gender ?? "",
       },
       teacher :{
-        teacherName: payload.teacher?.teacherName || "",
-        teacherEmail: payload.teacher?.teacherEmail|| ""
+        teacherName: payload.teacher?.teacherName ?? "",
+        teacherEmail: payload.teacher?.teacherEmail ?? ""
       } ,
       classDay :classDayValues ,
       package: payload.package,
@@ -250,46 +247,6 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
   
     return result;
    },
-
-
-   
-//teacher-student count
-
-// async getTeacherStudentCount(req: Request, h: ResponseToolkit) {
-//   try {
-//     console.log("Query parameters received:", req.query);
-
-
-
-//     const teachers = await classShedule.aggregate([
-//       {
-//         $group: {
-//           _id: "$teacher.teacherEmail", // Group by teacherEmail
-//           teacherId: { $first: "$teacher.teacherId" },
-//           teacherName: { $first: "$teacher.teacherName" },
-//           teacherEmail: { $first: "$teacher.teacherEmail" },
-//           uniqueStudents: { $addToSet: "$student.studentId" } // Collect unique student IDs
-//         }
-//       },
-//       {
-//         $project: {
-//           teacherId: 1,
-//           teacherName: 1,
-//           teacherEmail: 1,
-//           studentCount: { $size: "$uniqueStudents" } // Count unique student IDs
-//         }
-//       }
-//     ]);
-
-//     return h.response({
-//       success: true,
-//       data: teachers,
-//     }).code(200);
-//   } catch (error) {
-//     console.error("Error fetching teacher-student count:", error);
-//     return h.response({ success: false, message: "Internal Server Error" }).code(500);
-//   }
-// }
 
 async getTeacherStudentCount(req: Request, h: ResponseToolkit) {
   try {

@@ -1,30 +1,33 @@
-import { appStatus, learningInterest, numberOfStudents, preferredTeacher, eventType, referenceSource, classStatus } from "../config/messages";
+import { classStatus } from "../config/messages";
 
 // Use an enum for better type safety
 export enum Status {
-  ACTIVE = appStatus.ACTIVE,
-  IN_ACTIVE = appStatus.IN_ACTIVE,
-  DELETED = appStatus.DELETED,
+  ACTIVE = "Active",
+  IN_ACTIVE = "Inactive",
+  DELETED ="Deleted",
+  ARCHIVED = "Archived",
+  NEW = "New"
 }
 
 export enum LearningInterest {
-  QURAN = learningInterest.QURAN,
-  ISLAMIC = learningInterest.ISLAMIC,
-  ARANIC = learningInterest.ARANIC, // Fixed type (was ARABIC)
+  QURAN ="Quran",
+  ISLAMIC= "Islamic Studies",
+  ARABIC = "Arabic",
 }
 
 export enum NumberOfStudents {
-  ONE = numberOfStudents.ONE,
-  TWO = numberOfStudents.TWO,
-  THREE = numberOfStudents.THREE,
-  FOUR = numberOfStudents.FOUR,
-  FIVE = numberOfStudents.FIVE,
+
+  ONE = 1,
+  TWo = 2,
+  THREE = 3,
+  FOUR= 4,
+  FIVE= 5,
 }
 
 export enum PreferredTeacher {
-  TEACHER_1 = preferredTeacher.TEACHER_1,
-  TEACHER_2 = preferredTeacher.TEACHER_2,
-  TEACHER_3 = preferredTeacher.TEACHER_3,
+  TEACHER_1 = "Male",
+  TEACHER_2 = "Female",
+  TEACHER_3 = "Other",
 }
 
 export enum EvaluationStatus {
@@ -34,17 +37,17 @@ export enum EvaluationStatus {
 }
 
 export enum EventType {
-  MEETING_SCHEDULED = eventType.MEETING_SCHEDULED,
-  MEETING_WITHOUT_SCHEDULED = eventType.MEETING_WITHOUT_SCHEDULED,
-  MEETING_CANCELLED = eventType.MEETING_CANCELLED,
+  MEETING_SCHEDULED = "MEETING_SCHEDULED",
+  MEETING_CANCELLED = "MEETING_CANCELLED",
+  MEETING_UPDATED = "MEETING_UPDATED",
 }
 
 export enum ReferralSource {
-  FRIENDS = referenceSource.FRIENDS,
-  SOCIALMEDIA = referenceSource.SOCIALMEDIA, // Keep as string
-  EMAIL = referenceSource.EMAIL,
-  GOOGLE = referenceSource.GOOGLE,
-  OTHER = referenceSource.OTHER, // Keep as string
+  FRIEND ="Friend",
+  SOCIALMEDIA = "Social Media", // Keep as string
+  EMAIL = "E-Mail", 
+  GOOGLE = "Google",
+  OTHER = "Other"  // Keep as string
 }
 
 export class CustomEnumerator {

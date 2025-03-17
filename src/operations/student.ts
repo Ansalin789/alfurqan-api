@@ -1,9 +1,9 @@
 import { IStudentCreate, IStudents } from "../../types/models.types";
 import StudentModel from "../models/student";
 import { commonMessages, studentMessages } from "../config/messages";
-import { badRequest, Boom } from "@hapi/boom";
+import { badRequest } from "@hapi/boom";
 import UserShiftSchedule from "../models/usershiftschedule"; // Add this import
-import { forEach, isNil } from "lodash";
+import { isNil } from "lodash";
 import EmailTemplate from "../models/emailTemplate";
 import { sendEmailClient } from "../shared/email";
 import axios from "axios";
@@ -33,7 +33,7 @@ export interface StudentFilter {
 export const createStudent = async (
     payload: IStudentCreate
 ): Promise<IStudents | { error: any }> => {
-    const newUser = await new StudentModel(payload);
+    const newUser = new StudentModel(payload);
     if (newUser.startDate?.toDateString() === new Date().toDateString()) {
         return {
             error: badRequest('Evaluation class is not allowed to current date. Select another date'),
@@ -93,7 +93,6 @@ console.log("newUser academicCoach>>>>",newUser);
         ];
         const subject = "Welcome To Alfurqan";
         const htmlPart = emailTemplate.templateContent.replace('<username>', payload.firstName + ' ' + payload.lastName);
-      //  console.log("emailTemplate>>>>",emailTemplate);
         sendEmailClient(emailTo, subject,htmlPart);
     }
 
@@ -101,7 +100,6 @@ console.log("newUser academicCoach>>>>",newUser);
     const zoomMailTemplate = await EmailTemplate.findOne({
       templateKey: 'evaluation',
   }).exec();
-  //console.log("emailTemplate>>>>",zoomMailTemplate);
     const subject = 'Evaluation Zoom Meeting';
         const htmlPart = zoomMailTemplate?.templateContent.replace('<date>', payload.startDate.toDateString()).replace('<meetingtime>', payload.preferredFromTime).replace('<zoomlink>', meetingDetails.join_url);
         const emailTo = [
@@ -165,7 +163,7 @@ console.log("newUser academicCoach>>>>",newUser);
 
 
 async function validateHours(shiftstartdate: Date, shiftenddate: Date, fromtime: string, totime: string, payload: IStudentCreate): Promise<any> {
-        const result = await calculateHours(payload);
+        const result = calculateHours(payload);
         if(result>1){
             throw new Error('Evaluation class duration is more than 1 hour');
         }
@@ -239,7 +237,6 @@ async function getZoomAccessToken() {
     if (accessToken) return accessToken; // Use cached token if available
     const clientId = config.zoomConfig.zoom_client_id;
     const clientSecret = config.zoomConfig.zoom_client_secret;
-    const accountId = config.zoomConfig.zoom_account_id;
     const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
     const response = await axios.post(
       `https://zoom.us/oauth/token?grant_type=account_credentials&account_id=${process.env.ZOOM_ACCOUNT_ID}`,

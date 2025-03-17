@@ -4,7 +4,6 @@ import EvaluationModel from "../models/evaluation"
 import StudentModel from "../models/student"
 import UserShiftSchedule from "../models/usershiftschedule"; // Add this import
 import MeetingSchedule from "../models/calendar";
-// import { Types } from "aws-sdk/clients/acm";
 import SubscriptionModel from "../models/subscription"
 import EmailTemplate from "../models/emailTemplate";
 import { GetAllRecordsParams } from "../shared/enum";
@@ -17,8 +16,6 @@ import { sendEmailClient } from "../shared/email";
 import Course from "../models/course";
 import { config } from "../config/env";
 import User from "../models/users";
-import StudentPortModel from "../models/alstudents";
-import Stripe from 'stripe';
 import PaymentDetailsModel from "../models/paymentDetails"
 
 
@@ -54,7 +51,6 @@ export const createEvaluationRecord = async (
 
     const loginUser = await User.findOne({userName: payload.createdBy,role : 'ACADEMICCOACH'}).exec();
    
-    console.log("loginUser>>>>", loginUser);
     let teacherDetails: any = null;
       if(loginUser){
           newStudent.academicCoach = {
@@ -75,21 +71,18 @@ export const createEvaluationRecord = async (
     newStudent.learningInterest = payload.student.learningInterest; 
     newStudent.numberOfStudents = payload.student.numberOfStudents;
     newStudent.preferredTeacher = payload.student.preferredTeacher;
-    newStudent.preferredFromTime = payload.student.preferredFromTime || " ";
-    newStudent.preferredToTime = payload.student.preferredToTime || " ";
+    newStudent.preferredFromTime = payload.student.preferredFromTime ?? " ";
+    newStudent.preferredToTime = payload.student.preferredToTime ?? " ";
     newStudent.timeZone = payload.student.timeZone;
     newStudent.referralSource = payload.student.referralSource;
-    newStudent.startDate = payload.student.preferredDate || new Date;
+    newStudent.startDate = payload.student.preferredDate ?? new Date;
     newStudent.evaluationStatus = payload.student.evaluationStatus;
     newStudent.status = payload.student.status;
     newStudent.createdDate = new Date();
-    newStudent.createdBy = payload.student.studentEmail || "Admin";
+    newStudent.createdBy = payload.student.studentEmail ?? "Admin";
     let createStudent;
 if(!payload.student.studentId){
   createStudent = await newStudent.save()
-  const id = createStudent._id
-  console.log("id>>>>>>>>>", id);
-  console.log("createStudent>>>>>>", createStudent);
 }else if(payload.student.studentId){
   const updateInvoice = await StudentModel.findOneAndUpdate(
     { _id: new Types.ObjectId(payload.student.studentId) },
@@ -97,14 +90,12 @@ if(!payload.student.studentId){
     { new: true }
   ).lean();
 
-  const updatedStudent = await updateInvoice as IStudents;
-  console.log("id>>>>>>>>>", updatedStudent);
+  await updateInvoice as IStudents;
 }
 
 const subscriptonDetaails = await SubscriptionModel.findOne({
     subscriptionName: payload.subscription.subscriptionName
 }).exec();
-console.log("subscriptonDetaails>>>>>>", subscriptonDetaails)
 
     const newEvaluation = new EvaluationModel(payload);
     if(createStudent){
@@ -142,12 +133,7 @@ console.log("subscriptonDetaails>>>>>>", subscriptonDetaails)
             subscriptionEndDate: new Date(Date.now() + 28 * 24 * 60 * 60 * 1000) 
         };
     }
-    const price = payload.hours* newEvaluation.subscription.subscriptionPricePerHr
-   const totalHrs = payload.hours* 28;
-   const hrsPerWeek = payload.hours;
-   // newEvaluation.planTotalPrice = price;
-   // newEvaluation.accomplishmentTime = totalHrs.toString();
-   // newEvaluation.studentRate = hrsPerWeek;
+ 
     newEvaluation.expectedFinishingDate = 28
     const shiftScheduleRecord = await UserShiftSchedule.find({
       role: 'TEACHER'
@@ -185,14 +171,12 @@ if (shiftScheduleRecord.length > 0) {
   }
 } 
 
-newEvaluation.assignedTeacher = teacherDetails.name
-newEvaluation.studentStatus = payload.studentStatus,
-newEvaluation.classStatus = payload.classStatus,
-newEvaluation.trialClassStatus = payload.trialClassStatus,
- newEvaluation.assignedTeacherId = teacherDetails.teacherId,
- newEvaluation.assignedTeacherEmail = teacherDetails.email,
-console.log("studentStatus", newEvaluation.studentStatus);
-console.log("class status", newEvaluation.classStatus);
+newEvaluation.assignedTeacher = teacherDetails.name;
+newEvaluation.studentStatus = payload.studentStatus;
+newEvaluation.classStatus = payload.classStatus;
+newEvaluation.trialClassStatus = payload.trialClassStatus;
+ newEvaluation.assignedTeacherId = teacherDetails.teacherId;
+ newEvaluation.assignedTeacherEmail = teacherDetails.email;
 
 const createEvaluation = await newEvaluation.save();
 console.log("createEvaluation>>>",createEvaluation)
@@ -264,13 +248,11 @@ const evaluation = await EvaluationModel.findOne({
  _id: new Types.ObjectId(id)
 }).exec();
 
-console.log("evaluation>>>", evaluation);
 const updatedEvaluation = await updateEvaluations as IEvaluation; // Cast to expected type
 if(payload.trialClassStatus == "COMPLETED" && payload.studentStatus == "JOINED"){
   const emailTemplate = await EmailTemplate.findOne({
     templateKey: 'Invoice',
 }).exec();
-console.log("emailTemplate>>>", emailTemplate);
 
 if(emailTemplate && payload.student && payload.subscription && evaluation ){
     const emailTo = [
@@ -284,19 +266,14 @@ if(emailTemplate && payload.student && payload.subscription && evaluation ){
     .replace('<total>',evaluation.planTotalPrice.toString()).replace('<paymentLink>',updatedEvaluation.paymentLink
   );
    await sendEmailClient(emailTo, subject,htmlPart);
-  const email = await sendEmailClient(emailTo, subject,htmlPart);
-console.log("email>>>>",email);
 }
 }
 
-    console.log("updatedEvaluation>>>",updatedEvaluation);
     return updatedEvaluation;
    
 };
 
 async function trialClassAssigned(newEvaluation: any, teacherDetails: any) {
-console.log("newEvaluation>>>>", newEvaluation);
-console.log("teacherDetails>>>>", teacherDetails);
 
   const meetingDetails = await zoomMeetingInvite();
   const zoomMailTemplate = await EmailTemplate.findOne({
@@ -306,15 +283,11 @@ console.log("teacherDetails>>>>", teacherDetails);
 const today = new Date();
 const nextDay = new Date(today);
 nextDay.setDate(today.getDate() + 1);
-
-console.log("emailTemplate>>>>",zoomMailTemplate);
   const subject = 'Trail class';
       const htmlPart = zoomMailTemplate?.templateContent.replace('<date>', nextDay.toString()).replace('<meetingTime>', "10.00 AM").replace('<zoomlink>', meetingDetails.join_url);
       const emailTo = [
         { email: teacherDetails.email, name: teacherDetails.name}, { email: newEvaluation.student.studentEmail, name: newEvaluation.student.firstName }
     ];
-    console.log("emailTo>>>>",emailTo);
-
       if(htmlPart){
           sendEmailClient(emailTo, subject,htmlPart);
      }
@@ -403,7 +376,6 @@ let accessToken: any = null;
 if (accessToken) return accessToken; // Use cached token if available
 const clientId = config.zoomConfig.zoom_client_id;
 const clientSecret = config.zoomConfig.zoom_client_secret;
-const accountId = config.zoomConfig.zoom_account_id;
 const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 const response = await axios.post(
   `https://zoom.us/oauth/token?grant_type=account_credentials&account_id=${process.env.ZOOM_ACCOUNT_ID}`,
@@ -415,7 +387,7 @@ const response = await axios.post(
   }
 );
 accessToken = response.data.access_token;
-console.log(">>>>",accessToken);
+
 // Token is valid for 1 hour, so you may want to set up caching accordingly
 setTimeout(() => { accessToken = null; }, response.data.expires_in * 1000);
 
@@ -519,45 +491,7 @@ export const updateStudentInvoice = async (
     { new: true }
   ).lean();
   const updatedEvaluation = await updateInvoice as IEvaluation; // Cast to expected type
-  const savePaymentDetails = await PaymentDetailsModel.create
-
-  console.log("updatedEvaluation>>>>>>>>>",updatedEvaluation);
-  if(updatedEvaluation.invoiceStatus == "Completed" && updatedEvaluation.paymentStatus == "Paid"){
-  //  createStudentPortal(updatedEvaluation);
-  }
-
   return updatedEvaluation
 }
 
-//  async function createStudentPortal(updatedEvaluation:any) {
- 
-//     const specialChars = '@#$%&*!';
-//     const randomNum = Math.floor(Math.random() * 1000); // Random number between 0-999
-//     const randomSpecial = specialChars[Math.floor(Math.random() * specialChars.length)]; // Random special character
-  
-//     // Generate password
-//     const firstThreeChars = updatedEvaluation.student.studentFirstName.substring(0, 3); // First 3 characters of the username
-//     const reversedUsername = updatedEvaluation.student.studentFirstName.split('').reverse().join(''); // Reverse the username
-  
-//     const password = `${firstThreeChars}${randomSpecial}${randomNum}${reversedUsername}`;
-
-//   const createStudentPortal = await StudentPortModel.create({
-//     student : {
-//       studentId : updatedEvaluation.student.studentId,
-//       studentEmail: updatedEvaluation.student.studentEmail,
-//       studentPhone: updatedEvaluation.student.studentPhone
-//     },
-//     username: updatedEvaluation.student.studentFirstName,
-//     password: password,
-//     role: "Student",
-//     status: "Active",
-//     createdDate: new Date,
-//     createdBy: updatedEvaluation.createdBy,
-//     updatedDate: new Date
-//   }
-//    )
-
-// const saveStudent = createStudentPortal.save()
-//   return saveStudent;
-// }
   

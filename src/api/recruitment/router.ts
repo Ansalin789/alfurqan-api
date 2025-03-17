@@ -30,9 +30,6 @@ const register = async (server: Server): Promise<void> => {
             handler: handler.getAllApplicants,
             description: recruitmentMessages.LIST,
             tags: ["api", "recruitment"],
-            auth: {
-              strategies: ["jwt"],
-            },
           },
         },
         {
