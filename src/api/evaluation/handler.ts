@@ -1,5 +1,5 @@
 import { ResponseToolkit,Request } from "@hapi/hapi";
-import { zodEvaluationSchema } from "../../models/evaluation";
+import evaluation, { zodEvaluationSchema } from "../../models/evaluation";
 import { z } from "zod";
 import { createEvaluationRecord,getAllEvaluationRecords,getEvaluationRecordById, updateStudentEvaluation, updateStudentInvoice} from "../../operations/evaluation";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
@@ -256,6 +256,35 @@ export default {
     return result;
   },
 
+  // async getEvaluationRecordById(req: Request, h: ResponseToolkit) {
+  //   const academicCoachId = req.headers["academic-coach-id"]; // Get academic coach ID from header
+  //   const evaluationId = String(req.params.evaluationId);
+  
+  //   // Fetch evaluation record by ID
+  //   const evaluationRecord = await getEvaluationRecordById(evaluationId);
+  
+  //   if (isNil(evaluationRecord)) {
+  //     return notFound(evaluationMessages.EVALUATIONS_NOT_FOUND);
+  //   }
+  
+  //   // If academicCoachId is provided, fetch all trial class evaluations for the same student under that coach
+  //   if (academicCoachId) {
+  //     const studentTrialClasses = await evaluation.find({
+  //       "student.studentId": evaluationRecord.student.studentId, // Match student ID
+  //       academicCoachId: academicCoachId, // Match academic coach ID
+  //       trialClassStatus: { $exists: true }, // Ensure it’s a trial class
+  //     }).lean();
+  
+  //     return studentTrialClasses.length ? studentTrialClasses : notFound(evaluationMessages.NO_TRIAL_CLASSES_FOUND);
+  //   }
+  
+  //   // Return the specific evaluation record if no academicCoachId filter is applied
+  //   return evaluationRecord;
+  // },
+  
+
+
+  //update the invoice
   async updateInvoice(req: Request, h: ResponseToolkit){
     const { payload } = invoiceValidation.parse({
       payload: req.payload,
@@ -265,7 +294,9 @@ export default {
     invoiceStatus: payload.invoiceStatus,
     paymentStatus: payload.paymentStatus
      });
-  }
+  },
+ 
+  
   }
 
 

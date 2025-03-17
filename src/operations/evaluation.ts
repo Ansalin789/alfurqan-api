@@ -434,11 +434,12 @@ export const getAllEvaluationRecords = async (
 ): Promise<{ totalCount: number; evaluation: IEvaluation[] }> => {
   const { academicCoachId, searchText, sortBy, sortOrder, offset, limit, filterValues } = params;
 
-  const query: any = {
-    academicCoachId,
-  };
+  const query: any = {};
 
-   
+  // ✅ Only add academicCoachId to query if it is provided
+  if (academicCoachId) {
+    query.academicCoachId = academicCoachId;
+  }
 
   if (searchText) {
     query.$or = [
@@ -476,20 +477,20 @@ export const getAllEvaluationRecords = async (
       .skip(skip)
       .limit(Number(limit) ?? Number(commonMessages.LIMIT));
   }
+
   const [evaluation, totalCount] = await Promise.all([
     evaluationQuery.exec(),
     EvaluationModel.countDocuments(query).exec(),
   ]);
 
- // Log successful retrieval
- AppLogger.info(evaluationMessages.GET_ALL_LIST_SUCCESS, {
-  totalCount: totalCount,
-});
+  AppLogger.info(evaluationMessages.GET_ALL_LIST_SUCCESS, {
+    totalCount: totalCount,
+  });
 
   return { totalCount, evaluation };
 };
 
-
+//evaluationRecordBYId
   export const getEvaluationRecordById = async (
     id: string
   ): Promise<IEvaluation | null> => {
@@ -497,12 +498,15 @@ export const getAllEvaluationRecords = async (
       _id: new Types.ObjectId(id),
     }).lean();
   };
+
+
+  
   export interface EvaluationUpdate{
     invoiceStatus: string,
     paymentStatus: string,
    
-
   }
+  
   
 export const updateStudentInvoice = async (  
   id: string,
