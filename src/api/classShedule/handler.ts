@@ -26,6 +26,9 @@ const createInputValidation = z.object({
         scheduleStatus: true,
         studentAttendee:true,
         teacherAttendee: true,
+        sessionClassType:true,
+        sessionsEndtime:true,
+        sessionStarttime:true,
     }).partial()
   });
 
@@ -56,16 +59,21 @@ const updateClassScheduleInputValidation = z.object({
     startTime: true,
     endTime: true,
     scheduleStatus: true,
+    sessionClassType:true,
+    sessionStarttime:true,
+    sessionsEndtime:true,
+
 }).partial()
 })
 
 export default {
-
-  
-  async createandUpdateSchedule(req: Request, h: ResponseToolkit){
+async createandUpdateSchedule(req: Request, h: ResponseToolkit){
+    console.log("Raw Request Payload:", req.payload);
     const { payload } = createInputValidation.parse({
       payload: req.payload,
    });
+   console.log("Parsed Payload:", payload);
+
    const classDayValues = payload.classDay?.map((day: { value: string; label: string }) => day.value);
    const startTimeValues = payload.startTime?.map((time: { value: string; label: string }) => time.value);
    const endTimeValues = payload.endTime?.map((time: { value: string; label: string }) => time.value);
@@ -79,7 +87,10 @@ export default {
     package: payload.package,
     preferedTeacher: payload.preferedTeacher,
      course:payload.course,
-    totalHourse: payload.totalHourse,
+     sessionClassType: payload.sessionClassType || "",
+     sessionStarttime: payload.sessionStarttime || "",
+     sessionsEndtime: payload?.sessionsEndtime || "",
+     totalHourse: payload.totalHourse,
     startDate: payload.startDate,
     endDate: payload.endDate,
     startTime: startTimeValues,
@@ -88,7 +99,10 @@ export default {
     studentAttendee: payload.studentAttendee,
     teacherAttendee:payload.teacherAttendee,
    
-     });
+     }
+    );
+
+
   }
 ,
 

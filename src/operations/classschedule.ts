@@ -12,6 +12,7 @@ import { ClientSecretCredential } from "@azure/identity";
 import classShedule from "../models/classShedule";
 import student from "../models/student";
 import moment from "moment";
+import { clearLine } from "readline";
 
 /**
  * Creates a new candidate record in the database.
@@ -98,6 +99,9 @@ export const updateStudentClassSchedule = async (
           classDay: day,
           startTime: start,
           endTime: end,
+          sessionClassType:payload.sessionClassType,
+          sessionStarttime:payload.sessionStarttime,
+          sessionsEndtime:payload.sessionsEndtime,
           course:studentDetails?.student?.course,
           package: studentDetails?.student?.package,
           startDate: classDate,
@@ -282,6 +286,7 @@ async function createEvent(newClassSchedule: any): Promise<void> {
 }
 
 
+// 
 export const updateClassscheduleById = async (
   id: string,
   payload: Partial<IClassScheduleCreate>
@@ -292,6 +297,7 @@ export const updateClassscheduleById = async (
     { new: true }
   ).lean();
 };
+
 
 // Function implementation:
 export const getClassesForStudent = async (

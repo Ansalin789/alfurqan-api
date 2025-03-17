@@ -264,6 +264,9 @@ async function createStudentPortal(updatedEvaluation: any) {
         gender: "Male"
       },
       username: updatedEvaluation.student.studentFirstName,
+      sessionClassType: "",
+      sessionStarttime: "",
+      sessionsEndtime: "",
       password: password,
       role: "Student",
       status: "Active",
@@ -330,6 +333,10 @@ console.log(">>>>>>>>>>>>>",classDayValues);
               teacherName: teacherDetails?.userName,
               teacherEmail: teacherDetails?.email
             },
+            sessionClassType: "",
+            sessionStarttime: "",
+            sessionsEndtime: "",
+            
             classLink: meetingId,
             classDay: day,
             startTime: start,

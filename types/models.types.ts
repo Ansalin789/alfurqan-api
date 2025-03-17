@@ -460,6 +460,9 @@ export interface IClassSchedule extends Document{
   classhour:string;
   amount:string;
   currency:string;
+  sessionClassType:string;
+  sessionStarttime:string;
+  sessionsEndtime:string;
   startDate: Date;
   endDate: Date;
   startTime: any;
@@ -496,6 +499,12 @@ export interface IClassScheduleCreate{
     teacherName: string;
     teacherEmail: string;
   },
+  classhour:string;
+  amount:string;
+  currency:string;
+  sessionClassType:string;
+  sessionStarttime:string;
+  sessionsEndtime:string;
   classDay: string[];
   classStatus:string;
   package: string;
