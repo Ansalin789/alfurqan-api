@@ -88,7 +88,9 @@ export const updateStudentClassSchedule = async (
             studentId: studentDetails?._id,
             studentFirstName: studentDetails?.username,
             studentLastName: studentDetails?.username,
-            studentEmail: studentDetails?.student?.studentEmail
+            studentEmail: studentDetails?.student?.studentEmail,
+            gender: studentDetails?.student?.gender, // Ensure gender is included
+
           },
           teacher: {
             teacherId: teacherDetails?._id,
@@ -99,9 +101,10 @@ export const updateStudentClassSchedule = async (
           classDay: day,
           startTime: start,
           endTime: end,
-          sessionClassType:payload.sessionClassType,
-          sessionStarttime:payload.sessionStarttime,
-          sessionsEndtime:payload.sessionsEndtime,
+          sessionClassType: payload.sessionClassType || "",
+          sessionStarttime: payload.sessionStarttime || "",
+          sessionsEndtime: payload.sessionsEndtime || "",
+
           course:studentDetails?.student?.course,
           package: studentDetails?.student?.package,
           startDate: classDate,
@@ -291,12 +294,88 @@ export const updateClassscheduleById = async (
   id: string,
   payload: Partial<IClassScheduleCreate>
 ): Promise<IClassSchedule | null> => {
-  return ClassScheduleModel.findOneAndUpdate(
-    { _id: new Types.ObjectId(id) },
-    { $set: payload },
-    { new: true }
-  ).lean();
+  console.log("Fetching existing class for ID:", id);
+
+  // Fetch the existing class schedule from the database
+  const existingClass = await ClassScheduleModel.findById(id);
+  if (!existingClass) {
+    console.error("Class schedule not found for ID:", id);
+
+    throw new Error("Class schedule not found");
+  }
+
+  // Get class type and times from payload or existing data
+  const classType = payload.sessionClassType || existingClass.sessionClassType;
+  const startTime = payload.sessionStarttime || existingClass.sessionStarttime;
+  const endTime = payload.sessionsEndtime || existingClass.sessionsEndtime;
+
+  console.log("Class Type:", classType);
+  console.log("Start Time:", startTime);
+  console.log("End Time:", endTime);
+
+  // Convert start and end times to minutes
+  const startMinutes = convertTimeToMinutes(startTime);
+  const endMinutes = convertTimeToMinutes(endTime);
+  const duration = endMinutes - startMinutes; // Total duration in minutes
+ console.log("Converted Start Minutes:", startMinutes);
+  console.log("Converted End Minutes:", endMinutes);
+  console.log("Duration (mins):", duration);
+
+  let amount = 0;
+
+if (classType === "regular") {
+  amount = (duration / 60) * 4; // $4 per 60 mins
+} else if (classType === "group") {
+  amount = (duration / 60) * 6; // $6 per 60 mins
+} else if (classType === "trial") {
+  amount = 2; // Fixed $2 for a trial class
+}
+
+const formattedAmount = `$${amount.toFixed(2)}`; // Add dollar sign
+
+console.log("Calculated Amount:", formattedAmount);
+
+// Update the class schedule
+return ClassScheduleModel.findOneAndUpdate(
+  { _id: new Types.ObjectId(id) },
+  { 
+    $set: { 
+      ...payload,
+      amount: formattedAmount // Store amount with dollar sign
+    }
+  },
+  { new: true }
+).lean();
+
+
 };
+
+// Helper function to convert "HH:MM AM/PM" to minutes
+const convertTimeToMinutes = (timeStr: string): number => {
+  if (!timeStr) {
+    console.error("Invalid time string:", timeStr);
+    return NaN;
+  }
+
+  // Replace dot (.) with colon (:) if present (fix potential formatting issue)
+  timeStr = timeStr.replace(".", ":");
+
+  const [time, modifier] = timeStr.split(" ");
+  const [hours, minutes] = time.split(":").map(Number);
+
+  if (isNaN(hours) || isNaN(minutes)) {
+    console.error("Invalid time format:", timeStr);
+    return NaN;
+  }
+
+  let totalMinutes = hours * 60 + minutes;
+  if (modifier === "PM" && hours !== 12) totalMinutes += 12 * 60;
+  if (modifier === "AM" && hours === 12) totalMinutes -= 12 * 60;
+
+  return totalMinutes;
+};
+
+
 
 
 // Function implementation:
