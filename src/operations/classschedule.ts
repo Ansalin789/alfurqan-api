@@ -5,14 +5,11 @@ import StudentModel from "../models/alstudents";
 import UserModel from "../models/users"
 import AppLogger from "../helpers/logging";
 import { GetAllRecordsParams } from "../shared/enum";
-import { alstudentsMessages, ClassSchedulesMessages, commonMessages } from "../config/messages";
+import { alstudentsMessages, commonMessages } from "../config/messages";
 import { isNil } from "lodash";
 import { Client } from '@microsoft/microsoft-graph-client';
 import { ClientSecretCredential } from "@azure/identity";
-import classShedule from "../models/classShedule";
-import student from "../models/student";
 import moment from "moment";
-import { clearLine } from "readline";
 
 /**
  * Creates a new candidate record in the database.
@@ -116,7 +113,6 @@ export const updateStudentClassSchedule = async (
           preferedTeacher: payload.preferedTeacher,
         });
 
-        //await createRecurringEvents("tech@alfurqan.academy",newClassSchedule.startDate, newClassSchedule.endDate, newClassSchedule.classDay,newClassSchedule);
          const eventDetails = await createEvent(newClassSchedule);
          console.log("eventDetails>>>", eventDetails);
 
@@ -130,7 +126,6 @@ export const updateStudentClassSchedule = async (
     }
   }
 
-  //console.log("results>>>", results);
   return results;
 };
 

@@ -200,13 +200,3 @@ export const dashboardWidgetSupervisorCounts = async (supervisorId: string): Pro
   };
 };
 
-// export const dashboardSupervisorApplicationCount = async (supervisorId: string): Promise<{
-//   totalApplication: number;
-//   shortlisted: number;
-// }> => {
-
-//   return {
-//     totalApplication,
-//     shortlisted,
-//   };
-// }

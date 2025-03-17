@@ -12,8 +12,8 @@ export const createFeedback = async (
     const newFeedback = new feedback({
         sessionId:payload.sessionId!,
         student: payload.student!,
-        teacher: payload.teacher || {},
-        classDay: payload.classDay || "",
+        teacher: payload.teacher ?? {},
+        classDay: payload.classDay ?? "",
         preferedTeacher: payload.preferedTeacher!,
         course: payload.course!,
         
@@ -25,13 +25,13 @@ export const createFeedback = async (
         },
         startDate: new Date(payload.startDate!),
         endDate: new Date(payload.endDate!),
-        startTime: payload.startTime || "",
-        endTime: payload.endTime || "",
-        feedbackmessage: payload.feedbackmessage || "",
+        startTime: payload.startTime ?? "",
+        endTime: payload.endTime ?? "",
+        feedbackmessage: payload.feedbackmessage ?? "",
         createdDate: new Date(),
-        createdBy: payload.createdBy || "System",
+        createdBy: payload.createdBy ?? "System",
         lastUpdatedDate: new Date(),
-        lastUpdatedBy: payload.lastUpdatedBy || "System",
+        lastUpdatedBy: payload.lastUpdatedBy ?? "System",
 
     });
 
@@ -52,8 +52,8 @@ export const createTeacherFeedback = async (
     const newFeedback = new feedback({
         sessionId:payload.sessionId!,      
         student: payload.student!,
-        teacher: payload.teacher || {},
-        classDay: payload.classDay || [],
+        teacher: payload.teacher ?? {},
+        classDay: payload.classDay ?? [],
         preferedTeacher: payload.preferedTeacher!,
         course: payload.course!,
 
@@ -72,17 +72,17 @@ export const createTeacherFeedback = async (
         endDate: payload.endDate ? new Date(payload.endDate) : new Date(),
         
         // Handle times, setting empty arrays if they are missing
-        startTime: payload.startTime || [],
-        endTime: payload.endTime || [],
+        startTime: payload.startTime ?? [],
+        endTime: payload.endTime ?? [],
         
         // Feedback message with fallback if missing
-        feedbackmessage: payload.feedbackmessage || "",
+        feedbackmessage: payload.feedbackmessage ?? "",
         
         // Dates for creation and update with current timestamp
         createdDate: new Date(),
-        createdBy: payload.createdBy || "System",
+        createdBy: payload.createdBy ?? "System",
         lastUpdatedDate: new Date(),
-        lastUpdatedBy: payload.lastUpdatedBy || "System",
+        lastUpdatedBy: payload.lastUpdatedBy ?? "System",
 
     });
 
@@ -100,7 +100,7 @@ export const createTeacherFeedback = async (
 export const getcreateAllTeacherFeedback = async (
   params: GetAllRecordsParams
 ): Promise<{ totalCount: number; students: IFeedbackCreate[] }> => {
-  const { searchText, sortBy, sortOrder, offset, limit, filterValues } = params;
+  const { searchText, sortBy, sortOrder, offset, limit } = params;
 
   // Construct query object based on filters
   const query: any = {};
@@ -138,7 +138,6 @@ export const getcreateAllTeacherFeedback = async (
     studentQuery.exec(), // Fetch students with pagination
    feedback.countDocuments(query).exec(), // Count total records
   ]);
-  //console.log("students>>>>>>>>", students);
 
 
 // Add classSchedule count to each student
@@ -178,8 +177,8 @@ export const createSupervisorFeedback = async (
     const newFeedback = new feedback({
       sessionId:payload.sessionId!,
       supervisor: payload.supervisor!,
-      teacher: payload.teacher || {},
-      classDay: payload.classDay || "",
+      teacher: payload.teacher ?? {},
+      classDay: payload.classDay ?? "",
       preferedTeacher: payload.preferedTeacher!,
       course: payload.course!,
       
@@ -193,13 +192,13 @@ export const createSupervisorFeedback = async (
       
       startDate: new Date(payload.startDate!),
       endDate: new Date(payload.endDate!),
-      startTime: payload.startTime || "",
-      endTime: payload.endTime || "",
-      feedbackmessage: payload.feedbackmessage || "",
+      startTime: payload.startTime ?? "",
+      endTime: payload.endTime ?? "",
+      feedbackmessage: payload.feedbackmessage ?? "",
       createdDate: new Date(),
-      createdBy: payload.createdBy || "System",
+      createdBy: payload.createdBy ?? "System",
       lastUpdatedDate: new Date(),
-      lastUpdatedBy: payload.lastUpdatedBy || "System",
+      lastUpdatedBy: payload.lastUpdatedBy ?? "System",
     });
 
     const feedbackRecord = await newFeedback.save();

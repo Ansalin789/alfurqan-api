@@ -1,5 +1,5 @@
 import { ResponseToolkit,Request } from "@hapi/hapi";
-import evaluation, { zodEvaluationSchema } from "../../models/evaluation";
+import  { zodEvaluationSchema } from "../../models/evaluation";
 import { z } from "zod";
 import { createEvaluationRecord,getAllEvaluationRecords,getEvaluationRecordById, updateStudentEvaluation, updateStudentInvoice} from "../../operations/evaluation";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
@@ -96,67 +96,67 @@ export default {
         const endTimeValues = payload.endTime?.map((time: { value: string; label: string }) => time.value);
 
         return createEvaluationRecord({
-          academicCoachId: payload.academicCoachId || "",
+          academicCoachId: payload.academicCoachId ?? "",
             student: { // Ensure studentId is included
-                studentId: payload.student?.studentId || "", 
-                studentFirstName: payload.student?.studentFirstName || "",
-                studentLastName: payload.student?.studentLastName || "",
-                studentEmail: payload.student?.studentEmail || "",
-                studentPhone: payload.student?.studentPhone|| 0,
-                studentCity: payload.student?.studentCity || " ",
-                studentCountry: payload.student?.studentCountry || "",
-                studentCountryCode: payload.student?.studentCountryCode || "",
+                studentId: payload.student?.studentId ?? "", 
+                studentFirstName: payload.student?.studentFirstName ?? "",
+                studentLastName: payload.student?.studentLastName ?? "",
+                studentEmail: payload.student?.studentEmail ?? "",
+                studentPhone: payload.student?.studentPhone ?? 0,
+                studentCity: payload.student?.studentCity ?? " ",
+                studentCountry: payload.student?.studentCountry ?? "",
+                studentCountryCode: payload.student?.studentCountryCode ?? "",
                 learningInterest: payload.student?.learningInterest,
-                numberOfStudents: payload.student?.numberOfStudents || 1,
-                preferredTeacher: payload.student?.preferredTeacher || "defaultPreferredTeacher",
+                numberOfStudents: payload.student?.numberOfStudents ?? 1,
+                preferredTeacher: payload.student?.preferredTeacher ?? "defaultPreferredTeacher",
                 preferredFromTime: payload.student?.preferredFromTime,
                 preferredToTime: payload.student?.preferredToTime,
-                timeZone: payload.student?.timeZone || "",
-                referralSource: payload.student?.referralSource || "",
+                timeZone: payload.student?.timeZone ?? "",
+                referralSource: payload.student?.referralSource ?? "",
                 preferredDate: payload.student?.preferredDate,
-                evaluationStatus: payload.student?.evaluationStatus || "defaultStatus",
-                status: payload.student?.status || "defaultStatus",
+                evaluationStatus: payload.student?.evaluationStatus ?? "defaultStatus",
+                status: payload.student?.status ?? "defaultStatus",
                 createdDate: new Date(),
-                createdBy: payload.student?.createdBy || "",
+                createdBy: payload.student?.createdBy ?? "",
             },
             teacher:{
-              teacherName: payload.teacher?.teacherName  || ""
+              teacherName: payload.teacher?.teacherName  ?? ""
             },
-            classDay : classDayValues || undefined,
+            classDay : classDayValues ?? undefined,
             startTime:startTimeValues,
             endTime:endTimeValues,
-            isLanguageLevel: payload.isLanguageLevel || false,
-            languageLevel: payload.languageLevel || "",
-            isReadingLevel: payload.isReadingLevel || false,
-            readingLevel: payload.readingLevel || "",
-            isGrammarLevel: payload.isGrammarLevel || false,
-            grammarLevel: payload.grammarLevel || "",
-            hours: payload.hours || 0,
+            isLanguageLevel: payload.isLanguageLevel ?? false,
+            languageLevel: payload.languageLevel ?? "",
+            isReadingLevel: payload.isReadingLevel ?? false,
+            readingLevel: payload.readingLevel ?? "",
+            isGrammarLevel: payload.isGrammarLevel ?? false,
+            grammarLevel: payload.grammarLevel ?? "",
+            hours: payload.hours ?? 0,
             subscription:{
-                subscriptionName: payload.subscription?.subscriptionName || "",
+                subscriptionName: payload.subscription?.subscriptionName ?? "",
             } ,
-            planTotalPrice: payload.planTotalPrice ||0,
-            classStartDate: payload.classStartDate || new Date(),
-            classEndDate: payload.classEndDate || new Date(),
-            classStartTime: payload.classStartTime || "defaultStartTime",
-            classEndTime: payload.classEndTime || "defaultEndTime",
-            gardianName: payload.gardianName || "",
-            gardianEmail: payload.gardianEmail || "",
-            gardianPhone: payload.gardianPhone || "",
-            gardianCity: payload.gardianCity || "",
-            gardianCountry: payload.gardianCountry || "defaultCountry", // Add default value
-            gardianTimeZone: payload.gardianTimeZone || "defaultTimeZone", // Add default value
-            gardianLanguage: payload.gardianLanguage || "",
-           assignedTeacher:payload.assignedTeacher || "",
+            planTotalPrice: payload.planTotalPrice  ?? 0,
+            classStartDate: payload.classStartDate ?? new Date(),
+            classEndDate: payload.classEndDate ?? new Date(),
+            classStartTime: payload.classStartTime ?? "defaultStartTime",
+            classEndTime: payload.classEndTime ?? "defaultEndTime",
+            gardianName: payload.gardianName ?? "",
+            gardianEmail: payload.gardianEmail ?? "",
+            gardianPhone: payload.gardianPhone ?? "",
+            gardianCity: payload.gardianCity ?? "",
+            gardianCountry: payload.gardianCountry ?? "defaultCountry", // Add default value
+            gardianTimeZone: payload.gardianTimeZone ?? "defaultTimeZone", // Add default value
+            gardianLanguage: payload.gardianLanguage ?? "",
+           assignedTeacher:payload.assignedTeacher ?? "",
            accomplishmentTime: payload.accomplishmentTime,
-           studentRate: payload.studentRate || 0,
-           studentStatus: payload.studentStatus || "",
-           classStatus: payload.classStatus || "",
-           comments: payload.comments || "",
-           trialClassStatus: payload.trialClassStatus || "",
-           invoiceStatus: payload.invoiceStatus || "Pending",
-           paymentLink: payload.paymentLink || "",
-           paymentStatus: payload.paymentStatus || "Pending",
+           studentRate: payload.studentRate ?? 0,
+           studentStatus: payload.studentStatus ?? "",
+           classStatus: payload.classStatus ?? "",
+           comments: payload.comments ?? "",
+           trialClassStatus: payload.trialClassStatus ?? "",
+           invoiceStatus: payload.invoiceStatus ?? "Pending",
+           paymentLink: payload.paymentLink ?? "",
+           paymentStatus: payload.paymentStatus ?? "Pending",
             status: payload.status,
             createdDate: new Date(),
             createdBy: payload.createdBy,
@@ -173,56 +173,56 @@ export default {
 
   return updateStudentEvaluation(String(req.params.evaluationId),{   
     student: { // Ensure studentId is included
-      studentId: payload.student?.studentId || "", 
-      studentFirstName: payload.student?.studentFirstName || "",
-      studentLastName: payload.student?.studentLastName || "",
-      studentEmail: payload.student?.studentEmail || "",
-      studentPhone: payload.student?.studentPhone|| 0,
-      studentCity: payload.student?.studentCity || " ",
-      studentCountry: payload.student?.studentCountry || "",
-      studentCountryCode: payload.student?.studentCountryCode || "",
+      studentId: payload.student?.studentId ?? "", 
+      studentFirstName: payload.student?.studentFirstName ?? "",
+      studentLastName: payload.student?.studentLastName ?? "",
+      studentEmail: payload.student?.studentEmail ?? "",
+      studentPhone: payload.student?.studentPhone?? 0,
+      studentCity: payload.student?.studentCity ?? " ",
+      studentCountry: payload.student?.studentCountry ?? "",
+      studentCountryCode: payload.student?.studentCountryCode ?? "",
       learningInterest: payload.student?.learningInterest,
-      numberOfStudents: payload.student?.numberOfStudents || 1,
-      preferredTeacher: payload.student?.preferredTeacher || "defaultPreferredTeacher",
+      numberOfStudents: payload.student?.numberOfStudents ?? 1,
+      preferredTeacher: payload.student?.preferredTeacher ?? "defaultPreferredTeacher",
       preferredFromTime: payload.student?.preferredFromTime,
       preferredToTime: payload.student?.preferredToTime,
-      timeZone: payload.student?.timeZone || "",
-      referralSource: payload.student?.referralSource || "",
+      timeZone: payload.student?.timeZone ?? "",
+      referralSource: payload.student?.referralSource ?? "",
       preferredDate: payload.student?.preferredDate,
-      evaluationStatus: payload.student?.evaluationStatus || "defaultStatus",
-      status: payload.student?.status || "defaultStatus",
+      evaluationStatus: payload.student?.evaluationStatus ?? "defaultStatus",
+      status: payload.student?.status ?? "defaultStatus",
       createdDate: new Date(),
-      createdBy: payload.student?.createdBy || "",
+      createdBy: payload.student?.createdBy ?? "",
   },
-  isLanguageLevel: payload.isLanguageLevel || false,
-  languageLevel: payload.languageLevel || "",
-  isReadingLevel: payload.isReadingLevel || false,
-  readingLevel: payload.readingLevel || "",
-  isGrammarLevel: payload.isGrammarLevel || false,
-  grammarLevel: payload.grammarLevel || "",
-  hours: payload.hours || 0,
+  isLanguageLevel: payload.isLanguageLevel ?? false,
+  languageLevel: payload.languageLevel ?? "",
+  isReadingLevel: payload.isReadingLevel ?? false,
+  readingLevel: payload.readingLevel ?? "",
+  isGrammarLevel: payload.isGrammarLevel ?? false,
+  grammarLevel: payload.grammarLevel ?? "",
+  hours: payload.hours ?? 0,
   subscription:{
-      subscriptionName: payload.subscription?.subscriptionName || "",
+      subscriptionName: payload.subscription?.subscriptionName ?? "",
   } ,
-  classStartDate: payload.classStartDate || new Date(),
-  classEndDate: payload.classEndDate || new Date(),
-  classStartTime: payload.classStartTime || "defaultStartTime",
-  classEndTime: payload.classEndTime || "defaultEndTime",
-  gardianName: payload.gardianName || "",
-  gardianEmail: payload.gardianEmail || "",
-  gardianPhone: payload.gardianPhone || "",
-  gardianCity: payload.gardianCity || "",
-  gardianCountry: payload.gardianCountry || "defaultCountry", // Add default value
-  gardianTimeZone: payload.gardianTimeZone || "defaultTimeZone", // Add default value
-  gardianLanguage: payload.gardianLanguage || "",
- assignedTeacher:payload.assignedTeacher || "",
- studentStatus: payload.studentStatus || "",
- classStatus: payload.classStatus || "",
- comments: payload.comments || "",
- trialClassStatus: payload.trialClassStatus || "",
- invoiceStatus: payload.invoiceStatus || "Pending",
- paymentLink: payload.paymentLink || "",
- paymentStatus: payload.paymentStatus || "Pending",
+  classStartDate: payload.classStartDate ?? new Date(),
+  classEndDate: payload.classEndDate ?? new Date(),
+  classStartTime: payload.classStartTime ?? "defaultStartTime",
+  classEndTime: payload.classEndTime ?? "defaultEndTime",
+  gardianName: payload.gardianName ?? "",
+  gardianEmail: payload.gardianEmail ?? "",
+  gardianPhone: payload.gardianPhone ?? "",
+  gardianCity: payload.gardianCity ?? "",
+  gardianCountry: payload.gardianCountry ?? "defaultCountry", // Add default value
+  gardianTimeZone: payload.gardianTimeZone ?? "defaultTimeZone", // Add default value
+  gardianLanguage: payload.gardianLanguage ?? "",
+ assignedTeacher:payload.assignedTeacher ?? "",
+ studentStatus: payload.studentStatus ?? "",
+ classStatus: payload.classStatus ?? "",
+ comments: payload.comments ?? "",
+ trialClassStatus: payload.trialClassStatus ?? "",
+ invoiceStatus: payload.invoiceStatus ?? "Pending",
+ paymentLink: payload.paymentLink ?? "",
+ paymentStatus: payload.paymentStatus ?? "Pending",
   status: payload.status,
   createdDate: new Date(),
   createdBy: payload.createdBy,
@@ -255,34 +255,6 @@ export default {
   
     return result;
   },
-
-  // async getEvaluationRecordById(req: Request, h: ResponseToolkit) {
-  //   const academicCoachId = req.headers["academic-coach-id"]; // Get academic coach ID from header
-  //   const evaluationId = String(req.params.evaluationId);
-  
-  //   // Fetch evaluation record by ID
-  //   const evaluationRecord = await getEvaluationRecordById(evaluationId);
-  
-  //   if (isNil(evaluationRecord)) {
-  //     return notFound(evaluationMessages.EVALUATIONS_NOT_FOUND);
-  //   }
-  
-  //   // If academicCoachId is provided, fetch all trial class evaluations for the same student under that coach
-  //   if (academicCoachId) {
-  //     const studentTrialClasses = await evaluation.find({
-  //       "student.studentId": evaluationRecord.student.studentId, // Match student ID
-  //       academicCoachId: academicCoachId, // Match academic coach ID
-  //       trialClassStatus: { $exists: true }, // Ensure it’s a trial class
-  //     }).lean();
-  
-  //     return studentTrialClasses.length ? studentTrialClasses : notFound(evaluationMessages.NO_TRIAL_CLASSES_FOUND);
-  //   }
-  
-  //   // Return the specific evaluation record if no academicCoachId filter is applied
-  //   return evaluationRecord;
-  // },
-  
-
 
   //update the invoice
   async updateInvoice(req: Request, h: ResponseToolkit){

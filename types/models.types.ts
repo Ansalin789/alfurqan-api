@@ -305,6 +305,7 @@ teacher:{
   teacherEmail: string;
 },
 classDay: any;
+classType: string;
 startTime: any;
 endTime: any;
 isLanguageLevel: boolean;
@@ -456,7 +457,7 @@ export interface IClassSchedule extends Document{
   package: string;
   preferedTeacher: string;
   course: string;
-  totalHourse: Number;
+  totalHourse: number;
   classhour:string;
   amount:string;
   currency:string;
@@ -510,7 +511,7 @@ export interface IClassScheduleCreate{
   package: string;
   preferedTeacher: string;
   course: string;
-  totalHourse: Number;
+  totalHourse: number;
   startDate: Date;
   endDate: Date;
   startTime: string[];
@@ -789,19 +790,19 @@ export interface IAssignmentCreate {
 
 export interface IStudentInvoice extends Document{
   student: {
-      studentId: String;
-      studentName: String;
-      studentEmail:String;
-      studentPhone:Number;
+      studentId: string;
+      studentName: string;
+      studentEmail:string;
+      studentPhone:number;
   };
-  courseName: String;
-  amount: Number; 
-  invoiceStatus: String;
-  status: String;
+  courseName: string;
+  amount: number; 
+  invoiceStatus: string;
+  status: string;
   createdDate: Date;
-  createdBy:String ;
+  createdBy:string ;
   lastUpdatedDate: Date;
-  lastUpdatedBy: String;
+  lastUpdatedBy: string;
 }
 
 export interface IMessageCreate {

@@ -1,7 +1,7 @@
 import { model, Schema } from "mongoose";
 import { IEvaluation } from "../../types/models.types";
 import { z } from "zod";
-import { appStatus, commonMessages, evaluationStatus, learningInterest, preferredTeacher, referenceSource } from "../config/messages";
+import { appStatus, classType, commonMessages, evaluationStatus, learningInterest, preferredTeacher, referenceSource } from "../config/messages";
 
 const evaluationSchema = new Schema<IEvaluation>({
 academicCoachId: {
@@ -109,6 +109,10 @@ academicCoachId: {
   classDay:{
     type: Array,
     required: false,
+  },
+  classType: {
+    type: String,
+    required: false, 
   },
   startTime:{
     type: Array,
@@ -338,6 +342,7 @@ export const zodEvaluationSchema = z.object({
             value: z.string(),
         })
     ),
+    classType:z.enum([classType.REGULARCLASS, classType.GROUPCLASS]).optional(),
       totalHourse:z.number().optional(),
       startTime:z.array(
         z.object({
