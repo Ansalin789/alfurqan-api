@@ -26,9 +26,9 @@ const register = async (server: Server): Promise<void> => {
          handler: handler.createandUpdateSchedule,
          description: evaluationMessages.UPDATE,
          tags: ["api", "evaluation"],
-          auth: {
-            strategies: ["jwt"],
-          },
+          // auth: {
+          //   strategies: ["jwt"],
+          // },
       },
       },
       
@@ -114,7 +114,15 @@ const register = async (server: Server): Promise<void> => {
          tags: ["api", "classShedule"],
       },  
       },
-
+      {
+        method: "PUT",
+        path: "/classShedule/teacherreschedule/{classSheduleId}",
+        options: {
+         handler: handler.updateteacherreschedule,
+         description: evaluationMessages.UPDATE,
+         tags: ["api", "classShedule"],
+      },  
+      },
     ];
     server.route(routes);
   };

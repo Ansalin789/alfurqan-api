@@ -10,6 +10,7 @@ import { isNil } from "lodash";
 import { Client } from '@microsoft/microsoft-graph-client';
 import { ClientSecretCredential } from "@azure/identity";
 import moment from "moment";
+import classShedule from "../models/classShedule";
 
 /**
  * Creates a new candidate record in the database.
@@ -572,5 +573,111 @@ export const teachingActivity = async (
     throw new Error("Failed to fetch class hours for the student");
   }
 };
+
+
+
+
+
+export const updateteacherreschedule = async (
+  id: string,
+  payload: Partial<IClassSchedule>
+): Promise<(IClassSchedule | { error: any })[]> => {
+  const { classDay, startTime, endTime, scheduleStatus, startDate, endDate } = payload;
+  const results: (IClassSchedule | { error: any })[] = [];
+
+  // Validate inputs
+  if (
+    !classDay ||
+    !startTime ||
+    !endTime ||
+    !startDate ||
+    !endDate ||
+    classDay.length !== startTime.length ||
+    startTime.length !== endTime.length
+  ) {
+    throw new Error(
+      "classDay, startTime, endTime, startDate, and endDate must be provided and arrays must match in length."
+    );
+  }
+
+  try {
+    // Fetch student details
+    const studentDetails = await classShedule.findById(new Types.ObjectId(id)).exec();
+    if (!studentDetails) {
+      throw new Error("Student not found.");
+    }
+    console.log("Student Details:", studentDetails);
+
+    // Fetch teacher details
+    const teacherDetails = await UserModel.findOne({
+      role: "TEACHER",
+      userName: payload.teacher?.teacherName,
+    }).exec();
+    if (!teacherDetails) {
+      throw new Error("Teacher not found.");
+    }
+    console.log("Teacher Details:", teacherDetails);
+
+    // Fetch current schedule
+    const currentSchedule = await ClassScheduleModel.findById(new Types.ObjectId(id)).lean<IClassSchedule>();
+    if (!currentSchedule) {
+      throw new Error("Class schedule not found.");
+    }
+
+    for (let i = 0; i < startTime.length; i++) {
+      const newStartTime = startTime[i];
+      const newEndTime = endTime[i];
+
+      // Validate if reschedule status requires a new start time
+      if (scheduleStatus === "Reschedule" && currentSchedule.startTime === newStartTime) {
+        throw new Error(
+          `Rescheduling failed: The new start time (${newStartTime}) cannot be the same as the existing start time.`
+        );
+      }
+
+      // Update class schedule
+      const updatedClassSchedule = await ClassScheduleModel.findOneAndUpdate(
+        { _id: new Types.ObjectId(id) },
+        {
+          $set: {
+            teacher: {
+              teacherId: teacherDetails._id,
+              teacherName: teacherDetails.userName,
+              teacherEmail: teacherDetails.email,
+            },
+            startTime: newStartTime,
+            endTime: newEndTime,
+            package: payload.package,
+            course: payload.course,
+            sessionClassType: payload.sessionClassType,
+            sessionStarttime: payload.sessionStarttime,
+            sessionsEndtime: payload.sessionsEndtime,
+            totalHourse: payload.totalHourse,
+            scheduleStatus: scheduleStatus,
+            studentAttendee: payload.studentAttendee,
+            teacherAttendee: payload.teacherAttendee,
+            preferedTeacher: payload.preferedTeacher,
+          },
+        },
+        { new: true }
+      ).lean<IClassSchedule>();
+
+      console.log("Updated Class Schedule:", updatedClassSchedule);
+
+      if (updatedClassSchedule) {
+        results.push(updatedClassSchedule);
+      } else {
+        results.push({ error: "Failed to update class schedule." });
+      }
+    }
+  } catch (error: any) {
+    console.error("Error in scheduling process:", error.message);
+    results.push({ error: error.message });
+  }
+
+  return results;
+};
+
+
 
 

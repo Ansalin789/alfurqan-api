@@ -5,7 +5,7 @@ import { ClassSchedulesMessages } from "../../config/messages";
 import { isNil } from "lodash";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
-import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity} from "../../operations/classschedule";
+import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule} from "../../operations/classschedule";
 
 
 const createInputValidation = z.object({
@@ -26,6 +26,7 @@ const createInputValidation = z.object({
         sessionClassType:true,
         sessionsEndtime:true,
         sessionStarttime:true,
+        teacherreschedule:true,
     }).partial()
   });
 
@@ -77,6 +78,7 @@ async createandUpdateSchedule(req: Request, h: ResponseToolkit){
 
    return await updateStudentClassSchedule(String(req.params.studentId),{ 
     teacher :{
+      teacherId: payload.teacher?.teacherId ?? "",
       teacherName: payload.teacher?.teacherName ?? "",
       teacherEmail: payload.teacher?.teacherEmail ?? ""
     } ,
@@ -227,6 +229,7 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
         gender: payload.student?.gender ?? "",
       },
       teacher :{
+        teacherId: payload.teacher?.teacherId ?? "",
         teacherName: payload.teacher?.teacherName ?? "",
         teacherEmail: payload.teacher?.teacherEmail ?? ""
       } ,
@@ -382,6 +385,50 @@ async teachingActivity(req: Request, h: ResponseToolkit) {
     return h.response({ error }).code(400);
   }
 }
+,
+
+async updateteacherreschedule(req: Request, h: ResponseToolkit){
+  console.log("Raw Request Payload:", req.payload);
+  const { payload } = createInputValidation.parse({
+    payload: req.payload,
+ });
+ console.log("Parsed Payload:", payload);
+
+ const classDayValues = payload.classDay?.map((day: { value: string; label: string }) => day.value);
+ const startTimeValues = payload.startTime?.map((time: { value: string; label: string }) => time.value);
+ const endTimeValues = payload.endTime?.map((time: { value: string; label: string }) => time.value);
+
+
+ return await updateteacherreschedule(String(req.params.classSheduleId),{ 
+  teacher :{
+    teacherId: payload.teacher?.teacherId ?? "",
+    teacherName: payload.teacher?.teacherName ?? "",
+    teacherEmail: payload.teacher?.teacherEmail ?? ""
+  } ,
+  classDay :classDayValues,
+  package: payload.package,
+  preferedTeacher: payload.preferedTeacher,
+   course:payload.course,
+   sessionClassType: payload.sessionClassType || "",
+   sessionStarttime: payload.sessionStarttime || "",
+   sessionsEndtime: payload?.sessionsEndtime || "",
+   totalHourse: payload.totalHourse,
+  startDate: payload.startDate,
+  endDate: payload.endDate,
+  startTime: startTimeValues,
+  endTime: endTimeValues,
+  scheduleStatus: "Reschedule",
+  studentAttendee: payload.studentAttendee,
+  teacherAttendee:payload.teacherAttendee,
+ 
+   }
+  );
+
+
+}
+
+,
+
 
 }
 
