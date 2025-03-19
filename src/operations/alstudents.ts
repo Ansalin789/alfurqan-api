@@ -102,12 +102,12 @@ export const getalstudentsById = async (studentId: string): Promise<IAlStudents 
 
   try {
     // Query using student.studentId
-    const student: IAlStudents | null = await AlStudentsModel.findOne({
-      "student.studentId": studentId,
+    const student = await AlStudentsModel.findOne({
+      _id: studentId,
     }).lean();
-
+const studentDetails = student as IAlStudents;
     console.log("Fetched student details:", student);
-    return student ? student : null;
+    return studentDetails;
   } catch (error) {
     console.error("Error fetching student by studentId:", error);
     return null;
