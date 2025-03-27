@@ -204,6 +204,7 @@ export const zodClassScheduleSchema = z.object({
         gender: z.string(),
     }),
     teacher: z.object({
+        teacherId: z.string(),
         teacherName: z.string(),
         teacherEmail: z.string(),
     }),
@@ -254,7 +255,7 @@ export const zodClassScheduleSchema = z.object({
   lastUpdatedBy: z.string().optional(),
   studentAttendee: z.enum([attendeeStatus.PRESENT, attendeeStatus.ABSENT]),
   teacherAttendee: z.enum([attendeeStatus.PRESENT, attendeeStatus.ABSENT]),
-
+  teacherreschedule: z.string()
 
 })
 

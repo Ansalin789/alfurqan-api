@@ -5,7 +5,8 @@ import classShedule from "../models/classShedule";
 import usershiftschedule from "../models/usershiftschedule";
 import recruitment from "../models/recruitment";
 import feedback from "../models/feedback";
-
+import alstudents from "../models/alstudents";
+import tenantUser from "../models/users";
 
 
 export interface Dashboard {
@@ -175,10 +176,6 @@ export const dashboardWidgetCounts = async (p0: string
       totalDuration: calculatePercentage(totalHoursValue),
     };
   };
-  
-
-
-
 
 
 export const dashboardWidgetSupervisorCounts = async (supervisorId: string): Promise<{
@@ -200,3 +197,47 @@ export const dashboardWidgetSupervisorCounts = async (supervisorId: string): Pro
   };
 };
 
+export const dashboardCardCount = async (): Promise<{
+  totalStudents: number;
+  maleStudents: number;
+  femaleStudents: number;
+  totalTeachers: number;
+  maleTeachers: number;
+  femaleTeachers: number;
+  totalStaffs: number;
+  maleStaffs: number;
+  femaleStaffs: number;
+}> => {
+  // Fetch active students
+  const students = await alstudents.find({ status: 'Active' });
+  const totalStudents = students.length;
+  const maleStudents = students.filter(student => student.student.gender === 'Male').length;
+  const femaleStudents = students.filter(student => student.student.gender === 'Female').length;
+
+  // Fetch active teachers from tenantUser
+  const teachers = await tenantUser.find({ role: 'TEACHER', status: 'Active' });
+  const totalTeachers = teachers.length;
+  const maleTeachers = teachers.filter(teacher => teacher.gender === 'Male').length;
+  const femaleTeachers = teachers.filter(teacher => teacher.gender === 'Female').length;
+
+  // Fetch other staff members from tenantUser
+  const staffs = await tenantUser.find({ 
+    role: { $in: ['SUPERVISOR', 'ACADEMICCOACH'] }, 
+    status: 'Active' 
+  });
+  const totalStaffs = staffs.length;
+  const maleStaffs = staffs.filter(staff => staff.gender === 'Male').length;
+  const femaleStaffs = staffs.filter(staff => staff.gender === 'Female').length;
+
+  return {
+    totalStudents,
+    maleStudents,
+    femaleStudents,
+    totalTeachers,
+    maleTeachers,
+    femaleTeachers,
+    totalStaffs,
+    maleStaffs,
+    femaleStaffs
+  };
+};

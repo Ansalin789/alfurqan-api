@@ -497,6 +497,7 @@ export interface IClassScheduleCreate{
     gender: string;
   },
   teacher:{
+    teacherId: string;
     teacherName: string;
     teacherEmail: string;
   },
