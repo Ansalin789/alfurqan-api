@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ResponseToolkit, Request } from "@hapi/hapi";
-import {dashboardCardCount, dashboardWidgetCounts, dashboardWidgetStudentCounts, dashboardWidgetSupervisorCounts, dashboardWidgetTeacherCounts } from "../../operations/dashboard";
+import {dashboardCardCount, dashboardWidgetCounts, dashboardWidgetStudentCounts, dashboardWidgetSupervisorCounts, dashboardWidgetTeacherCounts, totalTrialRequestCount } from "../../operations/dashboard";
 
 export default {
   // Get widget counts for academic coach
@@ -48,6 +48,10 @@ export default {
 
   async getAdminCount(req: Request, h: ResponseToolkit){
     return await dashboardCardCount();
+},
+
+async getTotalTrialRequest(req: Request, h: ResponseToolkit){
+  return await totalTrialRequestCount();
 }
 
   // async getSupervisorApplicationCount (req: Request, h: ResponseToolkit) {

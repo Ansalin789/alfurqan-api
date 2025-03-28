@@ -241,3 +241,35 @@ export const dashboardCardCount = async (): Promise<{
     femaleStaffs
   };
 };
+
+export const totalTrialRequestCount = async (): Promise<{
+  totalTrialRequest: number;
+  pendingRequest: number;
+  pendingRequestPercentage: number;
+  joinedStudents: number;
+  joinedStudentsPercentage: number;
+  notJoinedStudents: number;
+  notJoinedrequestPercentage: number;
+
+}> => {
+
+const totalTrialRequestCount = await EvaluationModel.find({ status: 'Active' }).exec();
+
+const totalTrialRequest = totalTrialRequestCount.length;
+const pendingRequest = totalTrialRequestCount.filter(trialClass => trialClass.trialClassStatus === 'PENDING').length;
+const joinedStudents = totalTrialRequestCount.filter(trialClass => trialClass.studentStatus === 'JOINED').length;
+const notJoinedStudents = totalTrialRequestCount.filter(trialClass => trialClass.studentStatus === 'NOTJOINED').length;
+
+const pendingRequestPercentage=(pendingRequest/totalTrialRequest) * 100;
+const joinedStudentsPercentage=(joinedStudents/totalTrialRequest) * 100;
+const notJoinedrequestPercentage=(notJoinedStudents/totalTrialRequest) * 100;
+  return {
+    totalTrialRequest,
+    pendingRequest,
+    pendingRequestPercentage,
+    joinedStudents,
+    joinedStudentsPercentage,
+    notJoinedStudents,
+    notJoinedrequestPercentage,
+  }
+}
