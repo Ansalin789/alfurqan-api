@@ -258,7 +258,7 @@ async getTeacherStudentCount(req: Request, h: ResponseToolkit) {
     const teachers = await classShedule.aggregate([
       {
         $group: {
-          _id: "$teacher.teacherEmail", // Group by teacherEmail
+          _id: "$teacher.teacherId", // Group by teacherEmail
           teacherId: { $first: req.query },
           teacherName: { $first: "$teacher.teacherName" },
           teacherEmail: { $first: "$teacher.teacherEmail" },
