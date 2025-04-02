@@ -25,6 +25,10 @@ academicCoachId: {
         type: String,
         required: true,
     },
+    studentGender:{
+        type: String,
+        required: false, 
+    },
     studentPhone: {
         type: Number,
         required: true,
@@ -307,6 +311,7 @@ export const zodEvaluationSchema = z.object({
         studentId: z.string().optional(),
         studentFirstName: z.string(),
         studentLastName: z.string(),
+        studentGender: z.string().optional(),
         studentEmail: z.string(),
         studentPhone: z.number(),
         studentCity: z.string().optional(),

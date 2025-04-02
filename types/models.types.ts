@@ -80,6 +80,7 @@ export interface IStudents extends Document {
     email: string;
 };
   email: string;
+  gender: string;
   phoneNumber: number;
   city?: string;
   country: string;
@@ -105,6 +106,7 @@ export interface IStudentCreate {
   firstName: string;
   lastName: string;
   email: string;
+  gender: string;
   phoneNumber: number;
   city?: string;
   country: string;
@@ -282,6 +284,7 @@ student: {
   studentFirstName: string;
   studentLastName: string;
   studentEmail: string;
+  studentGender: string;
   studentPhone: number;
   studentCity?: string;
   studentCountry: string;
@@ -364,6 +367,7 @@ export interface IEvaluationCreate{
   studentFirstName: string;
   studentLastName: string;
   studentEmail: string;
+  studentGender: string;
   studentPhone: number;
   studentCity?: string;
   studentCountry: string;

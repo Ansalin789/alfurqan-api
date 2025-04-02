@@ -39,7 +39,7 @@ export const createStudent = async (
             error: badRequest('Evaluation class is not allowed to current date. Select another date'),
         };
     }
-    console.log("newUser>>>>", newUser.preferredToTime)
+    console.log("newUser>>>>", newUser);
     const shiftScheduleRecord = await UserShiftSchedule.find({
       role: "ACADEMICCOACH",
     });
@@ -157,6 +157,7 @@ console.log("newUser academicCoach>>>>",newUser);
           lastUpdatedBy: savedUser.firstName + ' ' + savedUser.lastName,
     });
     const userObject = savedUser.toObject();
+    console.log("userObject>>>>", userObject);
     await CreatemeetingDetails.save();
     return userObject;
 };

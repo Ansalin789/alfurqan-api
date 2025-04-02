@@ -55,6 +55,15 @@ const register = async (server: Server): Promise<void> => {
       },
     },
 
+    {
+      method: "GET",
+      path: "/totaltroalclass",
+      options: {
+        handler: handler.getTotaltrialClassCount,
+        description: evaluationMessages.BYID,
+        tags: ["api", "evaluationlist"],
+      },
+    },
          
   ];
   server.route(routes);

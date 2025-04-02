@@ -64,6 +64,7 @@ export const createEvaluationRecord = async (
     newStudent.firstName = payload.student.studentFirstName;
     newStudent.lastName = payload.student.studentLastName;
     newStudent.email =   payload.student.studentEmail;
+    newStudent.gender = payload.student.studentGender;
     newStudent.phoneNumber = payload.student.studentPhone;
     newStudent.city = payload.student.studentCity;
     newStudent.country = payload.student.studentCountry;
@@ -104,6 +105,7 @@ const subscriptonDetaails = await SubscriptionModel.findOne({
         studentFirstName: createStudent.firstName,
         studentLastName: createStudent.lastName,
         studentEmail: createStudent.email,
+        studentGender: createStudent.gender,
         studentPhone: createStudent.phoneNumber,
         studentCity: createStudent.city,
         studentCountry: createStudent.country,
@@ -186,7 +188,7 @@ console.log("createEvaluation>>>",createEvaluation)
     }
    
 
-    return newEvaluation.save();
+    return createEvaluation;
   };
 
 
@@ -492,6 +494,30 @@ export const updateStudentInvoice = async (
   ).lean();
   const updatedEvaluation = await updateInvoice as IEvaluation; // Cast to expected type
   return updatedEvaluation
-}
+};
 
+export const getTotalTrialClassRequestCount = async() => {
+  const evaluationStats = await EvaluationModel.aggregate([
+    {
+      $match: {
+        status: "Active",
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalCount: { $sum: 1 },
+        maleCount: { $sum: { $cond: [{ $eq: ["$student.studentGender", "male"] }, 1, 0] } },
+        femaleCount: { $sum: { $cond: [{ $eq: ["$student.studentGender", "female"] }, 1, 0] } },
+        completedCount: { $sum: { $cond: [{ $eq: ["$trialClassStatus", "COMPLETED"] }, 1, 0] } },
+        pendingCount: { $sum: { $cond: [{ $eq: ["$trialClassStatus", "PENDING"] }, 1, 0] } },
+        studentJointCount: { $sum: { $cond: [{ $eq: ["$studentStatus", "JOINED"] }, 1, 0] } },
+        studentNotJointCount: { $sum: { $cond: [{ $eq: ["$studentStatus", "NOTJOINED"] }, 1, 0] } },
+
+      },
+    },
+  ]);
   
+  return evaluationStats;
+  
+}
