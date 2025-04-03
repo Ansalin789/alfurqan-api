@@ -57,7 +57,7 @@ const register = async (server: Server): Promise<void> => {
 
     {
       method: "GET",
-      path: "/totaltroalclass",
+      path: "/totaltrialclass",
       options: {
         handler: handler.getTotaltrialClassCount,
         description: evaluationMessages.BYID,
