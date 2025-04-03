@@ -367,4 +367,25 @@ if (!isNil(filters.id)) {
   return StudentModel.findOne(query).lean();
 };
 
+export const getPreferedTeacherPercentage = async() =>{
+    const preferedTeahcer= await StudentModel.aggregate([
+      {
+        $match: {
+          status: "Active",
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          preferedTeacherCount: { $sum: 1 },
+          preferedTeacherMaleCount: { $sum: { $cond: [{ $eq: ["$preferredTeacher", "Male"] }, 1, 0] } },
+          preferedTeacherFemaleCount: { $sum: { $cond: [{ $eq: ["$preferredTeacher", "Female"] }, 1, 0] } },
+        },
+      },
+    ]);
+     const preferedTeacherPercentage = preferedTeahcer[0].preferedTeacherCount;
+     const preferedTeacherMalePercentage = ((preferedTeahcer[0].preferedTeacherMaleCount/ preferedTeahcer[0].preferedTeacherCount)*100).toFixed(2);
+     const preferedTeacherFemalePercentage = ((preferedTeahcer[0].preferedTeacherFemaleCount/ preferedTeahcer[0].preferedTeacherCount)*100).toFixed(2);
 
+    return {preferedTeacherPercentage, preferedTeacherMalePercentage, preferedTeacherFemalePercentage};
+}

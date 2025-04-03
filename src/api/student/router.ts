@@ -38,6 +38,16 @@ const register = async (server: Server): Promise<void> => {
       },
     },
 
+    {
+      method: "GET",
+      path: "/preferedteacher",
+      options: {
+        handler: handler.getPreferedTeacher,
+        description: studentMessages.BYID,
+        tags: ["api", "evaluationlist"],
+      },
+    },
+    
     // {
     //   method: "GET",
     //   path: "/student",

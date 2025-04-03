@@ -2,7 +2,7 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodStudentSchema } from "../../models/student";
-import { createStudent, getAllStudentsRecords,getStudentRecordById } from "../../operations/student";
+import { createStudent, getAllStudentsRecords,getPreferedTeacherPercentage,getStudentRecordById } from "../../operations/student";
 import { EvaluationStatus } from "../../shared/enum";  
 import {  studentMessages } from "../../config/messages"
 import { notFound } from "@hapi/boom";
@@ -107,5 +107,10 @@ async getStudentRecordById(req: Request, h: ResponseToolkit) {
 
   return result;
 },
+
+async getPreferedTeacher(req: Request, h: ResponseToolkit){
+  return await getPreferedTeacherPercentage();
+  }
+
 }
  
