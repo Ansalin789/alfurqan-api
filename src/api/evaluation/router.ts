@@ -64,6 +64,16 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "evaluationlist"],
       },
     },
+
+    {
+      method: "GET",
+      path: "/teacherstatus",
+      options: {
+        handler: handler.getAssignedTeacherCount,
+        description: evaluationMessages.BYID,
+        tags: ["api", "evaluationlist"],
+      },
+    },
          
   ];
   server.route(routes);

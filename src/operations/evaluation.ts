@@ -179,7 +179,7 @@ newEvaluation.classStatus = payload.classStatus;
 newEvaluation.trialClassStatus = payload.trialClassStatus;
  newEvaluation.assignedTeacherId = teacherDetails.teacherId;
  newEvaluation.assignedTeacherEmail = teacherDetails.email;
-
+ newEvaluation.teacherStatus = newEvaluation.teacher.teacherName == "" ? "Assigned": "Not Assigned";
 const createEvaluation = await newEvaluation.save();
 console.log("createEvaluation>>>",createEvaluation)
 
@@ -520,4 +520,29 @@ export const getTotalTrialClassRequestCount = async() => {
   
   return evaluationStats;
   
+};
+
+export const getTeacherStatusCount = async() =>{
+  const evaluationStats = await EvaluationModel.aggregate([
+    {
+      $match: {
+        status: "Active",
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalClassCount: { $sum: 1 },
+        assignedTeacherCount: { $sum: { $cond: [{ $eq: ["$teacherStatus", "Assigned"] }, 1, 0] } },
+        notAssinedCount: { $sum: { $cond: [{ $eq: ["$teacherStatus", "Not Assigned"] }, 1, 0] } },
+      },
+    },
+  ]);
+   const assignedTeacherPercentage = ((evaluationStats[0].assignedTeacherCount/ evaluationStats[0].totalClassCount)*100).toFixed(2);
+   const notAssignedTeacherPercentage = ((evaluationStats[0].notAssinedCount/ evaluationStats[0].totalClassCount)*100).toFixed(2);
+   const total = evaluationStats[0].totalClassCount;
+
+  return {total, assignedTeacherPercentage, notAssignedTeacherPercentage};
+
 }
+

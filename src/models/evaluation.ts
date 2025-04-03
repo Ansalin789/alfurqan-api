@@ -240,15 +240,15 @@ academicCoachId: {
     },
     assignedTeacher:{
         type: String,
-        required: true
+        required: false
     },
     assignedTeacherId:{
         type: String,
-        required: true
+        required: false
     },
     assignedTeacherEmail:{
         type: String,
-        required: true
+        required: false
     },
     studentStatus: {
         type: String,
@@ -275,6 +275,10 @@ academicCoachId: {
       required: false
     },
     paymentStatus:{
+    type: String,
+    required: false
+    },
+    teacherStatus:{
     type: String,
     required: false
     },
@@ -397,6 +401,7 @@ export const zodEvaluationSchema = z.object({
     invoiceStatus: z.string().optional(),
     paymentLink: z.string().optional(),
     paymentStatus: z.string().optional(),
+    teacherStatus: z.string().optional(),
     status: z.string().optional(),
     createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
         message: commonMessages.INVALID_DATE_FORMAT,
