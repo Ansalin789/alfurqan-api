@@ -544,5 +544,53 @@ export const getTeacherStatusCount = async() =>{
 
   return {total, assignedTeacherPercentage, notAssignedTeacherPercentage};
 
-}
+};
 
+export const getPreferedTeacherPercentage = async() =>{
+    const preferedTeahcer= await EvaluationModel.aggregate([
+      {
+        $match: {
+          status: "Active",
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          preferedTeacherCount: { $sum: 1 },
+          preferedTeacherMaleCount: { $sum: { $cond: [{ $eq: ["$student.preferredTeacher", "Male"] }, 1, 0] } },
+          preferedTeacherFemaleCount: { $sum: { $cond: [{ $eq: ["$student.preferredTeacher", "Female"] }, 1, 0] } },
+        },
+      },
+    ]);
+     const preferedTeacherPercentage = preferedTeahcer[0].preferedTeacherCount;
+     const preferedTeacherMalePercentage = ((preferedTeahcer[0].preferedTeacherMaleCount/ preferedTeahcer[0].preferedTeacherCount)*100).toFixed(2);
+     const preferedTeacherFemalePercentage = ((preferedTeahcer[0].preferedTeacherFemaleCount/ preferedTeahcer[0].preferedTeacherCount)*100).toFixed(2);
+
+    return {preferedTeacherPercentage, preferedTeacherMalePercentage, preferedTeacherFemalePercentage};
+};
+
+export const getStudentCourseCount  = async() =>{
+  const studentCourseCount= await EvaluationModel.aggregate([
+    {
+      $match: {
+        status: "Active",
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalCount: { $sum: 1 },
+        quranCount: { $sum: { $cond: [{ $eq: ["$student.learningInterest", "Quran"] }, 1, 0] } },
+        arabicCount: { $sum: { $cond: [{ $eq: ["$student.learningInterest", "Islamic Studies"] }, 1, 0] } },
+        islamicCount: { $sum: { $cond: [{ $eq: ["$student.learningInterest", "Arabic"] }, 1, 0] } },
+
+      },
+    },
+  ]);
+   const totalPercentage = studentCourseCount[0].totalCount;
+   const quranPercentage = ((studentCourseCount[0].quranCount/ studentCourseCount[0].totalCount)*100).toFixed(2);
+   const arabicPercentage = ((studentCourseCount[0].arabicCount/ studentCourseCount[0].totalCount)*100).toFixed(2);
+   const islamicPercentage = ((studentCourseCount[0].islamicCount/ studentCourseCount[0].totalCount)*100).toFixed(2);
+
+  return {totalPercentage, quranPercentage, arabicPercentage, islamicPercentage};
+}

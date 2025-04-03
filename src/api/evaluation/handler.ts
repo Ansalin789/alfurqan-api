@@ -1,7 +1,7 @@
 import { ResponseToolkit,Request } from "@hapi/hapi";
 import  { zodEvaluationSchema } from "../../models/evaluation";
 import { z } from "zod";
-import { createEvaluationRecord,getAllEvaluationRecords,getEvaluationRecordById, getTeacherStatusCount, getTotalTrialClassRequestCount, updateStudentEvaluation, updateStudentInvoice} from "../../operations/evaluation";
+import { createEvaluationRecord,getAllEvaluationRecords,getEvaluationRecordById, getPreferedTeacherPercentage, getStudentCourseCount, getTeacherStatusCount, getTotalTrialClassRequestCount, updateStudentEvaluation, updateStudentInvoice} from "../../operations/evaluation";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { evaluationMessages } from "../../config/messages";
 import { isNil } from "lodash";
@@ -277,10 +277,18 @@ export default {
     return await getTotalTrialClassRequestCount();
   },
   
-
   async getAssignedTeacherCount(req: Request, h: ResponseToolkit){
   return await getTeacherStatusCount();
-  }
+  },
+
+  async getPreferedTeacher(req: Request, h: ResponseToolkit){
+    return await getPreferedTeacherPercentage();
+    },
+
+    
+  async getStudentCourse(req: Request, h: ResponseToolkit){
+    return await getStudentCourseCount();
+    }
 
   }
 

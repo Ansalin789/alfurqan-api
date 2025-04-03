@@ -37,26 +37,6 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "studentlist"],
       },
     },
-
-    {
-      method: "GET",
-      path: "/preferedteacher",
-      options: {
-        handler: handler.getPreferedTeacher,
-        description: studentMessages.BYID,
-        tags: ["api", "evaluationlist"],
-      },
-    },
-
-    {
-      method: "GET",
-      path: "/studentcourse",
-      options: {
-        handler: handler.getStudentCourse,
-        description: studentMessages.BYID,
-        tags: ["api", "evaluationlist"],
-      },
-    },
     
     // {
     //   method: "GET",
