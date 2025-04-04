@@ -593,4 +593,43 @@ export const getStudentCourseCount  = async() =>{
    const islamicPercentage = ((studentCourseCount[0].islamicCount/ studentCourseCount[0].totalCount)*100).toFixed(2);
 
   return {totalPercentage, quranPercentage, arabicPercentage, islamicPercentage};
+};
+
+export const getCountriesCount = async() =>{
+
+  const studentCountByCountry = await StudentModel.aggregate([
+    {
+      $match: {
+        status: "Active", // Optional filter
+      },
+    },
+    {
+      $group: {
+        _id: "$country",
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $sort: { count: -1 }, // Optional: sort descending
+    },
+  ]);
+  
+  const evaluationCount = await EvaluationModel.countDocuments({
+    status: "Active",
+  }).exec();
+  
+  const results: any[] = [];
+  
+  for (const studentCountry of studentCountByCountry) {
+    let studentCountryPercentage = ((studentCountry.count / evaluationCount) * 100).toFixed(2);
+    results.push({
+      country: studentCountry._id,
+      count: studentCountry.count,
+      percentage: parseFloat(studentCountryPercentage),
+    });
+  }
+  
+  
+  return { evaluationCount, studentCountByCountry: results };
+
 }

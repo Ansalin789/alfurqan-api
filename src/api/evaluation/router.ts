@@ -94,6 +94,16 @@ const register = async (server: Server): Promise<void> => {
             tags: ["api", "evaluationlist"],
           },
         },
+
+        {
+          method: "GET",
+          path: "/countiescount",
+          options: {
+            handler: handler.getCountries,
+            description: evaluationMessages.BYID,
+            tags: ["api", "evaluationlist"],
+          },
+        },
   ];
   server.route(routes);
 };
