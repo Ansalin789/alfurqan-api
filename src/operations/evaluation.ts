@@ -597,7 +597,7 @@ export const getStudentCourseCount  = async() =>{
 
 export const getCountriesCount = async() =>{
 
-  const studentCountByCountry = await StudentModel.aggregate([
+  const studentCountByCountry = await EvaluationModel.aggregate([
     {
       $match: {
         status: "Active", // Optional filter
@@ -605,7 +605,7 @@ export const getCountriesCount = async() =>{
     },
     {
       $group: {
-        _id: "$country",
+        _id: "$student.studentCountry",
         count: { $sum: 1 },
       },
     },
@@ -632,4 +632,28 @@ export const getCountriesCount = async() =>{
   
   return { evaluationCount, studentCountByCountry: results };
 
-}
+};
+
+export const getTrialbyTeacherCount = async()=>{
+
+  const studentCountByCountry = await EvaluationModel.aggregate([
+    {
+      $match: {
+        status: "Active", // Optional filter
+      },
+    },
+    {
+      $group: {
+        _id: "$teacher.teacherName",
+        trialCount: { $sum: 1 },
+        joined: { $sum: { $cond: [{ $eq: ["$trialClassStatus", "PENDING"] }, 1, 0] } },
+      },
+    },
+    {
+      $sort: { count: -1 }, // Optional: sort descending
+    },
+  ]);
+  
+  return  studentCountByCountry ;
+  
+};

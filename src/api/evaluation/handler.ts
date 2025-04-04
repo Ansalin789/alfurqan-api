@@ -1,7 +1,7 @@
 import { ResponseToolkit,Request } from "@hapi/hapi";
 import  { zodEvaluationSchema } from "../../models/evaluation";
 import { z } from "zod";
-import { createEvaluationRecord,getAllEvaluationRecords,getCountriesCount,getEvaluationRecordById, getPreferedTeacherPercentage, getStudentCourseCount, getTeacherStatusCount, getTotalTrialClassRequestCount, updateStudentEvaluation, updateStudentInvoice} from "../../operations/evaluation";
+import { createEvaluationRecord,getAllEvaluationRecords,getCountriesCount,getEvaluationRecordById, getPreferedTeacherPercentage, getStudentCourseCount, getTeacherStatusCount, getTotalTrialClassRequestCount, getTrialbyTeacherCount, updateStudentEvaluation, updateStudentInvoice} from "../../operations/evaluation";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { evaluationMessages } from "../../config/messages";
 import { isNil } from "lodash";
@@ -291,8 +291,13 @@ export default {
 
     async getCountries(req: Request, h: ResponseToolkit){
       return await getCountriesCount();
+    },
+
+    async getTrialbyTeacher(req: Request, h: ResponseToolkit){
+      return await getTrialbyTeacherCount();
 
     }
+
 
   }
 
