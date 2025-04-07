@@ -657,3 +657,65 @@ export const getTrialbyTeacherCount = async()=>{
   return  studentCountByCountry ;
   
 };
+
+
+export const getTrialClassCount = async (
+  params: GetAllRecordsParams
+): Promise<{ totalCount: number; evaluation: IEvaluation[] }> => {
+  const {trialClassStatus, searchText, sortBy, sortOrder, offset, limit, filterValues } = params;
+
+  const query: any = {};
+
+  if (searchText) {
+    query.$or = [
+      { name: { $regex: searchText, $options: "i" } },
+      { email: { $regex: searchText, $options: "i" } },
+    ];
+  }
+
+  if(trialClassStatus){
+    query.trialClassStatus = { $in: trialClassStatus };
+  }
+
+
+  if (filterValues) {
+    if (filterValues.course) {
+      query.course = { $in: filterValues.course };
+    }
+    if (filterValues.country) {
+      query.country = { $in: filterValues.country };
+    }
+    if (filterValues.teacher) {
+      query.teacher = { $in: filterValues.teacher };
+    }
+    if (filterValues.status) {
+      query.status = { $in: filterValues.status };
+    }
+  }
+
+  const sortOptions: any = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
+
+  const evaluationQuery = EvaluationModel.find(query).sort(sortOptions);
+
+  if (!isNil(offset) && !isNil(limit)) {
+    const skip = Math.max(
+      0,
+      ((Number(offset) ?? Number(commonMessages.OFFSET)) - 1) *
+      (Number(limit) ?? Number(commonMessages.LIMIT))
+    );
+    evaluationQuery
+      .skip(skip)
+      .limit(Number(limit) ?? Number(commonMessages.LIMIT));
+  }
+
+  const [evaluation, totalCount] = await Promise.all([
+    evaluationQuery.exec(),
+    EvaluationModel.countDocuments(query).exec(),
+  ]);
+
+  AppLogger.info(evaluationMessages.GET_ALL_LIST_SUCCESS, {
+    totalCount: totalCount,
+  });
+
+  return { totalCount, evaluation };
+};

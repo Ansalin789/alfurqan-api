@@ -112,6 +112,15 @@ const register = async (server: Server): Promise<void> => {
             tags: ["api", "evaluationlist"],
           },
         },
+        {
+          method: "GET",
+          path: "/alltrialclass",
+          options: {
+            handler: handler.getTrialClass,
+            description: evaluationMessages.BYID,
+            tags: ["api", "evaluationlist"],
+          },
+        },
   ];
   server.route(routes);
 };

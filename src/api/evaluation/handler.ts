@@ -1,7 +1,7 @@
 import { ResponseToolkit,Request } from "@hapi/hapi";
 import  { zodEvaluationSchema } from "../../models/evaluation";
 import { z } from "zod";
-import { createEvaluationRecord,getAllEvaluationRecords,getCountriesCount,getEvaluationRecordById, getPreferedTeacherPercentage, getStudentCourseCount, getTeacherStatusCount, getTotalTrialClassRequestCount, getTrialbyTeacherCount, updateStudentEvaluation, updateStudentInvoice} from "../../operations/evaluation";
+import { createEvaluationRecord,getAllEvaluationRecords,getCountriesCount,getEvaluationRecordById, getPreferedTeacherPercentage, getStudentCourseCount, getTeacherStatusCount, getTotalTrialClassRequestCount, getTrialbyTeacherCount, getTrialClassCount, updateStudentEvaluation, updateStudentInvoice} from "../../operations/evaluation";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { evaluationMessages } from "../../config/messages";
 import { isNil } from "lodash";
@@ -81,6 +81,7 @@ const createInputValidation = z.object({
       sortOrder: true,
       offset: true,
       limit: true,
+      trialClassStatus: true,
       filterValues: true
     }),
   });
@@ -295,10 +296,19 @@ export default {
 
     async getTrialbyTeacher(req: Request, h: ResponseToolkit){
       return await getTrialbyTeacherCount();
+    },
+
+    async getTrialClass(req: Request, h: ResponseToolkit){
+
+      const { query } = getEvaluationListInputValidation.parse({
+        query: {
+          ...req.query,
+          filterValues: req.query?.filterValues ? JSON.parse(req.query.filterValues) : {},
+        },
+      });
+      return getTrialClassCount(query);
 
     }
-
-
   }
 
 
