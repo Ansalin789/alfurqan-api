@@ -194,3 +194,25 @@ const studentDetails = student as IAlStudents;
    return  alfStudentCount ;
    
  };
+
+
+ export const getStudentPercentage = async() =>{
+     const studentTotalCount= await AlStudentsModel.aggregate([
+      
+       {
+        $group: {
+          _id: null,
+          studentCount: { $sum: 1 },
+          studentMaleCount: { $sum: { $cond: [{ $eq: ["$student.gender", "Male"] }, 1, 0] } },
+          studentFemaleCount: { $sum: { $cond: [{ $eq: ["$student.gender", "Female"] }, 1, 0] } },
+        },
+      },
+      ]);
+      const studentPercentage = studentTotalCount[0].studentCount;
+      const studentMalePercentage = ((studentTotalCount[0].studentMaleCount/ studentTotalCount[0].studentCount)*100).toFixed(2);
+      const studentFemalePercentage = ((studentTotalCount[0].studentFemaleCount/ studentTotalCount[0].studentCount)*100).toFixed(2);
+      
+      return {studentPercentage, studentMalePercentage, studentFemalePercentage};
+ };
+
+

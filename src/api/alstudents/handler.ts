@@ -2,7 +2,7 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
-import { createAlStudent, getAllalstudentsList, getalstudentsById, getStudentRecordCount} from "../../operations/alstudents";
+import { createAlStudent, getAllalstudentsList, getalstudentsById, getStudentPercentage, getStudentRecordCount} from "../../operations/alstudents";
 import { alstudentsMessages } from "../../config/messages";
 import { isNil } from "lodash";
 import { zodAlStudentSchema } from "../../models/alstudents";
@@ -129,7 +129,13 @@ const handler = {
     
           return getStudentRecordCount();
     
-     }
+     },
+
+     async getStudentGenderCount(req: Request, h: ResponseToolkit){
+    
+      return getStudentPercentage();
+
+ }
 };
 
 
