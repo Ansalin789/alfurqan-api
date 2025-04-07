@@ -5,20 +5,7 @@ import handler from "./handler";
 const register = async (server: Server): Promise<void> => {
     // Register all routes for this unit
     const routes: ServerRoute[] = [
-    
-      // {
-      //   method: "POST",
-      //   path: "/classschedule",
-      //   options: {
-      //     handler: handler.classShedule,
-      //     description: evaluationMessages.CREATE,
-      //     tags: ["api", "class"],
-      //     // auth: {
-      //     //   strategies: ["jwt"],
-      //     // },
-      //   },
-      // }, 
-      
+     
       {
         method: "PUT",
         path: "/createclassschedule/{studentId}",
@@ -26,9 +13,6 @@ const register = async (server: Server): Promise<void> => {
          handler: handler.createandUpdateSchedule,
          description: evaluationMessages.UPDATE,
          tags: ["api", "evaluation"],
-          // auth: {
-          //   strategies: ["jwt"],
-          // },
       },
       },
       
@@ -39,9 +23,6 @@ const register = async (server: Server): Promise<void> => {
          handler: handler.getAllClassShedule,
          description: ClassSchedulesMessages.LIST,
          tags: ["api", "classShedule"],
-        //  auth: {
-        //   strategies: ["jwt"],
-        // },
       },
       },
 
@@ -52,13 +33,10 @@ const register = async (server: Server): Promise<void> => {
          handler: handler.getAllClassSheduleById,
          description: ClassSchedulesMessages.BYID,
          tags: ["api", "classShedule"],
-         auth: {
-          strategies: ["jwt"],
-        },
       },
       },
 
- {
+      {
         method: "GET",
         path: "/classShedule/students",
         options: {
@@ -81,11 +59,12 @@ const register = async (server: Server): Promise<void> => {
       {
         method: "GET",
         path: "/teacher-student-count",
+        options: {
         handler: handler.getTeacherStudentCount,
+        description: ClassSchedulesMessages.LIST,
+        tags: ["api", "classShedule"],
+        }
       },
-
-
-      
       {
         method: "PUT",
         path: "/classShedule/{classSheduleId}",

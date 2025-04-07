@@ -16,7 +16,6 @@ const register = async (server: Server): Promise<void> => {
           },
         },
 
-
      {
            method: "GET",
            path: "/alstudents/{alstudentsId}",
@@ -25,7 +24,17 @@ const register = async (server: Server): Promise<void> => {
              description: alstudentsMessages.BYID,
              tags: ["api", "alstudents"],
            },
-         },   
+         },  
+         
+         {
+          method: "GET",
+          path: "/alstudents/studentsrecordcount",
+          options: {
+            handler: handler.getAllStudentCount,
+            description: alstudentsMessages.BYID,
+            tags: ["api", "alstudents"],
+          },
+        },   
 
   ];
   server.route(routes);

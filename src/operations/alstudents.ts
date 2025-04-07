@@ -12,7 +12,7 @@ import  ClassScheduleModel  from "../models/classShedule"
 export const getAllalstudentsList = async (
   params: GetAllRecordsParams
 ): Promise<{ totalCount: number; students: IAlStudents[] }> => {
-  const { searchText, sortBy, sortOrder, offset, limit, filterValues } = params;
+  const { studentId, searchText, sortBy, sortOrder, offset, limit, filterValues } = params;
 
   // Construct query object based on filters
   const query: any = {};
@@ -24,6 +24,10 @@ export const getAllalstudentsList = async (
       { email: { $regex: searchText, $options: "i" } }, // Search by email (if applicable)
     ];
   }
+   
+    if (studentId) {
+      query["student.studentId"] = Array.isArray(studentId) ? { $in: studentId } : studentId;
+    }
 
   // Add filters to the query
   if (filterValues) {
@@ -64,7 +68,6 @@ export const getAllalstudentsList = async (
     studentQuery.exec(), // Fetch students with pagination
     AlStudentsModel.countDocuments(query).exec(), // Count total records
   ]);
-  //console.log("students>>>>>>>>", students);
 
 
 // Add classSchedule count to each student
@@ -80,7 +83,6 @@ const studentsWithClassScheduleCount = await Promise.all(
     };
   })
 );
-console.log("studentsWithClassScheduleCount>>>>",studentsWithClassScheduleCount);
 
   // Log successful retrieval
   AppLogger.info(alstudentsMessages.GET_ALL_LIST_SUCCESS, {
@@ -166,4 +168,29 @@ const studentDetails = student as IAlStudents;
    const savedUser = await newStudent.save();
 
    return savedUser
+ };
+
+
+ 
+
+ export const getStudentRecordCount = async()=>{
+ 
+   const alfStudentCount= await AlStudentsModel.aggregate([
+     {
+       $group: {
+         _id: null,
+         studentTotalCount: { $sum: 1 },
+         activeStudent: { $sum: { $cond: [{ $eq: ["$status", "Active"] }, 1, 0] } },
+         inActiveStudent: { $sum: { $cond: [{ $eq: ["$status", "InActive"] }, 1, 0] } },
+         onHoldStudent: { $sum: { $cond: [{ $eq: ["$studentStatus", "HOLD"] }, 1, 0] } },
+         studentOnBreak: { $sum: { $cond: [{ $eq: ["$studentStatus", "BREAKING"] }, 1, 0] } } 
+       },
+     },
+     {
+       $sort: { count: -1 }, // Optional: sort descending
+     },
+   ]);
+   
+   return  alfStudentCount ;
+   
  };
