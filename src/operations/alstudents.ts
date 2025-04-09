@@ -216,3 +216,41 @@ const studentDetails = student as IAlStudents;
  };
 
 
+export const getStudentCountriesCount = async() =>{
+
+  const studentCountByCountry = await AlStudentsModel.aggregate([
+    {
+      $match: {
+        status: "Active", // Optional filter
+      },
+    },
+    {
+      $group: {
+        _id: "$student.country",
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $sort: { count: -1 }, // Optional: sort descending
+    },
+  ]);
+  
+  const studentCount = await AlStudentsModel.countDocuments({
+    status: "Active",
+  }).exec();
+  
+  const results: any[] = [];
+  
+  for (const studentCountry of studentCountByCountry) {
+    let studentCountryPercentage = ((studentCountry.count / studentCount) * 100).toFixed(2);
+    results.push({
+      country: studentCountry._id,
+      count: studentCountry.count,
+      percentage: parseFloat(studentCountryPercentage),
+    });
+  }
+  
+  
+  return { studentCount, studentCountByCountry: results };
+
+};

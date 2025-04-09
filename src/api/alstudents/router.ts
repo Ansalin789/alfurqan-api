@@ -46,6 +46,16 @@ const register = async (server: Server): Promise<void> => {
           },
         }, 
 
+        {
+          method: "GET",
+          path: "/alstudents/studentscountrycount",
+          options: {
+            handler: handler.getStudentCountryCount,
+            description: alstudentsMessages.BYID,
+            tags: ["api", "alstudents"],
+          },
+        }, 
+
   ];
   server.route(routes);
 };
