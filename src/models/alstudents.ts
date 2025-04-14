@@ -23,6 +23,10 @@ student: {
         type: String,
         required: true,
     },
+    courseId: {
+        type: String,
+        required: false,
+    },
     package:
     {
         type: String,

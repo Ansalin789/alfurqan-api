@@ -11,6 +11,8 @@ import { Client } from '@microsoft/microsoft-graph-client';
 import { ClientSecretCredential } from "@azure/identity";
 import moment from "moment";
 import classShedule from "../models/classShedule";
+import { badRequest } from "@hapi/boom";
+import Evaluation from "../models/evaluation";
 
 /**
  * Creates a new candidate record in the database.
@@ -377,12 +379,13 @@ const convertTimeToMinutes = (timeStr: string): number => {
 // Function implementation:
 export const getClassesForStudent = async (
   params: GetAllRecordsParams
-): Promise<{ totalCount: number; classSchedule: IClassSchedule[] }> => {
+): Promise<{ totalCount: number; classSchedule: IClassSchedule[] } | { error : any } > => {
   const { studentId, sortBy = "_id", sortOrder = "asc", offset = 1, limit = 10 } = params;
 
   if (!studentId) {
-    throw new Error("Student ID is required");
-  }
+ return {
+            error: badRequest('Student id is Required'),
+        };  }
   // Query filtering for studentId
   const query: any = { "student.studentId": studentId };
   console.log(">>",query)
@@ -679,5 +682,77 @@ export const updateteacherreschedule = async (
 };
 
 
+export const getStudentClassCount  = async(studentId: string) =>{
+
+  const studentClassCount= await ClassScheduleModel.aggregate([
+    {
+      $match: {
+        status: "Active",
+        "student.studentId": studentId
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalClass: { $sum: 1 },
+      },
+    },
+  ]);
 
 
+  const studentLevel= await ClassScheduleModel.aggregate([
+    {
+      $match: {
+        status: "Active",
+        "student.studentId": studentId
+      },
+    },
+    {
+      $group: {
+        _id: "$course.level",
+        level: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const studentAttendanceCount= await ClassScheduleModel.aggregate([
+    {
+      $match: {
+        status: "Active",
+        "student.studentId": studentId
+
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalClass: { $sum: 1 },
+        Attendance: { $sum: { $cond: [{ $eq: ["$scheduleStatus", "Completed"] }, 1, 0] } },
+      },
+    },
+  ]);
+
+  const studentDurationCount= await ClassScheduleModel.aggregate([
+    {
+      $match: {
+        status: "Active",
+        "student.studentId": studentId
+
+      },
+    },
+    {
+      $group: {
+        _id: "totalHourse",
+        totalDuration: { $sum: 1 },
+      },
+    },
+  ]);
+ 
+
+   const totalClasses = studentClassCount[0].totalClass;
+   const totalAttendance = ((studentAttendanceCount[0].Attendance/studentAttendanceCount[0].totalClass)*100).toFixed(2);
+   const level = (studentLevel[0].level).toFixed(2);
+   const totalduration = (studentDurationCount[0].totalDuration).toFixed(2);
+
+  return {totalClasses, totalAttendance, level, totalduration};
+};
