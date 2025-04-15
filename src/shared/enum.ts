@@ -76,6 +76,7 @@ export interface GetAllRecordsParams {
   role?: string;
   classDay?: any;
   trialClassStatus?: any;
+  userid?: any;
   filterValues?: {
     studentId?: string; // This is important if you're passing the studentId here
     course?: string;

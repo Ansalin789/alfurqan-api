@@ -1,7 +1,11 @@
 import { ResponseToolkit,Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodAlStudentInvoiceSchemaValidation } from "../../shared/zod_schema_validation";
-import { getAllStudetnInVoiceList } from "../../operations/invoice";
+import { getAllStudetnInVoiceList, getStudetnInVoiceDetailsById } from "../../operations/invoice";
+import { isNil } from "lodash";
+import { getPaymentHistory } from "../../operations/payment_history";
+import { notFound } from "@hapi/boom";
+import { evaluationMessages } from "../../config/messages";
 
 
 
@@ -25,8 +29,15 @@ getAllStudetnInVoiceList(req: Request, h: ResponseToolkit) {
     });
     return getAllStudetnInVoiceList(query);
   },
-  
+
+    async getStudetnInVoiceDetails(req: Request, h: ResponseToolkit) {
+      const result = await getStudetnInVoiceDetailsById(String(req.params.id));
+    
+      if (isNil(result)) {
+        return notFound(evaluationMessages.EVALUATIONS_NOT_FOUND);
+      }
+    
+      return result;
+    },
+
   }
-
-
-

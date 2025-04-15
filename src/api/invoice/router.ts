@@ -16,6 +16,15 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "evaluationlist"],
       },
     },
+    {
+      method: "GET",
+      path: "/studentinvoice/{id}",
+      options: {
+        handler: handler.getStudetnInVoiceDetails,
+        tags: ["api", "evaluationlist"],
+      },
+    },
+  
          
   ];
   server.route(routes);

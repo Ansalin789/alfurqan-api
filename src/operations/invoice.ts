@@ -4,6 +4,7 @@ import StudentInvoiceModel from "../models/stinvoice"
 import { isNil } from "lodash";
 import { commonMessages, evaluationMessages } from "../config/messages";
 import AppLogger from "../helpers/logging";
+import { Types } from "mongoose";
 
 /**
  * Retrieves a list of all evaluation records with filters, sorting, and pagination.
@@ -42,3 +43,14 @@ export const getAllStudetnInVoiceList = async (
   console.log(invoice);
     return { totalCount, invoice };
   };
+
+  export const getStudetnInVoiceDetailsById = async (
+    id: string
+  ): Promise<IStudentInvoice | null> => {
+    return StudentInvoiceModel.findOne({
+      "student.studentId": new Types.ObjectId(id),
+    }).lean();
+  };
+
+
+  
