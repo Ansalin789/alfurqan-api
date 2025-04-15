@@ -51,7 +51,6 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "users"],
       },
     },
-
     {
       method: "GET",
       path: "/teacher/gendercount",
@@ -61,6 +60,16 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "users"],
       },
     },
+    {
+      method: "GET",
+      path: "/otheremployees",
+      options: {
+        handler: handler.getOtherEmployees,
+        description: userMessages.LIST,
+        tags: ["api", "users"],
+      },
+    },
+
   ];
   server.route(routes);
 };

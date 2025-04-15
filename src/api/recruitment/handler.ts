@@ -1,7 +1,7 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodRecruitmentSchema } from "../../models/recruitment";
-import { createRecruitment, getAllApplicantsRecords, getApplicantRecordById, updateApplicantByAdminId, updateApplicantById } from "../../operations/recruitment";
+import { createRecruitment, getAllApplicantsRecords, getApplicantRecordById, getTeacherCountriesCountDetails, updateApplicantByAdminId, updateApplicantById } from "../../operations/recruitment";
 import { Readable } from "stream";
 import * as Stream from "stream";
 import { zodGetAllApplicantsRecordsQuerySchema, zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
@@ -184,9 +184,11 @@ export default{
       }
   
       return result;
+    },
+
+  async getTeacherCountriesCount(req: Request, h: ResponseToolkit){
+      return await getTeacherCountriesCountDetails();
     }
-
-
 
 };
 

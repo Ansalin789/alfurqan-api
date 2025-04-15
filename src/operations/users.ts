@@ -230,3 +230,15 @@ export const getTeacherGenderCountDetails = async() => {
   return {teacherPercentage, teacherMalePercentage, teacherFemalePercentage};
 
 }
+
+
+
+export const getOtherEmployeesDetails = async (): Promise<{ users: IUser[]; totalCount: number }> => {
+  const users = await UserModel.find({
+    role: { $ne: "TEACHER" },
+  }).exec();
+
+  const totalCount = users.length;
+
+  return { users, totalCount };
+};
