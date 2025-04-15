@@ -178,3 +178,55 @@ export const bulkDeleteUsers = async (
 
   return updatedUsers as (Omit<IUser, "password"> | null)[];
 };
+
+export const getTeacherCardCount = async() => {
+
+    const teacherCount= await UserModel.aggregate([
+      {
+        $match: {
+          role: "TEACHER",
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          teacherTotalCount: { $sum: 1 },
+          activeTeacher: { $sum: { $cond: [{ $eq: ["$status", "Active"] }, 1, 0] } },
+          inActiveTeacher: { $sum: { $cond: [{ $eq: ["$status", "InActive"] }, 1, 0] } },
+          leaveOnTeacher: { $sum: { $cond: [{ $eq: ["$status", "HOLD"] }, 1, 0] } },
+        },
+      },
+      {
+        $sort: { count: -1 }, // Optional: sort descending
+      },
+    ]);
+    
+    return  teacherCount ;
+     
+};
+export const getTeacherGenderCountDetails = async() => {
+  const teacherCount= await UserModel.aggregate([
+    {
+      $match: {
+        role: "TEACHER",
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        teacherTotalCount: { $sum: 1 },
+        maleTeacher: { $sum: { $cond: [{ $eq: ["$gender", "Male"] }, 1, 0] } },
+        femaleTeacher: { $sum: { $cond: [{ $eq: ["$gender", "Female"] }, 1, 0] } },
+      },
+    },
+    {
+      $sort: { count: -1 }, // Optional: sort descending
+    },
+  ]);
+  const teacherPercentage = teacherCount[0].teacherTotalCount;
+  const teacherMalePercentage = ((teacherCount[0].maleTeacher/ teacherCount[0].teacherTotalCount)*100).toFixed(2);
+  const teacherFemalePercentage = ((teacherCount[0].femaleTeacher/ teacherCount[0].teacherTotalCount)*100).toFixed(2);
+  
+  return {teacherPercentage, teacherMalePercentage, teacherFemalePercentage};
+
+}

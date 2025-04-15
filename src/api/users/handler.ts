@@ -16,6 +16,8 @@ import {
   createUser,
   deleteUserById,
   getAllUserRecords,
+  getTeacherCardCount,
+  getTeacherGenderCountDetails,
   getUserRecordById,
   updateUser,
 } from "../../operations/users";
@@ -221,4 +223,13 @@ const updateInputValidation = z.object({
 
     return result;
   },
+
+   async getTeacherCount(req: Request, h: ResponseToolkit){
+      return await getTeacherCardCount();
+    },
+
+    async getTeacherGenderCount(req: Request, h: ResponseToolkit){
+      return await getTeacherGenderCountDetails();
+    }
+
 };
