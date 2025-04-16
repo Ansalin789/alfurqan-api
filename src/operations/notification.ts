@@ -1,18 +1,25 @@
 // services/notification.service.ts
-import NotificationModel from "../models/notification"
 import { INotification } from "../../types/models.types";
+import notification from "../models/notification";
+
+
+//Create Notification //
 
 export const createNotification = async (data: INotification[]) => {
-  try {
-    const newNotification = await NotificationModel.create(data);
-    return newNotification;
-  } catch (error) {
-    console.error("Error creating notification:", error);
-    throw new Error("Failed to create notification");
-  }
+ 
 };
 
 
-export const getallnotification = async () =>{
+/**
+ * Retrieves all meeting records with optional filters.
+ */
+export const getAllNotification = async (): Promise<{ totalCount: number; notificationlist: INotification[] }> => {
+  try {
+    const notificationlist = await notification.find().sort({ createdDate: -1 });
+    const totalCount = await notification.countDocuments();
 
+    return { totalCount, notificationlist };
+  } catch (error) {
+    throw new Error("Error fetching meetings: " + error);
+  }
 };
