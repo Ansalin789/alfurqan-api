@@ -204,6 +204,7 @@ export const getTeacherCardCount = async() => {
     return  teacherCount ;
      
 };
+
 export const getTeacherGenderCountDetails = async() => {
   const teacherCount= await UserModel.aggregate([
     {
@@ -283,3 +284,29 @@ export const getOtherEmpCardCount = async() =>{
   return { totalOtherEmpCount, otherEmpCount: results };
 
 };
+export const getOtherEmpGender = async() => {
+  const otherEmpCount= await UserModel.aggregate([
+    {
+      $match: {
+        role: { $ne: "TEACHER" },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        otherEmpTotalCount: { $sum: 1 },
+        maleEmployee: { $sum: { $cond: [{ $eq: ["$gender", "Male"] }, 1, 0] } },
+        femaleEmployee: { $sum: { $cond: [{ $eq: ["$gender", "Female"] }, 1, 0] } },
+      },
+    },
+    {
+      $sort: { count: -1 }, // Optional: sort descending
+    },
+  ]);
+  const employeePercentage = otherEmpCount[0].otherEmpTotalCount;
+  const employeeMalePercentage = ((otherEmpCount[0].maleEmployee/ otherEmpCount[0].otherEmpTotalCount)*100).toFixed(2);
+  const employeeFemalePercentage = ((otherEmpCount[0].femaleEmployee/ otherEmpCount[0].otherEmpTotalCount)*100).toFixed(2);
+  
+  return {employeePercentage, employeeMalePercentage, employeeFemalePercentage};
+
+}

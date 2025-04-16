@@ -80,6 +80,16 @@ const register = async (server: Server): Promise<void> => {
       },
     },
 
+    {
+      method: "GET",
+      path: "/otheremp/gendercount",
+      options: {
+        handler: handler.getOhterEmpGenderCount,
+        description: userMessages.LIST,
+        tags: ["api", "users"],
+      },
+    },
+
   ];
   server.route(routes);
 };
