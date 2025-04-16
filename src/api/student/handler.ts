@@ -2,7 +2,7 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodStudentSchema } from "../../models/student";
-import { createStudent, getAllStudentsRecords,getStudentRecordById } from "../../operations/student";
+import { createStudent, getAllStudentsRecords,getAllStudentVisitor,getStudentRecordById, StudentFilter } from "../../operations/student";
 import { EvaluationStatus } from "../../shared/enum";  
 import {  studentMessages } from "../../config/messages"
 import { notFound } from "@hapi/boom";
@@ -108,7 +108,27 @@ async getStudentRecordById(req: Request, h: ResponseToolkit) {
   return result;
 },
 
+async getStudentVisitor(req: Request, h: ResponseToolkit) {
+  const { query } = getStudentsListInputValidation.parse({
+    query: {
+      ...req.query,
+      filterValues: req.query?.filterValues
+        ? JSON.parse(req.query.filterValues as string)
+        : {},
+    },
+  });
 
+  const finalQuery: StudentFilter = {
+    ...query,
+    offset: query.offset !== undefined && query.offset !== null ? String(query.offset) : null,
+    limit: query.limit !== undefined && query.limit !== null ? String(query.limit) : null,
+    id: query.studentId, // or however you're mapping this
+    status: query.filterValues?.status,
+  };
+  
+
+  return await getAllStudentVisitor (finalQuery); // Assuming this is your DB call
+}
 
 
 }

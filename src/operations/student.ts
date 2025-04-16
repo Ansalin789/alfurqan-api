@@ -16,13 +16,17 @@ import { Types } from "mongoose";
 
 
 
-export interface StudentFilter {
-  id(id: any): string;
-  status: string;
-  country?: string;
-  course?: string;
-  teacher?: string;
-}
+
+  export interface StudentFilter {
+    id?: string;
+    status?: string;
+    country?: string;
+    course?: string;
+    teacher?: string;
+    offset?: string | null;  // added offset
+    limit?: string | null;   // added limit
+  }
+
 
 /**
  * Creates a new user.
@@ -368,5 +372,70 @@ if (!isNil(filters.id)) {
 };
 
 
+export const getAllStudentVisitor = async (
+  filters: StudentFilter
+): Promise<Record<string, number>> => {
+  const match: any = {};
 
+  // Apply filters
+  if (!isNil(filters.teacher)) {
+    match.teacher = filters.teacher;
+  }
+
+  if (!isNil(filters.course)) {
+    match.course = filters.course;
+  }
+
+  if (!isNil(filters.country)) {
+    match.country = filters.country;
+  }
+
+  if (!isNil(filters.id)) {
+    match._id = new Types.ObjectId(String(filters.id));
+  }
+
+  const result = await StudentModel.aggregate([
+    { $match: match },
+    {
+      $group: {
+        _id: "$referralSource",
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  // Initialize all known sources with 0
+  const stats = {
+    Friend: 0,
+    SocialMedia: 0,
+    Email: 0,
+    Google: 0,
+    Other: 0,
+  };
+
+  // Fill in actual counts
+  result.forEach((item) => {
+    const key = item._id?.replace(/\s+/g, '') ?? 'Other';
+    switch (key.toLowerCase()) {
+      case 'friend':
+        stats.Friend += item.count;
+        break;
+      case 'socialmedia':
+        stats.SocialMedia += item.count;
+        break;
+      case 'email':
+      case 'e-mail':
+        stats.Email += item.count;
+        break;
+        case 'google':
+        stats.Google += item.count;
+        break;
+      default:
+        stats.Other += item.count;
+        break;
+    }
+  });
+  console.log("Referral Source Stats:", stats);
+  return stats;
+};
 
