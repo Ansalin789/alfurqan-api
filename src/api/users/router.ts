@@ -70,6 +70,16 @@ const register = async (server: Server): Promise<void> => {
       },
     },
 
+    {
+      method: "GET",
+      path: "/otherempcount",
+      options: {
+        handler: handler.getOtherEmpCount,
+        description: userMessages.LIST,
+        tags: ["api", "users"],
+      },
+    },
+
   ];
   server.route(routes);
 };

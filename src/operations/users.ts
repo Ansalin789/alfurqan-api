@@ -242,3 +242,44 @@ export const getOtherEmployeesDetails = async (): Promise<{ users: IUser[]; tota
 
   return { users, totalCount };
 };
+
+export const getOtherEmpCardCount = async() =>{
+
+  const otherempCount = await UserModel.aggregate([
+    {
+      $match: {
+        status: "Active", // Optional filter
+        role: { $ne: "TEACHER" },
+      },
+    },
+    {
+      $group: {
+        _id: "$role",
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $sort: { count: -1 }, // Optional: sort descending
+    },
+  ]);
+  
+  const totalOtherEmpCount = await UserModel.countDocuments({
+     status: "Active", // Optional filter
+     role: { $ne: "TEACHER" },
+  }).exec();
+  
+  const results: any[] = [];
+  
+  for (const otherempDetails of otherempCount) {
+    let studentCountryPercentage = ((otherempDetails.count / totalOtherEmpCount) * 100).toFixed(2);
+    results.push({
+      country: otherempDetails._id,
+      count: otherempDetails.count,
+      percentage: parseFloat(studentCountryPercentage),
+    });
+  }
+  
+  
+  return { totalOtherEmpCount, otherEmpCount: results };
+
+};
