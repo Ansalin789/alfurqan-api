@@ -557,24 +557,6 @@ export interface IEmailTemplate {
   lastUpdatedDate?: Date;
   lastUpdatedBy?: string;
 }
-export interface INotification {
-  id: string;
-  tenantId: string;
-  userId: string;
-  eventType: string,
-  referenceId: string;
-  referenceType: string;
-  message?: string;
-  notificationStatus?: string;
-  status: keyof typeof CustomEnumerator.Status;
-  emailToAddress?: string[];
-  emailContent?: string;
-  createdDate: Date;
-  createdBy: string;
-  lastUpdatedDate?: Date;
-  lastUpdatedBy?: string;
-  isRead: boolean;
-}
 
 export interface MeetingSchedulePayload {
   tenantId: string;
@@ -1253,6 +1235,42 @@ export interface IMeeting extends Document{
   description: string;
   status: string;
   meetingStatus: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+}
+
+export interface INotification{
+    messages ?: string;
+    isRead: boolean;
+    senderId : string;
+    senderName : string;
+    senderEmail : string;
+    receiverId : string;
+    receiverName : string;
+    receiverEmail : string;
+    notificationType ?: string;
+    notificationStatus ?: string;
+    status: string;
+    createdDate: Date;
+    createdBy: string;
+    updatedDate?: Date;
+    updatedBy?: string;
+}
+
+export interface INotification extends Document{
+  messages ?: string;
+  isRead: boolean;
+  senderId : string;
+  senderName : string;
+  senderEmail : string;
+  receiverId : string;
+  receiverName : string;
+  receiverEmail : string;
+  notificationType ?: string;
+  notificationStatus ?: string;
+  status: string;
   createdDate: Date;
   createdBy: string;
   updatedDate?: Date;

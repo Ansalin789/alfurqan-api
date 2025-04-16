@@ -314,24 +314,6 @@ export const tenantsMessages: Record<string, any> = Object.freeze({
   BYID: "Get Tenant details by Tenant Code",
 });
 
-
-
-export const notificationsMessages: Record<string, any> = Object.freeze({
-  LIST: "Retrieve all the notifications list",
-  BULK_UPDATE: "Update all the notifications list by userId",
-  NOTIFICATION_NOT_FOUND: "Notification not found",
-  GET_ALL_LIST_START: 'getAllNotificationsRecords - Start',
-  GET_ALL_LIST_SUCCESS: 'getAllNotificationsRecords - Success',
-  REFERENCE_TYPES: ['Jobprofiling', 'MEETING_SCHEDULED', "JOB_NOTES", "CANDIDATE_FEEDBACKS", "IMPORT_JOBS", "CANDIDATE_JOB_APPLY", "CANDIDATE_INTERVIEW_STATUS"],
-  DATE_FORMAT: /^\d{4}-\d{2}-\d{2}$/,
-  DATE_FORMAT_INVALID: 'Date must be in the format YYYY-MM-DD',
-  UPDATE: "Update notification details by notificationId",
-  UPDATE_FAILED: "Failed to update the notification",
-  INVALID_ID: "Invalid ID",
-  INVALID_DATE_RANGE: "The date range is invalid because the start date is greater than the end date.",
-  MISSING_DATE_PAIR: "Both the start date and end date are required.",
-
-})
 export const dashboardMessages: Record<string, any> = Object.freeze({
   WIDGET_COUNT: "Get dashboard widget counts",
   // ... any other dashboard-related messages
@@ -368,3 +350,21 @@ export const assigmentType: Record<string, any> = Object.freeze({
   IMAGE_IDENTIFICATION: "image_identification",
   WORD_MATCHING: "word_matching",
   });
+
+
+export const notificationsMessages: Record<string, any> = Object.freeze({
+  LIST: "Retrieve all the notifications list",
+  BULK_UPDATE: "Update all the notifications list by userId",
+  NOTIFICATION_NOT_FOUND: "Notification not found",
+  GET_ALL_LIST_START: 'getAllNotificationsRecords - Start',
+  GET_ALL_LIST_SUCCESS: 'getAllNotificationsRecords - Success',
+  REFERENCE_TYPES: ['Jobprofiling', 'MEETING_SCHEDULED', "JOB_NOTES", "CANDIDATE_FEEDBACKS", "IMPORT_JOBS", "CANDIDATE_JOB_APPLY", "CANDIDATE_INTERVIEW_STATUS"],
+  DATE_FORMAT: /^\d{4}-\d{2}-\d{2}$/,
+  DATE_FORMAT_INVALID: 'Date must be in the format YYYY-MM-DD',
+  UPDATE: "Update notification details by notificationId",
+  UPDATE_FAILED: "Failed to update the notification",
+  INVALID_ID: "Invalid ID",
+  INVALID_DATE_RANGE: "The date range is invalid because the start date is greater than the end date.",
+  MISSING_DATE_PAIR: "Both the start date and end date are required.",
+
+})

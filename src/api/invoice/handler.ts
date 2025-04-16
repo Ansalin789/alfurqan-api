@@ -3,7 +3,6 @@ import { z } from "zod";
 import { zodAlStudentInvoiceSchemaValidation } from "../../shared/zod_schema_validation";
 import { getAllStudetnInVoiceList, getStudetnInVoiceDetailsById } from "../../operations/invoice";
 import { isNil } from "lodash";
-import { getPaymentHistory } from "../../operations/payment_history";
 import { notFound } from "@hapi/boom";
 import { evaluationMessages } from "../../config/messages";
 
