@@ -4,6 +4,7 @@ import handler from "./handler";
 
 const register = async (server: Server): Promise<void> => {
   const routes: ServerRoute[] = [
+    
     {
       method: "GET",
       path: "/notification/getlist",
