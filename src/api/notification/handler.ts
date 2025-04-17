@@ -1,6 +1,5 @@
 import { ResponseToolkit , Request} from "@hapi/hapi";
-import { getAllNotification, getNotificationsByReceiverId } from "../../operations/notification";
-
+import getAllNotification, { getNotificationsByNotificationId} from "../../operations/notification";
 
 
 
@@ -14,7 +13,7 @@ export default {
         return h.response({ success: false, message: "Receiver ID is required" }).code(400);
       }
   
-      const { notifications, totalCount } = await getNotificationsByReceiverId(notificationId);
+      const { notifications, totalCount } = await getNotificationsByNotificationId(notificationId);
   
       return h.response({
         success: true,
@@ -33,11 +32,27 @@ export default {
     
 // Retrieve all the students list
 async getnotificationList(req: Request, h: ResponseToolkit) {
-    try {
-        const notifications = await getAllNotification();
-        return h.response({ message: "Notification retrieved successfully", data: notifications }).code(200);
-      } catch (error) {
-        return h.response({ error }).code(500);
-      }
-    },
+  const receiverId = req.query.receiverId as string | undefined;
+
+  try {
+    const notifications = await getAllNotification(receiverId); // pass undefined if not present
+    return h
+      .response({
+        message: 'Notification(s) retrieved successfully',
+        data: notifications,
+      })
+      .code(200);
+  } catch (error) {
+    return h
+      .response({
+        error: (error as Error).message || 'Internal Server Error',
+      })
+      .code(500);
+  }
+}
+
+
+
+
+
 }

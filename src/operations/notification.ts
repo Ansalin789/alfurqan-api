@@ -1,6 +1,5 @@
 // services/notification.service.ts
 import { Types } from "mongoose";
-import { INotification } from "../../types/models.types";
 import AppLogger from "../helpers/logging";
 import notification, { zodnotificationSchema } from "../models/notification";
 import {getIO } from "../shared/socket";
@@ -30,7 +29,7 @@ export const sendNotification = async (rawData: any) => {
     return { success: false, error: err.message };
   }
 };
-export const getNotificationsByReceiverId = async (notificationId: string) => {
+export const getNotificationsByNotificationId = async (notificationId: string) => {
   try {
     const [notifications, totalCount] = await Promise.all([
       notification.findOne({ _id: new Types.ObjectId(notificationId) }).lean(),
@@ -45,22 +44,30 @@ export const getNotificationsByReceiverId = async (notificationId: string) => {
 /**
  * Retrieves all meeting records with optional filters.
  */
-export const getAllNotification = async ( receiverId?: string, senderId?: string ): Promise<{ totalCount: number; notificationlist: INotification[] }> => {
-    try {
-      const filter: any = {};
-  
-      if (receiverId) {
-        filter.receiverId = receiverId;
-      } else if (senderId) {
-        filter.senderId = senderId;
-      }
-  
-      const notificationlist = await notification.find(filter).sort({ createdDate: -1 });
-      const totalCount = await notification.countDocuments(filter);
-  
-      return { totalCount, notificationlist };
-    } catch (error) {
-      throw new Error("Error fetching notifications: " + error);
-    }
-  };
+export default async function getAllNotification(receiverId?: string) {
+  try {
+    const filter = receiverId ? { receiverId } : {};
+
+    const [notifications, totalCount] = await Promise.all([
+      notification.find(filter).sort({ createdDate: -1 }),
+      notification.countDocuments(filter),
+    ]);
+
+    return { notifications, totalCount };
+  } catch (error) {
+    throw new Error(`Failed to fetch notifications: ${(error as Error).message}`);
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
   
