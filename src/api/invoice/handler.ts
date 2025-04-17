@@ -1,7 +1,7 @@
 import { ResponseToolkit,Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodAlStudentInvoiceSchemaValidation } from "../../shared/zod_schema_validation";
-import { getAllStudetnInVoiceList, getStudetnInVoiceDetailsById } from "../../operations/invoice";
+import { getAllStudetnInVoiceList, getStudentAllRevenue, getStudetnInVoiceDetailsById } from "../../operations/invoice";
 import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
 import { evaluationMessages } from "../../config/messages";
@@ -14,13 +14,14 @@ import { evaluationMessages } from "../../config/messages";
       sortOrder: true,
       offset: true,
       limit: true,
+      type:true,
     }),
   });
 
 
 export default {
 // Retrieve all the Evaluation list
-getAllStudetnInVoiceList(req: Request, h: ResponseToolkit) {
+       getAllStudetnInVoiceList(req: Request, h: ResponseToolkit) {
     const { query } = geStudentListInputValidation.parse({
       query: {
         ...req.query,
@@ -39,4 +40,30 @@ getAllStudetnInVoiceList(req: Request, h: ResponseToolkit) {
       return result;
     },
 
-  }
+
+    async getAllStudentRevenue(req: Request, h: ResponseToolkit) {
+      // Parse the query parameters from the request
+      const { query } = geStudentListInputValidation.parse({
+        query: {
+          ...req.query,
+        },
+      });
+    
+      // Extract the 'type' or 'dateRange' from the parsed query object
+      const { type = "year" } = query; // Default to 'year' if not provided
+    
+      // Call the getStudentAllRevenue function and pass the 'type' (dateRange)
+      const revenueData = await getStudentAllRevenue(type);
+    
+      // Return the revenue data in the response
+      return h.response({
+        success: true,
+        data: revenueData,
+      });
+    }
+    
+    
+    }
+    
+    
+    
