@@ -14,6 +14,17 @@ const register = async (server: Server): Promise<void> => {
       },
     },
 
+    {
+      method: "GET",
+      path: "/notifications/{notificationId}",
+      options: {
+        handler:handler.getNotificationsHandler,
+        tags: ["api", "notifications"],
+        description: "Get notifications by receiverId",
+      },
+    },
+    
+
 
     // {
     //   method: "GET",

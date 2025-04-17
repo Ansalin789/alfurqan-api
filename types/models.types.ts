@@ -1243,7 +1243,7 @@ export interface IMeeting extends Document{
 
 export interface INotification{
     messages ?: string;
-    isRead: boolean;
+    isRead ?: boolean;
     senderId : string;
     senderName : string;
     senderEmail : string;
@@ -1261,7 +1261,7 @@ export interface INotification{
 
 export interface INotification extends Document{
   messages ?: string;
-  isRead: boolean;
+  isRead ?: boolean;
   senderId : string;
   senderName : string;
   senderEmail : string;
@@ -1270,8 +1270,8 @@ export interface INotification extends Document{
   receiverEmail : string;
   notificationType ?: string;
   notificationStatus ?: string;
-  status: string;
-  createdDate: Date;
+  status : string;
+  createdDate : Date;
   createdBy: string;
   updatedDate?: Date;
   updatedBy?: string;

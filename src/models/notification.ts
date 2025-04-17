@@ -42,6 +42,11 @@ const notificationSchema = new Schema<INotification>(
       type: String, 
       required: false,
      },
+     isRead:{
+      type:Boolean,
+      required:false,
+     },
+
      status: { type: String, required: false },
      createdDate: { type: Date, required: false, default: Date.now },
      createdBy: { type: String, required: false },
@@ -68,7 +73,7 @@ export const zodnotificationSchema = z.object({
   notificationType: z.string().optional(),
   notificationStatus: z.string().optional(),
   status: z.string().optional(),
-
+  isRead: z.boolean().optional(),
   createdDate: z.date().optional(),
   createdBy: z.string().optional(),
 
