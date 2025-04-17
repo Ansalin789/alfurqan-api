@@ -18,15 +18,16 @@ import { sendNotification } from "./notification";
 
 
 
-  export interface StudentFilter {
-    id?: string;
-    status?: string;
-    country?: string;
-    course?: string;
-    teacher?: string;
-    offset?: string | null;  // added offset
-    limit?: string | null;   // added limit
-  }
+export interface StudentFilter {
+  id?: string;
+  status?: string;
+  country?: string;
+  course?: string;
+  teacher?: string;
+  offset?: string | null;  // added offset
+  limit?: string | null;   // added limit
+}
+
 
 
 /**
@@ -452,7 +453,6 @@ export const getAllStudentVisitor = async (
         break;
     }
   });
-  console.log("Referral Source Stats:", stats);
+
   return stats;
 };
-
