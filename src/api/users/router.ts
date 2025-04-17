@@ -41,6 +41,55 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "users"],
       },
     },
+
+    {
+      method: "GET",
+      path: "/teacher/statuscount",
+      options: {
+        handler: handler.getTeacherCount,
+        description: userMessages.LIST,
+        tags: ["api", "users"],
+      },
+    },
+    {
+      method: "GET",
+      path: "/teacher/gendercount",
+      options: {
+        handler: handler.getTeacherGenderCount,
+        description: userMessages.LIST,
+        tags: ["api", "users"],
+      },
+    },
+    {
+      method: "GET",
+      path: "/otheremployees",
+      options: {
+        handler: handler.getOtherEmployees,
+        description: userMessages.LIST,
+        tags: ["api", "users"],
+      },
+    },
+
+    {
+      method: "GET",
+      path: "/otherempcount",
+      options: {
+        handler: handler.getOtherEmpCount,
+        description: userMessages.LIST,
+        tags: ["api", "users"],
+      },
+    },
+
+    {
+      method: "GET",
+      path: "/otheremp/gendercount",
+      options: {
+        handler: handler.getOhterEmpGenderCount,
+        description: userMessages.LIST,
+        tags: ["api", "users"],
+      },
+    },
+
   ];
   server.route(routes);
 };

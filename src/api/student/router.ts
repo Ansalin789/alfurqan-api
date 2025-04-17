@@ -1,6 +1,6 @@
 import { Server, ServerRoute } from "@hapi/hapi";
 import handler from "./handler";
-import { fileMessages, studentMessages } from "../../config/messages";
+import { studentMessages } from "../../config/messages";
 
 
 
@@ -37,9 +37,6 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "studentlist"],
       },
     },
-
-
-   
     {
       method: "GET",
       path: "/studentvisitor",
@@ -49,11 +46,6 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "studentlist"],
       },
     },
-
-
-
-
-
     // {
     //   method: "GET",
     //   path: "/student",

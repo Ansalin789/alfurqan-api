@@ -79,6 +79,15 @@ const register = async (server: Server): Promise<void> => {
             // },
           },
         },
+        {
+          method: "GET",
+          path: "/applicants/countriescount",
+          options: {
+            handler: handler.getTeacherCountriesCount,
+            description: recruitmentMessages.LIST,
+            tags: ["api", "recruitment"],
+          },
+        },
 
 ];
 server.route(routes);

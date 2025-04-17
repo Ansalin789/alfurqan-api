@@ -15,6 +15,7 @@ const createInputValidation = z.object({
     firstName: true,
     lastName: true,
     email: true,
+    gender:true,
     phoneNumber: true,
     city: true,
     country: true,
@@ -62,6 +63,7 @@ export default {
   firstName: payload.firstName,
   lastName: payload.lastName,
   email: payload.email,
+  gender: payload.gender,
   phoneNumber: payload.phoneNumber,
   city: payload.city,
   country: payload.country,
@@ -74,7 +76,7 @@ export default {
   timeZone: payload.timeZone,
   referralSource: payload.referralSource ?? "defaultReferralSource", 
   startDate: payload.startDate ?? new Date(), // Provide a default value for startDate
-  evaluationStatus: payload.evaluationStatus || EvaluationStatus.PENDING, // Use a valid EvaluationStatus value
+  evaluationStatus: payload.evaluationStatus ?? EvaluationStatus.PENDING, // Use a valid EvaluationStatus value
   refernceId: payload.refernceId ?? " ",
   status: payload.status ?? "defaultStatus", // Provide a default value for status
   createdDate: new Date(),

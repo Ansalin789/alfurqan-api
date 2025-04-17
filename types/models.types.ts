@@ -80,6 +80,7 @@ export interface IStudents extends Document {
     email: string;
 };
   email: string;
+  gender: string;
   phoneNumber: number;
   city?: string;
   country: string;
@@ -105,6 +106,7 @@ export interface IStudentCreate {
   firstName: string;
   lastName: string;
   email: string;
+  gender: string;
   phoneNumber: number;
   city?: string;
   country: string;
@@ -282,6 +284,7 @@ student: {
   studentFirstName: string;
   studentLastName: string;
   studentEmail: string;
+  studentGender: string;
   studentPhone: number;
   studentCity?: string;
   studentCountry: string;
@@ -348,6 +351,7 @@ trialClassStatus?: string;
 invoiceStatus?: string;
 paymentLink: string;
 paymentStatus?: string;
+teacherStatus?: string;
 status?: string;
 createdDate: Date;
 createdBy?: string;
@@ -364,6 +368,7 @@ export interface IEvaluationCreate{
   studentFirstName: string;
   studentLastName: string;
   studentEmail: string;
+  studentGender: string;
   studentPhone: number;
   studentCity?: string;
   studentCountry: string;
@@ -419,6 +424,7 @@ trialClassStatus?:string;
 invoiceStatus?: string;
 paymentLink?: string;
 paymentStatus?: string;
+teacherStatus?: string;
 status?: string;
 createdDate: Date;
 createdBy?: string;
@@ -497,6 +503,7 @@ export interface IClassScheduleCreate{
     gender: string;
   },
   teacher:{
+    teacherId: string;
     teacherName: string;
     teacherEmail: string;
   },
@@ -549,24 +556,6 @@ export interface IEmailTemplate {
   createdBy: string;
   lastUpdatedDate?: Date;
   lastUpdatedBy?: string;
-}
-export interface INotification {
-  id: string;
-  tenantId: string;
-  userId: string;
-  eventType: string,
-  referenceId: string;
-  referenceType: string;
-  message?: string;
-  notificationStatus?: string;
-  status: keyof typeof CustomEnumerator.Status;
-  emailToAddress?: string[];
-  emailContent?: string;
-  createdDate: Date;
-  createdBy: string;
-  lastUpdatedDate?: Date;
-  lastUpdatedBy?: string;
-  isRead: boolean;
 }
 
 export interface MeetingSchedulePayload {
@@ -1247,6 +1236,42 @@ export interface IMeeting extends Document{
   status: string;
   meetingStatus: string;
   createdDate: Date;
+  createdBy: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+}
+
+export interface INotification{
+    messages ?: string;
+    isRead ?: boolean;
+    senderId : string;
+    senderName : string;
+    senderEmail : string;
+    receiverId : string;
+    receiverName : string;
+    receiverEmail : string;
+    notificationType ?: string;
+    notificationStatus ?: string;
+    status: string;
+    createdDate: Date;
+    createdBy: string;
+    updatedDate?: Date;
+    updatedBy?: string;
+}
+
+export interface INotification extends Document{
+  messages ?: string;
+  isRead ?: boolean;
+  senderId : string;
+  senderName : string;
+  senderEmail : string;
+  receiverId : string;
+  receiverName : string;
+  receiverEmail : string;
+  notificationType ?: string;
+  notificationStatus ?: string;
+  status : string;
+  createdDate : Date;
   createdBy: string;
   updatedDate?: Date;
   updatedBy?: string;

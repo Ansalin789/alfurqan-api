@@ -20,6 +20,8 @@ import feedbackAPI  from "../api/feedback/router";
 import recruitmentAPI from "../api/recruitment/router";
 import addMeetingAPI from "../api/addMeeting/router";
 import supervisorfeedbackAPI from "../api/supervisorfeedback/router";
+import notificationAPI from "../api/notification/router"
+
 export const appPlugins = [
   {
     plugin: systemLifeCycle,
@@ -84,5 +86,8 @@ export const appPlugins = [
   },
   {
     plugin: supervisorfeedbackAPI,
+  },
+  {
+    plugin: notificationAPI,
   }
 ];

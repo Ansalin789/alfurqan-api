@@ -11,6 +11,7 @@ export const zodGetAllRecordsQuerySchema = z.object({
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
   offset: z.string().nullable().default(null),
   limit: z.string().nullable().default(null),
+  trialClassStatus: z.string().optional(),
   filterValues : z.object({
     // Filter for courses: Array of course names or IDs, optional
     course: z.string()
@@ -23,7 +24,8 @@ export const zodGetAllRecordsQuerySchema = z.object({
     .optional(),
     // Filter for status: Array of enums, optional, with default values
     status: z.string()
-    .optional()
+    .optional(),
+    
   })
 
  });
@@ -38,12 +40,16 @@ export const zodAuthenticationSchema = z.object({
   password: z.string().min(8),
 });
 
-export  const zodAlStudentInvoiceSchemaValidation = z.object({
+
+
+export const zodAlStudentInvoiceSchemaValidation = z.object({
   sortBy: z.string().default("lastUpdatedDate"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
   offset: z.string().nullable().default(null),
   limit: z.string().nullable().default(null),
+  type: z.enum(["weekly", "monthly", "yearly"]).default("yearly"),
 });
+
 
 export const zodGetAllApplicantsRecordsQuerySchema = z.object({
 

@@ -13,6 +13,8 @@ import Course from "../models/course";
 import { GetAllRecordsParams } from "../shared/enum";
 import AppLogger from "../helpers/logging";
 import { Types } from "mongoose";
+import { sendNotification } from "./notification";
+
 
 
 
@@ -43,7 +45,7 @@ export const createStudent = async (
             error: badRequest('Evaluation class is not allowed to current date. Select another date'),
         };
     }
-    console.log("newUser>>>>", newUser.preferredToTime)
+    console.log("newUser>>>>", newUser);
     const shiftScheduleRecord = await UserShiftSchedule.find({
       role: "ACADEMICCOACH",
     });
@@ -86,7 +88,23 @@ export const createStudent = async (
         email: academicCoachDetails?.email // Provide a default value if undefined
     };
 console.log("newUser academicCoach>>>>",newUser);
-    const savedUser = await newUser.save();
+    const savedUser = await newUser.save(); 
+    await sendNotification({
+      messages: `${savedUser.firstName}! has been joined in our academic team !.`,
+      senderId: savedUser._id.toString(),
+      senderName: savedUser.firstName,
+      senderEmail: savedUser.email,
+      isRead : false,
+      receiverId: savedUser.academicCoach.academicCoachId.toString(),
+      receiverName: savedUser.academicCoach.name,
+      receiverEmail: savedUser.academicCoach.email,
+    
+      notificationType: "STUDENT_NOTIFICATION",
+      notificationStatus: "unread",
+      status: "active",
+      createdBy: "system",
+      updatedBy: "system",
+    });
   
     const emailTemplate = await EmailTemplate.findOne({
         templateKey: 'welcome_email',
@@ -161,6 +179,7 @@ console.log("newUser academicCoach>>>>",newUser);
           lastUpdatedBy: savedUser.firstName + ' ' + savedUser.lastName,
     });
     const userObject = savedUser.toObject();
+    console.log("userObject>>>>", userObject);
     await CreatemeetingDetails.save();
     return userObject;
 };

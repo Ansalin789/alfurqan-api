@@ -2,7 +2,7 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
-import { createAlStudent, getAllalstudentsList, getalstudentsById} from "../../operations/alstudents";
+import { createAlStudent, getAllalstudentsList, getalstudentsById, getStudentCountriesCount, getStudentPercentage, getStudentRecordCount} from "../../operations/alstudents";
 import { alstudentsMessages } from "../../config/messages";
 import { isNil } from "lodash";
 import { zodAlStudentSchema } from "../../models/alstudents";
@@ -17,6 +17,7 @@ const getAllalstudentsListInputValidation = z.object({
     sortOrder: true,
     offset: true,
     limit: true,
+    studentId: true,
     filterValues: true,
   }),
 });
@@ -123,6 +124,22 @@ const handler = {
         role: payload.role|| " "
       });
     },
+
+     async getAllStudentCount(req: Request, h: ResponseToolkit){
+    
+          return getStudentRecordCount();
+    
+     },
+
+     async getStudentGenderCount(req: Request, h: ResponseToolkit){
+    
+      return getStudentPercentage();
+
+ },
+ async getStudentCountryCount(req: Request, h: ResponseToolkit){
+  return getStudentCountriesCount();
+
+ }
 };
 
 

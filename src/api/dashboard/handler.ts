@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ResponseToolkit, Request } from "@hapi/hapi";
-import {dashboardWidgetCounts, dashboardWidgetStudentCounts, dashboardWidgetSupervisorCounts, dashboardWidgetTeacherCounts } from "../../operations/dashboard";
+import {dashboardCardCount, dashboardWidgetCounts, dashboardWidgetStudentCounts, dashboardWidgetSupervisorCounts, dashboardWidgetTeacherCounts, totalClassCount, totalTrialRequestCount } from "../../operations/dashboard";
 
 export default {
   // Get widget counts for academic coach
@@ -45,6 +45,18 @@ export default {
       return h.response({ error: "Failed to fetch student widget counts." }).code(500);
     }
   },
+
+  async getAdminCount(req: Request, h: ResponseToolkit){
+    return await dashboardCardCount();
+},
+
+async getTotalTrialRequest(req: Request, h: ResponseToolkit){
+  return await totalTrialRequestCount();
+},
+
+async getTotalClass(req: Request, h: ResponseToolkit){
+  return await totalClassCount(req.query.dateRange as string);
+}
 
   // async getSupervisorApplicationCount (req: Request, h: ResponseToolkit) {
   //   return await dashboardSupervisorApplicationCount(req.headers.supervisor as string);

@@ -4,6 +4,19 @@ import StudentInvoiceModel from "../models/stinvoice"
 import { isNil } from "lodash";
 import { commonMessages, evaluationMessages } from "../config/messages";
 import AppLogger from "../helpers/logging";
+import { Types } from "mongoose";
+import {
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  startOfYear,
+  endOfYear,
+  eachDayOfInterval,
+  eachMonthOfInterval,
+  format
+} from "date-fns";
+import stinvoice from "../models/stinvoice";
 
 /**
  * Retrieves a list of all evaluation records with filters, sorting, and pagination.
@@ -42,3 +55,107 @@ export const getAllStudetnInVoiceList = async (
   console.log(invoice);
     return { totalCount, invoice };
   };
+
+  export const getStudetnInVoiceDetailsById = async (
+    id: string
+  ): Promise<IStudentInvoice | null> => {
+    return StudentInvoiceModel.findOne({
+      "student.studentId": new Types.ObjectId(id),
+    }).lean();
+  };
+
+ 
+  
+
+  
+  
+
+ 
+  
+
+export const getStudentAllRevenue = async (
+  dateRange: string
+): Promise<{ date: string; label: string; revenue: number }[]> => {
+  let startDate: Date;
+  let endDate: Date;
+  let intervalFn: (interval: { start: Date; end: Date }) => Date[];
+  let outputFormat: string;
+
+  const now = new Date();
+
+  switch (dateRange.toLowerCase()) {
+    case "yearly":
+      startDate = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+      endDate = new Date(Date.UTC(now.getUTCFullYear(), 11, 31, 23, 59, 59, 999));
+      intervalFn = eachMonthOfInterval;
+      outputFormat = "MMM-yyyy";
+      break;
+    case "monthly":
+      startDate = startOfMonth(now);
+      endDate = endOfMonth(now);
+      intervalFn = eachDayOfInterval;
+      outputFormat = "yyyy-MM-dd";
+      break;
+    case "weekly":
+      startDate = startOfWeek(now, { weekStartsOn: 1 });
+      endDate = endOfWeek(now, { weekStartsOn: 1 });
+      intervalFn = eachDayOfInterval;
+      outputFormat = "yyyy-MM-dd";
+      break;
+    default:
+      throw new Error("Invalid dateRange value. Use 'weekly', 'monthly', or 'yearly'.");
+  }
+
+  console.log(`🗓️ Start Date: ${startDate.toISOString()} | End Date: ${endDate.toISOString()}`);
+
+  // Fetch all invoices in the range
+  const invoices = await stinvoice.find({
+    invoiceStatus: "Paid", // optional filter if you only want paid ones
+  }).exec();
+
+  console.log(`📦 Found ${invoices.length} invoice(s)`);
+
+  const revenueMap: Record<string, number> = {};
+
+  invoices.forEach((invoice) => {
+    const invoiceDate = new Date(invoice.createdDate);
+    const formattedDate = format(invoiceDate, outputFormat);
+  
+    // Log each invoice being processed
+    console.log(`Processing invoice: ${invoice.amount} for ${formattedDate}`);
+  
+    if (revenueMap[formattedDate]) {
+      console.log(`Existing revenue for ${formattedDate}: ${revenueMap[formattedDate]}`);
+      revenueMap[formattedDate] += invoice.amount;
+      console.log(`Updated revenue for ${formattedDate}: ${revenueMap[formattedDate]}`);
+    } else {
+      revenueMap[formattedDate] = invoice.amount;
+      console.log(`Created new revenue entry for ${formattedDate}: ${invoice.amount}`);
+    }
+  });
+  
+  
+
+  console.log("📊 Revenue Map:", revenueMap);
+
+  const result = intervalFn({ start: startDate, end: endDate }).map((date, i) => {
+    const label = format(date, outputFormat);
+    const revenue = revenueMap[label] || 0;
+    console.log(`📅 Interval ${i + 1}: ${label} | Revenue: ${revenue}`);
+    return {
+      date: label,
+      label,
+      revenue,
+    };
+  });
+
+  console.log("✅ Final Result:", result);
+  return result;
+};
+
+  
+
+  
+  
+ 
+  

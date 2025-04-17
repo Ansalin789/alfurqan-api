@@ -249,4 +249,45 @@ else if(approvalData &&  approvalData.applicationStatus == applicationStatus.SHO
 const saveStudent = createStudentPortal.save()
 console.log("Student portal",saveStudent )
   return saveStudent;
-}
+};
+
+export const getTeacherCountriesCountDetails = async() =>{
+
+  const teacherCountByCountry = await RecruitModel.aggregate([
+    {
+      $match: {
+        status: "Active", // Optional filter
+        applicationStatus: "APPROVED"
+      },
+    },
+    {
+      $group: {
+        _id: "$candidateCountry",
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $sort: { count: -1 }, // Optional: sort descending
+    },
+  ]);
+  
+  const teacherCount = await RecruitModel.countDocuments({
+     status: "Active", // Optional filter
+    applicationStatus: "APPROVED"
+  }).exec();
+  
+  const results: any[] = [];
+  
+  for (const teacherCountry of teacherCountByCountry) {
+    let studentCountryPercentage = ((teacherCountry.count / teacherCount) * 100).toFixed(2);
+    results.push({
+      country: teacherCountry._id,
+      count: teacherCountry.count,
+      percentage: parseFloat(studentCountryPercentage),
+    });
+  }
+  
+  
+  return { teacherCount, studentCountByCountry: results };
+
+};

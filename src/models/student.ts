@@ -45,6 +45,10 @@ const studentSchema = new Schema<IStudents>(
       match: /\S+@\S+\.\S+/,
       unique: true,
     },
+    gender: {
+      type: String,
+      required: false
+    },
     phoneNumber: {
       type: Number,
       required: true,
@@ -141,6 +145,7 @@ export const zodStudentSchema = z.object({
   firstName: z.string().min(3),
   lastName: z.string().min(1),
   email: z.string().email(),
+  gender: z.string(),
   phoneNumber: z.number().min(10),
   city: z.string().optional(),
   country: z.string().min(3),

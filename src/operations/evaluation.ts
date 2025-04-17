@@ -64,6 +64,7 @@ export const createEvaluationRecord = async (
     newStudent.firstName = payload.student.studentFirstName;
     newStudent.lastName = payload.student.studentLastName;
     newStudent.email =   payload.student.studentEmail;
+    newStudent.gender = payload.student.studentGender;
     newStudent.phoneNumber = payload.student.studentPhone;
     newStudent.city = payload.student.studentCity;
     newStudent.country = payload.student.studentCountry;
@@ -104,6 +105,7 @@ const subscriptonDetaails = await SubscriptionModel.findOne({
         studentFirstName: createStudent.firstName,
         studentLastName: createStudent.lastName,
         studentEmail: createStudent.email,
+        studentGender: createStudent.gender,
         studentPhone: createStudent.phoneNumber,
         studentCity: createStudent.city,
         studentCountry: createStudent.country,
@@ -177,7 +179,7 @@ newEvaluation.classStatus = payload.classStatus;
 newEvaluation.trialClassStatus = payload.trialClassStatus;
  newEvaluation.assignedTeacherId = teacherDetails.teacherId;
  newEvaluation.assignedTeacherEmail = teacherDetails.email;
-
+ newEvaluation.teacherStatus = newEvaluation.teacher.teacherName == "" ? "Assigned": "Not Assigned";
 const createEvaluation = await newEvaluation.save();
 console.log("createEvaluation>>>",createEvaluation)
 
@@ -186,7 +188,7 @@ console.log("createEvaluation>>>",createEvaluation)
     }
    
 
-    return newEvaluation.save();
+    return createEvaluation;
   };
 
 
@@ -492,6 +494,228 @@ export const updateStudentInvoice = async (
   ).lean();
   const updatedEvaluation = await updateInvoice as IEvaluation; // Cast to expected type
   return updatedEvaluation
-}
+};
 
+export const getTotalTrialClassRequestCount = async() => {
+  const evaluationStats = await EvaluationModel.aggregate([
+    {
+      $match: {
+        status: "Active",
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalCount: { $sum: 1 },
+        maleCount: { $sum: { $cond: [{ $eq: ["$student.studentGender", "male"] }, 1, 0] } },
+        femaleCount: { $sum: { $cond: [{ $eq: ["$student.studentGender", "female"] }, 1, 0] } },
+        completedCount: { $sum: { $cond: [{ $eq: ["$trialClassStatus", "COMPLETED"] }, 1, 0] } },
+        pendingCount: { $sum: { $cond: [{ $eq: ["$trialClassStatus", "PENDING"] }, 1, 0] } },
+        studentJointCount: { $sum: { $cond: [{ $eq: ["$studentStatus", "JOINED"] }, 1, 0] } },
+        studentNotJointCount: { $sum: { $cond: [{ $eq: ["$studentStatus", "NOTJOINED"] }, 1, 0] } },
+
+      },
+    },
+  ]);
   
+  return evaluationStats;
+  
+};
+
+export const getTeacherStatusCount = async() =>{
+  const evaluationStats = await EvaluationModel.aggregate([
+    {
+      $match: {
+        status: "Active",
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalClassCount: { $sum: 1 },
+        assignedTeacherCount: { $sum: { $cond: [{ $eq: ["$teacherStatus", "Assigned"] }, 1, 0] } },
+        notAssinedCount: { $sum: { $cond: [{ $eq: ["$teacherStatus", "Not Assigned"] }, 1, 0] } },
+      },
+    },
+  ]);
+   const assignedTeacherPercentage = ((evaluationStats[0].assignedTeacherCount/ evaluationStats[0].totalClassCount)*100).toFixed(2);
+   const notAssignedTeacherPercentage = ((evaluationStats[0].notAssinedCount/ evaluationStats[0].totalClassCount)*100).toFixed(2);
+   const total = evaluationStats[0].totalClassCount;
+
+  return {total, assignedTeacherPercentage, notAssignedTeacherPercentage};
+
+};
+
+export const getPreferedTeacherPercentage = async() =>{
+    const preferedTeahcer= await EvaluationModel.aggregate([
+      {
+        $match: {
+          status: "Active",
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          preferedTeacherCount: { $sum: 1 },
+          preferedTeacherMaleCount: { $sum: { $cond: [{ $eq: ["$student.preferredTeacher", "Male"] }, 1, 0] } },
+          preferedTeacherFemaleCount: { $sum: { $cond: [{ $eq: ["$student.preferredTeacher", "Female"] }, 1, 0] } },
+        },
+      },
+    ]);
+     const preferedTeacherPercentage = preferedTeahcer[0].preferedTeacherCount;
+     const preferedTeacherMalePercentage = ((preferedTeahcer[0].preferedTeacherMaleCount/ preferedTeahcer[0].preferedTeacherCount)*100).toFixed(2);
+     const preferedTeacherFemalePercentage = ((preferedTeahcer[0].preferedTeacherFemaleCount/ preferedTeahcer[0].preferedTeacherCount)*100).toFixed(2);
+
+    return {preferedTeacherPercentage, preferedTeacherMalePercentage, preferedTeacherFemalePercentage};
+};
+
+export const getStudentCourseCount  = async() =>{
+  const studentCourseCount= await EvaluationModel.aggregate([
+    {
+      $match: {
+        status: "Active",
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalCount: { $sum: 1 },
+        quranCount: { $sum: { $cond: [{ $eq: ["$student.learningInterest", "Quran"] }, 1, 0] } },
+        arabicCount: { $sum: { $cond: [{ $eq: ["$student.learningInterest", "Islamic Studies"] }, 1, 0] } },
+        islamicCount: { $sum: { $cond: [{ $eq: ["$student.learningInterest", "Arabic"] }, 1, 0] } },
+
+      },
+    },
+  ]);
+   const totalPercentage = studentCourseCount[0].totalCount;
+   const quranPercentage = ((studentCourseCount[0].quranCount/ studentCourseCount[0].totalCount)*100).toFixed(2);
+   const arabicPercentage = ((studentCourseCount[0].arabicCount/ studentCourseCount[0].totalCount)*100).toFixed(2);
+   const islamicPercentage = ((studentCourseCount[0].islamicCount/ studentCourseCount[0].totalCount)*100).toFixed(2);
+
+  return {totalPercentage, quranPercentage, arabicPercentage, islamicPercentage};
+};
+
+export const getCountriesCount = async() =>{
+
+  const studentCountByCountry = await EvaluationModel.aggregate([
+    {
+      $match: {
+        status: "Active", // Optional filter
+      },
+    },
+    {
+      $group: {
+        _id: "$student.studentCountry",
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $sort: { count: -1 }, // Optional: sort descending
+    },
+  ]);
+  
+  const evaluationCount = await EvaluationModel.countDocuments({
+    status: "Active",
+  }).exec();
+  
+  const results: any[] = [];
+  
+  for (const studentCountry of studentCountByCountry) {
+    let studentCountryPercentage = ((studentCountry.count / evaluationCount) * 100).toFixed(2);
+    results.push({
+      country: studentCountry._id,
+      count: studentCountry.count,
+      percentage: parseFloat(studentCountryPercentage),
+    });
+  }
+  
+  
+  return { evaluationCount, studentCountByCountry: results };
+
+};
+
+export const getTrialbyTeacherCount = async()=>{
+
+  const studentCountByCountry = await EvaluationModel.aggregate([
+    {
+      $match: {
+        status: "Active", // Optional filter
+      },
+    },
+    {
+      $group: {
+        _id: "$teacher.teacherName",
+        trialCount: { $sum: 1 },
+        joined: { $sum: { $cond: [{ $eq: ["$trialClassStatus", "PENDING"] }, 1, 0] } },
+      },
+    },
+    {
+      $sort: { count: -1 }, // Optional: sort descending
+    },
+  ]);
+  
+  return  studentCountByCountry ;
+  
+};
+
+
+export const getTrialClassCount = async (
+  params: GetAllRecordsParams
+): Promise<{ totalCount: number; evaluation: IEvaluation[] }> => {
+  const {trialClassStatus, searchText, sortBy, sortOrder, offset, limit, filterValues } = params;
+
+  const query: any = {};
+
+  if (searchText) {
+    query.$or = [
+      { name: { $regex: searchText, $options: "i" } },
+      { email: { $regex: searchText, $options: "i" } },
+    ];
+  }
+
+  if(trialClassStatus){
+    query.trialClassStatus = { $in: trialClassStatus };
+  }
+
+
+  if (filterValues) {
+    if (filterValues.course) {
+      query.course = { $in: filterValues.course };
+    }
+    if (filterValues.country) {
+      query.country = { $in: filterValues.country };
+    }
+    if (filterValues.teacher) {
+      query.teacher = { $in: filterValues.teacher };
+    }
+    if (filterValues.status) {
+      query.status = { $in: filterValues.status };
+    }
+  }
+
+  const sortOptions: any = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
+
+  const evaluationQuery = EvaluationModel.find(query).sort(sortOptions);
+
+  if (!isNil(offset) && !isNil(limit)) {
+    const skip = Math.max(
+      0,
+      ((Number(offset) ?? Number(commonMessages.OFFSET)) - 1) *
+      (Number(limit) ?? Number(commonMessages.LIMIT))
+    );
+    evaluationQuery
+      .skip(skip)
+      .limit(Number(limit) ?? Number(commonMessages.LIMIT));
+  }
+
+  const [evaluation, totalCount] = await Promise.all([
+    evaluationQuery.exec(),
+    EvaluationModel.countDocuments(query).exec(),
+  ]);
+
+  AppLogger.info(evaluationMessages.GET_ALL_LIST_SUCCESS, {
+    totalCount: totalCount,
+  });
+
+  return { totalCount, evaluation };
+};

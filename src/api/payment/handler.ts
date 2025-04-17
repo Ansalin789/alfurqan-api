@@ -11,6 +11,7 @@ import UserModel from "../../models/users";
 import  ClassScheduleModel  from "../../models/classShedule";
 import { Client } from '@microsoft/microsoft-graph-client';
 import { ClientSecretCredential } from "@azure/identity";
+import Course from "../../models/course";
 
 export const createPaymentIntent = async (request: Request, h: ResponseToolkit) => {
   console.log("Received request payload:", request.payload);
@@ -73,6 +74,7 @@ console.log("updateEvaluationDetails>>", updateEvaluationDetails);
 async function createStudentPortal(updatedEvaluation: any) {
   try {
 
+    
     const specialChars = "@#$%&*!";
     const randomNum = Math.floor(Math.random() * 1000); // Random number between 0-999
     const randomSpecial = specialChars[Math.floor(Math.random() * specialChars.length)]; // Random special character
@@ -83,6 +85,9 @@ async function createStudentPortal(updatedEvaluation: any) {
 
     const password = `${firstThreeChars}${randomSpecial}${randomNum}${reversedUsername}`;
 
+    const courseDetails = await Course.findOne({
+      courseName: updatedEvaluation.student.learningInterest
+    }).exec();
     // Create student portal entry
     const studentPortal = await StudentPortModel.create({
       student: {
@@ -114,9 +119,7 @@ async function createStudentPortal(updatedEvaluation: any) {
     const classDayValues = updatedEvaluation.classDay;
    const startTimeValues = updatedEvaluation.startTime;
    const endTimeValues = updatedEvaluation.endTime;
-    
-console.log(">>>>>>>>>>>>>",classDayValues);
-const results: (IClassSchedule | { error: any })[] = [];
+    const results: (IClassSchedule | { error: any })[] = [];
 
     for (let i = 0; i < classDayValues.length; i++) {
       const day = classDayValues[i];
@@ -150,6 +153,8 @@ const results: (IClassSchedule | { error: any })[] = [];
         const classDates = getDatesForWeekdays(new Date(updatedEvaluation.classStartDate), new Date(updatedEvaluation.classEndDate), dayIndex);
         const meetingId = `alfregularclass-${studentDetails._id}`;
 
+     
+
         for (const classDate of classDates) {
           const newClassSchedule = new ClassScheduleModel({
             student: {
@@ -173,8 +178,12 @@ const results: (IClassSchedule | { error: any })[] = [];
             classDay: day,
             startTime: start,
             endTime: end,
-            course: studentDetails.student.course,
+            course: {
+              courseId: courseDetails?._id,
+              courseName: courseDetails?.courseName
+            },
             package: studentDetails.student.package,
+            totalHourse: updatedEvaluation.hours,
             startDate: classDate,
             endDate: classDate,
             createdBy: updatedEvaluation.createdBy,

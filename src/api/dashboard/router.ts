@@ -45,19 +45,45 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "dashboard"],
       },
     },
-    // {
-    //   method: "GET",
-    //   path: "/dashboard/supervisor/application",
-    //   options: {
-    //     handler: handler.getSupervisorApplicationCount,
-    //     description: dashboardMessages.WIDGET_COUNT,
-    //     tags: ["api", "dashboard"],
-    //     // auth: {
-    //     //   strategies: ["jwt"],
-    //     // },
-    //   },
-    // },
 
+    {
+      method: "GET",
+      path: "/dashboard/admin/count",
+      options: {
+        handler: handler.getAdminCount,
+        description: dashboardMessages.CARD_COUNT,
+        tags: ["api", "dashboard"],
+        // auth: {
+        //   strategies: ["jwt"],
+        // },
+      },
+    },
+
+    {
+      method: "GET",
+      path: "/dashboard/admin/totaltrialrequest",
+      options: {
+        handler: handler.getTotalTrialRequest,
+        description: dashboardMessages.CARD_COUNT,
+        tags: ["api", "dashboard"],
+        // auth: {
+        //   strategies: ["jwt"],
+        // },
+      },
+    },
+   
+    {
+      method: "GET",
+      path: "/dashboard/admin/totalclass",
+      options: {
+        handler: handler.getTotalClass,
+        description: dashboardMessages.CARD_COUNT,
+        tags: ["api", "dashboard"],
+        // auth: {
+        //   strategies: ["jwt"],
+        // },
+      },
+    },
 
 
   ];

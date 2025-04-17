@@ -5,7 +5,9 @@ import classShedule from "../models/classShedule";
 import usershiftschedule from "../models/usershiftschedule";
 import recruitment from "../models/recruitment";
 import feedback from "../models/feedback";
-
+import alstudents from "../models/alstudents";
+import tenantUser from "../models/users";
+import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, format, eachDayOfInterval, eachMonthOfInterval } from "date-fns";
 
 
 export interface Dashboard {
@@ -175,10 +177,6 @@ export const dashboardWidgetCounts = async (p0: string
       totalDuration: calculatePercentage(totalHoursValue),
     };
   };
-  
-
-
-
 
 
 export const dashboardWidgetSupervisorCounts = async (supervisorId: string): Promise<{
@@ -200,3 +198,165 @@ export const dashboardWidgetSupervisorCounts = async (supervisorId: string): Pro
   };
 };
 
+export const dashboardCardCount = async (): Promise<{
+  totalStudents: number;
+  maleStudents: number;
+  femaleStudents: number;
+  totalTeachers: number;
+  maleTeachers: number;
+  femaleTeachers: number;
+  totalStaffs: number;
+  maleStaffs: number;
+  femaleStaffs: number;
+}> => {
+  // Fetch active students
+  const students = await alstudents.find({ status: 'Active' });
+  const totalStudents = students.length;
+  const maleStudents = students.filter(student => student.student.gender === 'Male').length;
+  const femaleStudents = students.filter(student => student.student.gender === 'Female').length;
+
+  // Fetch active teachers from tenantUser
+  const teachers = await tenantUser.find({ role: 'TEACHER', status: 'Active' });
+  const totalTeachers = teachers.length;
+  const maleTeachers = teachers.filter(teacher => teacher.gender === 'Male').length;
+  const femaleTeachers = teachers.filter(teacher => teacher.gender === 'Female').length;
+
+  // Fetch other staff members from tenantUser
+  const staffs = await tenantUser.find({ 
+    role: { $in: ['SUPERVISOR', 'ACADEMICCOACH'] }, 
+    status: 'Active' 
+  });
+  const totalStaffs = staffs.length;
+  const maleStaffs = staffs.filter(staff => staff.gender === 'Male').length;
+  const femaleStaffs = staffs.filter(staff => staff.gender === 'Female').length;
+
+  return {
+    totalStudents,
+    maleStudents,
+    femaleStudents,
+    totalTeachers,
+    maleTeachers,
+    femaleTeachers,
+    totalStaffs,
+    maleStaffs,
+    femaleStaffs
+  };
+};
+
+export const totalTrialRequestCount = async (): Promise<{
+  totalTrialRequest: number;
+  pendingRequest: number;
+  pendingRequestPercentage: number;
+  joinedStudents: number;
+  joinedStudentsPercentage: number;
+  notJoinedStudents: number;
+  notJoinedrequestPercentage: number;
+
+}> => {
+
+const totalTrialRequestCount = await EvaluationModel.find({ status: 'Active' }).exec();
+
+const totalTrialRequest = totalTrialRequestCount.length;
+const pendingRequest = totalTrialRequestCount.filter(trialClass => trialClass.trialClassStatus === 'PENDING').length;
+const joinedStudents = totalTrialRequestCount.filter(trialClass => trialClass.studentStatus === 'JOINED').length;
+const notJoinedStudents = totalTrialRequestCount.filter(trialClass => trialClass.studentStatus === 'NOTJOINED').length;
+
+const pendingRequestPercentage=(pendingRequest/totalTrialRequest) * 100;
+const joinedStudentsPercentage=(joinedStudents/totalTrialRequest) * 100;
+const notJoinedrequestPercentage=(notJoinedStudents/totalTrialRequest) * 100;
+  return {
+    totalTrialRequest,
+    pendingRequest,
+    pendingRequestPercentage,
+    joinedStudents,
+    joinedStudentsPercentage,
+    notJoinedStudents,
+    notJoinedrequestPercentage,
+  }
+};
+
+export const totalClassCount = async (
+  dateRange: string
+): Promise<
+  { date: string; classCompleted: number; classPending: number; classReschedule: number; classCancelled: number }[]
+> => {
+  let startDate: Date;
+  let endDate: Date = new Date(); // Default to today
+  let dateFormat: string;
+  let intervalFn: (interval: { start: Date; end: Date }) => Date[];
+  let outputFormat: string;
+
+  // Determine start and end dates based on dateRange
+  switch (dateRange.toLowerCase()) {
+    case "yearly":
+      startDate = startOfYear(new Date());
+      endDate = endOfYear(new Date());
+      dateFormat = "%Y-%m"; // MongoDB format for months
+      intervalFn = eachMonthOfInterval;
+      outputFormat = "MMM-yyyy"; // Output format for months
+      break;
+    case "monthly":
+      startDate = startOfMonth(new Date());
+      endDate = endOfMonth(new Date());
+      dateFormat = "%Y-%m-%d"; // MongoDB format for days
+      intervalFn = eachDayOfInterval;
+      outputFormat = "yyyy-MM-dd"; // Output format for days
+      break;
+    case "weekly":
+      startDate = startOfWeek(new Date(), { weekStartsOn: 1 }); // Monday start
+      endDate = endOfWeek(new Date(), { weekStartsOn: 1 }); // Sunday end
+      dateFormat = "%Y-%m-%d";
+      intervalFn = eachDayOfInterval;
+      outputFormat = "yyyy-MM-dd";
+      break;
+    default:
+      throw new Error("Invalid dateRange value. Use 'weekly', 'monthly', or 'yearly'.");
+  }
+
+  console.log(`Fetching results from ${startDate.toISOString()} to ${endDate.toISOString()}`);
+
+  // Aggregation query to count class statuses per date/month
+  const result = await classShedule.aggregate([
+    {
+      $match: {
+        status: "Active",
+        startDate: { $gte: startDate, $lte: endDate },
+      },
+    },
+    {
+      $group: {
+        _id: { date: { $dateToString: { format: dateFormat, date: "$startDate" } }, status: "$scheduleStatus" },
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  let finalResult: any;
+    // Convert aggregation results into a structured object
+    const groupedResults: Record<string, any> = {};
+    result.forEach(({ _id, count }) => {
+      const date = format(new Date(_id.date), outputFormat); // Convert to correct format safely
+      if (!groupedResults[date]) {
+        groupedResults[date] = {
+          date,
+          classCompleted: 0,
+          classPending: 0,
+          classReschedule: 0,
+          classCancelled: 0,
+        };
+      }
+      if (_id.status === "Complete") groupedResults[date].classCompleted += count;
+      if (_id.status === "Pending") groupedResults[date].classPending += count;
+      if (_id.status === "Reschedule") groupedResults[date].classReschedule += count;
+      if (_id.status === "Cancelled") groupedResults[date].classCancelled += count;
+    });
+
+    // Ensure all intervals are included (fill missing values with 0)
+    const allDates = intervalFn({ start: startDate, end: endDate }).map((d) => format(d, outputFormat));
+    finalResult = allDates.map((date) => groupedResults[date] || { date, classCompleted: 0, classPending: 0, classReschedule: 0, classCancelled: 0 });
+
+
+    return finalResult;
+ 
+ 
+};

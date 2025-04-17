@@ -4,35 +4,49 @@ import AppLogger from "../helpers/logging";
 
 let ioConnection: SocketIOServer | null = null;
 
+// ✅ Initialize Socket.IO with HTTP server
 export const initializeSocket = (httpServer: HttpServer): void => {
   ioConnection = new SocketIOServer(httpServer, {
     cors: {
       origin: "*",
-      credentials: true
-    }
+      credentials: true,
+    },
   });
 
   ioConnection.on("connection", (socket: Socket) => {
-    AppLogger.info(`A user connected with Socket ID: ${socket.id}`);
+    AppLogger.info(`🔌 User connected - Socket ID: ${socket.id}`);
 
-    // Check if the client is connected
-    socket.on('connect', () => {
-      AppLogger.info(`Socket successfully connected: ${socket.id}`);
+    socket.on("join", (userId: string) => {
+      socket.join(userId);
+      AppLogger.info(`👤 User with Socket ID: ${socket.id} joined room: ${userId}`);
     });
 
-    // Handle disconnection
     socket.on("disconnect", () => {
-      AppLogger.info(`User with Socket ID: ${socket.id} disconnected`);
+      AppLogger.info(`❌ Disconnected - Socket ID: ${socket.id}`);
     });
   });
 };
 
+// ✅ Safe getter for io instance (instead of exporting mutable variable)
+export const getIO = (): SocketIOServer => {
+  if (!ioConnection) {
+    throw new Error("Socket.IO not initialized");
+  }
+  return ioConnection;
+};
 
-export const emitEventToClient = (event: string, data: any): void => {
-  if (ioConnection) {
-    ioConnection.emit(event, data);
-    AppLogger.info(`${event}: IO Data Emitted- ${JSON.stringify(data)}`);
-  } else {
-    AppLogger.info(`Socket.IO is not initialized`);
+// ✅ Emit to user or globally
+export const emitEventToClient = (event: string, data: any, userId?: string): void => {
+  try {
+    const io = getIO();
+    if (userId) {
+      io.to(userId).emit(event, data);
+      AppLogger.info(`📡 Event '${event}' sent to userId: ${userId} - Data: ${JSON.stringify(data)}`);
+    } else {
+      io.emit(event, data);
+      AppLogger.info(`📡 Global emit for event '${event}' - Data: ${JSON.stringify(data)}`);
+    }
+  } catch (err) {
+    AppLogger.error(`🚨 Failed to emit event: ${(err as Error).message}`);
   }
 };

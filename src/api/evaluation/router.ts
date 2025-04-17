@@ -55,7 +55,72 @@ const register = async (server: Server): Promise<void> => {
       },
     },
 
+    {
+      method: "GET",
+      path: "/totaltrialclass",
+      options: {
+        handler: handler.getTotaltrialClassCount,
+        description: evaluationMessages.BYID,
+        tags: ["api", "evaluationlist"],
+      },
+    },
+
+    {
+      method: "GET",
+      path: "/teacherstatus",
+      options: {
+        handler: handler.getAssignedTeacherCount,
+        description: evaluationMessages.BYID,
+        tags: ["api", "evaluationlist"],
+      },
+    },
+
+     {
+          method: "GET",
+          path: "/preferedteacher",
+          options: {
+            handler: handler.getPreferedTeacher,
+            description: evaluationMessages.BYID,
+            tags: ["api", "evaluationlist"],
+          },
+        },
          
+        {
+          method: "GET",
+          path: "/studentcourse",
+          options: {
+            handler: handler.getStudentCourse,
+            description: evaluationMessages.BYID,
+            tags: ["api", "evaluationlist"],
+          },
+        },
+        {
+          method: "GET",
+          path: "/countiescount",
+          options: {
+            handler: handler.getCountries,
+            description: evaluationMessages.BYID,
+            tags: ["api", "evaluationlist"],
+          },
+        },
+        {
+          method: "GET",
+          path: "/trialbyteacher",
+          options: {
+            handler: handler.getTrialbyTeacher,
+            description: evaluationMessages.BYID,
+            tags: ["api", "evaluationlist"],
+          },
+        },
+        {
+          method: "GET",
+          path: "/alltrialclass",
+          options: {
+            handler: handler.getTrialClass,
+            description: evaluationMessages.BYID,
+            tags: ["api", "evaluationlist"],
+          },
+        },
   ];
   server.route(routes);
 };

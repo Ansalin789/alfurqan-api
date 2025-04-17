@@ -1,7 +1,7 @@
 import { ResponseToolkit,Request } from "@hapi/hapi";
 import  { zodEvaluationSchema } from "../../models/evaluation";
 import { z } from "zod";
-import { createEvaluationRecord,getAllEvaluationRecords,getEvaluationRecordById, updateStudentEvaluation, updateStudentInvoice} from "../../operations/evaluation";
+import { createEvaluationRecord,getAllEvaluationRecords,getCountriesCount,getEvaluationRecordById, getPreferedTeacherPercentage, getStudentCourseCount, getTeacherStatusCount, getTotalTrialClassRequestCount, getTrialbyTeacherCount, getTrialClassCount, updateStudentEvaluation, updateStudentInvoice} from "../../operations/evaluation";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { evaluationMessages } from "../../config/messages";
 import { isNil } from "lodash";
@@ -49,6 +49,7 @@ const createInputValidation = z.object({
     invoiceStatus: true,
     paymentLink: true,
     paymentStatus: true,
+    teacherStatus: true,
     status:true,
     createdBy:true,
     createdDate:true,  
@@ -80,6 +81,7 @@ const createInputValidation = z.object({
       sortOrder: true,
       offset: true,
       limit: true,
+      trialClassStatus: true,
       filterValues: true
     }),
   });
@@ -102,6 +104,7 @@ export default {
                 studentFirstName: payload.student?.studentFirstName ?? "",
                 studentLastName: payload.student?.studentLastName ?? "",
                 studentEmail: payload.student?.studentEmail ?? "",
+                studentGender: payload.student?.studentGender ?? "",
                 studentPhone: payload.student?.studentPhone ?? 0,
                 studentCity: payload.student?.studentCity ?? " ",
                 studentCountry: payload.student?.studentCountry ?? "",
@@ -157,6 +160,7 @@ export default {
            invoiceStatus: payload.invoiceStatus ?? "Pending",
            paymentLink: payload.paymentLink ?? "",
            paymentStatus: payload.paymentStatus ?? "Pending",
+           teacherStatus: payload.teacherStatus ?? "Not Assigned",
             status: payload.status,
             createdDate: new Date(),
             createdBy: payload.createdBy,
@@ -177,6 +181,7 @@ export default {
       studentFirstName: payload.student?.studentFirstName ?? "",
       studentLastName: payload.student?.studentLastName ?? "",
       studentEmail: payload.student?.studentEmail ?? "",
+      studentGender: payload.student?.studentGender ?? "",
       studentPhone: payload.student?.studentPhone?? 0,
       studentCity: payload.student?.studentCity ?? " ",
       studentCountry: payload.student?.studentCountry ?? "",
@@ -223,6 +228,7 @@ export default {
  invoiceStatus: payload.invoiceStatus ?? "Pending",
  paymentLink: payload.paymentLink ?? "",
  paymentStatus: payload.paymentStatus ?? "Pending",
+ teacherStatus: payload.teacherStatus ?? "Not Assigned",
   status: payload.status,
   createdDate: new Date(),
   createdBy: payload.createdBy,
@@ -268,7 +274,41 @@ export default {
      });
   },
  
+  async getTotaltrialClassCount(req: Request, h: ResponseToolkit){
+    return await getTotalTrialClassRequestCount();
+  },
   
+  async getAssignedTeacherCount(req: Request, h: ResponseToolkit){
+  return await getTeacherStatusCount();
+  },
+
+  async getPreferedTeacher(req: Request, h: ResponseToolkit){
+    return await getPreferedTeacherPercentage();
+    },
+
+  async getStudentCourse(req: Request, h: ResponseToolkit){
+    return await getStudentCourseCount();
+    },
+
+    async getCountries(req: Request, h: ResponseToolkit){
+      return await getCountriesCount();
+    },
+
+    async getTrialbyTeacher(req: Request, h: ResponseToolkit){
+      return await getTrialbyTeacherCount();
+    },
+
+    async getTrialClass(req: Request, h: ResponseToolkit){
+
+      const { query } = getEvaluationListInputValidation.parse({
+        query: {
+          ...req.query,
+          filterValues: req.query?.filterValues ? JSON.parse(req.query.filterValues) : {},
+        },
+      });
+      return getTrialClassCount(query);
+
+    }
   }
 
 
