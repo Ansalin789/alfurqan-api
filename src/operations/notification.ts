@@ -3,6 +3,7 @@ import { Types } from "mongoose";
 import AppLogger from "../helpers/logging";
 import notification, { zodnotificationSchema } from "../models/notification";
 import {getIO } from "../shared/socket";
+import { INotification } from "../../types/models.types";
 
 
 //Create Notification //
@@ -57,7 +58,27 @@ export default async function getAllNotification(receiverId?: string) {
   } catch (error) {
     throw new Error(`Failed to fetch notifications: ${(error as Error).message}`);
   }
+  
 }
+
+/**
+ * Updates a notification by its ID.
+ * @param {string} id - The unique ID of the notification to update.
+ * @param {Partial<INotification>} payload - The fields to update.
+ * @returns {Promise<INotification | null>} - The updated notification or null if not found.
+ */
+
+export const updateNotification = async (
+  id: string,
+  payload: Partial<INotification>
+): Promise<INotification | null> => {
+
+  return notification.findOneAndUpdate(
+    { _id: new Types.ObjectId(id) },
+    { $set: payload },
+    { new: true }
+  ).lean();
+};
 
 
 

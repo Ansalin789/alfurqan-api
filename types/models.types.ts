@@ -1251,7 +1251,7 @@ export interface INotification{
     receiverName : string;
     receiverEmail : string;
     notificationType ?: string;
-    notificationStatus ?: string;
+    notificationStatus : string;
     status: string;
     createdDate: Date;
     createdBy: string;
@@ -1269,7 +1269,7 @@ export interface INotification extends Document{
   receiverName : string;
   receiverEmail : string;
   notificationType ?: string;
-  notificationStatus ?: string;
+  notificationStatus : string;
   status : string;
   createdDate : Date;
   createdBy: string;

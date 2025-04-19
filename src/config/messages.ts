@@ -390,3 +390,9 @@ export const notificationsMessages: Record<string, any> = Object.freeze({
   ROLE_ACCESS : "Roll access",
 
 });
+
+
+export const notificationStatus: Record<string, any> = Object.freeze({
+  SEEN : "Seen",
+  UN_READ: "Unread",
+});
