@@ -18,15 +18,16 @@ import { sendNotification } from "./notification";
 
 
 
-  export interface StudentFilter {
-    id?: string;
-    status?: string;
-    country?: string;
-    course?: string;
-    teacher?: string;
-    offset?: string | null;  // added offset
-    limit?: string | null;   // added limit
-  }
+export interface StudentFilter {
+  id?: string;
+  status?: string;
+  country?: string;
+  course?: string;
+  teacher?: string;
+  offset?: string | null;  // added offset
+  limit?: string | null;   // added limit
+}
+
 
 
 /**
@@ -94,12 +95,12 @@ console.log("newUser academicCoach>>>>",newUser);
       senderName: savedUser.firstName,
       senderEmail: savedUser.email,
       isRead : false,
-      receiverId: savedUser.academicCoach.academicCoachId.toString(),
-      receiverName: savedUser.academicCoach.name,
-      receiverEmail: savedUser.academicCoach.email,
+      receiverId: [savedUser.academicCoach.academicCoachId.toString(),"6805da8c06542aa33858b889"],
+      receiverName: [savedUser.academicCoach.name,"Admin"],
+      receiverEmail: [savedUser.academicCoach.email,"rahul.blackstoneinfomatics@gmail.com"],
     
       notificationType: "STUDENT_NOTIFICATION",
-      notificationStatus: "unread",
+      notificationStatus: "Unseen",
       status: "active",
       createdBy: "system",
       updatedBy: "system",
@@ -452,7 +453,6 @@ export const getAllStudentVisitor = async (
         break;
     }
   });
-  console.log("Referral Source Stats:", stats);
+
   return stats;
 };
-

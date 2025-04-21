@@ -1,8 +1,20 @@
 import { ResponseToolkit , Request} from "@hapi/hapi";
-import getAllNotification, { getNotificationsByNotificationId} from "../../operations/notification";
+import getAllNotification, { getNotificationsByNotificationId, updateNotification} from "../../operations/notification";
+import { Types } from "mongoose";
+import { zodnotificationSchema } from "../../models/notification";
+import { z } from "zod";
+import { isNil } from "lodash";
+import { notificationsMessages } from "../../config/messages";
+import { notFound } from "@hapi/boom";
 
 
-
+// Validation schema for the payload
+const updateInputValidation = z.object({
+  payload: zodnotificationSchema.pick({
+    notificationStatus: true,
+    isRead: true,
+  }),
+});
 
 export default {
  async getNotificationsHandler(req: Request, h: ResponseToolkit){
@@ -49,10 +61,38 @@ async getnotificationList(req: Request, h: ResponseToolkit) {
       })
       .code(500);
   }
+},
+
+
+
+
+async updateNotificationById(req: Request, h: ResponseToolkit) {
+  
+  const notificationId = String(req.params.notificationId);
+
+  // Check if notificationId is a valid ObjectId
+  if (!Types.ObjectId.isValid(notificationId)) {
+    return h.response({ message: "Invalid notification ID format" }).code(400);
+  }
+
+  // Validate payload
+  const { payload } = updateInputValidation.parse({
+    payload: req.payload,
+  });
+
+  const result = await updateNotification(notificationId, payload);
+
+  if (isNil(result)) {
+    return notFound(notificationsMessages.USER_NOT_FOUND);
+  }
+
+  return result;
+}
+
+
 }
 
 
 
 
 
-}
