@@ -776,23 +776,25 @@ export interface IAssignmentCreate {
   answerValidation: string;
   assignmentStatus: string;
 }
-
-export interface IStudentInvoice extends Document{
+export interface IStudentInvoice extends Document {
   student: {
-      studentId: string;
-      studentName: string;
-      studentEmail:string;
-      studentPhone:number;
+    studentId: string;
+    studentName: string;
+    studentEmail: string;
+    studentPhone: number;
+    country: string;
+    city: string;
   };
   courseName: string;
   amount: number; 
   invoiceStatus: string;
   status: string;
   createdDate: Date;
-  createdBy:string ;
+  createdBy: string;
   lastUpdatedDate: Date;
   lastUpdatedBy: string;
 }
+
 
 export interface IMessageCreate {
   sender: string;
