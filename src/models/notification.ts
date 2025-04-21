@@ -72,7 +72,7 @@ export const zodnotificationSchema = z.object({
   receiverEmail: z.string(),
 
   notificationType: z.string().optional(),
-  notificationStatus:  z.enum([notificationStatus.SEEN, notificationStatus.UN_READ]),
+  notificationStatus:  z.enum([notificationStatus.SEEN, notificationStatus.UN_SEEN]),
   status: z.string().optional(),
   isRead: z.boolean(),
   createdDate: z.date().optional(),
