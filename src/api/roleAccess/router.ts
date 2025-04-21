@@ -8,7 +8,7 @@ const register = async (server: Server): Promise<void> => {
     
     {
       method: "PUT",
-      path: "/roleAccess/{userId}",
+      path: "/update-access/{_id}",
       options: {
         handler: handler.updateroleAccessById,
         description: roleAccess.UPDATE,

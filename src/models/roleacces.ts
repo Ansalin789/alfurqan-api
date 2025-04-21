@@ -7,9 +7,8 @@ const roleAccess = new Schema<IAccessModel>(
     employeeId: { type: String, required: false },
     employeeName: { type: String, required: false },
     contact: { type: String, required: false },
-    designation: { type: String, required: false },
-    dateOfJoining:{ type: String, required: false },
-   
+    designation: {  type: [String], required: false },
+    dateOfJoining:{ type: Date, required: false },
     roleAccess :{
 
     admin: {type: Boolean, required: false},
@@ -93,7 +92,7 @@ export const zodroleAccessSchema = z.object({
   employeeId: z.string().optional(),
   employeeName: z.string().optional(),
   contact: z.string().optional(),
-  designation: z.string().optional(),
+  designation: z.array(z.string()).min(1),
   dateOfJoining: z.string().optional(),
 
   roleAccess: z.object({
