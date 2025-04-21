@@ -394,7 +394,7 @@ export const notificationsMessages: Record<string, any> = Object.freeze({
 
 export const notificationStatus: Record<string, any> = Object.freeze({
   SEEN : "Seen",
-  UN_READ: "Unread",
+  UN_SEEN: "Unseen",
 });
 
 
