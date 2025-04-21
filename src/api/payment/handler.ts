@@ -31,8 +31,7 @@ export const createPaymentIntent = async (request: Request, h: ResponseToolkit) 
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency,
-    });
-
+    }); 
 if(paymentIntentResponse){
   const savePaymentDetails = PaymentDetailsModel.create({
     userId: evaluationDetails?._id,
@@ -46,8 +45,30 @@ if(paymentIntentResponse){
     createdBy: "System"
    });
    (await savePaymentDetails).save();
-};
+
+   const invoicePayload = InvoiceModel .create({
+    student: {
+      studentId: evaluationDetails?.student?.studentId || "",
+      studentName: `${evaluationDetails?.student?.studentFirstName ?? ""} ${evaluationDetails?.student?.studentLastName ?? ""}`,
+      studentEmail: evaluationDetails?.student?.studentEmail,
+      studentPhone: evaluationDetails?.student?.studentPhone,
+      country: evaluationDetails?.student?.studentCountry,
+      city: evaluationDetails?.student?.studentCity,
+    },
+    courseName: evaluationDetails?.student?.learningInterest, 
+    amount: evaluationDetails?.planTotalPrice || 0,
+    invoiceStatus: evaluationDetails?.invoiceStatus || "",
+    status: "Active",
+    createdBy: "System",
+    lastUpdatedBy: evaluationDetails?.updatedBy || "System",
+  });
   
+ 
+  const result = (await invoicePayload) .save();
+  console.log(result);
+};
+
+
 const updateEvaluationDetails = await EvaluationModel.findByIdAndUpdate(
   evaluationDetails?._id,
   {

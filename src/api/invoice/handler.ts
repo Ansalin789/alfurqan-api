@@ -1,7 +1,7 @@
 import { ResponseToolkit,Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodAlStudentInvoiceSchemaValidation } from "../../shared/zod_schema_validation";
-import { getAllStudetnInVoiceList, getStudentAllRevenue, getStudetnInVoiceDetailsById } from "../../operations/invoice";
+import { getAllStudetnInVoiceList, getStudentAllRevenue, getStudetnInVoiceDetailsById, getTotalAmountByCountry, getTotalAmountByCourse } from "../../operations/invoice";
 import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
 import { evaluationMessages } from "../../config/messages";
@@ -61,7 +61,27 @@ export default {
         data: revenueData,
       });
     }
+    ,
+
+    async getTotalAmountByCountry(req: Request, h: ResponseToolkit) {
+      const { query } = geStudentListInputValidation.parse({
+        query: {
+          ...req.query,
+        },
+      });
     
+      return getTotalAmountByCountry(query.type); // ✅ Only pass `type`
+    },
+    
+    async getTotalAmountByCourse(req: Request, h: ResponseToolkit) {
+      const { query } = geStudentListInputValidation.parse({
+        query: {
+          ...req.query,
+        },
+      });
+    
+      return getTotalAmountByCourse(query.type); // ✅ Only pass `type`
+    }
     
     }
     

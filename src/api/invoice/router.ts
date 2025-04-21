@@ -33,6 +33,25 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "evaluationlist"],
       },
     },
+    {
+      method: "GET",
+      path: "/amountbycountry",
+      options: {
+        handler: handler.getTotalAmountByCountry,
+        description: evaluationMessages.LIST,
+        tags: ["api", "invoice"],
+      },
+    },
+
+    {
+      method: "GET",
+      path: "/amountbycourse",
+      options: {
+        handler: handler.getTotalAmountByCourse,
+        description: evaluationMessages.LIST,
+        tags: ["api", "invoice"],
+      },
+    }
          
   ];
   server.route(routes);

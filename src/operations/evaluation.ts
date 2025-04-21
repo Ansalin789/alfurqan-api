@@ -17,6 +17,7 @@ import Course from "../models/course";
 import { config } from "../config/env";
 import User from "../models/users";
 import PaymentDetailsModel from "../models/paymentDetails"
+import { log } from "console";
 
 
 
@@ -260,6 +261,8 @@ if(emailTemplate && payload.student && payload.subscription && evaluation ){
     const emailTo = [
         { email: payload.student.studentEmail, name: payload.student.studentFirstName + ' ' + payload.student.studentLastName }
     ];
+    
+
     const subject = "Invoice";
     const htmlPart = emailTemplate.templateContent.replace('<studentname>', payload.student.studentFirstName + ' ' + payload.student.studentLastName)
     .replace('<address>', payload.student.studentCity? payload.student.studentCity: " ").replace('<phonenumber>', payload.student.studentPhone.toString())
@@ -267,7 +270,9 @@ if(emailTemplate && payload.student && payload.subscription && evaluation ){
     .replace('<amount>', evaluation.planTotalPrice.toString()).replace('<adjustamount>', evaluation.planTotalPrice.toString()).replace('<subtotal>',evaluation.planTotalPrice.toString())
     .replace('<total>',evaluation.planTotalPrice.toString()).replace('<paymentLink>',updatedEvaluation.paymentLink
   );
-   await sendEmailClient(emailTo, subject,htmlPart);
+   const email = await sendEmailClient(emailTo, subject,htmlPart);
+   console.log(">>>>>>>>>>>>",email);
+
 }
 }
 
