@@ -776,23 +776,25 @@ export interface IAssignmentCreate {
   answerValidation: string;
   assignmentStatus: string;
 }
-
-export interface IStudentInvoice extends Document{
+export interface IStudentInvoice extends Document {
   student: {
-      studentId: string;
-      studentName: string;
-      studentEmail:string;
-      studentPhone:number;
+    studentId: string;
+    studentName: string;
+    studentEmail: string;
+    studentPhone: number;
+    country: string;
+    city: string;
   };
   courseName: string;
   amount: number; 
   invoiceStatus: string;
   status: string;
   createdDate: Date;
-  createdBy:string ;
+  createdBy: string;
   lastUpdatedDate: Date;
   lastUpdatedBy: string;
 }
+
 
 export interface IMessageCreate {
   sender: string;
@@ -1251,7 +1253,7 @@ export interface INotification{
     receiverName : string;
     receiverEmail : string;
     notificationType ?: string;
-    notificationStatus ?: string;
+    notificationStatus : string;
     status: string;
     createdDate: Date;
     createdBy: string;
@@ -1269,10 +1271,138 @@ export interface INotification extends Document{
   receiverName : string;
   receiverEmail : string;
   notificationType ?: string;
-  notificationStatus ?: string;
+  notificationStatus : string;
   status : string;
   createdDate : Date;
   createdBy: string;
   updatedDate?: Date;
   updatedBy?: string;
+}
+
+export interface IAccessModel {
+  employeeId: string;
+  employeeName: string;
+  contact: string;
+  designation: string[];
+  dateOfJoining?: Date; // Format: 'DD/MM/YYYY'
+  roleAccess: {
+    admin?: boolean;
+    adminmodules?: {
+      dashboard?: boolean;
+      evaluation?: boolean;
+      student?: boolean;
+      employees?: boolean;
+      courses?: boolean;
+      classes?: boolean;
+      invoice?: boolean;
+      analytics?: boolean;
+      messages?: boolean;
+      settings?: boolean;
+    };
+    academicCoach?: boolean;
+    academicmodules?: {
+      dashboard?: boolean;
+      scheduledevaluation?: boolean;
+      scheduledtrail?: boolean;
+      students?: boolean;
+      teachers?: boolean;
+      messages?: boolean;
+      support?: boolean;
+    };
+    supervisor?: boolean;
+    supervisormodules?: {
+      dashboard?: boolean;
+      recuirement?: boolean;
+      meeting?: boolean;
+      teachers?: boolean;
+      messages?: boolean;
+      support?: boolean;
+    };
+      student?: boolean;
+      studentmodules?: {
+        dashboard?: boolean;
+        recuirement?: boolean;
+        meeting?: boolean;
+        teachers?: boolean;
+        messages?: boolean;
+        suppor?: boolean;
+      };
+      teacher?: boolean;
+      teachermodules?: {
+        dashboard?: boolean;
+        recuirement?: boolean;
+        meeting?: boolean;
+        teachers?: boolean;
+        messages?: boolean;
+        support?: boolean;
+      };
+ 
+  };
+}
+
+
+export interface IAccessModel extends Document{
+  employeeId: string;
+  employeeName: string;
+  contact: string;
+  designation: string[];
+  dateOfJoining?: Date; // Format: 'DD/MM/YYYY'
+  roleAccess: {
+    admin?: boolean;
+    adminmodules?: {
+      dashboard?: boolean;
+      evaluation?: boolean;
+      student?: boolean;
+      employees?: boolean;
+      courses?: boolean;
+      classes?: boolean;
+      invoice?: boolean;
+      analytics?: boolean;
+      messages?: boolean;
+      settings?: boolean;
+    };
+    academicCoach?: boolean;
+    academicmodules?: {
+      dashboard?: boolean;
+      scheduledevaluation?: boolean;
+      scheduledtrail?: boolean;
+      students?: boolean;
+      teachers?: boolean;
+      messages?: boolean;
+      support?: boolean;
+    };
+    supervisor?: boolean;
+    supervisormodules?: {
+      dashboard?: boolean;
+      recuirement?: boolean;
+      meeting?: boolean;
+      teachers?: boolean;
+      messages?: boolean;
+      support?: boolean;
+    };
+      student?: boolean;
+      studentmodules?: {
+        dashboard?: boolean;
+        recuirement?: boolean;
+        meeting?: boolean;
+        teachers?: boolean;
+        messages?: boolean;
+        suppor?: boolean;
+      };
+      teacher?: boolean;
+      teachermodules?: {
+        dashboard?: boolean;
+        recuirement?: boolean;
+        meeting?: boolean;
+        teachers?: boolean;
+        messages?: boolean;
+        support?: boolean;
+      };
+ 
+  };
+    status: string;
+    createdDate: Date;
+    createdBy: string;
+    updatedDate?: Date;
+    updatedBy?: string;
 }

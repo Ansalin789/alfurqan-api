@@ -1,6 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 import { z } from "zod";
 import { INotification } from "../../types/models.types";
+import { notificationStatus } from "../config/messages";
 
 const notificationSchema = new Schema<INotification>(
   {
@@ -36,7 +37,7 @@ const notificationSchema = new Schema<INotification>(
      },
     notificationType: { 
       type: String, 
-      required: false,
+      required: true,
      },
      notificationStatus: { 
       type: String, 
@@ -44,7 +45,7 @@ const notificationSchema = new Schema<INotification>(
      },
      isRead:{
       type:Boolean,
-      required:false,
+      required:true,
      },
 
      status: { type: String, required: false },
@@ -71,9 +72,9 @@ export const zodnotificationSchema = z.object({
   receiverEmail: z.string(),
 
   notificationType: z.string().optional(),
-  notificationStatus: z.string().optional(),
+  notificationStatus:  z.enum([notificationStatus.SEEN, notificationStatus.UN_SEEN]),
   status: z.string().optional(),
-  isRead: z.boolean().optional(),
+  isRead: z.boolean(),
   createdDate: z.date().optional(),
   createdBy: z.string().optional(),
 

@@ -1,6 +1,7 @@
 
 import { Server, ServerRoute } from "@hapi/hapi";
 import handler from "./handler";
+import Joi from "joi";
 
 const register = async (server: Server): Promise<void> => {
   const routes: ServerRoute[] = [
@@ -23,26 +24,22 @@ const register = async (server: Server): Promise<void> => {
         description: "Get notifications by receiverId",
       },
     },
+
+    {
+      method: "PUT",
+      path: "/notification/{notificationId}",
+      options: {
+        handler: handler.updateNotificationById,
+        tags: ["api", "notification"],
+        description: "Update a notification's status to seen",
+        validate: {
+          params: Joi.object({
+            notificationId: Joi.string().required()
+          })
+        }
+      }
+    }
     
-
-
-    // {
-    //   method: "GET",
-    //   path: "/notification/{notificationId}",
-    //   options: {
-    //     handler:handler.getnotificationById ,  
-    //     tags: ["api", "notification"],  
-    //   },
-    // },
-
-    // {
-    //     method: "PUT",
-    //     path: "/notification/{notificationId}",
-    //     options: {
-    //       handler:handler.createTeacherMessageList ,  
-    //       tags: ["api", "notification"],  
-    //     },
-    //   },
 
     //   {
     //     method: "PUT",
