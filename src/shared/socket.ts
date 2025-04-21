@@ -16,7 +16,7 @@ export const initializeSocket = (httpServer: HttpServer): void => {
   ioConnection.on("connection", (socket: Socket) => {
     AppLogger.info(`🔌 User connected - Socket ID: ${socket.id}`);
 
-    socket.on("join", (userId: string) => {
+    socket.on("subscribe", (userId: string) => {
       socket.join(userId);
       AppLogger.info(`👤 User with Socket ID: ${socket.id} joined room: ${userId}`);
     });
