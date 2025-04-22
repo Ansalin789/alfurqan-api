@@ -11,6 +11,10 @@ enum LearningInterest {
   ISLAMIC = 'Islamic Studies',
   ARANIC = 'Arabic',
 }
+enum notificationStatus{
+  SEEN = "Seen",
+  UN_SEEN = "Unseen",
+}
 enum NumberOfStudents {
   ONE = 1,
   TWO = 2,
@@ -1405,4 +1409,89 @@ export interface IAccessModel extends Document{
     createdBy: string;
     updatedDate?: Date;
     updatedBy?: string;
+}
+
+
+export interface IAdminMeetingCreate {
+  meetingName: string;
+  meetingId?: string;
+  admin?: {
+    adminId?: string;
+    adminName?: string;
+    adminEmail?: string;
+    adminRole?: string;
+  };
+  selectedDate: Date;
+  startTime: string;
+  endTime: string;
+  teacher: {
+    teacherId: string;
+    teacherName: string;
+    teacherEmail: string;
+  }[]; // <-- ✅ MUST be an array of teacher objects
+  description: string;
+  status: string;
+  meetingStatus?: string;
+  createdDate?: Date;
+  createdBy: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+}
+
+
+
+export interface IAdminMeeting extends Document{
+  
+  meetingName: string;
+  meetingId: string;
+   admin:{
+    adminId?: string;
+    adminName?: string;
+    adminEmail?: string;
+    adminRole?: string;
+  };
+  selectedDate: Date;
+  startTime: any;
+  endTime: any;
+  teacher:  string[];
+  description: string;
+  status: string;
+  meetingStatus: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+}
+export interface RealTimeMessageCreate{
+  messages : string;
+  isRead : boolean;
+  senderId : string;
+  senderName : string;
+  senderEmail ?: string;
+  receiverId : string;
+  receiverName : string;
+  receiverEmail ?: string;
+  notificationStatus : notificationStatus;
+  status?: string;
+  createdDate?: Date;
+  createdBy?: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+}
+
+export interface RealTimeMessage extends Document{
+messages : string;
+isRead : boolean;
+senderId : string;
+senderName : string;
+senderEmail ?: string;
+receiverId : string;
+receiverName : string;
+receiverEmail ?: string;
+notificationStatus : notificationStatus;
+status ?: string;
+createdDate ?: Date;
+createdBy?: string;
+updatedDate?: Date;
+updatedBy?: string;
 }

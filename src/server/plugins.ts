@@ -22,7 +22,8 @@ import addMeetingAPI from "../api/addMeeting/router";
 import supervisorfeedbackAPI from "../api/supervisorfeedback/router";
 import notificationAPI from "../api/notification/router";
 import roleAccessAPI from "../api/roleAccess/router";
-
+import adminMeeting from "../api/adminMeeting/router"
+import realtimemessageAPI from "../api/realtimemessage/router";
 export const appPlugins = [
   {
     plugin: systemLifeCycle,
@@ -93,5 +94,11 @@ export const appPlugins = [
   },
   {
     plugin: roleAccessAPI,
+  },
+  {
+    plugin: adminMeeting,
+  },
+  {
+    plugin:realtimemessageAPI,
   }
 ];
