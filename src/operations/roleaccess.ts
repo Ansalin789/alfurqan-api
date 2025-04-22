@@ -1,3 +1,4 @@
+import { Types } from "mongoose";
 import { IAccessModel } from "../../types/models.types";
 import roleacces from "../models/roleacces";
 
@@ -59,3 +60,13 @@ export default async function getallsettinglist(filters: FilterOptions) {
   const result = await roleacces.find(query);
   return result;
 }
+
+
+export const getrolesettingById = async (settingId: string) => {
+  try {
+    const settings = await roleacces.findOne({ _id: new Types.ObjectId(settingId) }).lean();
+    return { settings };
+  } catch (error) {
+    throw new Error(`Failed to fetch role access: ${(error as Error).message}`);
+  }
+};
