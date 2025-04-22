@@ -1,9 +1,11 @@
 import { Request, ResponseToolkit } from '@hapi/hapi';
 import UserModel from "../../models/users"
-import  { updateUserAccess } from "../../operations/roleaccess"
+import  getallsettinglist, { updateUserAccess } from "../../operations/roleaccess"
 import { IAccessModel } from '../../../types/models.types';
 
 export default{
+
+  //Update the role access
 
    async updateroleAccessById(req: Request, h: ResponseToolkit) {
       try {
@@ -98,11 +100,29 @@ export default{
         console.error(error);
         return h.response({ message: 'Internal Server Error' }).code(500);
       }
+    },
+    
+    
+   //getlist for Employeelist
+    
+   async getsettinglist(req: Request, h: ResponseToolkit) {
+    try {
+      const { employeeName, designation, fromDate, toDate } = req.query;
+  
+      const result = await getallsettinglist({ employeeName, designation, fromDate, toDate });
+  
+      return h.response({
+        status: 'success',
+        data: result,
+      }).code(200);
+    } catch (error) {
+      console.error(error);
+      return h.response({ message: 'Internal Server Error' }).code(500);
     }
-    
-    
-    
-    
+  },
+  
 
 
-}
+
+
+  }

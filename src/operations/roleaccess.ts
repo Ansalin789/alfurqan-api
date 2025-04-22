@@ -25,3 +25,37 @@ export const updateUserAccess = async (
     return { error };
   }
 };
+
+
+
+/**
+ * Retrieves all meeting records with optional filters.
+ */
+interface FilterOptions {
+  employeeName?: string;
+  designation?: string;
+  fromDate?: string;
+  toDate?: string;
+}
+
+export default async function getallsettinglist(filters: FilterOptions) {
+  const query: any = {};
+
+  if (filters.employeeName) {
+    query.employeeName = { $regex: filters.employeeName, $options: 'i' }; // Case-insensitive
+  }
+
+  if (filters.designation) {
+    query.designation = filters.designation; // or use $in if multiple possible
+  }
+
+  if (filters.fromDate && filters.toDate) {
+    query.dateOfJoining = {
+      $gte: new Date(filters.fromDate),
+      $lte: new Date(filters.toDate),
+    };
+  }
+
+  const result = await roleacces.find(query);
+  return result;
+}

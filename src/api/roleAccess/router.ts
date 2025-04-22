@@ -16,6 +16,15 @@ const register = async (server: Server): Promise<void> => {
       },
     },
 
+    {
+      method: "GET",
+      path: "/update-access/list",
+      options: {
+        handler:handler.getsettinglist,  
+        tags: ["api", "roleAccess"],  
+      },
+    },
+
 
   ];
   server.route(routes);
