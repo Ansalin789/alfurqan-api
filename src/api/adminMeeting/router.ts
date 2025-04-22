@@ -38,10 +38,25 @@ const register = async (server: Server): Promise<void> => {
                 options: {
                   handler: handler.getAdminMeetingRecordById,
                   description: addAminMeetingMessages.LIST,
-                  tags: ["api", "recruitment"],
+                  tags: ["api", "adminmeeting"],
                 },
            },
-
+          
+          {
+            method: "PUT",
+            path: "/allAdminMeeting/{meetingId}",
+            options: {
+                handler: handler.updateAdminMeetingRecordById,
+                description: addAminMeetingMessages.LIST,
+                tags: ["api", "adminmeeting"],
+                payload: {
+                    output: "data",  // Ensure payload is treated as parsed data
+                    parse: true,
+                    allow: "application/json", // Ensure JSON is allowed
+                    maxBytes: 50 * 1024 * 1024,
+                },
+            },
+          }
 
 
 
