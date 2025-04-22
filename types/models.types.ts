@@ -263,6 +263,19 @@ export interface IMeetingScheduleCreate {
 }
 
 export interface ICourse extends Document {
+  course: {
+    courseId?: string;
+    courseTitle: string;
+    courseDuration: string;
+    courseDescription: string;
+    courseLevel: string;
+  };
+  level: {
+    levelId: string;
+    contentLevel: string;
+    descriptions: Buffer;
+    duration: string;
+  }[]; // <-- make level an array
   courseName: string;
   status: string;
   createdDate: Date;
@@ -272,6 +285,20 @@ export interface ICourse extends Document {
 }
 
 export interface ICourseCreate {
+  course: {
+    courseId?: string;
+    courseTitle:string;
+    courseDuration:string;
+    courseDescription:string;
+    courseLevel:string;
+  };
+  level :{
+    levelId:string;
+    contentLevel:string;
+    descriptions:Buffer;
+    duration:string;
+
+  }[]
   courseName: string;
   status: string;
   createdDate: Date;
