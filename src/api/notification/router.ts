@@ -17,7 +17,7 @@ const register = async (server: Server): Promise<void> => {
 
     {
       method: "GET",
-      path: "/notifications/{notificationId}",
+      path: "/notification/{notificationId}",
       options: {
         handler:handler.getNotificationsHandler,
         tags: ["api", "notifications"],
@@ -29,14 +29,10 @@ const register = async (server: Server): Promise<void> => {
       method: "PUT",
       path: "/notification/{notificationId}",
       options: {
+        cors:true,
         handler: handler.updateNotificationById,
         tags: ["api", "notification"],
         description: "Update a notification's status to seen",
-        validate: {
-          params: Joi.object({
-            notificationId: Joi.string().required()
-          })
-        }
       }
     }
     
