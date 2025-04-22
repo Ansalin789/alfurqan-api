@@ -11,6 +11,10 @@ enum LearningInterest {
   ISLAMIC = 'Islamic Studies',
   ARANIC = 'Arabic',
 }
+enum notificationStatus{
+  SEEN = "Seen",
+  UN_SEEN = "Unseen",
+}
 enum NumberOfStudents {
   ONE = 1,
   TWO = 2,
@@ -1458,4 +1462,36 @@ export interface IAdminMeeting extends Document{
   updatedDate?: Date;
   updatedBy?: string;
 }
+export interface RealTimeMessageCreate{
+  messages : string;
+  isRead : boolean;
+  senderId : string;
+  senderName : string;
+  senderEmail ?: string;
+  receiverId : string;
+  receiverName : string;
+  receiverEmail ?: string;
+  notificationStatus : notificationStatus;
+  status?: string;
+  createdDate?: Date;
+  createdBy?: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+}
 
+export interface RealTimeMessage extends Document{
+messages : string;
+isRead : boolean;
+senderId : string;
+senderName : string;
+senderEmail ?: string;
+receiverId : string;
+receiverName : string;
+receiverEmail ?: string;
+notificationStatus : notificationStatus;
+status ?: string;
+createdDate ?: Date;
+createdBy?: string;
+updatedDate?: Date;
+updatedBy?: string;
+}

@@ -6,6 +6,18 @@ import User from "../models/users";
 import { v4 as uuidv4 } from 'uuid';  // Import the uuid package to generate unique IDs
 
 
+export interface IAdminMeetingUpdate{
+  meetingName:string,
+  selectedDate: Date,
+  status?:string,
+  meetingStatus?: string,
+  startTime:string,
+  endTime:string,
+  updatedDate?:Date,
+  updatedBy?:string,
+  description:string,
+  }
+
 /**
  * Creates a new meeting.
  *
@@ -106,5 +118,20 @@ export const getAdminMeetingById = async (  id: string): Promise<IAdminMeeting |
     _id: new Types.ObjectId(id),
   }).lean();
 };
+
+
+
+//Update
+export const updateAdminMeetingById = async (
+  id: string,
+  payload: Partial<IAdminMeetingUpdate>
+): Promise<IAdminMeeting | null> => {
+  return addmeeting.findOneAndUpdate(
+    { _id: new Types.ObjectId(id) },
+    { $set: payload },
+    { new: true }
+  ).lean();
+};
+
 
 
