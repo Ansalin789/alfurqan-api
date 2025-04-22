@@ -33,11 +33,6 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.updateNotificationById,
         tags: ["api", "notification"],
         description: "Update a notification's status to seen",
-        validate: {
-          params: Joi.object({
-            notificationId: Joi.string().required()
-          })
-        }
       }
     }
     
