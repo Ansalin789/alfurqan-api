@@ -1406,3 +1406,56 @@ export interface IAccessModel extends Document{
     updatedDate?: Date;
     updatedBy?: string;
 }
+
+
+export interface IAdminMeetingCreate {
+  meetingName: string;
+  meetingId?: string;
+  admin?: {
+    adminId?: string;
+    adminName?: string;
+    adminEmail?: string;
+    adminRole?: string;
+  };
+  selectedDate: Date;
+  startTime: string;
+  endTime: string;
+  teacher: {
+    teacherId: string;
+    teacherName: string;
+    teacherEmail: string;
+  }[]; // <-- ✅ MUST be an array of teacher objects
+  description: string;
+  status: string;
+  meetingStatus?: string;
+  createdDate?: Date;
+  createdBy: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+}
+
+
+
+export interface IAdminMeeting extends Document{
+  
+  meetingName: string;
+  meetingId: string;
+   admin:{
+    adminId?: string;
+    adminName?: string;
+    adminEmail?: string;
+    adminRole?: string;
+  };
+  selectedDate: Date;
+  startTime: any;
+  endTime: any;
+  teacher:  string[];
+  description: string;
+  status: string;
+  meetingStatus: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+}
+
