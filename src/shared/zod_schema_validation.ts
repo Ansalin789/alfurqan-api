@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const zodGetAllRecordsQuerySchema = z.object({
+  courseId:z.string().optional(),
   roomId:z.string().optional(),
   teacherId:z.string().optional(),
   studentId:z.string().optional(),
