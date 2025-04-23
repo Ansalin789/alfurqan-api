@@ -88,15 +88,15 @@ export default {
 
 async updateAdminMeetingRecordById(req: Request, h: ResponseToolkit) {
   try {
-    const payload = req.payload as any;
+    const payload = req.payload as IAdminMeetingUpdate;
 
     if (!payload) {
       return h.response({ message: "Request payload is missing" }).code(400);
     }
 
-    const { selectedDate, startTime, endTime, meetingStatus, updatedBy, updatedDate } = payload;
+    const { selectedDate, startTime, endTime, meetingStatus, updatedBy, updatedDate, meetingName, description } = payload;
 
-    // Validate required reschedule fields
+    // Validate required reschedule fields (only selectedDate, startTime, and endTime)
     if (!selectedDate || !startTime || !endTime) {
       return h.response({ message: "Missing required reschedule fields" }).code(400);
     }
@@ -108,21 +108,25 @@ async updateAdminMeetingRecordById(req: Request, h: ResponseToolkit) {
       meetingStatus: meetingStatus ?? "rescheduled",
       updatedBy: updatedBy ?? "admin",
       updatedDate: updatedDate ?? new Date(),
+      meetingName, // Optional field
+      description, // Optional field
     };
 
     const result = await updateAdminMeetingById(req.params.meetingId, updatedPayload);
 
     if (!result) {
-      return h.response({ message: "Failed to update meeting" }).code(404);
+      return h.response({ message: "Failed to update meetings" }).code(404);
     }
 
-    return h.response({ message: "Meeting rescheduled successfully", data: result }).code(200);
+    return h.response({ message: "Meetings updated successfully", data: result }).code(200);
 
   } catch (error) {
-    console.error("Error during rescheduling:", error);
+    console.error("Error during updating meetings:", error);
     return h.response({ message: "Internal Server Error", error }).code(500);
   }
 }
+
+
 
 
 
