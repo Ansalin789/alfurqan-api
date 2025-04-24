@@ -4,6 +4,7 @@ import { IAdminMeetingCreate } from "../../../types/models.types";
 import { isNil } from "lodash";
 import { addAminMeetingMessages } from "../../config/messages";
 import { notFound } from "@hapi/boom";
+import AppLogger from "../../helpers/logging";
 
 
 export interface IAdminMeetingUpdate{
@@ -42,6 +43,8 @@ export default {
         updatedBy: rawPayload.updatedBy ?? "",
         teacher: Array.isArray(rawPayload.teacher) ? rawPayload.teacher : [],
       };
+
+     AppLogger.log(rawPayload);
   
       // Call the service to create meetings
       const meetings = await admincreateMeeting(payload);

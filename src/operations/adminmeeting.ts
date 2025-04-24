@@ -87,6 +87,7 @@ export const admincreateMeeting = async (payload: IAdminMeetingCreate): Promise<
       });
 
       const savedMeeting = await newMeeting.save();
+      console.log(savedMeeting);
       createdMeetings.push(savedMeeting);
     }
 
