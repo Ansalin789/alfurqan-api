@@ -1,7 +1,7 @@
 import { ResponseToolkit,Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodOtherEmployeeSchema } from "../../models/otheremployee";
-import { saveOtherEmployee } from "../../operations/otheremployee";
+import { getOhterEmpCountriesCount, saveOtherEmployee } from "../../operations/otheremployee";
 import * as Stream from "stream";
 
 
@@ -100,7 +100,9 @@ export default {
             status: payload.status
           }) 
      },
-
+     async getOhterEmpCountries(req: Request, h: ResponseToolkit){
+      return await getOhterEmpCountriesCount();
+    }
  
 }
 async function streamToBuffer(stream: Stream.Readable): Promise<Buffer> {
@@ -111,3 +113,4 @@ async function streamToBuffer(stream: Stream.Readable): Promise<Buffer> {
     stream.on("error", (err: any) => reject(err));
   });
 };
+

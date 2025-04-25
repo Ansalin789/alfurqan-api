@@ -2,6 +2,7 @@ import { IOtherEmployee, IOtherEmployeeCreate } from "../../types/models.types"
 import IOtherEmployeeModel from "../models/otheremployee"
 import User from "../models/users"
 import ShiftSchedule from "../models/usershiftschedule"
+import OtherEmpModel from "../models/otheremployee"
 
 /**
  * Creates a new user.
@@ -26,6 +27,45 @@ otherempdetails.preferedShiftTo = preffredToTime;
           return savedOtherEmployee;
 
 }
+
+export const getOhterEmpCountriesCount = async() =>{
+
+  const otherEmpCountByCountry = await OtherEmpModel.aggregate([
+    {
+      $match: {
+        status: "Active", // Optional filter
+      },
+    },
+    {
+      $group: {
+        _id: "$country",
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $sort: { count: -1 }, // Optional: sort descending
+    },
+  ]);
+  
+  const otherEmployeeCount = await OtherEmpModel.countDocuments({
+    status: "Active",
+  }).exec();
+  
+  const results: any[] = [];
+  
+  for (const studentCountry of otherEmpCountByCountry) {
+    let otherEmpCountryPercentage = ((studentCountry.count / otherEmployeeCount) * 100).toFixed(2);
+    results.push({
+      country: studentCountry._id,
+      count: studentCountry.count,
+      percentage: parseFloat(otherEmpCountryPercentage),
+    });
+  }
+  
+  
+  return { otherEmployeeCount, otherEmpCountByCountry: results };
+
+};
 
  async function createTeacherPortalPortal(updateData:any) {
     const specialChars = '@#$%&*!';
