@@ -25,7 +25,7 @@ const register = async (server: Server): Promise<void> => {
 
       {
         method: "PUT",
-        path: "/courseslevel",
+        path: "/courses/{courseId}",  // Include the courseId path parameter
         options: {
           handler:handler.UpdateAllCourseLevel,  
           tags: ["api", "course"],  
