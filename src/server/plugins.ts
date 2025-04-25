@@ -22,6 +22,7 @@ import addMeetingAPI from "../api/addMeeting/router";
 import supervisorfeedbackAPI from "../api/supervisorfeedback/router";
 import notificationAPI from "../api/notification/router";
 import roleAccessAPI from "../api/roleAccess/router";
+import otheremployeeAPI from "../api/otherEmployee/router"
 
 export const appPlugins = [
   {
@@ -93,5 +94,8 @@ export const appPlugins = [
   },
   {
     plugin: roleAccessAPI,
+  },
+  {
+    plugin: otheremployeeAPI,
   }
 ];

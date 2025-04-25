@@ -409,3 +409,15 @@ export const roleAccess: Record<string, string> = Object.freeze({
   ENCRYPT_PASSWORD_ERROR: "Password must be an encrypted value",
   USER_PROFILE_INVALID_FILE_TYPE: "Invalid file type. Only .png , .jpg or jpeg files are allowed.",
 });
+
+export const otherEmployeesMessages: Record<string, string> = Object.freeze({
+  LIST: "Retrieve all the employee list",
+  BYID: "Retrieve employee details by employeeId",
+  CREATE: "Create a new employee",
+  UPDATE: "Update a existing employee",
+  DELETE: "Delete employee by employeeId",
+  BULK_DELETE: "Bulk Delete employee by employeeIds",
+  USER_NOT_FOUND: "Your account is not found or active, contact admin",
+  ENCRYPT_PASSWORD_ERROR: "Password must be an encrypted value",
+  USER_PROFILE_INVALID_FILE_TYPE: "Invalid file type. Only .png , .jpg or jpeg files are allowed.",
+});

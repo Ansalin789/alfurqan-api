@@ -1,0 +1,91 @@
+import { IOtherEmployee, IOtherEmployeeCreate } from "../../types/models.types"
+import IOtherEmployeeModel from "../models/otheremployee"
+import User from "../models/users"
+import ShiftSchedule from "../models/usershiftschedule"
+
+/**
+ * Creates a new user.
+ *
+ * @param {IOtherEmployeeCreate} payload - The data of the user to be created.
+ */
+export const saveOtherEmployee = async (payload: IOtherEmployeeCreate): Promise<IOtherEmployee | { error: any }> => {
+
+const otherempdetails = {} as IOtherEmployee;
+
+otherempdetails.preferedWorkingHours =  payload.preferedWorkingHours;
+const preffredToTime = (payload.preferedShiftFrom) + otherempdetails.preferedWorkingHours;
+otherempdetails.preferedShiftTo = preffredToTime;
+
+         const newOtherEmployee = new IOtherEmployeeModel(payload);
+
+         // Convert file to string (Base64 encoding)
+          const savedOtherEmployee = await newOtherEmployee.save();
+         const saveUser = await createTeacherPortalPortal(savedOtherEmployee)
+         createShiftSchedule(savedOtherEmployee, saveUser);
+
+          return savedOtherEmployee;
+
+}
+
+ async function createTeacherPortalPortal(updateData:any) {
+    const specialChars = '@#$%&*!';
+    const randomNum = Math.floor(Math.random() * 1000); // Random number between 0-999
+    const randomSpecial = specialChars[Math.floor(Math.random() * specialChars.length)]; // Random special character
+  
+    // Generate password
+    const firstThreeChars = updateData.firstName.substring(0, 3); // First 3 characters of the username
+    const reversedUsername = updateData.firstName.split('').reverse().join(''); // Reverse the username
+  
+    const password = `${firstThreeChars}${randomSpecial}${randomNum}${reversedUsername}`;
+
+  let createStudentPortal = await User.create({
+    userName: updateData.firstName,
+    email:updateData.email,
+    password: password,
+    profileImage: null,
+    role: updateData.designation,
+    gender: updateData.gender,
+    country: updateData.country,
+    status: "Active",
+    createdBy: "Admin",
+    createdDate: new Date,
+    lastUpdatedBy: "Admin" ,   
+    updatedDate: new Date
+  }
+   )
+
+   const saveStudent = await createStudentPortal.save();
+
+  return saveStudent;
+};
+async function createShiftSchedule(saveStudent:any, saveUser: any) {
+
+
+  const startDate = new Date();
+  
+  // Create end date by cloning the start date and adding 30 days
+  const endDate = new Date(startDate);
+  endDate.setDate(startDate.getDate() + 30);
+  let createShift = await ShiftSchedule.create({
+        academicCoachId : null,
+        teacherId : null,
+        supervisorId: null,
+        employeeId: saveStudent._id.toString(),
+        name: saveUser.userName,
+        email: saveUser.email,
+        role: saveUser.role[0],
+        workhrs: saveStudent.preferedWorkingHours,
+        startdate: startDate,
+        enddate : endDate, 
+        fromtime: saveStudent.preferedShiftFrom,
+        totime: saveStudent.preferedShiftTo,
+        createdDate: new Date(),
+        createdBy: "Admin",
+        lastUpdatedBy: "Admin"
+    }
+     );
+     console.log("createShift", createShift);
+     await createShift.save();
+     
+  console.log("Student portal",saveStudent )
+};

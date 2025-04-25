@@ -46,6 +46,7 @@ export interface IUser extends Document {
   role: string[];
   profileImage?: string | null;
   lastLoginDate?: Date;
+  country?: string;
   status: Status;
   createdDate?: Date;
   createdBy: string;
@@ -62,6 +63,7 @@ export interface IUserCreate {
   role: string[];
   profileImage?: string | null;
   lastLoginDate?: Date;
+  country?: string;
   status: Status;
   createdDate?: Date;
   createdBy: string;
@@ -132,6 +134,7 @@ export interface IUsershiftschedule extends Document{
   academicCoachId: string;
   teacherId: string;
   supervisorId: string;
+  employeeId: string;
   name: string;
   email: string;
   role: string;
@@ -151,6 +154,7 @@ export interface IUsershiftscheduleCreate{
   academicCoachId: string;
   teacherId: string;
   supervisorId: string;
+  employeeId: string;
   name: string;
   email: string;
   role: string;
@@ -1251,7 +1255,7 @@ export interface INotification{
     receiverName : string;
     receiverEmail : string;
     notificationType ?: string;
-    notificationStatus : string;
+    notificationStatus ?: string;
     status: string;
     createdDate: Date;
     createdBy: string;
@@ -1269,7 +1273,7 @@ export interface INotification extends Document{
   receiverName : string;
   receiverEmail : string;
   notificationType ?: string;
-  notificationStatus : string;
+  notificationStatus ?: string;
   status : string;
   createdDate : Date;
   createdBy: string;
@@ -1277,129 +1281,85 @@ export interface INotification extends Document{
   updatedBy?: string;
 }
 
-export interface IAccessModel {
-  employeeId: string;
-  employeeName: string;
-  contact: string;
+export interface IOtherEmployee extends Document{
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: number;
+  nationality: string;
+  country: string ;
+  city: string;
+  dateOfBirth: string;
+  gender: string;
+  residentialAddress: string;
+  higherQualification: string;
+  universityName: string;
+  previousJob: string;
+  experience: string;
+  bankName: string;
+  accountNumber: number;
+  bankCode: string;
+  passportNumber: string;
+  languagesKnown: string;
+  emergencyContactNumber: number;
+  relationshipWithEmployee: string
+  address: string;
   designation: string;
-  dateOfJoining: string; // Format: 'DD/MM/YYYY'
-  roleAccess: {
-    admin: boolean;
-    adminmodules: {
-      dashboard: boolean;
-      evaluation: boolean;
-      student: boolean;
-      employees: boolean;
-      courses: boolean;
-      classes: boolean;
-      invoice: boolean;
-      analytics: boolean;
-      messages: boolean;
-      settings: boolean;
-    };
-    academicCoach: boolean;
-    academicmodules: {
-      dashboard: boolean;
-      scheduledevaluation: boolean;
-      scheduledtrail: boolean;
-      students: boolean;
-      teachers: boolean;
-      messages: boolean;
-      support: boolean;
-    };
-    supervisor: boolean;
-    supervisormodules: {
-      dashboard: boolean;
-      recuirement: boolean;
-      meeting: boolean;
-      teachers: boolean;
-      messages: boolean;
-      support: boolean;
-    };
-      student: boolean;
-      studentmodules: {
-        dashboard: boolean;
-        recuirement: boolean;
-        meeting: boolean;
-        teachers: boolean;
-        messages: boolean;
-        support: boolean;
-      };
-      teacher: boolean;
-      teachermodules: {
-        dashboard: boolean;
-        recuirement: boolean;
-        meeting: boolean;
-        teachers: boolean;
-        messages: boolean;
-        support: boolean;
-      };
- 
-  };
+  department: string;
+  preferedWorkingHours: number;
+  preferedShiftFrom : string;
+  preferedShiftTo: string;
+  comments: string;
+  profileImage: string;
+  applicationDate: Date;
+  currency: string;
+  expectedSalary: number;
+  applicationStatus: string;
+  preferedWorkingDays: string;
+  resume: any;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate: Date;
+  updatedBy: string;
 }
 
 
-export interface IAccessModel extends Document{
-  employeeId: string;
-  employeeName: string;
-  contact: string;
+export interface IOtherEmployeeCreate{
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: number;
+  nationality: string;
+  country: string ;
+  city: string;
+  dateOfBirth: string;
+  gender: string;
+  residentialAddress: string;
+  higherQualification: string;
+  universityName: string;
+  previousJob: string;
+  experience: number;
+  bankName: string;
+  accountNumber: number;
+  bankCode: string;
+  passportNumber: string;
+  languagesKnown: string;
+  emergencyContactNumber: number;
+  relationshipWithEmployee: string
+  address: string;
   designation: string;
-  dateOfJoining: string; // Format: 'DD/MM/YYYY'
-  roleAccess: {
-    admin: boolean;
-    adminmodules: {
-      dashboard: boolean;
-      evaluation: boolean;
-      student: boolean;
-      employees: boolean;
-      courses: boolean;
-      classes: boolean;
-      invoice: boolean;
-      analytics: boolean;
-      messages: boolean;
-      settings: boolean;
-    };
-    academicCoach: boolean;
-    academicmodules: {
-      dashboard: boolean;
-      scheduledevaluation: boolean;
-      scheduledtrail: boolean;
-      students: boolean;
-      teachers: boolean;
-      messages: boolean;
-      support: boolean;
-    };
-    supervisor: boolean;
-    supervisormodules: {
-      dashboard: boolean;
-      recuirement: boolean;
-      meeting: boolean;
-      teachers: boolean;
-      messages: boolean;
-      support: boolean;
-    };
-      student: boolean;
-      studentmodules: {
-        dashboard: boolean;
-        recuirement: boolean;
-        meeting: boolean;
-        teachers: boolean;
-        messages: boolean;
-        support: boolean;
-      };
-      teacher: boolean;
-      teachermodules: {
-        dashboard: boolean;
-        recuirement: boolean;
-        meeting: boolean;
-        teachers: boolean;
-        messages: boolean;
-        support: boolean;
-      };
-    };
-    status: string;
-    createdDate: Date;
-    createdBy: string;
-    updatedDate?: Date;
-    updatedBy?: string;
+  department: string;
+  preferedWorkingHours: number;
+  preferedShiftFrom : string;
+  preferedShiftTo: string;
+  comments: string;
+  profileImage: string;
+  applicationDate: Date;
+  currency: string;
+  expectedSalary: number;
+  applicationStatus: string;
+  preferedWorkingDays?: string;
+  resume: any;
+  status: string;
 }
