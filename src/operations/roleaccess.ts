@@ -5,27 +5,45 @@ import roleacces from "../models/roleacces";
 
 
 
-/**
- * Generates role-based access and stores in AccessModel for all users with given role
- * @param role - Role to filter users by
- */
 export const updateUserAccess = async (
-  payload: Partial <IAccessModel>
+  payload: Partial<IAccessModel>
 ): Promise<{ totalCount: number; assignments: IAccessModel[] } | { error: any }> => {
   try {
-    const roleAccess = new roleacces(payload);
-    const saved = await roleAccess.save();
+    // Check if a record already exists for the given employeeId
+    let roleAccess = await roleacces.findOne({ employeeId: payload.employeeId });
+
+    if (roleAccess) {
+      // If the record exists, update it
+      roleAccess = await roleacces.findOneAndUpdate(
+        { employeeId: payload.employeeId },  // Match by employeeId
+        payload,  // Update with the new data
+        { new: true }  // Return the updated document
+      );
+
+      if (!roleAccess) {
+        throw new Error('Failed to update role access');
+      }
+    } else {
+      // If the record doesn't exist, create a new one
+      roleAccess = new roleacces(payload);
+      await roleAccess.save();
+    }
+
+    // Get the total count of documents
     const totalCount = await roleacces.countDocuments();
 
     return {
       totalCount,
-      assignments: [saved]
+      assignments: [roleAccess]  // Return the updated or newly created roleAccess record
     };
+
   } catch (error) {
     console.error("Error saving role access:", error);
     return { error };
   }
 };
+
+
 
 
 
