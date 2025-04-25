@@ -11,6 +11,10 @@ enum LearningInterest {
   ISLAMIC = 'Islamic Studies',
   ARANIC = 'Arabic',
 }
+enum notificationStatus{
+  SEEN = "Seen",
+  UN_SEEN = "Unseen",
+}
 enum NumberOfStudents {
   ONE = 1,
   TWO = 2,
@@ -263,6 +267,19 @@ export interface IMeetingScheduleCreate {
 }
 
 export interface ICourse extends Document {
+  course: {
+    courseId?: string;
+    courseTitle: string;
+    courseDuration: string;
+    courseDescription: string;
+    courseLevel: string;
+  };
+  level: {
+    levelId: string;
+    contentLevel: string;
+    descriptions: Buffer;
+    duration: string;
+  }[]; // <-- make level an array
   courseName: string;
   status: string;
   createdDate: Date;
@@ -272,6 +289,20 @@ export interface ICourse extends Document {
 }
 
 export interface ICourseCreate {
+  course: {
+    courseId?: string;
+    courseTitle:string;
+    courseDuration:string;
+    courseDescription:string;
+    courseLevel:string;
+  };
+  level :{
+    levelId:string;
+    contentLevel:string;
+    descriptions:Buffer;
+    duration:string;
+
+  }[]
   courseName: string;
   status: string;
   createdDate: Date;
@@ -780,23 +811,25 @@ export interface IAssignmentCreate {
   answerValidation: string;
   assignmentStatus: string;
 }
-
-export interface IStudentInvoice extends Document{
+export interface IStudentInvoice extends Document {
   student: {
-      studentId: string;
-      studentName: string;
-      studentEmail:string;
-      studentPhone:number;
+    studentId: string;
+    studentName: string;
+    studentEmail: string;
+    studentPhone: number;
+    country: string;
+    city: string;
   };
   courseName: string;
   amount: number; 
   invoiceStatus: string;
   status: string;
   createdDate: Date;
-  createdBy:string ;
+  createdBy: string;
   lastUpdatedDate: Date;
   lastUpdatedBy: string;
 }
+
 
 export interface IMessageCreate {
   sender: string;
@@ -1362,4 +1395,216 @@ export interface IOtherEmployeeCreate{
   preferedWorkingDays?: string;
   resume: any;
   status: string;
+}
+export interface IAccessModel {
+  employeeId: string;
+  employeeName: string;
+  contact: string;
+  designation: string[];
+  dateOfJoining?: Date; // Format: 'DD/MM/YYYY'
+  roleAccess: {
+    admin?: boolean;
+    adminmodules?: {
+      dashboard?: boolean;
+      evaluation?: boolean;
+      student?: boolean;
+      employees?: boolean;
+      courses?: boolean;
+      classes?: boolean;
+      invoice?: boolean;
+      analytics?: boolean;
+      messages?: boolean;
+      settings?: boolean;
+    };
+    academicCoach?: boolean;
+    academicmodules?: {
+      dashboard?: boolean;
+      scheduledevaluation?: boolean;
+      scheduledtrail?: boolean;
+      students?: boolean;
+      teachers?: boolean;
+      messages?: boolean;
+      support?: boolean;
+    };
+    supervisor?: boolean;
+    supervisormodules?: {
+      dashboard?: boolean;
+      recuirement?: boolean;
+      meeting?: boolean;
+      teachers?: boolean;
+      messages?: boolean;
+      support?: boolean;
+    };
+      student?: boolean;
+      studentmodules?: {
+        dashboard?: boolean;
+        recuirement?: boolean;
+        meeting?: boolean;
+        teachers?: boolean;
+        messages?: boolean;
+        suppor?: boolean;
+      };
+      teacher?: boolean;
+      teachermodules?: {
+        dashboard?: boolean;
+        recuirement?: boolean;
+        meeting?: boolean;
+        teachers?: boolean;
+        messages?: boolean;
+        support?: boolean;
+      };
+ 
+  };
+}
+
+
+export interface IAccessModel extends Document{
+  employeeId: string;
+  employeeName: string;
+  contact: string;
+  designation: string[];
+  dateOfJoining?: Date; // Format: 'DD/MM/YYYY'
+  roleAccess: {
+    admin?: boolean;
+    adminmodules?: {
+      dashboard?: boolean;
+      evaluation?: boolean;
+      student?: boolean;
+      employees?: boolean;
+      courses?: boolean;
+      classes?: boolean;
+      invoice?: boolean;
+      analytics?: boolean;
+      messages?: boolean;
+      settings?: boolean;
+    };
+    academicCoach?: boolean;
+    academicmodules?: {
+      dashboard?: boolean;
+      scheduledevaluation?: boolean;
+      scheduledtrail?: boolean;
+      students?: boolean;
+      teachers?: boolean;
+      messages?: boolean;
+      support?: boolean;
+    };
+    supervisor?: boolean;
+    supervisormodules?: {
+      dashboard?: boolean;
+      recuirement?: boolean;
+      meeting?: boolean;
+      teachers?: boolean;
+      messages?: boolean;
+      support?: boolean;
+    };
+      student?: boolean;
+      studentmodules?: {
+        dashboard?: boolean;
+        recuirement?: boolean;
+        meeting?: boolean;
+        teachers?: boolean;
+        messages?: boolean;
+        suppor?: boolean;
+      };
+      teacher?: boolean;
+      teachermodules?: {
+        dashboard?: boolean;
+        recuirement?: boolean;
+        meeting?: boolean;
+        teachers?: boolean;
+        messages?: boolean;
+        support?: boolean;
+      };
+ 
+  };
+    status: string;
+    createdDate: Date;
+    createdBy: string;
+    updatedDate?: Date;
+    updatedBy?: string;
+}
+
+
+export interface IAdminMeetingCreate {
+  meetingName: string;
+  meetingId?: string;
+  admin?: {
+    adminId?: string;
+    adminName?: string;
+    adminEmail?: string;
+    adminRole?: string;
+  };
+  selectedDate: Date;
+  startTime: string;
+  endTime: string;
+  teacher: {
+    teacherId: string;
+    teacherName: string;
+    teacherEmail: string;
+  }[]; // <-- ✅ MUST be an array of teacher objects
+  description: string;
+  status: string;
+  meetingStatus?: string;
+  createdDate?: Date;
+  createdBy: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+}
+
+
+
+export interface IAdminMeeting extends Document{
+  
+  meetingName: string;
+  meetingId: string;
+   admin:{
+    adminId?: string;
+    adminName?: string;
+    adminEmail?: string;
+    adminRole?: string;
+  };
+  selectedDate: Date;
+  startTime: any;
+  endTime: any;
+  teacher:  string[];
+  description: string;
+  status: string;
+  meetingStatus: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+}
+export interface RealTimeMessageCreate{
+  messages : string;
+  isRead : boolean;
+  senderId : string;
+  senderName : string;
+  senderEmail ?: string;
+  receiverId : string;
+  receiverName : string;
+  receiverEmail ?: string;
+  notificationStatus : notificationStatus;
+  status?: string;
+  createdDate?: Date;
+  createdBy?: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+}
+
+export interface RealTimeMessage extends Document{
+messages : string;
+isRead : boolean;
+senderId : string;
+senderName : string;
+senderEmail ?: string;
+receiverId : string;
+receiverName : string;
+receiverEmail ?: string;
+notificationStatus : notificationStatus;
+status ?: string;
+createdDate ?: Date;
+createdBy?: string;
+updatedDate?: Date;
+updatedBy?: string;
 }

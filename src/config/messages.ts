@@ -394,7 +394,7 @@ export const notificationsMessages: Record<string, any> = Object.freeze({
 
 export const notificationStatus: Record<string, any> = Object.freeze({
   SEEN : "Seen",
-  UN_READ: "Unread",
+  UN_SEEN: "Unseen",
 });
 
 
@@ -420,4 +420,20 @@ export const otherEmployeesMessages: Record<string, string> = Object.freeze({
   USER_NOT_FOUND: "Your account is not found or active, contact admin",
   ENCRYPT_PASSWORD_ERROR: "Password must be an encrypted value",
   USER_PROFILE_INVALID_FILE_TYPE: "Invalid file type. Only .png , .jpg or jpeg files are allowed.",
+});
+export const addAminMeetingMessages: Record<string, string> = Object.freeze({
+  LIST: "Retrieve all meetings",
+  BYID: "Retrieve meeting details by meetingId",
+  CREATE: "Create a new meeting",
+  UPDATE: "Update an existing meeting",
+  DELETE: "Delete a meeting by meetingId",
+  BULK_DELETE: "Bulk delete meetings by meetingIds",
+  USER_NOT_FOUND: "User not found or inactive, contact admin",
+  INVALID_DATE_FORMAT: "Invalid date format. Please provide a valid date.",
+  INVALID_TIME_FORMAT: "Invalid time format. Please use HH:MM format.",
+  MEETING_TITLE_REQUIRED: "Meeting title is required",
+  MEETING_DATE_REQUIRED: "Meeting date is required",
+  MEETING_TIME_REQUIRED: "Meeting start and end time are required",
+  TEACHER_REQUIRED: "At least one teacher must be assigned",
+  INVALID_STATUS: "Invalid meeting status",
 });

@@ -23,7 +23,9 @@ import supervisorfeedbackAPI from "../api/supervisorfeedback/router";
 import notificationAPI from "../api/notification/router";
 import roleAccessAPI from "../api/roleAccess/router";
 import otheremployeeAPI from "../api/otherEmployee/router"
-
+import adminMeeting from "../api/adminMeeting/router"
+import realtimemessageAPI from "../api/realtimemessage/router";
+import courseAPI from "../api/course/router"
 export const appPlugins = [
   {
     plugin: systemLifeCycle,
@@ -97,5 +99,14 @@ export const appPlugins = [
   },
   {
     plugin: otheremployeeAPI,
+  },
+  {
+    plugin: adminMeeting,
+  },
+  {
+    plugin:realtimemessageAPI,
+  },
+  {
+    plugin:courseAPI ,
   }
 ];

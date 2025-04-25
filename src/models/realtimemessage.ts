@@ -1,14 +1,14 @@
 import mongoose, { Schema } from "mongoose";
 import { z } from "zod";
-import { INotification } from "../../types/models.types";
+import { RealTimeMessage } from "../../types/models.types";
 import { notificationStatus } from "../config/messages";
 
-const notificationSchema = new Schema<INotification>(
+const realtimeSchema = new Schema<RealTimeMessage>(
   {
   
     messages: {
       type: String,
-      required: false,
+      required: true,
     },
     senderId: {
       type: String,
@@ -16,7 +16,7 @@ const notificationSchema = new Schema<INotification>(
     },
     senderName: {
       type: String,
-      required: false
+      required: true,
     },
     senderEmail:  {  
        type: String,
@@ -25,23 +25,20 @@ const notificationSchema = new Schema<INotification>(
   
     receiverId: { 
        type: String,
-       required: false,
+       required: true,
      },
     receiverName: {
        type: String,
-        required: false
+        required: true,
      },
     receiverEmail: { 
       type: String, 
       required: false,
      },
-    notificationType: { 
-      type: String, 
-      required: true,
-     },
      notificationStatus: { 
-      type: String, 
-      required: false,
+      type: String,
+      enum: [notificationStatus.SEEN, notificationStatus.UN_SEEN], 
+      required: true,
      },
      isRead:{
       type:Boolean,
@@ -55,31 +52,30 @@ const notificationSchema = new Schema<INotification>(
      updatedBy: { type: String, required: false },
   },
   {
-    collection: "notification",
+    collection: "Realtimemessage",
     timestamps: false,
   }
 );
 
-export const zodnotificationSchema = z.object({
-  messages: z.string().optional(),
+export const zodrealtimemessageSchema = z.object({
+  messages: z.string(),
 
   senderId: z.string(),
   senderName: z.string(),
-  senderEmail: z.string(),
+  senderEmail: z.string().optional(),
 
   receiverId: z.string(),
   receiverName: z.string(),
-  receiverEmail: z.string(),
+  receiverEmail: z.string().optional(),
 
-  notificationType: z.string().optional(),
   notificationStatus:  z.enum([notificationStatus.SEEN, notificationStatus.UN_SEEN]),
   status: z.string().optional(),
   isRead: z.boolean(),
-  createdDate: z.date().optional(),
+  createdDate: z.string().optional(),
   createdBy: z.string().optional(),
 
-  updatedDate: z.date().optional(),
+  updatedDate: z.string().optional(),
   updatedBy: z.string().optional(),
 });
 
-export default mongoose.model<INotification>("Notification",notificationSchema);
+export default mongoose.model<RealTimeMessage>("Realtimemessage",realtimeSchema);

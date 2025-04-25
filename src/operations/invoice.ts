@@ -155,6 +155,164 @@ export const getStudentAllRevenue = async (
 
   
 
+
+export const getTotalAmountByCountry = async (
+  dateRange: string
+): Promise<{ country: string; revenue: number; count: number }[]> => {
+  try {
+    const matchStage: any = {
+      status: "Active",
+    };
+
+    const now = new Date();
+    let startDate: Date | undefined;
+
+    if (dateRange === "all") {
+      startDate = undefined; // no filter
+    } else if (dateRange === "weekly") {
+      startDate = new Date(now);
+      startDate.setDate(now.getDate() - 7);
+    } else if (dateRange === "monthly") {
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    } else if (dateRange === "yearly") {
+      startDate = new Date(now.getFullYear(), 0, 1);
+    }
+    
+    if (startDate) {
+      matchStage.createdDate = { $gte: startDate, $lte: now };
+    }
+    
+
+    const result = await stinvoice.aggregate([
+      { $match: matchStage },
+      {
+        $group: {
+          _id: "$student.country",
+          revenue: { $sum: "$amount" },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          country: "$_id",
+          revenue: 1,
+          count: 1,
+          _id: 0,
+        },
+      },
+      { $sort: { revenue: -1 } },
+    ]);
+
+    // 🔢 Add total revenue at the end
+    const totalRevenue = result.reduce((acc, cur) => acc + cur.revenue, 0);
+    const totalCount = result.reduce((acc, cur) => acc + cur.count, 0);
+
+    result.push({
+      country: "TotalAllCountries",
+      revenue: totalRevenue,
+      count: totalCount,
+    });
+
+    return result;
+  } catch (error) {
+    console.error("Error fetching student revenue by country:", error);
+    throw error;
+  }
+};
+
+export const getTotalAmountByCourse = async (
+  dateRange: string
+): Promise<{ courseName: string; revenue: number; count: number }[]> => {
+  try {
+    console.log("▶️ Called getTotalAmountByCourse with dateRange:", dateRange);
+
+    const matchStage: any = {}; 
+
+    const now = new Date();
+    console.log("🕒 Current Date:", now);
+
+    let startDate: Date | undefined;
+
+    if (dateRange === "weekly") {
+      startDate = new Date(now);
+      startDate.setDate(now.getDate() - 7);
+      console.log("📅 Weekly Start Date:", startDate);
+    } else if (dateRange === "monthly") {
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      console.log("📅 Monthly Start Date:", startDate);
+    } else if (dateRange === "yearly") {
+      startDate = new Date(now.getFullYear(), 0, 1);
+      console.log("📅 Yearly Start Date:", startDate);
+    } else if (dateRange === "all") {
+      console.log("📅 No date filter applied (ALL records)");
+    }
+
+    if (startDate) {
+      matchStage.createdDate = { $gte: startDate, $lte: now };
+      console.log("🔍 Applied Date Filter:", matchStage.createdDate);
+    }
+
+    console.log(" Final matchStage for aggregation:", matchStage);
+    const matchedDocs = await stinvoice.find({});
+    console.log("🧾 Total docs in collection:", matchedDocs.length);
+    matchedDocs.forEach(doc => {
+      console.log({
+        courseName: doc.courseName,
+        amount: doc.amount,
+        createdDate: doc.createdDate,
+        invoiceStatus: doc.invoiceStatus,
+      });
+    });
+        
+
+    const result = await stinvoice.aggregate([
+      { $match: {} }, // No filtering
+      {
+        $group: {
+          _id: { $ifNull: ["$courseName", "Unknown"] },
+          revenue: { $sum: "$amount" },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          courseName: "$_id",
+          revenue: 1,
+          count: 1,
+          _id: 0,
+        },
+      },
+      { $sort: { revenue: -1 } },
+    ]);
+    
+
+    console.log("📊 Aggregation Result:", result);
+
+    const totalRevenue = result.reduce((acc, cur) => acc + cur.revenue, 0);
+    const totalCount = result.reduce((acc, cur) => acc + cur.count, 0);
+
+    console.log("💰 Total Revenue:", totalRevenue);
+    console.log("🔢 Total Count:", totalCount);
+
+    result.push({
+      courseName: "TotalAllCourses",
+      revenue: totalRevenue,
+      count: totalCount,
+    });
+
+    console.log("✅ Final Result with Totals:", result);
+
+    return result;
+  } catch (error) {
+    console.error("❌ Error in getTotalAmountByCourse:", error);
+    throw error;
+  }
+};
+
+
+
+
+
   
   
  
