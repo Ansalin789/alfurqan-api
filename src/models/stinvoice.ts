@@ -83,8 +83,8 @@ const studentInvoiceSchema = new Schema<IStudentInvoice>(
     required:true,
     },
     createdDate: {
-      type: String,
-      required :false,
+      type: Date,
+      required :true,
       default: Date.now,
     },
     createdBy: {

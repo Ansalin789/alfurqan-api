@@ -61,6 +61,7 @@ export default {
       return result;
     },
 
+    
     async getAllStudentRevenue(req: Request, h: ResponseToolkit) {
       // Parse the query parameters from the request
       const { query } = geStudentListInputValidation.parse({
@@ -122,8 +123,7 @@ export default {
         
         const payload = parsed.data.payload;
     
-        const dueDate = payload.dueDate ? new Date(payload.dueDate).toISOString() : undefined;
-        const createdDate = new Date().toISOString(); // Current date in ISO format
+        const dueDate = payload.dueDate ? new Date(payload.dueDate).toISOString() : undefined;// Current date in ISO format
         const lastUpdatedDate = new Date().toISOString(); // Current date in ISO format
         
         let attachFileBuffer: Buffer | undefined;
@@ -166,7 +166,7 @@ if (payload.attachFile) {
           attachFile: attachFileBuffer,
           dueDate: dueDate,  // validated and parsed
           status: payload.status ?? "Active",
-          createdDate: createdDate,  // always use current date for createdDate
+          createdDate: new Date(),  // always use current date for createdDate
           createdBy: payload.createdBy ?? "System",  // default to "System" if missing
           lastUpdatedDate: lastUpdatedDate,  // always use current date for lastUpdatedDate
           lastUpdatedBy: payload.lastUpdatedBy ?? "System",  // default to "System" if missing

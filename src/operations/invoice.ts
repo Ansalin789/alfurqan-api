@@ -107,7 +107,7 @@ export const getAllStudetnInVoiceList = async (
   
     console.log(`🗓️ Start Date: ${startDate.toISOString()} | End Date: ${endDate.toISOString()}`);
   
-    const invoices = await stinvoice.find({
+    const invoices = await StudentInvoiceModel.find({
       invoiceStatus: { $in: ["Paid", "Pending"] },
     }).exec();
     
