@@ -1,6 +1,6 @@
 import { IStudentInvoice } from "../../types/models.types";
 import { GetAllRecordsParams } from "../shared/enum";
-import StudentInvoiceModel from "../models/stinvoice"
+import StudentInvoiceModel, { zodAlStudentInvoiceSchema } from "../models/stinvoice"
 import { isNil } from "lodash";
 import { commonMessages, evaluationMessages } from "../config/messages";
 import AppLogger from "../helpers/logging";
@@ -66,14 +66,6 @@ export const getAllStudetnInVoiceList = async (
   };
 
  
-  
-
-  
-  
-
- 
-  
-
   export const getStudentAllRevenue = async (
     dateRange: string,
     year: string // year as a date string (e.g., "2023-01-01")
@@ -157,10 +149,8 @@ export const getAllStudetnInVoiceList = async (
     console.log("✅ Final Result:", result);
     return result;
   };
-  
-  
-  
 
+  
 
 export const getTotalAmountByCountry = async (
   dateRange: string
@@ -312,6 +302,54 @@ export const getTotalAmountByCourse = async (
   } catch (error) {
     console.error("❌ Error in getTotalAmountByCourse:", error);
     throw error;
+  }
+};
+export const sendInvoiceOperation = async (
+  payload: Partial<IStudentInvoice>
+): Promise<{ invoice: IStudentInvoice } | { error: any }> => {
+  try {
+    // ✅ Validate payload with Zod
+    const validation = zodAlStudentInvoiceSchema.safeParse(payload);
+    if (!validation.success) {
+      return { error: validation.error.flatten().fieldErrors };
+    }
+
+    // ✅ Create and save the invoice
+    const newInvoice = new StudentInvoiceModel({
+      student: {
+        studentId: payload.student?.studentId ?? "",
+        studentName: payload.student?.studentName ?? "",
+        studentEmail: payload.student?.studentEmail ?? "",
+        studentPhone: payload.student?.studentPhone ?? "",
+        country: payload.student?.country ?? "",
+        city: payload.student?.city ?? "",
+      },
+      courseName: payload.courseName ?? "",
+      amount: payload.amount ?? 0,
+      packageType: payload.packageType ?? "",
+      itemDescription: payload.itemDescription ?? "",
+      duration: payload.duration ?? "",
+      rate: payload.rate ?? "",
+      description: payload.description ?? "",
+      attachFile: payload.attachFile ?? undefined,
+
+      invoiceStatus: payload.invoiceStatus ?? "Pending",
+      status: payload.status ?? "Active",
+      dueDate: payload.dueDate ?? undefined,
+      createdDate: payload.createdDate ?? new Date(),
+      createdBy: payload.createdBy ?? "",
+      lastUpdatedDate: payload.lastUpdatedDate ?? new Date(),
+      lastUpdatedBy: payload.lastUpdatedBy ?? "",
+    });
+
+    const savedInvoice = await newInvoice.save();
+
+
+    AppLogger.info(`Invoice created: ${JSON.stringify(savedInvoice)}`);
+    return { invoice: savedInvoice };
+  } catch (error) {
+    console.error("Error saving invoice:", error);
+    return { error: "Failed to save invoice: " + error };
   }
 };
 

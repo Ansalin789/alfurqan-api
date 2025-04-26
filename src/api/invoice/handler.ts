@@ -1,12 +1,32 @@
 import { ResponseToolkit,Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodAlStudentInvoiceSchemaValidation } from "../../shared/zod_schema_validation";
-import { getAllStudetnInVoiceList, getStudentAllRevenue, getStudetnInVoiceDetailsById, getTotalAmountByCountry, getTotalAmountByCourse } from "../../operations/invoice";
+import { getAllStudetnInVoiceList, getStudentAllRevenue, getStudetnInVoiceDetailsById, getTotalAmountByCountry, getTotalAmountByCourse, sendInvoiceOperation } from "../../operations/invoice";
 import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
 import { evaluationMessages } from "../../config/messages";
+import { zodAlStudentInvoiceSchema } from "../../models/stinvoice";
 
-
+const createInvoiceValidation = z.object({
+  payload: z.object({
+    student: zodAlStudentInvoiceSchema.shape.student, // full required nested student object
+    ...zodAlStudentInvoiceSchema.pick({
+      courseName: true,
+      amount: true,
+      invoiceStatus: true,
+      packageType: true,
+      itemDescription: true,
+      duration: true,
+      rate: true,
+      description: true,
+      attachFile: true,
+      dueDate: true,
+      status: true,
+      createdBy: true,
+      lastUpdatedBy: true,
+    }).shape,
+  }),
+});
 
   const geStudentListInputValidation = z.object({
     query: zodAlStudentInvoiceSchemaValidation.pick({
@@ -84,6 +104,97 @@ export default {
       });
     
       return getTotalAmountByCourse(query.type); // ✅ Only pass `type`
+    },
+    async sendInvoice(req: Request, h: ResponseToolkit) {
+      try {
+        // Log incoming request data for debugging
+        console.log("Incoming request payload:", req.payload);
+    
+        // Parse incoming data using Zod validation
+        const parsed = createInvoiceValidation.safeParse({ payload: req.payload });
+        
+        if (!parsed.success) {
+          console.log("Zod validation failed:", parsed.error.flatten().fieldErrors);
+          return h
+            .response({ success: false, error: parsed.error.flatten().fieldErrors })
+            .code(400);
+        }
+        
+        const payload = parsed.data.payload;
+    
+        const dueDate = payload.dueDate ? new Date(payload.dueDate).toISOString() : undefined;
+        const createdDate = new Date().toISOString(); // Current date in ISO format
+        const lastUpdatedDate = new Date().toISOString(); // Current date in ISO format
+        
+        let attachFileBuffer: Buffer | undefined;
+
+if (payload.attachFile) {
+  if (typeof payload.attachFile === "string") {
+    // If it's a base64 string, convert it
+    attachFileBuffer = Buffer.from(payload.attachFile, 'base64');
+  } else if (Buffer.isBuffer(payload.attachFile)) {
+    // If it's already a Buffer, just use it
+    attachFileBuffer = payload.attachFile;
+  } else {
+    console.log("Invalid file format for attachFile");
+    return h
+      .response({ success: false, error: "attachFile must be base64 string or Buffer" })
+      .code(400);
+  }
+}
+
+        // Debugging: Log the parsed payload before passing it to the operation
+        console.log("Parsed payload before sending invoice:", payload);
+    
+        const result = await sendInvoiceOperation({
+          student: {
+            studentId: payload.student?.studentId ?? "",
+            studentName: payload.student?.studentName ?? "",
+            studentEmail: payload.student?.studentEmail ?? "",
+            studentPhone: payload.student?.studentPhone ?? "",
+            country: payload.student?.country ?? "",
+            city: payload.student?.city ?? "",
+          },
+          courseName: payload.courseName ?? "",
+          amount: payload.amount ?? 0,
+          invoiceStatus: payload.invoiceStatus ?? "Pending",
+          packageType: payload.packageType ?? "",
+          itemDescription: payload.itemDescription ?? "",
+          duration: payload.duration ?? "",
+          rate: payload.rate ?? "",
+          description: payload.description ?? "",
+          attachFile: attachFileBuffer,
+          dueDate: dueDate,  // validated and parsed
+          status: payload.status ?? "Active",
+          createdDate: createdDate,  // always use current date for createdDate
+          createdBy: payload.createdBy ?? "System",  // default to "System" if missing
+          lastUpdatedDate: lastUpdatedDate,  // always use current date for lastUpdatedDate
+          lastUpdatedBy: payload.lastUpdatedBy ?? "System",  // default to "System" if missing
+        });
+    
+        // Debugging: Log the result of the operation
+        console.log("Result from sendInvoiceOperation:", result);
+    
+        // If an error occurs during the operation, return the error message
+        if ("error" in result) {
+          console.log("Error during sendInvoiceOperation:", result.error);
+          return h.response({ success: false, error: result.error }).code(400);
+        }
+    
+        // Return success message with created invoice data
+        console.log("Invoice created successfully:", result.invoice);
+        return h
+          .response({
+            success: true,
+            message: "Invoice created successfully",
+            data: result.invoice,
+          })
+          .code(201);
+      } catch (error) {
+        // Log any internal server errors
+        console.error("Handler error in sendInvoice:", error);
+        return h.response({ success: false, error: "Failed to send invoice" }).code(500);
+      }
     }
     
     }
