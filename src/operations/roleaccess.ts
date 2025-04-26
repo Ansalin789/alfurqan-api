@@ -80,11 +80,12 @@ export default async function getallsettinglist(filters: FilterOptions) {
 }
 
 
-export const getrolesettingById = async (settingId: string) => {
+export const getrolesettingById = async (employeeId: string) => {
   try {
-    const settings = await roleacces.findOne({ _id: new Types.ObjectId(settingId) }).lean();
+    const settings = await roleacces.findOne({ employeeId }).lean();
     return { settings };
   } catch (error) {
     throw new Error(`Failed to fetch role access: ${(error as Error).message}`);
   }
 };
+
