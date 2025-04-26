@@ -122,8 +122,6 @@ async getStudentVisitor(req: Request, h: ResponseToolkit) {
     ...query,
     offset: query.offset !== undefined && query.offset !== null ? String(query.offset) : null,
     limit: query.limit !== undefined && query.limit !== null ? String(query.limit) : null,
-    id: query.studentId, // or however you're mapping this
-    status: query.filterValues?.status,
   };
   
 

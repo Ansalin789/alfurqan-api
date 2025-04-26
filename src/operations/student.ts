@@ -392,67 +392,90 @@ if (!isNil(filters.id)) {
 
 export const getAllStudentVisitor = async (
   filters: StudentFilter
-): Promise<Record<string, number>> => {
+): Promise<
+  {
+    name: string;
+    Friend: number;
+    SocialMedia: number;
+    Email: number;
+    Google: number;
+    Other: number;
+  }[]
+> => {
   const match: any = {};
 
-  // Apply filters
-  if (!isNil(filters.teacher)) {
-    match.teacher = filters.teacher;
-  }
-
-  if (!isNil(filters.course)) {
-    match.course = filters.course;
-  }
-
-  if (!isNil(filters.country)) {
-    match.country = filters.country;
-  }
-
-  if (!isNil(filters.id)) {
-    match._id = new Types.ObjectId(String(filters.id));
-  }
+  if (!isNil(filters.teacher)) match.teacher = filters.teacher;
+  if (!isNil(filters.course)) match.course = filters.course;
+  if (!isNil(filters.country)) match.country = filters.country;
+  if (!isNil(filters.id)) match._id = new Types.ObjectId(String(filters.id));
 
   const result = await StudentModel.aggregate([
     { $match: match },
     {
       $group: {
-        _id: "$referralSource",
+        _id: {
+          date: {
+            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }, // group by date
+          },
+          referralSource: "$referralSource",
+        },
         count: { $sum: 1 },
       },
     },
+    {
+      $sort: { "_id.date": 1 } // sort chronologically
+    }
   ]);
 
-  // Initialize all known sources with 0
-  const stats = {
-    Friend: 0,
-    SocialMedia: 0,
-    Email: 0,
-    Google: 0,
-    Other: 0,
-  };
+  const groupedMap: Record<
+    string,
+    {
+      name: string;
+      Friend: number;
+      SocialMedia: number;
+      Email: number;
+      Google: number;
+      Other: number;
+    }
+  > = {};
 
-  // Fill in actual counts
   result.forEach((item) => {
-    const key = item._id?.replace(/\s+/g, '') ?? 'Other';
-    switch (key.toLowerCase()) {
+    const date = item._id.date;
+    const rawKey = item._id.referralSource?.replace(/\s+/g, '') ?? 'Other';
+    const key = rawKey.toLowerCase();
+
+    if (!groupedMap[date]) {
+      groupedMap[date] = {
+        name: date,
+        Friend: 0,
+        SocialMedia: 0,
+        Email: 0,
+        Google: 0,
+        Other: 0,
+      };
+    }
+
+    switch (key) {
       case 'friend':
-        stats.Friend += item.count;
+        groupedMap[date].Friend += item.count;
         break;
       case 'socialmedia':
-        stats.SocialMedia += item.count;
+        groupedMap[date].SocialMedia += item.count;
         break;
       case 'email':
       case 'e-mail':
-        stats.Email += item.count;
+        groupedMap[date].Email += item.count;
         break;
-        case 'google':
-        stats.Google += item.count;
+      case 'google':
+        groupedMap[date].Google += item.count;
         break;
       default:
-        stats.Other += item.count;
+        groupedMap[date].Other += item.count;
         break;
     }
   });
 
-  return stats;
+  // Convert map to sorted array
+  return Object.values(groupedMap).sort((a, b) => a.name.localeCompare(b.name));
 };
+

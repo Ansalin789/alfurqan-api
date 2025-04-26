@@ -49,6 +49,7 @@ export const zodAlStudentInvoiceSchemaValidation = z.object({
   offset: z.string().nullable().default(null),
   limit: z.string().nullable().default(null),
   type: z.enum(["weekly", "monthly", "yearly"]).default("yearly"),
+  year: z.string().default(() => new Date().toISOString().split("T")[0]), 
 });
 
 

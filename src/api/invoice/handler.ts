@@ -15,6 +15,7 @@ import { evaluationMessages } from "../../config/messages";
       offset: true,
       limit: true,
       type:true,
+      year:true,
     }),
   });
 
@@ -40,7 +41,6 @@ export default {
       return result;
     },
 
-
     async getAllStudentRevenue(req: Request, h: ResponseToolkit) {
       // Parse the query parameters from the request
       const { query } = geStudentListInputValidation.parse({
@@ -49,11 +49,11 @@ export default {
         },
       });
     
-      // Extract the 'type' or 'dateRange' from the parsed query object
-      const { type = "year" } = query; // Default to 'year' if not provided
+      // Extract the 'type' or 'dateRange' and 'year' (as a date string) from the parsed query object
+      const { type = "year", year = new Date().toISOString().split("T")[0] } = query; // Default to today's date as string
     
-      // Call the getStudentAllRevenue function and pass the 'type' (dateRange)
-      const revenueData = await getStudentAllRevenue(type);
+      // Call the getStudentAllRevenue function and pass the 'type' (dateRange) and 'year' (as date string)
+      const revenueData = await getStudentAllRevenue(type, year);
     
       // Return the revenue data in the response
       return h.response({
@@ -61,6 +61,9 @@ export default {
         data: revenueData,
       });
     }
+    
+    
+    
     ,
 
     async getTotalAmountByCountry(req: Request, h: ResponseToolkit) {
