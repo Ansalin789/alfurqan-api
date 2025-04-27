@@ -166,7 +166,7 @@ if (payload.attachFile) {
           attachFile: attachFileBuffer,
           dueDate: dueDate,  // validated and parsed
           status: payload.status ?? "Active",
-          createdDate: new Date(),  // always use current date for createdDate
+          createdDate: new Date().toISOString(),  // always use current date for createdDate
           createdBy: payload.createdBy ?? "System",  // default to "System" if missing
           lastUpdatedDate: lastUpdatedDate,  // always use current date for lastUpdatedDate
           lastUpdatedBy: payload.lastUpdatedBy ?? "System",  // default to "System" if missing

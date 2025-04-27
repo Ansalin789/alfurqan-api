@@ -336,7 +336,7 @@ export const sendInvoiceOperation = async (
       invoiceStatus: payload.invoiceStatus ?? "Pending",
       status: payload.status ?? "Active",
       dueDate: payload.dueDate ?? undefined,
-      createdDate: payload.createdDate ?? new Date(),
+      createdDate: payload.createdDate ?? "",
       createdBy: payload.createdBy ?? "",
       lastUpdatedDate: payload.lastUpdatedDate ?? new Date(),
       lastUpdatedBy: payload.lastUpdatedBy ?? "",

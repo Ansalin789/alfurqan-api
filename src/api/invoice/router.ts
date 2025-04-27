@@ -55,12 +55,17 @@ const register = async (server: Server): Promise<void> => {
     {
       method: "POST",
       path: "/invoice/send",
-      handler:handler.sendInvoice,
+      handler: handler.sendInvoice,
       options: {
         auth: false, // change based on your needs
         tags: ["api", "invoice"],
         description: "Create and send invoice to DB",
-      },
+        payload: {
+          maxBytes: 10485760, // 10 MB for the payload size
+          output: "data",     // for JSON data
+          parse: true          // automatically parse the payload
+        }
+      }
     }   
   ];
   server.route(routes);
