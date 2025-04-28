@@ -1402,6 +1402,9 @@ export interface IOtherEmployeeCreate{
   resume: any;
   status: string;
 }
+
+
+
 export interface IAccessModel {
   employeeId: string;
   employeeName: string;
@@ -1444,19 +1447,20 @@ export interface IAccessModel {
       student?: boolean;
       studentmodules?: {
         dashboard?: boolean;
-        recuirement?: boolean;
-        meeting?: boolean;
-        teachers?: boolean;
-        messages?: boolean;
-        suppor?: boolean;
+        classes?: boolean;
+        assignments?: boolean;
+        payments?: boolean;
+        knowledgebase?: boolean;
+        support?: boolean;
       };
       teacher?: boolean;
       teachermodules?: {
         dashboard?: boolean;
-        recuirement?: boolean;
-        meeting?: boolean;
-        teachers?: boolean;
+        liveclasses?: boolean;
+        scheduledclasses?: boolean;
+        assignments?: boolean;
         messages?: boolean;
+        analytics?: boolean;
         support?: boolean;
       };
  
@@ -1506,19 +1510,20 @@ export interface IAccessModel extends Document{
       student?: boolean;
       studentmodules?: {
         dashboard?: boolean;
-        recuirement?: boolean;
-        meeting?: boolean;
-        teachers?: boolean;
-        messages?: boolean;
-        suppor?: boolean;
+        classes?: boolean;
+        assignments?: boolean;
+        payments?: boolean;
+        knowledgebase?: boolean;
+        support?: boolean;
       };
       teacher?: boolean;
       teachermodules?: {
         dashboard?: boolean;
-        recuirement?: boolean;
-        meeting?: boolean;
-        teachers?: boolean;
+        liveclasses?: boolean;
+        scheduledclasses?: boolean;
+        assignments?: boolean;
         messages?: boolean;
+        analytics?: boolean;
         support?: boolean;
       };
  
@@ -1699,4 +1704,134 @@ export interface IKnowledgeBaseCreate{
   createdBy: string,
   updatedDate: Date,
   updatedBy: string
+}
+
+export interface IAccessModel {
+  employeeId: string;
+  employeeName: string;
+  contact: string;
+  designation: string[];
+  dateOfJoining?: Date; // Format: 'DD/MM/YYYY'
+  roleAccess: {
+    admin?: boolean;
+    adminmodules?: {
+      dashboard?: boolean;
+      evaluation?: boolean;
+      student?: boolean;
+      employees?: boolean;
+      courses?: boolean;
+      classes?: boolean;
+      invoice?: boolean;
+      analytics?: boolean;
+      messages?: boolean;
+      settings?: boolean;
+    };
+    academicCoach?: boolean;
+    academicmodules?: {
+      dashboard?: boolean;
+      scheduledevaluation?: boolean;
+      scheduledtrail?: boolean;
+      students?: boolean;
+      teachers?: boolean;
+      messages?: boolean;
+      support?: boolean;
+    };
+    supervisor?: boolean;
+    supervisormodules?: {
+      dashboard?: boolean;
+      recuirement?: boolean;
+      meeting?: boolean;
+      teachers?: boolean;
+      messages?: boolean;
+      support?: boolean;
+    };
+      student?: boolean;
+      studentmodules?: {
+        dashboard?: boolean;
+        classes?: boolean;
+        assignments?: boolean;
+        payments?: boolean;
+        knowledgebase?: boolean;
+        support?: boolean;
+      };
+      teacher?: boolean;
+      teachermodules?: {
+        dashboard?: boolean;
+        liveclasses?: boolean;
+        scheduledclasses?: boolean;
+        assignments?: boolean;
+        messages?: boolean;
+        analytics?: boolean;
+        support?: boolean;
+      };
+ 
+  };
+}
+
+
+export interface IAccessModel extends Document{
+  employeeId: string;
+  employeeName: string;
+  contact: string;
+  designation: string[];
+  dateOfJoining?: Date; // Format: 'DD/MM/YYYY'
+  roleAccess: {
+    admin?: boolean;
+    adminmodules?: {
+      dashboard?: boolean;
+      evaluation?: boolean;
+      student?: boolean;
+      employees?: boolean;
+      courses?: boolean;
+      classes?: boolean;
+      invoice?: boolean;
+      analytics?: boolean;
+      messages?: boolean;
+      settings?: boolean;
+    };
+    academicCoach?: boolean;
+    academicmodules?: {
+      dashboard?: boolean;
+      scheduledevaluation?: boolean;
+      scheduledtrail?: boolean;
+      students?: boolean;
+      teachers?: boolean;
+      messages?: boolean;
+      support?: boolean;
+    };
+    supervisor?: boolean;
+    supervisormodules?: {
+      dashboard?: boolean;
+      recuirement?: boolean;
+      meeting?: boolean;
+      teachers?: boolean;
+      messages?: boolean;
+      support?: boolean;
+    };
+    student?: boolean;
+    studentmodules?: {
+      dashboard?: boolean;
+      classes?: boolean;
+      assignments?: boolean;
+      payments?: boolean;
+      knowledgebase?: boolean;
+      support?: boolean;
+    };
+      teacher?: boolean;
+      teachermodules?: {
+        dashboard?: boolean;
+        liveclasses?: boolean;
+        scheduledclasses?: boolean;
+        assignments?: boolean;
+        messages?: boolean;
+        analytics?: boolean;
+        support?: boolean;
+      };
+ 
+  };
+    status: string;
+    createdDate: Date;
+    createdBy: string;
+    updatedDate?: Date;
+    updatedBy?: string;
 }

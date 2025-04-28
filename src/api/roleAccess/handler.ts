@@ -63,19 +63,20 @@ export default{
           student: rawPayload.roleAccess?.student || false,
           studentmodules: {
             dashboard: rawPayload.roleAccess?.studentmodules?.dashboard || false,
-            recuirement: rawPayload.roleAccess?.studentmodules?.recuirement || false,
-            meeting: rawPayload.roleAccess?.studentmodules?.meeting || false,
-            teachers: rawPayload.roleAccess?.studentmodules?.teachers || false,
-            messages: rawPayload.roleAccess?.studentmodules?.messages || false,
-            suppor: rawPayload.roleAccess?.studentmodules?.suppor || false, // typo preserved
+            classes: rawPayload.roleAccess?.studentmodules?.classes || false,
+            assignments: rawPayload.roleAccess?.studentmodules?.assignments || false,
+            payments: rawPayload.roleAccess?.studentmodules?.payments || false,
+            knowledgebase: rawPayload.roleAccess?.studentmodules?.knowledgebase || false,
+            support: rawPayload.roleAccess?.studentmodules?.support || false, // typo preserved
           },
           teacher: rawPayload.roleAccess?.teacher || false,
           teachermodules: {
             dashboard: rawPayload.roleAccess?.teachermodules?.dashboard || false,
-            recuirement: rawPayload.roleAccess?.teachermodules?.recuirement || false,
-            meeting: rawPayload.roleAccess?.teachermodules?.meeting || false,
-            teachers: rawPayload.roleAccess?.teachermodules?.teachers || false,
+            liveclasses: rawPayload.roleAccess?.teachermodules?.liveclasses || false,
+            scheduledclasses: rawPayload.roleAccess?.teachermodules?.scheduledclasses || false,
+            assignments: rawPayload.roleAccess?.teachermodules?.assignments || false,
             messages: rawPayload.roleAccess?.teachermodules?.messages || false,
+            analytics: rawPayload.roleAccess?.teachermodules?.analytics || false,
             support: rawPayload.roleAccess?.teachermodules?.support || false,
           },
         },
@@ -114,9 +115,6 @@ export default{
       return h.response({ message: 'Internal Server Error' }).code(500);
     }
   },
-  
-    
-    
    //getlist for Employeelist
     
    async getsettinglist(req: Request, h: ResponseToolkit) {
@@ -161,11 +159,4 @@ export default{
         message: error.message ?? "Failed to fetch settings",
       }).code(500);
     }
-  },
-  
-  
-
-
-
-
-  }
+  },}

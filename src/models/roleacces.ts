@@ -53,10 +53,11 @@ const roleAccess = new Schema<IAccessModel>(
         teachermodules: 
         {
             dashboard : { type: Boolean, required: false },
-            recuirement: { type: Boolean, required: false },
-            meeting: { type: Boolean, required: false },
-            teachers: { type: Boolean, required: false },
+            liveclasses: { type: Boolean, required: false },
+            scheduledclasses: { type: Boolean, required: false },
+            assignments: { type: Boolean, required: false },
             messages: { type: Boolean, required: false },
+            analytics:{ type: Boolean, required: false },
             support: { type: Boolean, required: false },
           }, 
 
@@ -64,13 +65,13 @@ const roleAccess = new Schema<IAccessModel>(
           studentmodules: 
           {
               dashboard : { type: Boolean, required: false },
-              recuirement: { type: Boolean, required: false },
-              meeting: { type: Boolean, required: false },
-              teachers: { type: Boolean, required: false },
-              messages: { type: Boolean, required: false },
+              classes: { type: Boolean, required: false },
+              assignments: { type: Boolean, required: false },
+              payments: { type: Boolean, required: false },
+              knowledgebase: { type: Boolean, required: false },
               support: { type: Boolean, required: false },
             }, 
-
+            
 
   
       },
@@ -134,20 +135,21 @@ export const zodroleAccessSchema = z.object({
     teacher: z.boolean().optional(),
     teachermodules: z.object({
       dashboard: z.boolean().optional(),
-      recuirement: z.boolean().optional(),
-      meeting: z.boolean().optional(),
-      teachers: z.boolean().optional(),
+      liveclasses: z.boolean().optional(),
+      scheduledclasses: z.boolean().optional(),
+      assignments: z.boolean().optional(),
       messages: z.boolean().optional(),
+      analytics: z.boolean().optional(),
       support: z.boolean().optional(),
     }).optional(),
 
     student: z.boolean().optional(),
     studentmodules: z.object({
       dashboard: z.boolean().optional(),
-      recuirement: z.boolean().optional(),
-      meeting: z.boolean().optional(),
-      teachers: z.boolean().optional(),
-      messages: z.boolean().optional(),
+      classes: z.boolean().optional(),
+      assignments: z.boolean().optional(),
+      payments: z.boolean().optional(),
+      knowledgebase: z.boolean().optional(),
       support: z.boolean().optional(),
     }).optional(),
   }),
