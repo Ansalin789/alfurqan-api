@@ -774,11 +774,10 @@ export interface IallAssignment {
   assignmentStatus: string;
 
 }
-
 export interface IAssignmentCreate {
-  studentId: string;
+  studentId?: string;
   assignmentName: string;
-  assignedTeacher: string;
+  assignedTeacher?: string;
   assignmentType: { 
     quiz?: string;
     writing?: string;
@@ -805,8 +804,8 @@ export interface IAssignmentCreate {
   updatedBy: string;
   level: string;
   courses: string;
-  assignedDate: Date;
-  dueDate: Date;
+  assignedDate?: Date;
+  dueDate?: Date;
   answer: string;
   answerValidation: string;
   assignmentStatus: string;
@@ -816,17 +815,24 @@ export interface IStudentInvoice extends Document {
     studentId: string;
     studentName: string;
     studentEmail: string;
-    studentPhone: number;
+    studentPhone: string;
     country: string;
     city: string;
   };
   courseName: string;
   amount: number; 
+  packageType:string;
+  itemDescription:string;
+  duration:string;
+  rate:string;
+  description:string;
+  attachFile?:Buffer;
+  dueDate:string;
   invoiceStatus: string;
   status: string;
-  createdDate: Date;
+  createdDate: string;
   createdBy: string;
-  lastUpdatedDate: Date;
+  lastUpdatedDate?: string;
   lastUpdatedBy: string;
 }
 

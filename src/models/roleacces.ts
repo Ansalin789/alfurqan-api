@@ -14,7 +14,7 @@ const roleAccess = new Schema<IAccessModel>(
     admin: {type: Boolean, required: false},
     adminmodules: 
     {
-        dasboard : { type: Boolean, required: false },
+        dashboard : { type: Boolean, required: false },
         evaluation: { type: Boolean, required: false },
         student: { type: Boolean, required: false },
         employees: { type: Boolean, required: false },
@@ -98,7 +98,7 @@ export const zodroleAccessSchema = z.object({
   roleAccess: z.object({
     admin: z.boolean().optional(),
     adminmodules: z.object({
-      dasboard: z.boolean().optional(),
+      dashboard: z.boolean().optional(),
       evaluation: z.boolean().optional(),
       student: z.boolean().optional(),
       employees: z.boolean().optional(),

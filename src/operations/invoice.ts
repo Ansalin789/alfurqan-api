@@ -1,6 +1,6 @@
 import { IStudentInvoice } from "../../types/models.types";
 import { GetAllRecordsParams } from "../shared/enum";
-import StudentInvoiceModel from "../models/stinvoice"
+import StudentInvoiceModel, { zodAlStudentInvoiceSchema } from "../models/stinvoice"
 import { isNil } from "lodash";
 import { commonMessages, evaluationMessages } from "../config/messages";
 import AppLogger from "../helpers/logging";
@@ -14,7 +14,8 @@ import {
   endOfYear,
   eachDayOfInterval,
   eachMonthOfInterval,
-  format
+  format,
+  parseISO
 } from "date-fns";
 import stinvoice from "../models/stinvoice";
 
@@ -65,96 +66,91 @@ export const getAllStudetnInVoiceList = async (
   };
 
  
+  export const getStudentAllRevenue = async (
+    dateRange: string,
+    year: string // year as a date string (e.g., "2023-01-01")
+  ): Promise<{ date: string; label: string; revenue: number }[]> => {
+    let startDate: Date;
+    let endDate: Date;
+    let intervalFn: (interval: { start: Date; end: Date }) => Date[];
+    let outputFormat: string;
   
-
+    // Parse the year from the provided date string
+    const parsedDate = parseISO(year);
+    const parsedYear = parsedDate.getFullYear();
   
+    const now = new Date();
   
-
- 
-  
-
-export const getStudentAllRevenue = async (
-  dateRange: string
-): Promise<{ date: string; label: string; revenue: number }[]> => {
-  let startDate: Date;
-  let endDate: Date;
-  let intervalFn: (interval: { start: Date; end: Date }) => Date[];
-  let outputFormat: string;
-
-  const now = new Date();
-
-  switch (dateRange.toLowerCase()) {
-    case "yearly":
-      startDate = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
-      endDate = new Date(Date.UTC(now.getUTCFullYear(), 11, 31, 23, 59, 59, 999));
-      intervalFn = eachMonthOfInterval;
-      outputFormat = "MMM-yyyy";
-      break;
-    case "monthly":
-      startDate = startOfMonth(now);
-      endDate = endOfMonth(now);
-      intervalFn = eachDayOfInterval;
-      outputFormat = "yyyy-MM-dd";
-      break;
-    case "weekly":
-      startDate = startOfWeek(now, { weekStartsOn: 1 });
-      endDate = endOfWeek(now, { weekStartsOn: 1 });
-      intervalFn = eachDayOfInterval;
-      outputFormat = "yyyy-MM-dd";
-      break;
-    default:
-      throw new Error("Invalid dateRange value. Use 'weekly', 'monthly', or 'yearly'.");
-  }
-
-  console.log(`🗓️ Start Date: ${startDate.toISOString()} | End Date: ${endDate.toISOString()}`);
-
-  // Fetch all invoices in the range
-  const invoices = await stinvoice.find({
-    invoiceStatus: "Paid", // optional filter if you only want paid ones
-  }).exec();
-
-  console.log(`📦 Found ${invoices.length} invoice(s)`);
-
-  const revenueMap: Record<string, number> = {};
-
-  invoices.forEach((invoice) => {
-    const invoiceDate = new Date(invoice.createdDate);
-    const formattedDate = format(invoiceDate, outputFormat);
-  
-    // Log each invoice being processed
-    console.log(`Processing invoice: ${invoice.amount} for ${formattedDate}`);
-  
-    if (revenueMap[formattedDate]) {
-      console.log(`Existing revenue for ${formattedDate}: ${revenueMap[formattedDate]}`);
-      revenueMap[formattedDate] += invoice.amount;
-      console.log(`Updated revenue for ${formattedDate}: ${revenueMap[formattedDate]}`);
-    } else {
-      revenueMap[formattedDate] = invoice.amount;
-      console.log(`Created new revenue entry for ${formattedDate}: ${invoice.amount}`);
+    switch (dateRange.toLowerCase()) {
+      case "yearly":
+        // Use the provided year to create the start and end dates for that year
+        startDate = new Date(Date.UTC(parsedYear, 0, 1));
+        endDate = new Date(Date.UTC(parsedYear, 11, 31, 23, 59, 59, 999));        
+        intervalFn = eachMonthOfInterval;
+        outputFormat = "MMM-yyyy"; // Format as "Jan-YYYY", "Feb-YYYY", etc.
+        break;
+      case "monthly":
+        startDate = startOfMonth(now);
+        endDate = endOfMonth(now);
+        intervalFn = eachDayOfInterval;
+        outputFormat = "yyyy-MM-dd";
+        break;
+      case "weekly":
+        startDate = startOfWeek(now, { weekStartsOn: 1 });
+        endDate = endOfWeek(now, { weekStartsOn: 1 });
+        intervalFn = eachDayOfInterval;
+        outputFormat = "yyyy-MM-dd";
+        break;
+      default:
+        throw new Error("Invalid dateRange value. Use 'weekly', 'monthly', or 'yearly'.");
     }
-  });
   
+    console.log(`🗓️ Start Date: ${startDate.toISOString()} | End Date: ${endDate.toISOString()}`);
   
-
-  console.log("📊 Revenue Map:", revenueMap);
-
-  const result = intervalFn({ start: startDate, end: endDate }).map((date, i) => {
-    const label = format(date, outputFormat);
-    const revenue = revenueMap[label] || 0;
-    console.log(`📅 Interval ${i + 1}: ${label} | Revenue: ${revenue}`);
-    return {
-      date: label,
-      label,
-      revenue,
-    };
-  });
-
-  console.log("✅ Final Result:", result);
-  return result;
-};
+    const invoices = await StudentInvoiceModel.find({
+      invoiceStatus: { $in: ["Paid", "Pending"] },
+    }).exec();
+    
+  
+    console.log(`📦 Found ${invoices.length} invoice(s)`);
+  
+    const revenueMap: Record<string, number> = {};
+  
+    invoices.forEach((invoice) => {
+      const invoiceDate = new Date(invoice.createdDate);
+      const formattedDate = format(invoiceDate, outputFormat);
+  
+      // Log each invoice being processed
+      console.log(`Processing invoice: ${invoice.amount} for ${formattedDate}`);
+  
+      if (revenueMap[formattedDate]) {
+        console.log(`Existing revenue for ${formattedDate}: ${revenueMap[formattedDate]}`);
+        revenueMap[formattedDate] += invoice.amount;
+        console.log(`Updated revenue for ${formattedDate}: ${revenueMap[formattedDate]}`);
+      } else {
+        revenueMap[formattedDate] = invoice.amount;
+        console.log(`Created new revenue entry for ${formattedDate}: ${invoice.amount}`);
+      }
+    });
+  
+    console.log("📊 Revenue Map:", revenueMap);
+  
+    const result = intervalFn({ start: startDate, end: endDate }).map((date, i) => {
+      const label = format(date, outputFormat);
+      const revenue = revenueMap[label] || 0;
+      console.log(`📅 Interval ${i + 1}: ${label} | Revenue: ${revenue}`);
+      return {
+        date: label,
+        label,
+        revenue,
+      };
+    });
+  
+    console.log("✅ Final Result:", result);
+    return result;
+  };
 
   
-
 
 export const getTotalAmountByCountry = async (
   dateRange: string
@@ -306,6 +302,54 @@ export const getTotalAmountByCourse = async (
   } catch (error) {
     console.error("❌ Error in getTotalAmountByCourse:", error);
     throw error;
+  }
+};
+export const sendInvoiceOperation = async (
+  payload: Partial<IStudentInvoice>
+): Promise<{ invoice: IStudentInvoice } | { error: any }> => {
+  try {
+    // ✅ Validate payload with Zod
+    const validation = zodAlStudentInvoiceSchema.safeParse(payload);
+    if (!validation.success) {
+      return { error: validation.error.flatten().fieldErrors };
+    }
+
+    // ✅ Create and save the invoice
+    const newInvoice = new StudentInvoiceModel({
+      student: {
+        studentId: payload.student?.studentId ?? "",
+        studentName: payload.student?.studentName ?? "",
+        studentEmail: payload.student?.studentEmail ?? "",
+        studentPhone: payload.student?.studentPhone ?? "",
+        country: payload.student?.country ?? "",
+        city: payload.student?.city ?? "",
+      },
+      courseName: payload.courseName ?? "",
+      amount: payload.amount ?? 0,
+      packageType: payload.packageType ?? "",
+      itemDescription: payload.itemDescription ?? "",
+      duration: payload.duration ?? "",
+      rate: payload.rate ?? "",
+      description: payload.description ?? "",
+      attachFile: payload.attachFile ?? undefined,
+
+      invoiceStatus: payload.invoiceStatus ?? "Pending",
+      status: payload.status ?? "Active",
+      dueDate: payload.dueDate ?? undefined,
+      createdDate: payload.createdDate ?? "",
+      createdBy: payload.createdBy ?? "",
+      lastUpdatedDate: payload.lastUpdatedDate ?? new Date(),
+      lastUpdatedBy: payload.lastUpdatedBy ?? "",
+    });
+
+    const savedInvoice = await newInvoice.save();
+
+
+    AppLogger.info(`Invoice created: ${JSON.stringify(savedInvoice)}`);
+    return { invoice: savedInvoice };
+  } catch (error) {
+    console.error("Error saving invoice:", error);
+    return { error: "Failed to save invoice: " + error };
   }
 };
 

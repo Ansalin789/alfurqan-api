@@ -104,18 +104,20 @@ export default {
 
    async UpdateAllCourseLevel(req: Request, h: ResponseToolkit) {
     try {
+      // Extract courseId from the path parameters (e.g., /courses/{courseId})
+      const courseId = req.params.courseId;
+  
+      // Ensure that courseId is provided
+      if (!courseId) {
+        return h.response({ error: "Course ID is required" }).code(400); // Respond with an error if courseId is missing
+      }
+  
       // Parse and validate the payload using Zod schema
       const { payload } = createCourseValidation.parse({
         payload: req.payload,
       });
   
       console.log("Payload received:", req.payload);
-  
-      // Ensure that courseId is provided
-      const courseId = payload.course?.courseId;
-      if (!courseId) {
-        return h.response({ error: "Course ID is required" }).code(400); // Respond with an error if courseId is missing
-      }
   
       // Create new level objects from payload (handle as an array)
       const newLevels = (payload.level ?? []).map(level => ({
@@ -139,7 +141,8 @@ export default {
       console.error("Error updating course level:", error);
       return h.response({ error: "Failed to update course level" }).code(500);
     }
-  },
+  }
+  ,
 
 
   async getAllCourseLevelByCourseId(req: Request, h: ResponseToolkit) {
