@@ -1614,3 +1614,35 @@ createdBy?: string;
 updatedDate?: Date;
 updatedBy?: string;
 }
+
+export interface IEmpwages extends Document{
+  employeeId: string,
+  employeeName: string,
+  classType:{
+    className: string,
+    hoursMins: string,
+    rate: string,
+    currency: string
+  },
+  status: string,
+  createdDate: Date,
+  createdBy: string,
+  updatedDate: Date,
+  updatedBy: string
+}
+
+export interface IEmpwagesCreate{
+  employeeId: string,
+  employeeName: string,
+  classType:{
+    className: string,
+    hoursMins: string,
+    rate: string,
+    currency: string
+  },
+  status: string,
+  createdDate: Date,
+  createdBy: string,
+  updatedDate: Date,
+  updatedBy: string
+}
