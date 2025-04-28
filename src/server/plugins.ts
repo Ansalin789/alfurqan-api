@@ -27,6 +27,7 @@ import adminMeeting from "../api/adminMeeting/router"
 import realtimemessageAPI from "../api/realtimemessage/router";
 import courseAPI from "../api/course/router";
 import employeeWagesAPI from "../api/empwege/router";
+import expenseAPI from "../api/expenses/router";
 export const appPlugins = [
   {
     plugin: systemLifeCycle,
@@ -112,5 +113,8 @@ export const appPlugins = [
   },
   {
     plugin:employeeWagesAPI,
+  },
+  {
+    plugin:expenseAPI,
   }
 ];

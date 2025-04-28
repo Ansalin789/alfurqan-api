@@ -1646,3 +1646,33 @@ export interface IEmpwagesCreate{
   updatedDate: Date,
   updatedBy: string
 }
+
+
+export interface IExpense extends Document{
+  paymentDate: string,
+  expenseType: string,
+  amount:string,
+  category:string,
+  paymentMethod:string,
+  status: string,
+  createdDate: Date,
+  createdBy: string,
+  updatedDate: Date,
+  updatedBy: string
+}
+
+export interface IExpenseCreate{
+  employeeId: string,
+  employeeName: string,
+  classType:{
+    className: string,
+    hoursMins: string,
+    rate: string,
+    currency: string
+  },
+  status: string,
+  createdDate: Date,
+  createdBy: string,
+  updatedDate: Date,
+  updatedBy: string
+}
