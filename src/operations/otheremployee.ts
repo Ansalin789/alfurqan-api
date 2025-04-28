@@ -3,6 +3,7 @@ import IOtherEmployeeModel from "../models/otheremployee"
 import User from "../models/users"
 import ShiftSchedule from "../models/usershiftschedule"
 import OtherEmpModel from "../models/otheremployee"
+import { Types } from "mongoose"
 
 /**
  * Creates a new user.
@@ -128,4 +129,12 @@ async function createShiftSchedule(saveStudent:any, saveUser: any) {
      await createShift.save();
      
   console.log("Student portal",saveStudent )
+};
+
+export const getOhterEmployeeById = async (
+  id: string
+): Promise<IOtherEmployee | null> => {
+  return IOtherEmployeeModel.findOne({
+    _id: new Types.ObjectId(id),
+  }).lean();
 };

@@ -34,6 +34,16 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "users"],
       },
     },
+
+    {
+      method: "GET",
+      path: "/otheremp/{id}",
+      options: {
+        handler: handler.getOhterEmpById,
+        description: userMessages.LIST,
+        tags: ["api", "users"],
+      },
+    },
 ];
 server.route(routes);
 };

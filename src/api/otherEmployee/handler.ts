@@ -1,8 +1,11 @@
 import { ResponseToolkit,Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodOtherEmployeeSchema } from "../../models/otheremployee";
-import { getOhterEmpCountriesCount, saveOtherEmployee } from "../../operations/otheremployee";
+import { getOhterEmpCountriesCount, getOhterEmployeeById, saveOtherEmployee } from "../../operations/otheremployee";
 import * as Stream from "stream";
+import { isNil } from "lodash";
+import { notFound } from "@hapi/boom";
+import { recruitmentMessages } from "../../config/messages";
 
 
 
@@ -102,7 +105,17 @@ export default {
      },
      async getOhterEmpCountries(req: Request, h: ResponseToolkit){
       return await getOhterEmpCountriesCount();
-    }
+    },
+
+       async getOhterEmpById(req: Request, h: ResponseToolkit){
+          const result = await getOhterEmployeeById(String(req.params.id));
+    
+          if (isNil(result)) {
+               return notFound(recruitmentMessages.USER_NOT_FOUND);
+               }
+    
+      return result;
+        },
  
 }
 async function streamToBuffer(stream: Stream.Readable): Promise<Buffer> {
