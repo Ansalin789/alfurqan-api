@@ -437,3 +437,22 @@ export const addAminMeetingMessages: Record<string, string> = Object.freeze({
   TEACHER_REQUIRED: "At least one teacher must be assigned",
   INVALID_STATUS: "Invalid meeting status",
 });
+
+
+export const addKnowledgeBaseMessages: Record<string, string> = Object.freeze({
+  LIST: "Retrieve all meetings",
+  BYID: "Retrieve meeting details by meetingId",
+  CREATE: "Create a new meeting",
+  UPDATE: "Update an existing meeting",
+  DELETE: "Delete a meeting by meetingId",
+  BULK_DELETE: "Bulk delete meetings by meetingIds",
+  USER_NOT_FOUND: "User not found or inactive, contact admin",
+  INVALID_DATE_FORMAT: "Invalid date format. Please provide a valid date.",
+  INVALID_TIME_FORMAT: "Invalid time format. Please use HH:MM format.",
+  COURSE_TITLE_REQUIRED: "Course title is required",
+});
+
+export const uploadedFormat: Record<string, any> = Object.freeze({
+  PDF :"Pdf",
+  VIDEO: "Video",
+});

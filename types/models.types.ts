@@ -1676,3 +1676,27 @@ export interface IExpenseCreate{
   updatedDate: Date,
   updatedBy: string
 }
+
+export interface IKnowledgeBase extends Document{
+  courseName: string,
+  subjectTitle: string;
+  uploadedFormat: string,
+  uploadedFile: Buffer,
+  status: string,
+  createdDate: Date,
+  createdBy: string,
+  updatedDate: Date,
+  updatedBy: string
+}
+
+export interface IKnowledgeBaseCreate{
+  courseName: string,
+  subjectTitle: string;
+  uploadedFormat: string,
+  uploadedFile: Buffer,
+  status: string,
+  createdDate: Date,
+  createdBy: string,
+  updatedDate: Date,
+  updatedBy: string
+}

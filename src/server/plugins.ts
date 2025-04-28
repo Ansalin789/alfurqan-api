@@ -28,6 +28,8 @@ import realtimemessageAPI from "../api/realtimemessage/router";
 import courseAPI from "../api/course/router";
 import employeeWagesAPI from "../api/empwege/router";
 import expenseAPI from "../api/expenses/router";
+import KnowledgeBaseAPI from "../api/knowledgebase/router"
+
 export const appPlugins = [
   {
     plugin: systemLifeCycle,
@@ -116,5 +118,9 @@ export const appPlugins = [
   },
   {
     plugin:expenseAPI,
+  },
+  
+  {
+    plugin:KnowledgeBaseAPI,
   }
 ];
