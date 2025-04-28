@@ -1,6 +1,6 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
-import { createKnowledgeBase } from "../../operations/knowledgeBase";
+import getAllknowledge, { createKnowledgeBase } from "../../operations/knowledgeBase";
 import { zodknowledgeBaseValidationSchema } from "../../models/knowledgebase";
 
 const createInputValidation = z.object({
@@ -18,6 +18,8 @@ const createInputValidation = z.object({
 });
 
 export default {
+
+
   async createKnowledgeBase(req: Request, h: ResponseToolkit) {
     try {
       const { payload } = createInputValidation.parse({ payload: req.payload });
@@ -36,9 +38,6 @@ if (typeof payload.uploadedFile === "string") {
     .response({ success: false, error: "attachFile must be a base64 string or Buffer" })
     .code(400);
 }
-
-      
-
 
       const knowledgebase = await createKnowledgeBase({
         courseName: payload.courseName,
@@ -63,4 +62,27 @@ if (typeof payload.uploadedFile === "string") {
       return h.response({ error: "Something went wrong" }).code(400);
     }
   },
+
+//list knowledgebase
+
+async getknowledgebaseList(req: Request, h: ResponseToolkit) {
+  try {
+    const result = await getAllknowledge();  // No filters passed
+    
+    return h.response({
+      status: 'success',
+      data: result,
+    }).code(200);
+  } catch (error) {
+    console.error(error);
+    return h.response({ message: 'Internal Server Error' }).code(500);
+  }
+}
+
+
 };
+
+
+
+
+

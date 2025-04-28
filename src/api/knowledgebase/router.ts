@@ -20,8 +20,15 @@ const register = async (server: Server): Promise<void> => {
       },
     },
     },
+    {
+      method: "GET",
+      path: "/knowledgebase/list",
+      options: {
+        handler: handler.getknowledgebaseList,
+        tags: ["api", "knowledgeBase"],
+      },
+    }
     
-       
 
   ];
   server.route(routes);

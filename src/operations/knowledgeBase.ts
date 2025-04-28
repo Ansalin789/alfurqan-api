@@ -2,6 +2,7 @@ import { IKnowledgeBase, IKnowledgeBaseCreate } from "../../types/models.types";
 import KnowledgeBase from "../models/knowledgebase";
 import Course from "../models/course";
 import { uploadedFormat } from "../config/messages";
+import knowledgebase from "../models/knowledgebase";
 
 /**
  * Creates a new knowledge base entry.
@@ -46,3 +47,9 @@ export const createKnowledgeBase = async (payload: IKnowledgeBaseCreate): Promis
     return { error };
   }
 };
+
+
+export default async function getAllknowledge() {
+  const result = await knowledgebase.find();  // Simply retrieve all records without any filters
+  return result;
+}
