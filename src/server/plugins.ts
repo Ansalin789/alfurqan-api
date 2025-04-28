@@ -25,7 +25,8 @@ import roleAccessAPI from "../api/roleAccess/router";
 import otheremployeeAPI from "../api/otherEmployee/router"
 import adminMeeting from "../api/adminMeeting/router"
 import realtimemessageAPI from "../api/realtimemessage/router";
-import courseAPI from "../api/course/router"
+import courseAPI from "../api/course/router";
+import employeeWagesAPI from "../api/empwege/router";
 export const appPlugins = [
   {
     plugin: systemLifeCycle,
@@ -108,5 +109,8 @@ export const appPlugins = [
   },
   {
     plugin:courseAPI ,
+  },
+  {
+    plugin:employeeWagesAPI,
   }
 ];
