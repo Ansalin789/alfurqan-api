@@ -111,6 +111,16 @@ const register = async (server: Server): Promise<void> => {
           tags: ["api", "classShedule"],
         },
       },
+
+      {
+        method: "GET",
+        path: "/classShedule/totalclasses",
+        options: {
+          handler: handler.getTotalClassess,
+          description: ClassSchedulesMessages.LIST,
+          tags: ["api", "classShedule"],
+        },
+      },
     ];
     server.route(routes);
   };

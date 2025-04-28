@@ -13,6 +13,7 @@ import moment from "moment";
 import classShedule from "../models/classShedule";
 import { badRequest } from "@hapi/boom";
 import Evaluation from "../models/evaluation";
+import { endOfMonth, startOfMonth, subMonths, eachMonthOfInterval, format } from "date-fns";
 
 /**
  * Creates a new candidate record in the database.
@@ -755,4 +756,73 @@ export const getStudentClassCount  = async(studentId: string) =>{
    const totalduration = (studentDurationCount[0].totalDuration).toFixed(2);
 
   return {totalClasses, totalAttendance, level, totalduration};
+};
+
+
+
+export const getTotalClassesCount = async (
+  dateRange: string
+): Promise<{ date: string; totalClass: number }[]> => {
+  let startDate: Date;
+  let endDate: Date = new Date(); // Default to today
+  let dateFormat: string;
+  let intervalFn: (interval: { start: Date; end: Date }) => Date[];
+  let outputFormat: string;
+
+  // Determine start and end dates based on dateRange
+  switch (dateRange.toLowerCase()) {
+    case "last8months":
+      startDate = startOfMonth(subMonths(new Date(), 7)); // 7 months ago, start of month
+      endDate = endOfMonth(new Date());                   // end of current month
+      dateFormat = "%Y-%m"; // MongoDB date format
+      intervalFn = eachMonthOfInterval;
+      outputFormat = "MMM-yyyy"; // Display format
+      break;
+      case "last6months":
+        startDate = startOfMonth(subMonths(new Date(), 5)); // 7 months ago, start of month
+        endDate = endOfMonth(new Date());                   // end of current month
+        dateFormat = "%Y-%m"; // MongoDB date format
+        intervalFn = eachMonthOfInterval;
+        outputFormat = "MMM-yyyy"; // Display format
+        break;
+    default:
+      throw new Error("Invalid dateRange value. Use 'last8months'.");
+  }
+
+  console.log(`Fetching results from ${startDate.toISOString()} to ${endDate.toISOString()}`);
+
+  // MongoDB aggregation
+  const result = await classShedule.aggregate([
+    {
+      $match: {
+        status: "Active",
+        startDate: { $gte: startDate, $lte: endDate },
+      },
+    },
+    {
+      $group: {
+        _id: { date: { $dateToString: { format: dateFormat, date: "$startDate" } } },
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  // Group results correctly
+  const groupedResults: Record<string, { date: string; totalClass: number }> = {};
+  result.forEach(({ _id, count }) => {
+    const dateFormatted = format(new Date(`${_id.date}-01`), outputFormat); // append `-01` for valid Date
+    groupedResults[dateFormatted] = {
+      date: dateFormatted,
+      totalClass: count,  // ❗ Assign the correct count here
+    };
+  });
+
+  // Ensure all months are covered
+  const allDates = intervalFn({ start: startDate, end: endDate }).map((d) =>
+    format(d, outputFormat)
+  );
+
+  const finalResult = allDates.map((date) => groupedResults[date] || { date, totalClass: 0 });
+
+  return finalResult;
 };

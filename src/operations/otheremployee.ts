@@ -80,6 +80,7 @@ export const getOhterEmpCountriesCount = async() =>{
     const password = `${firstThreeChars}${randomSpecial}${randomNum}${reversedUsername}`;
 
   let createStudentPortal = await User.create({
+    userId: updateData._id,
     userName: updateData.firstName,
     email:updateData.email,
     password: password,
@@ -93,7 +94,7 @@ export const getOhterEmpCountriesCount = async() =>{
     lastUpdatedBy: "Admin" ,   
     updatedDate: new Date
   }
-   )
+   );
 
    const saveStudent = await createStudentPortal.save();
 

@@ -5,7 +5,7 @@ import { ClassSchedulesMessages } from "../../config/messages";
 import { isNil } from "lodash";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
-import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount} from "../../operations/classschedule";
+import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount, getTotalClassesCount} from "../../operations/classschedule";
 
 
 const createInputValidation = z.object({
@@ -423,13 +423,15 @@ async updateteacherreschedule(req: Request, h: ResponseToolkit){
  
    }
   );
-
-
 },
 
 async getStudentClassesCount (req: Request, h: ResponseToolkit){
   return await getStudentClassCount(req.query.studentId);
-}
+},
+
+async getTotalClassess(req: Request, h: ResponseToolkit){
+    return await getTotalClassesCount(req.query.dateRange as string);
+  },
 
 }
 
