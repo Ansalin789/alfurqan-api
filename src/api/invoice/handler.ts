@@ -1,7 +1,7 @@
 import { ResponseToolkit,Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodAlStudentInvoiceSchemaValidation } from "../../shared/zod_schema_validation";
-import { getAllStudetnInVoiceList, getStudentAllRevenue, getStudetnInVoiceDetailsById, getTotalAmountByCountry, getTotalAmountByCourse, sendInvoiceOperation } from "../../operations/invoice";
+import getstudentInvoiceList, { getAllStudetnInVoiceList, getStudentAllRevenue, getStudetnInVoiceDetailsById, getTotalAmountByCountry, getTotalAmountByCourse, sendInvoiceOperation } from "../../operations/invoice";
 import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
 import { evaluationMessages } from "../../config/messages";
@@ -194,6 +194,24 @@ if (payload.attachFile) {
         // Log any internal server errors
         console.error("Handler error in sendInvoice:", error);
         return h.response({ success: false, error: "Failed to send invoice" }).code(500);
+      }
+    },
+
+
+
+    //listing all student invoice
+    
+    async getallstudentinvoiceList(req: Request, h: ResponseToolkit) {
+      try {
+        const result = await getstudentInvoiceList();  // No filters passed
+        
+        return h.response({
+          status: 'success',
+          data: result,
+        }).code(200);
+      } catch (error) {
+        console.error(error);
+        return h.response({ message: 'Internal Server Error' }).code(500);
       }
     }
     

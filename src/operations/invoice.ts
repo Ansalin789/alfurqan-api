@@ -354,6 +354,13 @@ export const sendInvoiceOperation = async (
 };
 
 
+//listing all studentInvoice
+
+
+export default async function getstudentInvoiceList() {
+  const result = await StudentInvoiceModel.find();  // Simply retrieve all records without any filters
+  return result;
+}
 
 
 

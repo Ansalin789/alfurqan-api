@@ -66,7 +66,19 @@ const register = async (server: Server): Promise<void> => {
           parse: true          // automatically parse the payload
         }
       }
-    }   
+    } ,
+
+    {
+      method: "GET",
+      path: "/studentinvoice/list",
+      options: {
+        handler: handler.getallstudentinvoiceList,
+        tags: ["api", "knowledgeBase"],
+      },
+    }
+    
+    
+
   ];
   server.route(routes);
 };
