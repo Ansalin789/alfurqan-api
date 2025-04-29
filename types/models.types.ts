@@ -1835,3 +1835,40 @@ export interface IAccessModel extends Document{
     updatedDate?: Date;
     updatedBy?: string;
 }
+
+
+
+
+
+
+
+
+
+
+export interface ISalarywages extends Document{
+  employeeId: string,
+  employeeName: string,
+  designation:string,
+  salaryAmount:string,
+  paymentDate:string,
+  paymentStatus:string,
+  status: string,
+  createdDate:string,
+  createdBy: string,
+  updatedDate: string,
+  updatedBy: string
+}
+
+export interface ISalarywagesCreate{
+  employeeId: string,
+  employeeName: string,
+  designation:string,
+  salaryAmount:string,
+  paymentDate:string,
+  paymentStatus:string,
+  status: string,
+  createdDate:string,
+  createdBy: string,
+  updatedDate: string,
+  updatedBy: string
+}
