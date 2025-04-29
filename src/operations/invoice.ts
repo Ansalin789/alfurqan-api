@@ -435,4 +435,46 @@ export const getInvoiceCounts = async (): Promise<{
 
  
  
-  
+export const getInvoiceDueDateBuckets = async (): Promise<{
+  range_0_10: number;
+  range_11_20: number;
+  range_21_30: number;
+  range_30_plus: number;
+}> => {
+  const invoices = await StudentInvoiceModel.find({
+    dueDate: { $ne: null },
+    createdDate: { $ne: null }
+  }).exec();
+
+  // Initialize counters
+  let range_0_10 = 0;
+  let range_11_20 = 0;
+  let range_21_30 = 0;
+  let range_30_plus = 0;
+
+  invoices.forEach((invoice) => {
+    const created = new Date(invoice.createdDate);
+    const due = new Date(invoice.dueDate);
+
+    // Calculate number of days between createdDate and dueDate
+    const diffInMs = due.getTime() - created.getTime();
+    const dueDays = Math.ceil(diffInMs / (1000 * 60 * 60 * 24));
+
+    if (dueDays <= 10) {
+      range_0_10++;
+    } else if (dueDays <= 20) {
+      range_11_20++;
+    } else if (dueDays <= 30) {
+      range_21_30++;
+    } else {
+      range_30_plus++;
+    }
+  });
+
+  return {
+    range_0_10,
+    range_11_20,
+    range_21_30,
+    range_30_plus
+  };
+};

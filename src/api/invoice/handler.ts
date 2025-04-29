@@ -1,7 +1,7 @@
 import { ResponseToolkit,Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodAlStudentInvoiceSchemaValidation } from "../../shared/zod_schema_validation";
-import getstudentInvoiceList, { getAllStudetnInVoiceList, getAllTotalInvoice, getInvoiceCounts, getStudentAllRevenue, getStudetnInVoiceDetailsById, getTotalAmountByCountry, getTotalAmountByCourse, sendInvoiceOperation } from "../../operations/invoice";
+import getstudentInvoiceList, { getAllStudetnInVoiceList, getAllTotalInvoice, getInvoiceCounts, getInvoiceDueDateBuckets, getStudentAllRevenue, getStudetnInVoiceDetailsById, getTotalAmountByCountry, getTotalAmountByCourse, sendInvoiceOperation } from "../../operations/invoice";
 import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
 import { evaluationMessages } from "../../config/messages";
@@ -238,8 +238,16 @@ if (payload.attachFile) {
     }
     
 
-
-
+,
+    async getInvoiceDueDateBuckets(req: Request, h: ResponseToolkit) {
+      // No query params, no input needed
+      const revenueData = await getInvoiceDueDateBuckets();
+    
+      return h.response({
+        success: true,
+        data: revenueData,
+      });
+    }
 
 
 

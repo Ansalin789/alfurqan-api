@@ -70,7 +70,15 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "invoice"],
       },
     },
-
+    {
+      method: "GET",
+      path: "/invoiceduebydates",
+      options: {
+        handler: handler.getInvoiceDueDateBuckets,
+        description: evaluationMessages.LIST,
+        tags: ["api", "invoice"],
+      },
+    },
     {
       method: "POST",
       path: "/invoice/send",
