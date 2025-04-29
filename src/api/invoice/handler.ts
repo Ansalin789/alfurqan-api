@@ -1,7 +1,7 @@
 import { ResponseToolkit,Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodAlStudentInvoiceSchemaValidation } from "../../shared/zod_schema_validation";
-import getstudentInvoiceList, { getAllStudetnInVoiceList, getStudentAllRevenue, getStudetnInVoiceDetailsById, getTotalAmountByCountry, getTotalAmountByCourse, sendInvoiceOperation } from "../../operations/invoice";
+import getstudentInvoiceList, { getAllStudetnInVoiceList, getAllTotalInvoice, getInvoiceCounts, getStudentAllRevenue, getStudetnInVoiceDetailsById, getTotalAmountByCountry, getTotalAmountByCourse, sendInvoiceOperation } from "../../operations/invoice";
 import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
 import { evaluationMessages } from "../../config/messages";
@@ -81,11 +81,7 @@ export default {
         success: true,
         data: revenueData,
       });
-    }
-    
-    
-    
-    ,
+    } ,
 
     async getTotalAmountByCountry(req: Request, h: ResponseToolkit) {
       const { query } = geStudentListInputValidation.parse({
@@ -195,12 +191,10 @@ if (payload.attachFile) {
         console.error("Handler error in sendInvoice:", error);
         return h.response({ success: false, error: "Failed to send invoice" }).code(500);
       }
-    },
+    }
+    ,
 
 
-
-    //listing all student invoice
-    
     async getallstudentinvoiceList(req: Request, h: ResponseToolkit) {
       try {
         const result = await getstudentInvoiceList();  // No filters passed
@@ -214,7 +208,43 @@ if (payload.attachFile) {
         return h.response({ message: 'Internal Server Error' }).code(500);
       }
     }
+
+,
+
+
+
+
+    async getTotalInvoice(req: Request, h: ResponseToolkit) {
+      // No query params, no input needed
+      const revenueData = await getAllTotalInvoice();
     
+      return h.response({
+        success: true,
+        data: revenueData,
+      });
+    },
+
+
+
+
+    async getInvoiceCounts(req: Request, h: ResponseToolkit) {
+      // No query params, no input needed
+      const revenueData = await getInvoiceCounts();
+    
+      return h.response({
+        success: true,
+        data: revenueData,
+      });
+    }
+    
+
+
+
+
+
+
+
+
     }
     
     

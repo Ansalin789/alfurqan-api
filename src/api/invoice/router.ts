@@ -53,6 +53,25 @@ const register = async (server: Server): Promise<void> => {
       },
     },
     {
+      method: "GET",
+      path: "/totalinvoice",
+      options: {
+        handler: handler.getTotalInvoice,
+        description: evaluationMessages.LIST,
+        tags: ["api", "invoice"],
+      },
+    },
+    {
+      method: "GET",
+      path: "/invoicecounts",
+      options: {
+        handler: handler.getInvoiceCounts,
+        description: evaluationMessages.LIST,
+        tags: ["api", "invoice"],
+      },
+    },
+
+    {
       method: "POST",
       path: "/invoice/send",
       handler: handler.sendInvoice,
