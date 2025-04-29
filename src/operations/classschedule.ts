@@ -13,6 +13,8 @@ import moment from "moment";
 import classShedule from "../models/classShedule";
 import { badRequest } from "@hapi/boom";
 import Evaluation from "../models/evaluation";
+import AlStudenModel from "../models/alstudents";
+
 import { endOfMonth, startOfMonth, subMonths, eachMonthOfInterval, format } from "date-fns";
 
 /**
@@ -888,5 +890,52 @@ export const getClassesWiseCount = async() => {
    return {classschedule, evaluationStats};
    
  };
+
+
+
+ export const getStudentList = async (
+  teacherId: string
+): Promise<{ studentId: string; name: string }[]> => {
+  if (!teacherId) {
+    throw new Error("Teacher ID is required");
+  }
+
+  try {
+    // Fetch class schedules taught by the given teacher, returning only the 'student' field
+    const classSchedules = await ClassScheduleModel.find(
+      { "teacher.teacherId": teacherId },
+      { student: 1 }
+    ).lean();
+
+    const uniqueStudentsMap = new Map();
+
+    for (const cls of classSchedules) {
+      const student = cls.student;
+      if (student?.studentId && !uniqueStudentsMap.has(student.studentId)) {
+        const alstudent = await AlStudenModel.findOne({
+          "student.studentId": cls.student.studentId
+        }).exec();
+        let evaluation 
+        if(alstudent){
+          evaluation = await Evaluation.findOne({
+            "student.studentId": alstudent.student.studentId
+          }).exec();
+        }
+
+        uniqueStudentsMap.set(student.studentId, {
+          studentId: student.studentId,
+          name: student.studentFirstName, // or student.name depending on your schema
+          studentDetails: evaluation
+        });
+      }
+    }
+
+    return Array.from(uniqueStudentsMap.values());
+  } catch (error) {
+    console.error("Error fetching students for teacher:", error);
+    throw new Error("Failed to fetch students for the teacher");
+  }
+};
+
 
 
