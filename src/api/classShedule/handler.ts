@@ -5,7 +5,7 @@ import { ClassSchedulesMessages } from "../../config/messages";
 import { isNil } from "lodash";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
-import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount, getTotalClassesCount} from "../../operations/classschedule";
+import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount, getTotalClassesCount, getClassesStatusCount, getClassesWiseCount} from "../../operations/classschedule";
 
 
 const createInputValidation = z.object({
@@ -432,6 +432,15 @@ async getStudentClassesCount (req: Request, h: ResponseToolkit){
 async getTotalClassess(req: Request, h: ResponseToolkit){
     return await getTotalClassesCount(req.query.dateRange as string);
   },
+
+   async getClassesStatusCount(req: Request, h: ResponseToolkit){
+      return await getClassesStatusCount();
+    },
+
+    async getClassesWiseCount(req: Request, h: ResponseToolkit){
+      return await getClassesWiseCount();
+    },
+    
 
 }
 

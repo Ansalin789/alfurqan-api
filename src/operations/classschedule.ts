@@ -826,3 +826,67 @@ export const getTotalClassesCount = async (
 
   return finalResult;
 };
+
+
+export const getClassesStatusCount = async() => {
+ const evaluationStats = await classShedule.aggregate([
+    {
+      $match: {
+        status: "Active",
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalClassCount: { $sum: 1 },
+        pending: { $sum: { $cond: [{ $eq: ["$scheduleStatus", "Reschedule"] }, 1, 0] } },
+        reschedule: { $sum: { $cond: [{ $eq: ["$scheduleStatus", "Reschedule"] }, 1, 0] } },
+        complete: { $sum: { $cond: [{ $eq: ["$scheduleStatus", "Complete"] }, 1, 0] } },
+      },
+    },
+  ]);
+   const pendingPercentage = ((evaluationStats[0].pending/ evaluationStats[0].totalClassCount)*100).toFixed(2);
+   const reschedulePercentage = ((evaluationStats[0].reschedule/ evaluationStats[0].totalClassCount)*100).toFixed(2);
+   const completePercentage = ((evaluationStats[0].complete/ evaluationStats[0].totalClassCount)*100).toFixed(2);
+
+   const total = evaluationStats[0].totalClassCount;
+
+  return {total, pendingPercentage, reschedulePercentage,completePercentage};
+  
+};
+
+
+export const getClassesWiseCount = async() => {
+  const classschedule = await classShedule.aggregate([
+     {
+       $match: {
+         status: "Active",
+       },
+     },
+     {
+       $group: {
+         _id: null,
+         totalRegularClassCount: { $sum: 1 },
+       },
+     },
+   ]);
+
+   const evaluationStats = await Evaluation.aggregate([
+    {
+      $match: {
+        trialClassStatus: "COMPLETED",
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalTrialClassCount: { $sum: 1 },
+      },
+    },
+  ]);
+ 
+   return {classschedule, evaluationStats};
+   
+ };
+
+
