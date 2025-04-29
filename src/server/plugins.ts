@@ -28,7 +28,8 @@ import realtimemessageAPI from "../api/realtimemessage/router";
 import courseAPI from "../api/course/router";
 import employeeWagesAPI from "../api/empwege/router";
 import expenseAPI from "../api/expenses/router";
-import KnowledgeBaseAPI from "../api/knowledgebase/router"
+import KnowledgeBaseAPI from "../api/knowledgebase/router";
+import salaryandwagesAPI from "../api/salarywages/router";
 
 export const appPlugins = [
   {
@@ -122,5 +123,8 @@ export const appPlugins = [
   
   {
     plugin:KnowledgeBaseAPI,
+  },
+  {
+    plugin:salaryandwagesAPI,
   }
 ];
