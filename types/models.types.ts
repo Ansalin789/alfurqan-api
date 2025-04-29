@@ -1405,137 +1405,6 @@ export interface IOtherEmployeeCreate{
 
 
 
-export interface IAccessModel {
-  employeeId: string;
-  employeeName: string;
-  contact: string;
-  designation: string[];
-  dateOfJoining?: Date; // Format: 'DD/MM/YYYY'
-  roleAccess: {
-    admin?: boolean;
-    adminmodules?: {
-      dashboard?: boolean;
-      evaluation?: boolean;
-      student?: boolean;
-      employees?: boolean;
-      courses?: boolean;
-      classes?: boolean;
-      invoice?: boolean;
-      analytics?: boolean;
-      messages?: boolean;
-      settings?: boolean;
-    };
-    academicCoach?: boolean;
-    academicmodules?: {
-      dashboard?: boolean;
-      scheduledevaluation?: boolean;
-      scheduledtrail?: boolean;
-      students?: boolean;
-      teachers?: boolean;
-      messages?: boolean;
-      support?: boolean;
-    };
-    supervisor?: boolean;
-    supervisormodules?: {
-      dashboard?: boolean;
-      recuirement?: boolean;
-      meeting?: boolean;
-      teachers?: boolean;
-      messages?: boolean;
-      support?: boolean;
-    };
-      student?: boolean;
-      studentmodules?: {
-        dashboard?: boolean;
-        classes?: boolean;
-        assignments?: boolean;
-        payments?: boolean;
-        knowledgebase?: boolean;
-        support?: boolean;
-      };
-      teacher?: boolean;
-      teachermodules?: {
-        dashboard?: boolean;
-        liveclasses?: boolean;
-        scheduledclasses?: boolean;
-        assignments?: boolean;
-        messages?: boolean;
-        analytics?: boolean;
-        support?: boolean;
-      };
- 
-  };
-}
-
-
-export interface IAccessModel extends Document{
-  employeeId: string;
-  employeeName: string;
-  contact: string;
-  designation: string[];
-  dateOfJoining?: Date; // Format: 'DD/MM/YYYY'
-  roleAccess: {
-    admin?: boolean;
-    adminmodules?: {
-      dashboard?: boolean;
-      evaluation?: boolean;
-      student?: boolean;
-      employees?: boolean;
-      courses?: boolean;
-      classes?: boolean;
-      invoice?: boolean;
-      analytics?: boolean;
-      messages?: boolean;
-      settings?: boolean;
-    };
-    academicCoach?: boolean;
-    academicmodules?: {
-      dashboard?: boolean;
-      scheduledevaluation?: boolean;
-      scheduledtrail?: boolean;
-      students?: boolean;
-      teachers?: boolean;
-      messages?: boolean;
-      support?: boolean;
-    };
-    supervisor?: boolean;
-    supervisormodules?: {
-      dashboard?: boolean;
-      recuirement?: boolean;
-      meeting?: boolean;
-      teachers?: boolean;
-      messages?: boolean;
-      support?: boolean;
-    };
-      student?: boolean;
-      studentmodules?: {
-        dashboard?: boolean;
-        classes?: boolean;
-        assignments?: boolean;
-        payments?: boolean;
-        knowledgebase?: boolean;
-        support?: boolean;
-      };
-      teacher?: boolean;
-      teachermodules?: {
-        dashboard?: boolean;
-        liveclasses?: boolean;
-        scheduledclasses?: boolean;
-        assignments?: boolean;
-        messages?: boolean;
-        analytics?: boolean;
-        support?: boolean;
-      };
- 
-  };
-    status: string;
-    createdDate: Date;
-    createdBy: string;
-    updatedDate?: Date;
-    updatedBy?: string;
-}
-
-
 export interface IAdminMeetingCreate {
   meetingName: string;
   meetingId?: string;
@@ -1712,60 +1581,61 @@ export interface IAccessModel {
   contact: string;
   designation: string[];
   dateOfJoining?: Date; // Format: 'DD/MM/YYYY'
-  roleAccess: {
+  roleAccess?: {
     admin?: boolean;
     adminmodules?: {
-      dashboard?: boolean;
-      evaluation?: boolean;
-      student?: boolean;
-      employees?: boolean;
-      courses?: boolean;
-      classes?: boolean;
-      invoice?: boolean;
-      analytics?: boolean;
-      messages?: boolean;
-      settings?: boolean;
-    };
+      dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
+      evaluation?: { read?: boolean, write?: boolean, delete?: boolean },
+      student?: { read?: boolean, write?: boolean, delete?: boolean },
+      employees?: { read?: boolean, write?: boolean, delete?: boolean },
+      courses?: { read?: boolean, write?: boolean, delete?: boolean },
+      classes?: { read?: boolean, write?: boolean, delete?: boolean },
+      invoice?: { read?: boolean, write?: boolean, delete?: boolean },
+      analytics?: { read?: boolean, write?: boolean, delete?: boolean },
+      messages?: { read?: boolean, write?: boolean, delete?: boolean },
+      settings?: { read?: boolean, write?: boolean, delete?: boolean },
+    },
     academicCoach?: boolean;
     academicmodules?: {
-      dashboard?: boolean;
-      scheduledevaluation?: boolean;
-      scheduledtrail?: boolean;
-      students?: boolean;
-      teachers?: boolean;
-      messages?: boolean;
-      support?: boolean;
-    };
+      dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
+      scheduledevaluation?: { read?: boolean, write?: boolean, delete?: boolean },
+      scheduledtrail?: { read?: boolean, write?: boolean, delete?: boolean },
+      students?: { read?: boolean, write?: boolean, delete?: boolean },
+      teachers?: { read?: boolean, write?: boolean, delete?: boolean },
+      messages?: { read?: boolean, write?: boolean, delete?: boolean },
+      support?: { read?: boolean, write?: boolean, delete?: boolean },
+    },
     supervisor?: boolean;
     supervisormodules?: {
-      dashboard?: boolean;
-      recuirement?: boolean;
-      meeting?: boolean;
-      teachers?: boolean;
-      messages?: boolean;
-      support?: boolean;
-    };
-      student?: boolean;
-      studentmodules?: {
-        dashboard?: boolean;
-        classes?: boolean;
-        assignments?: boolean;
-        payments?: boolean;
-        knowledgebase?: boolean;
-        support?: boolean;
-      };
-      teacher?: boolean;
-      teachermodules?: {
-        dashboard?: boolean;
-        liveclasses?: boolean;
-        scheduledclasses?: boolean;
-        assignments?: boolean;
-        messages?: boolean;
-        analytics?: boolean;
-        support?: boolean;
-      };
- 
+      dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
+      recuirement?: { read?: boolean, write?: boolean, delete?: boolean },
+      meeting?: { read?: boolean, write?: boolean, delete?: boolean },
+      teachers?: { read: boolean, write?: boolean, delete?: boolean },
+      messages?: { read?: boolean, write?: boolean, delete?: boolean },
+      support?: { read?: boolean, write?: boolean, delete?: boolean },
+    },
+    student?: boolean;
+    studentmodules?: {
+      dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
+      classes?: { read?: boolean, write?: boolean, delete?: boolean },
+      assignments?: { read: boolean, write?: boolean, delete?: boolean },
+      payments?: { read?: boolean, write?: boolean, delete?: boolean },
+      knowledgebase?: { read?: boolean, write?: boolean, delete?: boolean },
+      support?: { read?: boolean, write?: boolean, delete?: boolean },
+    },
+    teacher?: boolean;
+    teachermodules?: {
+      dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
+      liveclasses?: { read?: boolean, write?: boolean, delete?: boolean },
+      scheduledclasses?: { read?: boolean, write?: boolean, delete?: boolean },
+      assignments?: { read?: boolean, write?: boolean, delete?: boolean },
+      messages?: { read?: boolean, write?: boolean, delete?: boolean },
+      analytics?: { read?: boolean, write?: boolean, delete?: boolean },
+      support?: { read?: boolean, write?: boolean, delete?: boolean },
+    },
   };
+  
+  
 }
 
 
@@ -1775,72 +1645,66 @@ export interface IAccessModel extends Document{
   contact: string;
   designation: string[];
   dateOfJoining?: Date; // Format: 'DD/MM/YYYY'
-  roleAccess: {
+  roleAccess?: {
     admin?: boolean;
     adminmodules?: {
-      dashboard?: boolean;
-      evaluation?: boolean;
-      student?: boolean;
-      employees?: boolean;
-      courses?: boolean;
-      classes?: boolean;
-      invoice?: boolean;
-      analytics?: boolean;
-      messages?: boolean;
-      settings?: boolean;
-    };
+      dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
+      evaluation?: { read?: boolean, write?: boolean, delete?: boolean },
+      student?: { read?: boolean, write?: boolean, delete?: boolean },
+      employees?: { read?: boolean, write?: boolean, delete?: boolean },
+      courses?: { read?: boolean, write?: boolean, delete?: boolean },
+      classes?: { read?: boolean, write?: boolean, delete?: boolean },
+      invoice?: { read?: boolean, write?: boolean, delete?: boolean },
+      analytics?: { read?: boolean, write?: boolean, delete?: boolean },
+      messages?: { read?: boolean, write?: boolean, delete?: boolean },
+      settings?: { read?: boolean, write?: boolean, delete?: boolean },
+    },
     academicCoach?: boolean;
     academicmodules?: {
-      dashboard?: boolean;
-      scheduledevaluation?: boolean;
-      scheduledtrail?: boolean;
-      students?: boolean;
-      teachers?: boolean;
-      messages?: boolean;
-      support?: boolean;
-    };
+      dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
+      scheduledevaluation?: { read?: boolean, write?: boolean, delete?: boolean },
+      scheduledtrail?: { read?: boolean, write?: boolean, delete?: boolean },
+      students?: { read?: boolean, write?: boolean, delete?: boolean },
+      teachers?: { read?: boolean, write?: boolean, delete?: boolean },
+      messages?: { read?: boolean, write?: boolean, delete?: boolean },
+      support?: { read?: boolean, write?: boolean, delete?: boolean },
+    },
     supervisor?: boolean;
     supervisormodules?: {
-      dashboard?: boolean;
-      recuirement?: boolean;
-      meeting?: boolean;
-      teachers?: boolean;
-      messages?: boolean;
-      support?: boolean;
-    };
+      dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
+      recuirement?: { read?: boolean, write?: boolean, delete?: boolean },
+      meeting?: { read?: boolean, write?: boolean, delete?: boolean },
+      teachers?: { read: boolean, write?: boolean, delete?: boolean },
+      messages?: { read?: boolean, write?: boolean, delete?: boolean },
+      support?: { read?: boolean, write?: boolean, delete?: boolean },
+    },
     student?: boolean;
     studentmodules?: {
-      dashboard?: boolean;
-      classes?: boolean;
-      assignments?: boolean;
-      payments?: boolean;
-      knowledgebase?: boolean;
-      support?: boolean;
-    };
-      teacher?: boolean;
-      teachermodules?: {
-        dashboard?: boolean;
-        liveclasses?: boolean;
-        scheduledclasses?: boolean;
-        assignments?: boolean;
-        messages?: boolean;
-        analytics?: boolean;
-        support?: boolean;
-      };
- 
+      dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
+      classes?: { read?: boolean, write?: boolean, delete?: boolean },
+      assignments?: { read: boolean, write?: boolean, delete?: boolean },
+      payments?: { read?: boolean, write?: boolean, delete?: boolean },
+      knowledgebase?: { read?: boolean, write?: boolean, delete?: boolean },
+      support?: { read?: boolean, write?: boolean, delete?: boolean },
+    },
+    teacher?: boolean;
+    teachermodules?: {
+      dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
+      liveclasses?: { read?: boolean, write?: boolean, delete?: boolean },
+      scheduledclasses?: { read?: boolean, write?: boolean, delete?: boolean },
+      assignments?: { read?: boolean, write?: boolean, delete?: boolean },
+      messages?: { read?: boolean, write?: boolean, delete?: boolean },
+      analytics?: { read?: boolean, write?: boolean, delete?: boolean },
+      support?: { read?: boolean, write?: boolean, delete?: boolean },
+    },
   };
+  
     status: string;
     createdDate: Date;
     createdBy: string;
     updatedDate?: Date;
     updatedBy?: string;
 }
-
-
-
-
-
-
 
 
 

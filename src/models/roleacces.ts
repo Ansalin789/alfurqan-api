@@ -7,87 +7,216 @@ const roleAccess = new Schema<IAccessModel>(
     employeeId: { type: String, required: false },
     employeeName: { type: String, required: false },
     contact: { type: String, required: false },
-    designation: {  type: [String], required: false },
-    dateOfJoining:{ type: Date, required: false },
-    roleAccess :{
-
-    admin: {type: Boolean, required: false},
-    adminmodules: 
-    {
-        dashboard : { type: Boolean, required: false },
-        evaluation: { type: Boolean, required: false },
-        student: { type: Boolean, required: false },
-        employees: { type: Boolean, required: false },
-        courses: { type: Boolean, required: false },
-        classes: { type: Boolean, required: false },
-        invoice: { type: Boolean, required: false },
-        analytics: { type: Boolean, required: false },
-        messages: { type: Boolean, required: false },
-        settings: {type: Boolean, required:false},
-      },
-
-      academicCoach: {type: Boolean, required: false},
-      academicmodules: 
-      {
-          dashboard : { type: Boolean, required: false },
-          scheduledevaluation: { type: Boolean, required: false },
-          scheduledtrail: { type: Boolean, required: false },
-          students: { type: Boolean, required: false },
-          teachers: { type: Boolean, required: false },
-          messages: { type: Boolean, required: false },
-          support: {type: Boolean, required:false},
+    designation: { type: [String], required: false },
+    dateOfJoining: { type: Date, required: false },
+    roleAccess: {
+      admin: { type: Boolean, required: false },
+      adminmodules: {
+        dashboard: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
         },
-
-      supervisor: {type: Boolean, required: false},
-      supervisormodules: 
-      {
-          dashboard : { type: Boolean, required: false },
-          recuirement: { type: Boolean, required: false },
-          meeting: { type: Boolean, required: false },
-          teachers: { type: Boolean, required: false },
-          messages: { type: Boolean, required: false },
-          support: { type: Boolean, required: false },
+        evaluation: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
         },
-
-        teacher: {type: Boolean, required: false},
-        teachermodules: 
-        {
-            dashboard : { type: Boolean, required: false },
-            liveclasses: { type: Boolean, required: false },
-            scheduledclasses: { type: Boolean, required: false },
-            assignments: { type: Boolean, required: false },
-            messages: { type: Boolean, required: false },
-            analytics:{ type: Boolean, required: false },
-            support: { type: Boolean, required: false },
-          }, 
-
-          student: {type: Boolean, required: false},
-          studentmodules: 
-          {
-              dashboard : { type: Boolean, required: false },
-              classes: { type: Boolean, required: false },
-              assignments: { type: Boolean, required: false },
-              payments: { type: Boolean, required: false },
-              knowledgebase: { type: Boolean, required: false },
-              support: { type: Boolean, required: false },
-            }, 
-            
-
-  
+        student: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        employees: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        courses: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        classes: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        invoice: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        analytics: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        messages: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        settings: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
       },
-     
-      status: { type: String, required: false },
-      createdDate: { type: Date, required: true, default: Date.now },
-      createdBy: { type: String, required: true },
-      updatedDate: { type: Date, required: true, default: Date.now },
-      updatedBy: { type: String, required: false },
+      academicCoach: { type: Boolean, required: false },
+      academicmodules: {
+        dashboard: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        scheduledevaluation: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        scheduledtrail: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        students: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        teachers: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        messages: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        support: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          deleted: { type: Boolean, required: false },
+        },
+      },
+      supervisor: { type: Boolean, required: false },
+      supervisormodules: {
+        dashboard: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        recuirement: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        meeting: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        teachers: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        messages: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        support: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+      },
+      teacher: { type: Boolean, required: false },
+      teachermodules: {
+        dashboard: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        liveclasses: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        scheduledclasses: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        assignments: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        messages: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        analytics: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        support: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+      },
+      student: { type: Boolean, required: false },
+      studentmodules: {
+        dashboard: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        classes: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        assignments: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        payments: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        knowledgebase: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        support: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+      },
     },
-   {
-    collection: "roleAccess",
+    status: { type: String, required: false },
+    createdDate: { type: Date, required: true, default: Date.now },
+    createdBy: { type: String, required: true },
+    updatedDate: { type: Date, required: true, default: Date.now },
+    updatedBy: { type: String, required: false },
+  },
+  {
+    collection: 'roleAccess',
     timestamps: false,
-   }
+  }
 );
-
 
 export const zodroleAccessSchema = z.object({
   employeeId: z.string().optional(),
@@ -99,58 +228,202 @@ export const zodroleAccessSchema = z.object({
   roleAccess: z.object({
     admin: z.boolean().optional(),
     adminmodules: z.object({
-      dashboard: z.boolean().optional(),
-      evaluation: z.boolean().optional(),
-      student: z.boolean().optional(),
-      employees: z.boolean().optional(),
-      courses: z.boolean().optional(),
-      classes: z.boolean().optional(),
-      invoice: z.boolean().optional(),
-      analytics: z.boolean().optional(),
-      messages: z.boolean().optional(),
-      settings: z.boolean().optional(),
+      dashboard: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      evaluation: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      student: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      employees: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      courses: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      classes: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      invoice: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      analytics: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      messages: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      settings: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
     }).optional(),
 
     academicCoach: z.boolean().optional(),
     academicmodules: z.object({
-      dashboard: z.boolean().optional(),
-      scheduledevaluation: z.boolean().optional(),
-      scheduledtrail: z.boolean().optional(),
-      students: z.boolean().optional(),
-      teachers: z.boolean().optional(),
-      messages: z.boolean().optional(),
-      support: z.boolean().optional(),
+      dashboard: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      scheduledevaluation: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      scheduledtrail: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      students: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      teachers: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      messages: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      support: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
     }).optional(),
 
     supervisor: z.boolean().optional(),
     supervisormodules: z.object({
-      dashboard: z.boolean().optional(),
-      recuirement: z.boolean().optional(),
-      meeting: z.boolean().optional(),
-      teachers: z.boolean().optional(),
-      messages: z.boolean().optional(),
-      support: z.boolean().optional(),
+      dashboard: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      recuirement: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      meeting: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      teachers: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      messages: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      support: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
     }).optional(),
 
     teacher: z.boolean().optional(),
     teachermodules: z.object({
-      dashboard: z.boolean().optional(),
-      liveclasses: z.boolean().optional(),
-      scheduledclasses: z.boolean().optional(),
-      assignments: z.boolean().optional(),
-      messages: z.boolean().optional(),
-      analytics: z.boolean().optional(),
-      support: z.boolean().optional(),
+      dashboard: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      liveclasses: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      scheduledclasses: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      assignments: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      messages: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      analytics: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      support: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
     }).optional(),
 
     student: z.boolean().optional(),
     studentmodules: z.object({
-      dashboard: z.boolean().optional(),
-      classes: z.boolean().optional(),
-      assignments: z.boolean().optional(),
-      payments: z.boolean().optional(),
-      knowledgebase: z.boolean().optional(),
-      support: z.boolean().optional(),
+      dashboard: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      classes: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      assignments: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      payments: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      knowledgebase: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      support: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
     }).optional(),
   }),
 
