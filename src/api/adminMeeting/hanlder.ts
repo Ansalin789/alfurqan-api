@@ -29,9 +29,13 @@ export default {
     try {
       const rawPayload = req.payload as any;
   
+      // Normalize selectedDate to midnight
+      const selectedDate = new Date(rawPayload.selectedDate);
+      selectedDate.setHours(0, 0, 0, 0);
+  
       const payload: IAdminMeetingCreate = {
         meetingName: rawPayload.meetingName,
-        selectedDate: new Date(rawPayload.selectedDate),
+        selectedDate,
         startTime: rawPayload.startTime,
         endTime: rawPayload.endTime,
         description: rawPayload.description,
@@ -43,10 +47,14 @@ export default {
         updatedBy: rawPayload.updatedBy ?? "",
         teacher: Array.isArray(rawPayload.teacher) ? rawPayload.teacher : [],
       };
-
-     AppLogger.log(rawPayload);
   
-      // Call the service to create meetings
+      console.log("Normalized selectedDate in handler:", selectedDate);
+      AppLogger.log({
+        level: "info",
+        message: "Payload received",
+        data: payload
+      });
+  
       const meetings = await admincreateMeeting(payload);
   
       if ("error" in meetings) {
@@ -63,6 +71,9 @@ export default {
       return h.response({ error }).code(400);
     }
   },
+  
+  
+  
   
   
   //Admin Meeting List
