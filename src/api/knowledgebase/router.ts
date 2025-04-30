@@ -14,7 +14,7 @@ const register = async (server: Server): Promise<void> => {
       tags: ["api", "knowledgeBase"],
       payload: {
         parse: true, 
-        maxBytes: 10485760,
+        maxBytes: 20 * 1024 * 1024 ,
         allow: "application/json",
         output: "data",
       },
