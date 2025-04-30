@@ -5,7 +5,7 @@ import { ClassSchedulesMessages } from "../../config/messages";
 import { isNil } from "lodash";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
-import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount} from "../../operations/classschedule";
+import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount, getTotalClassesCount, getClassesStatusCount, getClassesWiseCount, getStudentList} from "../../operations/classschedule";
 
 
 const createInputValidation = z.object({
@@ -306,9 +306,7 @@ async getTeacherStudentCount(req: Request, h: ResponseToolkit) {
     console.error("Error fetching teacher-student count:", error);
     return h.response({ success: false, message: "Internal Server Error" }).code(500);
   }
-}
-
-,
+},
 
 
 async totalhours(req: Request, h: ResponseToolkit) {
@@ -423,13 +421,37 @@ async updateteacherreschedule(req: Request, h: ResponseToolkit){
  
    }
   );
-
-
 },
 
 async getStudentClassesCount (req: Request, h: ResponseToolkit){
   return await getStudentClassCount(req.query.studentId);
-}
+},
+
+async getTotalClassess(req: Request, h: ResponseToolkit){
+    return await getTotalClassesCount(req.query.dateRange as string);
+  },
+
+   async getClassesStatusCount(req: Request, h: ResponseToolkit){
+      return await getClassesStatusCount();
+    },
+
+    async getClassesWiseCount(req: Request, h: ResponseToolkit){
+      return await getClassesWiseCount();
+    },
+
+
+    async getTeacherStudentList(req: Request, h: ResponseToolkit) {
+      try {
+        // Parse and validate the query object
+      
+        // ✅ Correctly call the database function (not the handler itself)
+        return await getStudentList(req.query.teacherId); // Call the actual function fetching data
+      } catch (error) {
+        console.error("Error in getClassesForTeacher handler:", error);
+        throw error; // Handle the error appropriately
+      }
+    },
+    
 
 }
 

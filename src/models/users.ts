@@ -48,6 +48,10 @@ const userSchema = new Schema<IUser>(
       type: Date,
       default: Date.now
     },
+    country: {
+      type: String,
+      required: false,
+    },
     status: {
       type: String,
       enum: Object.values(CustomEnumerator.Status),
@@ -88,6 +92,7 @@ export const zodUserSchema = z.object({
   role: z.array(z.string()).min(1),
   profileImage: z.string().nullable(),
   lastLoginDate: z.string().nullable(),
+  country: z.string().optional(),
   status: z.enum([appStatus.ACTIVE, appStatus.IN_ACTIVE, appStatus.DELETED]),
   createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: commonMessages.INVALID_DATE_FORMAT,

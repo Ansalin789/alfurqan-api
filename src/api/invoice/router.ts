@@ -51,8 +51,61 @@ const register = async (server: Server): Promise<void> => {
         description: evaluationMessages.LIST,
         tags: ["api", "invoice"],
       },
+    },
+    {
+      method: "GET",
+      path: "/totalinvoice",
+      options: {
+        handler: handler.getTotalInvoice,
+        description: evaluationMessages.LIST,
+        tags: ["api", "invoice"],
+      },
+    },
+    {
+      method: "GET",
+      path: "/invoicecounts",
+      options: {
+        handler: handler.getInvoiceCounts,
+        description: evaluationMessages.LIST,
+        tags: ["api", "invoice"],
+      },
+    },
+    {
+      method: "GET",
+      path: "/invoiceduebydates",
+      options: {
+        handler: handler.getInvoiceDueDateBuckets,
+        description: evaluationMessages.LIST,
+        tags: ["api", "invoice"],
+      },
+    },
+    {
+      method: "POST",
+      path: "/invoice/send",
+      handler: handler.sendInvoice,
+      options: {
+        auth: false, // change based on your needs
+        tags: ["api", "invoice"],
+        description: "Create and send invoice to DB",
+        payload: {
+          maxBytes: 10485760, // 10 MB for the payload size
+          output: "data",     // for JSON data
+          parse: true          // automatically parse the payload
+        }
+      }
+    } ,
+
+    {
+      method: "GET",
+      path: "/studentinvoice/list",
+      options: {
+        handler: handler.getallstudentinvoiceList,
+        tags: ["api", "knowledgeBase"],
+      },
     }
-         
+    
+    
+
   ];
   server.route(routes);
 };

@@ -4,14 +4,24 @@ import course from "../models/course";
 import { GetAllRecordsParams } from "../shared/enum";
 import { commonMessages } from "../config/messages";
 import AppLogger from "../helpers/logging";
+import { HydratedDocument } from "mongoose";
 
 export const createCourses = async (
     payload: Partial<ICourse>
   ): Promise<{ totalCount: number; course: ICourse } | { error: any }> => {
   try {
+    const autoGenerateCourseId = (): string => {
+      const digits = Math.floor(1000 + Math.random() * 9000); // 4 digits
+      const letters = Array.from({ length: 3 }, () =>
+        String.fromCharCode(65 + Math.floor(Math.random() * 26)) // A-Z
+      ).join('');
+      return `${digits}${letters}`;
+    };
+
+    const generateCourseId = autoGenerateCourseId();
     const result = new course({
       course: {
-        courseId: payload.course?.courseId || "",
+        courseId: generateCourseId,
         courseTitle: payload.course?.courseTitle || "",
         courseDuration: payload.course?.courseDuration || "",
         courseDescription: payload.course?.courseDescription || "",
@@ -34,10 +44,10 @@ export const createCourses = async (
       lastUpdatedBy: payload.lastUpdatedBy || "System",
     });
 
-    const courseRecord  = await result.save();
+    const courseRecord = await result.save();
     const totalCount = await course.countDocuments();
 
-    return { totalCount, course: courseRecord  };
+    return { totalCount, course: courseRecord.toObject() };
   } catch (error) {
     console.error(" Error creating course:", error);
     return { error };
@@ -132,6 +142,7 @@ export const UpdateAllLevel = async (
     return { error };
   }
 };
+
 
 
 

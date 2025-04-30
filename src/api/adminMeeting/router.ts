@@ -17,7 +17,6 @@ const register = async (server: Server): Promise<void> => {
             payload: {
               parse: true,
               allow: "application/json", 
-              maxBytes: 50 * 1024 * 1024, // ✅ Optional: Limit request size
             },
           },
         },

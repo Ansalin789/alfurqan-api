@@ -14,23 +14,26 @@ export const createAssignment = async (
 ): Promise<{ totalCount: number; assignments: IAssignment[] } | { error: any }> => {
   try {
     // Validate assignment due date
-    if (payload.dueDate && payload.dueDate === new Date()) {
-      throw badRequest("Assignment due date cannot be today. Please select another date.");
-    }
+    // if (payload.dueDate && payload.dueDate === new Date()) {
+    //   throw badRequest("Assignment due date cannot be today. Please select another date.");
+    // }
 
     // Log the incoming payload for debugging
-    console.log("Incoming Payload:", payload.options);
-
-    const studentDetails = await alstudents.findOne({_id: payload.studentId}).exec();
+   // console.log("Incoming Payload:", payload.options);
+   let studentDetails;
+if(payload.studentId){
+  studentDetails = await alstudents.findOne({_id: payload.studentId}).exec();
+}
+    
    
-    console.log("studentDetails>>>>", studentDetails);
-   
+    //console.log("studentDetails>>>>", studentDetails);
+    let assignedTeacher 
+if(payload.assignedTeacher){
+  assignedTeacher  = await userModel.findOne({userName: payload.assignedTeacher, role : 'TEACHER'}).exec();
+}
+   // console.log("assignedTeacher>>>>", assignedTeacher);
 
-    const assignedTeacher = await userModel.findOne({userName: payload.assignedTeacher, role : 'TEACHER'}).exec();
-   
-    console.log("assignedTeacher>>>>", assignedTeacher);
-
-    console.log("optionAnswer>>>>", payload.options); // Logs the fetched audio file
+    //console.log("optionAnswer>>>>", payload.options); // Logs the fetched audio file
     
     // Create a new assignment
     const newAssignment = new assignment({
@@ -71,6 +74,7 @@ export const createAssignment = async (
 
     // Save the new assignment to the database
     const assignmentRecord = await newAssignment.save();
+    console.log("assignmentRecord>>>>", assignmentRecord);
 
     // Count total assignments in the database
     const totalCount = await assignment.countDocuments();

@@ -76,7 +76,7 @@ export default {
 async createAssignment(req: Request, h: ResponseToolkit) {
   try {
     const rawPayload = req.payload as any;
-    console.log("Received payload:", rawPayload);
+    // console.log("Received payload:", rawPayload);
 
     // Parse and process payload fields
     const chooseType = rawPayload.chooseType === "true" || rawPayload.chooseType === true;

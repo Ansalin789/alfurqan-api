@@ -22,9 +22,15 @@ import addMeetingAPI from "../api/addMeeting/router";
 import supervisorfeedbackAPI from "../api/supervisorfeedback/router";
 import notificationAPI from "../api/notification/router";
 import roleAccessAPI from "../api/roleAccess/router";
+import otheremployeeAPI from "../api/otherEmployee/router"
 import adminMeeting from "../api/adminMeeting/router"
 import realtimemessageAPI from "../api/realtimemessage/router";
-import courseAPI from "../api/course/router"
+import courseAPI from "../api/course/router";
+import employeeWagesAPI from "../api/empwege/router";
+import expenseAPI from "../api/expenses/router";
+import KnowledgeBaseAPI from "../api/knowledgebase/router";
+import salaryandwagesAPI from "../api/salarywages/router";
+
 export const appPlugins = [
   {
     plugin: systemLifeCycle,
@@ -97,6 +103,9 @@ export const appPlugins = [
     plugin: roleAccessAPI,
   },
   {
+    plugin: otheremployeeAPI,
+  },
+  {
     plugin: adminMeeting,
   },
   {
@@ -104,5 +113,18 @@ export const appPlugins = [
   },
   {
     plugin:courseAPI ,
+  },
+  {
+    plugin:employeeWagesAPI,
+  },
+  {
+    plugin:expenseAPI,
+  },
+  
+  {
+    plugin:KnowledgeBaseAPI,
+  },
+  {
+    plugin:salaryandwagesAPI,
   }
 ];

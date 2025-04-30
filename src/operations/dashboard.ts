@@ -183,11 +183,13 @@ export const dashboardWidgetSupervisorCounts = async (supervisorId: string): Pro
   totalApplication: number;
   shortlisted: number;
   rejected: number;
+  waiting:number
 }> => {
   // Fetch counts in parallel
-  const [shortlisted, rejected, totalApplication] = await Promise.all([
+  const [shortlisted, rejected,waiting ,totalApplication] = await Promise.all([
     recruitment.countDocuments({ supervisorId, applicationStatus: "SHORTLISTED" }).exec(),
     recruitment.countDocuments({ supervisorId, applicationStatus: "REJECTED" }).exec(),
+    recruitment.countDocuments({ supervisorId, applicationStatus: "WAITING" }).exec(),
     recruitment.countDocuments({ supervisorId }).exec(),
   ]);
 
@@ -195,6 +197,7 @@ export const dashboardWidgetSupervisorCounts = async (supervisorId: string): Pro
     totalApplication,
     shortlisted,
     rejected,
+    waiting,
   };
 };
 
