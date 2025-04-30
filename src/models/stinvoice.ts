@@ -80,11 +80,11 @@ const studentInvoiceSchema = new Schema<IStudentInvoice>(
     },
     dueDate:{
     type: String,
-    required:true,
+    required:false,
     },
     createdDate: {
       type: String,
-      required :true,
+      required :false,
     },
     createdBy: {
       type: String,
@@ -131,7 +131,7 @@ export const zodAlStudentInvoiceSchema = z.object({
   // Update for dates: Treat as strings and convert to Date
   dueDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: commonMessages.INVALID_DATE_FORMAT,
-  }).transform((val) => new Date(val)),
+  }).transform((val) => new Date(val)).optional(),
 
   createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: commonMessages.INVALID_DATE_FORMAT,
