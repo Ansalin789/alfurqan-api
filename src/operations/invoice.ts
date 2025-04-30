@@ -69,14 +69,14 @@ export const getAllStudetnInVoiceList = async (
  
   export const getStudentAllRevenue = async (
     dateRange: string,
-    year: string // year as a date string (e.g., "2023-01-01")
+    year: string // year as ISO string like "2023-01-01"
   ): Promise<{ date: string; label: string; revenue: number }[]> => {
     let startDate: Date;
     let endDate: Date;
     let intervalFn: (interval: { start: Date; end: Date }) => Date[];
     let outputFormat: string;
   
-    // Parse the year from the provided date string
+    // Parse the provided year string
     const parsedDate = parseISO(year);
     const parsedYear = parsedDate.getFullYear();
   
@@ -84,11 +84,10 @@ export const getAllStudetnInVoiceList = async (
   
     switch (dateRange.toLowerCase()) {
       case "yearly":
-        // Use the provided year to create the start and end dates for that year
         startDate = new Date(Date.UTC(parsedYear, 0, 1));
-        endDate = new Date(Date.UTC(parsedYear, 11, 31, 23, 59, 59, 999));        
+        endDate = new Date(Date.UTC(parsedYear, 11, 31, 23, 59, 59, 999));
         intervalFn = eachMonthOfInterval;
-        outputFormat = "MMM-yyyy"; // Format as "Jan-YYYY", "Feb-YYYY", etc.
+        outputFormat = "MMM-yyyy";
         break;
       case "monthly":
         startDate = startOfMonth(now);
@@ -106,48 +105,34 @@ export const getAllStudetnInVoiceList = async (
         throw new Error("Invalid dateRange value. Use 'weekly', 'monthly', or 'yearly'.");
     }
   
-    console.log(`🗓️ Start Date: ${startDate.toISOString()} | End Date: ${endDate.toISOString()}`);
-  
-    const invoices = await StudentInvoiceModel.find({
+    const invoices: IStudentInvoice[] = await StudentInvoiceModel.find({
       invoiceStatus: { $in: ["Paid", "Pending"] },
     }).exec();
-    
-  
-    console.log(`📦 Found ${invoices.length} invoice(s)`);
   
     const revenueMap: Record<string, number> = {};
   
     invoices.forEach((invoice) => {
+      if (!invoice.createdDate) return; // ✅ Skip if date is undefined
+  
       const invoiceDate = new Date(invoice.createdDate);
       const formattedDate = format(invoiceDate, outputFormat);
   
-      // Log each invoice being processed
-      console.log(`Processing invoice: ${invoice.amount} for ${formattedDate}`);
-  
       if (revenueMap[formattedDate]) {
-        console.log(`Existing revenue for ${formattedDate}: ${revenueMap[formattedDate]}`);
         revenueMap[formattedDate] += invoice.amount;
-        console.log(`Updated revenue for ${formattedDate}: ${revenueMap[formattedDate]}`);
       } else {
         revenueMap[formattedDate] = invoice.amount;
-        console.log(`Created new revenue entry for ${formattedDate}: ${invoice.amount}`);
       }
     });
   
-    console.log("📊 Revenue Map:", revenueMap);
-  
-    const result = intervalFn({ start: startDate, end: endDate }).map((date, i) => {
+    const result = intervalFn({ start: startDate, end: endDate }).map((date) => {
       const label = format(date, outputFormat);
-      const revenue = revenueMap[label] || 0;
-      console.log(`📅 Interval ${i + 1}: ${label} | Revenue: ${revenue}`);
       return {
         date: label,
         label,
-        revenue,
+        revenue: revenueMap[label] || 0,
       };
     });
   
-    console.log("✅ Final Result:", result);
     return result;
   };
 
@@ -367,13 +352,12 @@ export default async function getstudentInvoiceList() {
 }
 
 
-
 export const getAllTotalInvoice = async (): Promise<{ date: string; total: number; paid: number }[]> => {
   const now = new Date();
-  const currentYear = now.getFullYear(); // Make sure it's 2025 here!!
+  const currentYear = now.getFullYear(); // Ensure it's 2025 if needed
 
-  const startDate = startOfYear(new Date(currentYear, 0, 1)); // 2025-01-01
-  const endDate = endOfYear(new Date(currentYear, 0, 1));     // 2025-12-31
+  const startDate = startOfYear(new Date(currentYear, 0, 1)); // Jan 1
+  const endDate = endOfYear(new Date(currentYear, 0, 1));     // Dec 31
 
   const invoices = await StudentInvoiceModel.find({
     invoiceStatus: { $in: ["Paid", "Pending"] }
@@ -381,7 +365,9 @@ export const getAllTotalInvoice = async (): Promise<{ date: string; total: numbe
 
   const revenueMap: Record<string, { total: number; paid: number }> = {};
 
-  invoices.forEach((invoice) => {
+  invoices.forEach((invoice: IStudentInvoice) => {
+    if (!invoice.createdDate) return; // ✅ Ensure date is defined
+
     const invoiceDate = new Date(invoice.createdDate);
     const formattedDate = format(invoiceDate, "MMM-yyyy");
 
@@ -389,10 +375,8 @@ export const getAllTotalInvoice = async (): Promise<{ date: string; total: numbe
       revenueMap[formattedDate] = { total: 0, paid: 0 };
     }
 
-    // ➡️ total = sum of both "Paid" + "Pending" invoice amounts
     revenueMap[formattedDate].total += invoice.amount;
 
-    // ➡️ paid = sum of only "Paid" invoice amounts
     if (invoice.invoiceStatus === "Paid") {
       revenueMap[formattedDate].paid += invoice.amount;
     }
@@ -434,7 +418,6 @@ export const getInvoiceCounts = async (): Promise<{
 };
 
  
- 
 export const getInvoiceDueDateBuckets = async (): Promise<{
   range_0_10: number;
   range_11_20: number;
@@ -446,28 +429,28 @@ export const getInvoiceDueDateBuckets = async (): Promise<{
     createdDate: { $ne: null }
   }).exec();
 
-  // Initialize counters
   let range_0_10 = 0;
   let range_11_20 = 0;
   let range_21_30 = 0;
   let range_30_plus = 0;
 
-  invoices.forEach((invoice) => {
-    const created = new Date(invoice.createdDate);
-    const due = new Date(invoice.dueDate);
+  invoices.forEach((invoice: IStudentInvoice) => {
+    if (invoice.createdDate && invoice.dueDate) {
+      const created = new Date(invoice.createdDate);
+      const due = new Date(invoice.dueDate);
 
-    // Calculate number of days between createdDate and dueDate
-    const diffInMs = due.getTime() - created.getTime();
-    const dueDays = Math.ceil(diffInMs / (1000 * 60 * 60 * 24));
+      const diffInMs = due.getTime() - created.getTime();
+      const dueDays = Math.ceil(diffInMs / (1000 * 60 * 60 * 24));
 
-    if (dueDays <= 10) {
-      range_0_10++;
-    } else if (dueDays <= 20) {
-      range_11_20++;
-    } else if (dueDays <= 30) {
-      range_21_30++;
-    } else {
-      range_30_plus++;
+      if (dueDays <= 10) {
+        range_0_10++;
+      } else if (dueDays <= 20) {
+        range_11_20++;
+      } else if (dueDays <= 30) {
+        range_21_30++;
+      } else {
+        range_30_plus++;
+      }
     }
   });
 

@@ -24,7 +24,9 @@ export interface IAdminMeetingUpdate{
  * @param {IAdminMeetingCreate} payload - The data for the new meeting.
  */
 
-export const admincreateMeeting = async (payload: IAdminMeetingCreate): Promise<IAdminMeeting[] | { error: any }> => {
+export const admincreateMeeting = async (
+  payload: IAdminMeetingCreate
+): Promise<IAdminMeeting[] | { error: any }> => {
   try {
     const admin = await User.findOne({
       userName: payload.createdBy,
@@ -32,44 +34,65 @@ export const admincreateMeeting = async (payload: IAdminMeetingCreate): Promise<
     }).exec();
 
     if (!admin) {
+      console.warn("Admin not found for user:", payload.createdBy);
       return { error: "No Admin found." };
+    }
+
+    if (!payload.teacher || payload.teacher.length === 0) {
+      console.warn("No teachers provided in payload:", payload);
+      return { error: "At least one teacher must be selected to create a meeting." };
     }
 
     const createdMeetings: IAdminMeeting[] = [];
 
-    // Generate a single meeting ID for the group of meetings
     function generateCustomMeetingId() {
-      const digits = Math.floor(1000 + Math.random() * 9000); // 4 digits
+      const digits = Math.floor(1000 + Math.random() * 9000);
       const letters = Array.from({ length: 3 }, () =>
-        String.fromCharCode(65 + Math.floor(Math.random() * 26)) // A-Z
+        String.fromCharCode(65 + Math.floor(Math.random() * 26))
       ).join('');
       return `${digits}${letters}`;
     }
 
-    const groupMeetingId = generateCustomMeetingId();  // Shared meeting ID for all teachers
-
-    // Check date validity once
+    const groupMeetingId = generateCustomMeetingId();
     const selectedDate = new Date(payload.selectedDate);
-    if (selectedDate < new Date()) {
-      return { error: "Meeting date cannot be in the past. Please select a future date." };
+    selectedDate.setHours(0, 0, 0, 0); // ✅ Normalize selectedDate
+
+    const now = new Date();
+    now.setHours(0, 0, 0, 0); // ✅ Normalize current date for comparison
+
+    if (selectedDate < now) {
+      console.warn("Attempted to create meeting in the past:", selectedDate);
+      return { error: "Meeting date cannot be in the past. Please select today or a future date." };
     }
 
-    // Create a meeting for each teacher using the same groupMeetingId
+    // ✅ Optional: Validate time for today's date
+    if (selectedDate.getTime() === now.getTime()) {
+      const [hours, minutes] = payload.startTime.split(":").map(Number);
+      const startTime = new Date();
+      startTime.setHours(hours, minutes, 0, 0);
+
+      const currentTime = new Date();
+      if (startTime < currentTime) {
+        return { error: "Start time cannot be in the past for today's meeting." };
+      }
+    }
+
     for (const teacher of payload.teacher) {
       if (!teacher.teacherId || !teacher.teacherName || !teacher.teacherEmail) {
+        console.warn("Skipping invalid teacher entry:", teacher);
         continue;
       }
 
       const newMeeting = new adminmeeting({
         meetingName: payload.meetingName,
-        meetingId: groupMeetingId,  // Use same ID for all in this group
+        meetingId: groupMeetingId,
         admin: {
           adminId: admin._id.toString(),
           adminName: admin.userName,
           adminEmail: admin.email,
           adminRole: Array.isArray(admin.role) ? admin.role[0] : admin.role,
         },
-        selectedDate: selectedDate,
+        selectedDate,
         startTime: payload.startTime,
         endTime: payload.endTime,
         teacher: {
@@ -87,8 +110,13 @@ export const admincreateMeeting = async (payload: IAdminMeetingCreate): Promise<
       });
 
       const savedMeeting = await newMeeting.save();
-      console.log(savedMeeting);
+      console.log("Meeting created:", savedMeeting);
       createdMeetings.push(savedMeeting);
+    }
+
+    if (createdMeetings.length === 0) {
+      console.warn("No valid teacher entries found. No meetings created for payload:", payload);
+      return { error: "No valid teachers found. No meetings were created." };
     }
 
     return createdMeetings;
@@ -98,6 +126,8 @@ export const admincreateMeeting = async (payload: IAdminMeetingCreate): Promise<
     return { error };
   }
 };
+
+
 
 
 

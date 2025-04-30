@@ -827,10 +827,10 @@ export interface IStudentInvoice extends Document {
   rate:string;
   description:string;
   attachFile?:Buffer;
-  dueDate:string;
+  dueDate?:string;
   invoiceStatus: string;
   status: string;
-  createdDate: string;
+  createdDate?: string;
   createdBy: string;
   lastUpdatedDate?: string;
   lastUpdatedBy: string;
