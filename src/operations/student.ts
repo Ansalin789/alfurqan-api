@@ -45,7 +45,6 @@ export const createStudent = async (
             error: badRequest('Evaluation class is not allowed to current date. Select another date'),
         };
     }
-    console.log("newUser>>>>", newUser);
     const shiftScheduleRecord = await UserShiftSchedule.find({
       role: "ACADEMICCOACH",
     });
@@ -71,7 +70,6 @@ export const createStudent = async (
                 role: shiftSchedule.role,
                 email: shiftSchedule.email
             };
-            console.log("academicCoachDetails>>>>", academicCoachDetails);
              }
                 
                 break; // Exit the loop once a valid academic coach is found
@@ -87,7 +85,6 @@ export const createStudent = async (
         role: academicCoachDetails?.role, // Provide a default value if undefined
         email: academicCoachDetails?.email // Provide a default value if undefined
     };
-console.log("newUser academicCoach>>>>",newUser);
     const savedUser = await newUser.save(); 
     await sendNotification({
       messages: `${savedUser.firstName}! has been joined in our academic team !.`,
@@ -111,10 +108,11 @@ console.log("newUser academicCoach>>>>",newUser);
     }).exec();
     if(emailTemplate){
         const emailTo = [
-            { email: payload.email, name: payload.firstName + ' ' + payload.lastName }
+            { email: payload.email }
         ];
         const subject = "Welcome To Alfurqan";
         const htmlPart = emailTemplate.templateContent.replace('<username>', payload.firstName + ' ' + payload.lastName);
+        //const htmlPart = "<html><body><p>Hello World</p></body></html>";
         sendEmailClient(emailTo, subject,htmlPart);
     }
 
@@ -125,12 +123,12 @@ console.log("newUser academicCoach>>>>",newUser);
     const subject = 'Evaluation Zoom Meeting';
         const htmlPart = zoomMailTemplate?.templateContent.replace('<date>', payload.startDate.toDateString()).replace('<meetingtime>', payload.preferredFromTime).replace('<zoomlink>', meetingDetails.join_url);
         const emailTo = [
-          { email: payload.email, name: payload.firstName + ' ' + payload.lastName }, { email: savedUser.academicCoach.email, name: savedUser.academicCoach.name }
+          { email: payload.email }, { email: savedUser.academicCoach.email }
       ];
 
       
         if(htmlPart){
-            sendEmailClient(emailTo, subject,htmlPart);
+           // sendEmailClient(emailTo, subject,htmlPart);
         }
         const course = await Course.findOne({
           courseName: payload.learningInterest,
@@ -179,7 +177,6 @@ console.log("newUser academicCoach>>>>",newUser);
           lastUpdatedBy: savedUser.firstName + ' ' + savedUser.lastName,
     });
     const userObject = savedUser.toObject();
-    console.log("userObject>>>>", userObject);
     await CreatemeetingDetails.save();
     return userObject;
 };

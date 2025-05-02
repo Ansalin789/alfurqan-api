@@ -16,8 +16,6 @@ import { sendEmailClient } from "../shared/email";
 import Course from "../models/course";
 import { config } from "../config/env";
 import User from "../models/users";
-import PaymentDetailsModel from "../models/paymentDetails"
-import { log } from "console";
 
 
 
@@ -259,7 +257,7 @@ if(payload.trialClassStatus == "COMPLETED" && payload.studentStatus == "JOINED")
 
 if(emailTemplate && payload.student && payload.subscription && evaluation ){
     const emailTo = [
-        { email: payload.student.studentEmail, name: payload.student.studentFirstName + ' ' + payload.student.studentLastName }
+        { email: payload.student.studentEmail }
     ];
     
 
@@ -293,7 +291,7 @@ nextDay.setDate(today.getDate() + 1);
   const subject = 'Trail class';
       const htmlPart = zoomMailTemplate?.templateContent.replace('<date>', nextDay.toString()).replace('<meetingTime>', "10.00 AM").replace('<zoomlink>', meetingDetails.join_url);
       const emailTo = [
-        { email: teacherDetails.email, name: teacherDetails.name}, { email: newEvaluation.student.studentEmail, name: newEvaluation.student.firstName }
+        { email: teacherDetails.email}, { email: newEvaluation.student.studentEmail }
     ];
       if(htmlPart){
           sendEmailClient(emailTo, subject,htmlPart);
