@@ -1736,3 +1736,32 @@ export interface ISalarywagesCreate{
   updatedDate: string,
   updatedBy: string
 }
+
+
+export interface IPackage extends Document {
+  packageName: string;
+  costPerHour: string;
+  categories: {
+    [category: string]: string[]; // Key: "Academics", Value: ["E-certificate", ...]
+  };
+  descriptionPoint: string;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate: Date;
+  updatedBy: string;
+}
+
+export interface IPackageCreate {
+  packageName: string;
+  costPerHour: string;
+  categories: {
+    [category: string]: string[];
+  };
+  descriptionPoint: string;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate: Date;
+  updatedBy: string;
+}
