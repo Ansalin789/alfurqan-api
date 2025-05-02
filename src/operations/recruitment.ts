@@ -238,11 +238,11 @@ else if(approvalData &&  approvalData.applicationStatus == applicationStatus.SHO
        }).exec();
        if(emailTemplate){
            const emailTo = [
-               { email: createStudentPortal.email, name: createStudentPortal.userName  }
+               { email: createStudentPortal.email }
            ];
            const subject = "Welcome To Alfurqan Team";
            const htmlPart = emailTemplate.templateContent.replace('<username>', createStudentPortal.userName).replace('<password>',createStudentPortal.password );
-         //  console.log("emailTemplate>>>>",emailTemplate);
+           console.log("emailTemplate>>>>",emailTemplate);
            sendEmailClient(emailTo, subject,htmlPart);
        }
 

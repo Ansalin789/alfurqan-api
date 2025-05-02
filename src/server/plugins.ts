@@ -31,6 +31,10 @@ import expenseAPI from "../api/expenses/router";
 import KnowledgeBaseAPI from "../api/knowledgebase/router";
 import salaryandwagesAPI from "../api/salarywages/router";
 
+import packageAPI from "../api/package/router"
+import leaveRequestAPI from "../api/leaveRequest/router";
+
+
 export const appPlugins = [
   {
     plugin: systemLifeCycle,
@@ -126,5 +130,11 @@ export const appPlugins = [
   },
   {
     plugin:salaryandwagesAPI,
+  },
+  {
+    plugin:packageAPI,
+  },
+  {
+   plugin:leaveRequestAPI,
   }
 ];
