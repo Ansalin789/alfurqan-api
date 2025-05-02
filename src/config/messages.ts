@@ -456,3 +456,9 @@ export const uploadedFormat: Record<string, any> = Object.freeze({
   PDF :"Pdf",
   VIDEO: "Video",
 });
+
+export const leaveStatus: Record<string, any> = Object.freeze({
+  PAID: "PAID",
+  CASUAL: "CASUAL",
+  SICK: "SICK",
+});

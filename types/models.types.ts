@@ -1765,3 +1765,39 @@ export interface IPackageCreate {
   updatedDate: Date;
   updatedBy: string;
 }
+export interface ILeaveRequestCreate {
+  name: string,
+  role:string,
+  fromDate: Date,
+  toDate: Date,
+  leaveType: string,
+  leaveStatus: string,
+  approvedId: string,
+  approvedName: string,
+  reason: string,
+  status?: string,
+  createdDate?: Date,
+  createdBy?: string,
+  updatedDate?: Date,
+  updatedBy?: string,
+}
+
+
+export interface ILeaveRequest extends Document {
+  employeeId: any;
+  name: string,
+  role:string,
+  fromDate: Date,
+  toDate: Date,
+  leaveType: string,
+  leaveStatus: string,
+  approvedId: string,
+  approvedName: string,
+  reason: string,
+  status?: string,
+  createdDate?: Date,
+  createdBy?: string,
+  updatedDate?: Date,
+  updatedBy?: string,
+
+}

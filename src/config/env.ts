@@ -9,8 +9,7 @@ export const config: Config = {
     host: "localhost",
   },
   mongo: {
-    url:  "mongodb://alfurqan:Blackstone%232024@88.222.215.48:27017"
-    //"mongodb://alfurqan:Blackstone%232024@88.222.215.48:27017"  // First let's test without authentication
+    url:  "mongodb://alfurqan:Blackstone%232024@194.164.149.74:27017"  // First let's test without authentication
   },
   // mongo: {
   //   url: "mongodb://alfurqan:Blackstone%232024@88.222.215.48:27017" // Changed to use IPv4
