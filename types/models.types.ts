@@ -1775,6 +1775,7 @@ export interface ILeaveRequestCreate {
   approvedId: string,
   approvedName: string,
   reason: string,
+  updatedLeave?: string,
   status?: string,
   createdDate?: Date,
   createdBy?: string,
@@ -1794,6 +1795,50 @@ export interface ILeaveRequest extends Document {
   approvedId: string,
   approvedName: string,
   reason: string,
+  updatedLeave?: string,
+  status?: string,
+  createdDate?: Date,
+  createdBy?: string,
+  updatedDate?: Date,
+  updatedBy?: string,
+
+}
+
+export interface IleaveSummary {
+  name: string,
+  role:string,
+  fromDate: Date,
+  toDate: Date,
+  leaveType: string,
+  leaveStatus: string,
+  leavesTaken: string,
+  remainingLeaves: string,
+  approvedId: string,
+  approvedName: string,
+  reason: string,
+  updatedLeave?: string,
+  status?: string,
+  createdDate?: Date,
+  createdBy?: string,
+  updatedDate?: Date,
+  updatedBy?: string,
+}
+
+
+export interface IleaveSummary  extends Document {
+  employeeId: any;
+  name: string,
+  role:string,
+  fromDate: Date,
+  toDate: Date,
+  leaveType: string,
+  leaveStatus: string,
+  leavesTaken: string,
+  remainingLeaves: string,
+  approvedId: string,
+  approvedName: string,
+  reason: string,
+  updatedLeave?: string,
   status?: string,
   createdDate?: Date,
   createdBy?: string,

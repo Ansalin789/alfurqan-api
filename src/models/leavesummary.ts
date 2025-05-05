@@ -1,9 +1,9 @@
 import  { model, Schema } from "mongoose";
-import { ILeaveRequest } from "../../types/models.types";
+import {  IleaveSummary } from "../../types/models.types";
 import { z } from "zod";
 import { appStatus, commonMessages, leave, leaveStatus } from "../config/messages";
 
-const leaverequestSchema = new Schema<ILeaveRequest>(
+const leaveSummarySchema = new Schema<IleaveSummary>(
   {
     name: {  type: String, required: true },
     employeeId: {  type: String, required: true },
@@ -12,6 +12,8 @@ const leaverequestSchema = new Schema<ILeaveRequest>(
     toDate: { type: Date, required: true, default: Date.now },
     leaveStatus: { type: String, required: true },
     leaveType: { type: String, required: true },
+    leavesTaken: { type: String, required: true },
+    remainingLeaves: { type: String, required: true },
     approvedId: {type: String, required: true},
     approvedName: {type: String, required: true},
     reason: {type: String, required: true},
@@ -23,7 +25,7 @@ const leaverequestSchema = new Schema<ILeaveRequest>(
     updatedBy: { type: String, required: false },
   },
   {
-    collection: "leaverequest",
+    collection: "LeaveSummary",
     timestamps: false,
   }
 );
@@ -41,6 +43,8 @@ export const zodleaverequestSchema = z.object({
   leaveType: z.enum([leaveStatus.PAID, leaveStatus.CASUAL, leaveStatus.SICK]),
   leaveStatus: z.enum([leave.APPROVED, leave.REJECTED, leave.WAITINGLIST]),
   approvedId: z.string(),
+  leavesTaken: z.string(),
+  remainingLeaves: z.string(),
   approvedName: z.string(),
   updatedLeave: z.string().optional(),
   reason: z.string(),
@@ -56,4 +60,6 @@ export const zodleaverequestSchema = z.object({
 
 
 });
-export default model<ILeaveRequest>("LeaveRequest", leaverequestSchema);
+
+
+export default model<IleaveSummary>("LeaveSummary", leaveSummarySchema);
