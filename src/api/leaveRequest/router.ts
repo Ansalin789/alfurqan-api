@@ -22,7 +22,50 @@ const register = async (server: Server): Promise<void> => {
             tags: ["api", "LeaveSummary"],
                
           },
-       }
+       },
+       {
+            method: "GET",
+            path: "/leaverequest/list",
+            options: {
+              handler: handler.getleaverequestList,
+              description: leaveRequestMessages.LIST,
+              tags: ["api", "LeaveSummary"],
+            },
+         },
+
+         {
+          method: "GET",
+          path: "/leavesummary/list",
+          options: {
+            handler: handler.getleaveSummaryList,
+            description: leaveRequestMessages.LIST,
+            tags: ["api", "LeaveSummary"],
+          },
+         },
+
+         
+          {
+            method: "GET",
+            path: "/leaverequest/{id}",
+            options: {
+              handler: handler.getLeaveRecordById,
+              description: leaveRequestMessages.LIST,
+              tags: ["api", "LeaveRequest"],
+          
+            },
+          },
+
+                 
+          {
+            method: "GET",
+            path: "/leaveSummary/{id}",
+            options: {
+              handler: handler.getLeaveSummaryRecordById,
+              description: leaveRequestMessages.LIST,
+              tags: ["api", "LeaveSummary"],
+          
+            },
+          },
 
 
 

@@ -1,9 +1,12 @@
 import { Request, ResponseToolkit } from '@hapi/hapi'; 
 import { zodleaverequestSchema } from '../../models/leaverequest';
 import { z } from 'zod';
-import { createLeaveRequest, updateLeaveRequest } from '../../operations/leaveRequest';
+import { createLeaveRequest, getAllLeaveList, getAllLeaveSummaryList, getLeaveRequestRecordById, getLeaveSummaryRecordById, updateLeaveRequest } from '../../operations/leaveRequest';
 import { ILeaveRequest } from '../../../types/models.types';
 import mongoose from 'mongoose';
+import { isNil } from 'lodash';
+import { leaveRequestMessages } from '../../config/messages';
+import { notFound } from '@hapi/boom';
 
 const createInputValidation = z.object({
   payload: zodleaverequestSchema.pick({
@@ -91,11 +94,47 @@ async updateLeaveRequestHandler(req: Request, h: ResponseToolkit) {
       error: error instanceof Error ? error.message : error
     }).code(500);
   }
+},
+
+
+//leave Request List
+
+    async getleaverequestList(req: Request, h: ResponseToolkit) {
+      const result = await getAllLeaveList();
+    
+      return result;
+    },
+
+
+//leave Summary List
+
+async getleaveSummaryList(req: Request, h: ResponseToolkit) {
+  const result = await getAllLeaveSummaryList();
+
+  return result;
+},
+
+//LeaveRequestByID
+async getLeaveRecordById(req: Request, h: ResponseToolkit) {
+  const result = await getLeaveRequestRecordById(String(req.params.id)); // ✅ Fix here
+
+  if (isNil(result)) {
+    return notFound(leaveRequestMessages.USER_NOT_FOUND);
+  }
+
+  return result;
+},
+
+//LeaveSummaryById
+async getLeaveSummaryRecordById(req: Request, h: ResponseToolkit) {
+  const result = await getLeaveSummaryRecordById(String(req.params.id)); // ✅ Fix here
+
+  if (isNil(result)) {
+    return notFound(leaveRequestMessages.USER_NOT_FOUND);
+  }
+
+  return result;
 }
-
-
-
-
 
 
 

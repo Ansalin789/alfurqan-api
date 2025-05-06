@@ -1,8 +1,9 @@
-import mongoose from "mongoose";
-import { ILeaveRequest, ILeaveRequestCreate } from "../../types/models.types";
+import mongoose, { Types } from "mongoose";
+import { ILeaveRequest, ILeaveRequestCreate, IleaveSummary } from "../../types/models.types";
 import LeaveRequestModel from "../models/leaverequest";
 import User from "../models/users";
 import LeaveSummaryModel from "../models/leavesummary"
+import AppLogger from "../helpers/logging";
 
 export const createLeaveRequest = async (
     payload: Partial<ILeaveRequestCreate> & { name: string }
@@ -162,7 +163,53 @@ await leaveSummary.save();
   }
 };
 
+//leave Request List
 
 
+export const getAllLeaveList = async (): Promise<{ totalCount: number; leaveRequest: ILeaveRequest[] }> => {
+  const [leaveRequest, totalCount] = await Promise.all([
+    LeaveRequestModel.find().exec(),
+    LeaveRequestModel.countDocuments().exec(),
+  ]);
 
+  AppLogger.info("Fetched all leave requests", { totalCount });
+
+  return { totalCount, leaveRequest };
+};
+
+
+//leave Summary List
+
+
+export const getAllLeaveSummaryList = async (): Promise<{ totalCount: number; leavesummary: IleaveSummary[] }> => {
+  const [leavesummary, totalCount] = await Promise.all([
+    LeaveSummaryModel.find().exec(),
+    LeaveSummaryModel.countDocuments().exec(),
+  ]);
+
+  AppLogger.info("Fetched all leave Summary", { totalCount });
+
+  return { totalCount, leavesummary }; 
+};
+
+//LeaveRequestById
+
+export const getLeaveRequestRecordById = async (
+  id: string
+): Promise<ILeaveRequest | null> => {
+  return LeaveRequestModel.findOne({
+    _id: new Types.ObjectId(id),
+  }).lean();
+};
+
+
+//LeaveSummary
+
+export const getLeaveSummaryRecordById = async (
+  id: string
+): Promise<IleaveSummary | null> => {
+  return LeaveSummaryModel.findOne({
+    _id: new Types.ObjectId(id),
+  }).lean();
+};
 
