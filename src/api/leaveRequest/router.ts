@@ -14,15 +14,15 @@ const register = async (server: Server): Promise<void> => {
       },
     },
     {
-        method: "PUT",
-        path: "/leaverequest/{id}",
-        options: {
-            handler: handler.updateLeaveRequestHandler,
-            description: leaveRequestMessages.LIST,
-            tags: ["api", "LeaveSummary"],
-               
-          },
-       },
+      method: "PUT",
+      path: "/leaverequest/{employeeId}",
+      options: {
+        handler: handler.updateLeaveRequestHandler,
+        description: leaveRequestMessages.LIST,
+        tags: ["api", "LeaveSummary"],
+      },
+    },
+    
        {
             method: "GET",
             path: "/leaverequest/list",

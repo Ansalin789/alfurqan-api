@@ -53,10 +53,10 @@ export const createLeaveRequest = async (
 //Update leave summary
 
 
-const DEFAULT_MONTHLY_QUOTA = 5; // Default monthly leave quota
+const DEFAULT_MONTHLY_QUOTA = 5;
 
 export const updateLeaveRequest = async (
-  id: string,
+  employeeId: string,
   updates: Partial<ILeaveRequest>
 ): Promise<{
   updatedLeave?: ILeaveRequest;
@@ -65,45 +65,29 @@ export const updateLeaveRequest = async (
   error?: any;
 }> => {
   try {
-    // 1. Fetch the existing leave request from the database
-    const existingLeave = await LeaveRequestModel.findOne({ _id: new mongoose.Types.ObjectId(id) }).exec();
-    
-    if (!existingLeave) {
-      return { error: "Leave request not found" };
-    }
+    // 1. Get the latest leave request for the employee
+    const existingLeave = await LeaveRequestModel.findOne({ employeeId }).sort({ createdDate: -1 }).exec();
+    if (!existingLeave) return { error: "Leave request not found" };
 
-    // 2. If leave is not being approved, just update and return
-    const isBeingApproved = updates.leaveStatus === "APPROVED";
-    if (!isBeingApproved) {
-      const updatedLeave = await LeaveRequestModel.findByIdAndUpdate(id, updates, { new: true }).exec();
-
-      if (!updatedLeave) {
-        return { error: "Failed to update leave request." };
-      }
-
-      return { updatedLeave };
-    }
-
-    // 3. Compute the current month range (start and end date)
-    const employeeId = existingLeave.employeeId;
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-    // 4. Fetch all other approved leaves for the same employee in the current month
-    const approvedLeaves = await LeaveRequestModel.find({
-      employeeId,
-      leaveStatus: "APPROVED",
-      _id: { $ne: id }, // Exclude the current leave
-      fromDate: { $gte: monthStart, $lte: monthEnd },
-    });
-
-    // 5. Calculate the duration of the new leave request (either from updates or existing)
+    // 2. Determine date range for updated or existing leave
     const from = new Date(updates.fromDate || existingLeave.fromDate);
     const to = new Date(updates.toDate || existingLeave.toDate);
     const thisLeaveDays = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
-    // 6. Calculate the total leaves taken so far (including other approved leaves in the current month)
+    // 3. Define month range
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    // 4. Fetch other approved leaves for this employee in the current month
+    const approvedLeaves = await LeaveRequestModel.find({
+      employeeId,
+      leaveStatus: "APPROVED",
+      _id: { $ne: existingLeave._id },
+      fromDate: { $gte: monthStart, $lte: monthEnd },
+    });
+
+    // 5. Sum days from approved leaves (excluding current)
     const takenSoFar = approvedLeaves.reduce((sum, leave) => {
       const fromDate = new Date(leave.fromDate);
       const toDate = new Date(leave.toDate);
@@ -111,10 +95,11 @@ export const updateLeaveRequest = async (
       return sum + days;
     }, 0);
 
-    const totalWithThis = takenSoFar + thisLeaveDays;
+    const isBeingApproved = updates.leaveStatus === "APPROVED";
+    const totalWithThis = isBeingApproved ? takenSoFar + thisLeaveDays : takenSoFar;
 
-    // 7. Check if the leave quota is exceeded
-    if (totalWithThis > DEFAULT_MONTHLY_QUOTA) {
+    // 6. Validate leave quota only for APPROVED
+    if (isBeingApproved && totalWithThis > DEFAULT_MONTHLY_QUOTA) {
       return {
         error: `Leave quota exceeded. Requested ${totalWithThis} days, but monthly quota is ${DEFAULT_MONTHLY_QUOTA}.`,
         leavesTaken: takenSoFar,
@@ -122,36 +107,38 @@ export const updateLeaveRequest = async (
       };
     }
 
-// 8. Approve and update the leave request
-const updatedLeave = await LeaveRequestModel.findByIdAndUpdate(id, updates, { new: true }).exec();
+    // 7. Update the leave request document
+    const updatedLeave = await LeaveRequestModel.findByIdAndUpdate(
+      existingLeave._id,
+      updates,
+      { new: true }
+    ).exec();
+    if (!updatedLeave) return { error: "Failed to update leave request." };
 
-if (!updatedLeave) {
-  return { error: "Failed to update leave request after approval." };
-}
-
-// 9. Store a record in the LeaveSummary collection
-const leaveSummary = new LeaveSummaryModel({
-  employeeId: updatedLeave.employeeId,
-  name: updatedLeave.name,
-  role: updatedLeave.role,
-  fromDate: updatedLeave.fromDate,
-  toDate: updatedLeave.toDate,
-  leaveType: updatedLeave.leaveType,
-  leaveStatus: updatedLeave.leaveStatus,
-  leavesTaken: totalWithThis.toString(),
-  remainingLeaves: (DEFAULT_MONTHLY_QUOTA - totalWithThis).toString(),
-  approvedId: updatedLeave.approvedId,
-  approvedName: updatedLeave.approvedName,
-  reason: updatedLeave.reason,
-  status: updatedLeave.status,
-  createdDate: new Date(),
-  createdBy: updatedLeave.approvedName,
-  updatedDate: new Date(),
-  updatedBy: updatedLeave.approvedName,
-});
-
-await leaveSummary.save();
-
+    // 8. Upsert summary per employeeId
+    await LeaveSummaryModel.findOneAndUpdate(
+      { employeeId: updatedLeave.employeeId }, // single summary per employee
+      {
+        employeeId: updatedLeave.employeeId,
+        name: updatedLeave.name,
+        role: updatedLeave.role,
+        fromDate: updatedLeave.fromDate,
+        toDate: updatedLeave.toDate,
+        leaveType: updatedLeave.leaveType,
+        leaveStatus: updatedLeave.leaveStatus,
+        leavesTaken: totalWithThis.toString(),
+        remainingLeaves: (DEFAULT_MONTHLY_QUOTA - totalWithThis).toString(),
+        approvedId: updatedLeave.approvedId,
+        approvedName: updatedLeave.approvedName,
+        reason: updatedLeave.reason,
+        status: updatedLeave.status,
+        createdBy: updatedLeave.approvedName,
+        updatedBy: updatedLeave.approvedName,
+        updatedDate: new Date(),
+        $setOnInsert: { createdDate: new Date() },
+      },
+      { upsert: true, new: true }
+    );
 
     return {
       updatedLeave,
@@ -162,6 +149,8 @@ await leaveSummary.save();
     return { error: error instanceof Error ? error.message : error };
   }
 };
+
+
 
 //leave Request List
 
