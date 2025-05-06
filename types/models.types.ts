@@ -505,6 +505,7 @@ export interface IClassSchedule extends Document{
   sessionClassType:string;
   sessionStarttime:string;
   sessionsEndtime:string;
+  sessionStatus:string;
   startDate: Date;
   endDate: Date;
   startTime: any;
@@ -548,6 +549,7 @@ export interface IClassScheduleCreate{
   sessionClassType:string;
   sessionStarttime:string;
   sessionsEndtime:string;
+  sessionStatus:string;
   classDay: string[];
   classStatus:string;
   package: string;

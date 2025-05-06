@@ -89,6 +89,7 @@ async createandUpdateSchedule(req: Request, h: ResponseToolkit){
      sessionClassType: payload.sessionClassType || "",
      sessionStarttime: payload.sessionStarttime || "",
      sessionsEndtime: payload?.sessionsEndtime || "",
+     sessionStatus:"NotCompleted",
      totalHourse: payload.totalHourse,
     startDate: payload.startDate,
     endDate: payload.endDate,
@@ -245,7 +246,9 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
       // ✅ Add these:
       sessionStarttime: payload.sessionStarttime,
       sessionsEndtime: payload.sessionsEndtime,
-      sessionClassType: payload.sessionClassType
+      sessionClassType: payload.sessionClassType,
+      sessionStatus:"NotCompleted"
+
     });
     
     if (isNil(result)) {
