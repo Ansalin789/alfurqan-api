@@ -107,7 +107,7 @@ export const updateStudentClassSchedule = async (
           sessionClassType: payload.sessionClassType || "",
           sessionStarttime: payload.sessionStarttime || "",
           sessionsEndtime: payload.sessionsEndtime || "",
-
+          sessionStatus:"NotCompleted",
           course:studentDetails?.student?.course,
           package: studentDetails?.student?.package,
           startDate: classDate,
@@ -305,44 +305,41 @@ export const updateClassscheduleById = async (
     throw new Error("Class schedule not found");
   }
 
-  // Get class type and times from payload or existing data
-  const classType = payload.sessionClassType || existingClass.sessionClassType;
-  const startTime = payload.sessionStarttime || existingClass.sessionStarttime;
-  const endTime = payload.sessionsEndtime || existingClass.sessionsEndtime;
+ // Determine class type and session times
+const classType = payload.sessionClassType || existingClass.sessionClassType;
+const startTime = payload.sessionStarttime || existingClass.sessionStarttime;
+const endTime = payload.sessionsEndtime || existingClass.sessionsEndtime;
 
-  console.log("Class Type:", classType);
-  console.log("Start Time:", startTime);
-  console.log("End Time:", endTime);
+let amount = 0;
+let sessionStatus = "NotCompleted";
 
-  // Convert start and end times to minutes
+if (startTime && endTime) {
   const startMinutes = convertTimeToMinutes(startTime);
   const endMinutes = convertTimeToMinutes(endTime);
-  const duration = endMinutes - startMinutes; // Total duration in minutes
- console.log("Converted Start Minutes:", startMinutes);
-  console.log("Converted End Minutes:", endMinutes);
-  console.log("Duration (mins):", duration);
+  const duration = endMinutes - startMinutes;
 
-  let amount = 0;
+  if (duration > 0) {
+    if (classType === "regular") {
+      amount = (duration / 60) * 4;
+    } else if (classType === "group") {
+      amount = (duration / 60) * 6;
+    } else if (classType === "trial") {
+      amount = 2;
+    }
 
-if (classType === "regular") {
-  amount = (duration / 60) * 4; // $4 per 60 mins
-} else if (classType === "group") {
-  amount = (duration / 60) * 6; // $6 per 60 mins
-} else if (classType === "trial") {
-  amount = 2; // Fixed $2 for a trial class
+    sessionStatus = "Completed";
+  }
 }
 
-const formattedAmount = `$${amount.toFixed(2)}`; // Add dollar sign
+const formattedAmount = `$${amount.toFixed(2)}`;
 
-console.log("Calculated Amount:", formattedAmount);
-
-// Update the class schedule
 return ClassScheduleModel.findOneAndUpdate(
   { _id: new Types.ObjectId(id) },
-  { 
-    $set: { 
+  {
+    $set: {
       ...payload,
-      amount: formattedAmount // Store amount with dollar sign
+      amount: formattedAmount,
+      sessionStatus
     }
   },
   { new: true }

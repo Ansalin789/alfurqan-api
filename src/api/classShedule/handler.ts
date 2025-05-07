@@ -89,6 +89,7 @@ async createandUpdateSchedule(req: Request, h: ResponseToolkit){
      sessionClassType: payload.sessionClassType || "",
      sessionStarttime: payload.sessionStarttime || "",
      sessionsEndtime: payload?.sessionsEndtime || "",
+     sessionStatus:"NotCompleted",
      totalHourse: payload.totalHourse,
     startDate: payload.startDate,
     endDate: payload.endDate,
@@ -219,31 +220,37 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
     const classDayValues = payload.classDay?.map((day: { value: string; label: string }) => day.value);
     const startTimeValues = payload.startTime?.map((time: { value: string; label: string }) => time.value);
     const endTimeValues = payload.endTime?.map((time: { value: string; label: string }) => time.value);
-    const result = await updateClassscheduleById(String(req.params.classSheduleId),
-    {   
+    const result = await updateClassscheduleById(String(req.params.classSheduleId), {
       student: {
         studentId: payload.student?.studentId ?? "",
         studentFirstName: payload.student?.studentFirstName ?? "",
         studentLastName: payload.student?.studentLastName ?? "",
-        studentEmail:payload.student?.studentEmail ?? "",
+        studentEmail: payload.student?.studentEmail ?? "",
         gender: payload.student?.gender ?? "",
       },
-      teacher :{
+      teacher: {
         teacherId: payload.teacher?.teacherId ?? "",
         teacherName: payload.teacher?.teacherName ?? "",
         teacherEmail: payload.teacher?.teacherEmail ?? ""
-      } ,
-      classDay :classDayValues ,
+      },
+      classDay: classDayValues,
       package: payload.package,
       preferedTeacher: payload.preferedTeacher,
-      // course:payload.course,
       totalHourse: payload.totalHourse,
       startDate: payload.startDate,
       endDate: payload.endDate,
       startTime: startTimeValues,
       endTime: endTimeValues,
-      scheduleStatus: payload.scheduleStatus
-       } );
+      scheduleStatus: payload.scheduleStatus,
+    
+      // ✅ Add these:
+      sessionStarttime: payload.sessionStarttime,
+      sessionsEndtime: payload.sessionsEndtime,
+      sessionClassType: payload.sessionClassType,
+      sessionStatus:"NotCompleted"
+
+    });
+    
     if (isNil(result)) {
       return notFound(ClassSchedulesMessages.CANDIDATE_NOT_FOUND);
     }

@@ -147,6 +147,12 @@ export default{
   });
   return getAllApplicantsRecords(query);
     },
+
+
+
+
+
+
     
     async getApplicantRecordById(req: Request, h: ResponseToolkit){
       const result = await getApplicantRecordById(String(req.params.applicantId));
@@ -157,6 +163,9 @@ export default{
 
   return result;
     },
+
+
+    
 
     async updateApplicantRecordById(req: Request, h: ResponseToolkit) {
 

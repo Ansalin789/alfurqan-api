@@ -462,3 +462,29 @@ export const leaveStatus: Record<string, any> = Object.freeze({
   CASUAL: "CASUAL",
   SICK: "SICK",
 });
+
+export const leave: Record<string, any> = Object.freeze({
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED",
+  WAITINGLIST: "WAITINGLIST"
+});
+
+export const leaveRequestMessages: Record<string, string> = Object.freeze({
+  LIST: "Retrieve all leave requests",
+  BYID: "Retrieve leave request details by request ID",
+  CREATE: "Create a new leave request",
+  UPDATE: "Update an existing leave request",
+  DELETE: "Delete a leave request by ID",
+  BULK_DELETE: "Bulk delete leave requests by IDs",
+  APPROVE: "Approve a leave request",
+  REJECT: "Reject a leave request",
+  USER_NOT_FOUND: "Employee not found or inactive. Please contact admin",
+  ADMIN_NOT_FOUND: "Admin not found or unauthorized to approve",
+  INVALID_DATE_FORMAT: "Invalid date format. Please use YYYY-MM-DD",
+  INVALID_LEAVE_TYPE: "Invalid leave type. Accepted values are PAID, CASUAL, or SICK",
+  INSUFFICIENT_LEAVE_BALANCE: "Insufficient leave balance for the requested period",
+  LEAVE_QUOTA_EXCEEDED: "Monthly leave quota exceeded",
+  FROM_DATE_REQUIRED: "From date is required",
+  TO_DATE_REQUIRED: "To date is required",
+  REASON_REQUIRED: "Reason for leave is required",
+});
