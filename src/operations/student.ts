@@ -120,16 +120,7 @@ export const createStudent = async (
     const zoomMailTemplate = await EmailTemplate.findOne({
       templateKey: 'evaluation',
   }).exec();
-    const subject = 'Evaluation Zoom Meeting';
-        const htmlPart = zoomMailTemplate?.templateContent.replace('<date>', payload.startDate.toDateString()).replace('<meetingtime>', payload.preferredFromTime).replace('<zoomlink>', meetingDetails.join_url);
-        const emailTo = [
-          { email: payload.email }, { email: savedUser.academicCoach.email }
-      ];
-
-      
-        if(htmlPart){
-           // sendEmailClient(emailTo, subject,htmlPart);
-        }
+   
         const course = await Course.findOne({
           courseName: payload.learningInterest,
         });
@@ -176,6 +167,17 @@ export const createStudent = async (
           lastUpdatedDate: new Date(),
           lastUpdatedBy: savedUser.firstName + ' ' + savedUser.lastName,
     });
+
+    const subject = 'Evaluation Zoom Meeting';
+    const htmlPart = zoomMailTemplate?.templateContent.replace('<date>', payload.startDate.toDateString()).replace('<meetingtime>', payload.preferredFromTime).replace('<zoomlink>', CreatemeetingDetails.meetingLink);
+    const emailTo = [
+      { email: payload.email }, { email: savedUser.academicCoach.email }
+  ];
+
+  
+    if(htmlPart){
+       sendEmailClient(emailTo, subject,htmlPart);
+    }
     const userObject = savedUser.toObject();
     await CreatemeetingDetails.save();
     return userObject;

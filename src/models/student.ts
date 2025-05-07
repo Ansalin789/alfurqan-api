@@ -2,7 +2,7 @@ import mongoose, { Schema } from "mongoose";
 import { v4 as uuidv4 } from "uuid";
 import { IStudents } from "../../types/models.types";
 
-import CustomEnumerator from "../shared/enum";
+import CustomEnumerator, { NumberOfStudents } from "../shared/enum";
 import { z } from "zod";
 import { appStatus,appRegexPatterns, commonMessages, evaluationStatus, learningInterest, numberOfStudents,preferredTeacher, referenceSource } from "../config/messages";
 
@@ -74,7 +74,6 @@ const studentSchema = new Schema<IStudents>(
     numberOfStudents: {
       type: Number,
       required: true,
-      minlength: 1
     },
     preferredTeacher:{
       type: String,
@@ -151,7 +150,7 @@ export const zodStudentSchema = z.object({
   country: z.string().min(3),
   countryCode: z.string().min(1),
   learningInterest: z.enum([learningInterest.QURAN, learningInterest.ISLAMIC, learningInterest.ARABIC]),
-  numberOfStudents: z.number().min(1),
+  numberOfStudents: z.nativeEnum(NumberOfStudents).default(NumberOfStudents.ONE),
   preferredTeacher: z.enum([preferredTeacher.TEACHER_1, preferredTeacher.TEACHER_2, preferredTeacher.TEACHER_3]),
   preferredFromTime: z.string().regex(/^(0[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$/, "Time must be in format HH:MM AM/PM"),
   preferredToTime: z.string().regex(/^(0[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$/, "Time must be in format HH:MM AM/PM"),

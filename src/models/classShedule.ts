@@ -188,6 +188,10 @@ const classScheduleSchema = new Schema<IClassSchedule>(
       type: String,
       required: false
     },
+    sessionStatus: {
+      type: String,
+      required: false
+    },
   },
   {
     collection: "classschedule",
@@ -217,6 +221,7 @@ export const zodClassScheduleSchema = z.object({
     sessionClassType:z.string().optional(),
     sessionStarttime:z.string().optional(),
     sessionsEndtime:z.string().optional(),
+    sessionStatus:z.string().optional(),
     package:z.string(),
     preferedTeacher:z.string().optional(),
     course:z.string(),

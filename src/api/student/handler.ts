@@ -3,11 +3,12 @@ import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodStudentSchema } from "../../models/student";
 import { createStudent, getAllStudentsRecords,getAllStudentVisitor,getStudentRecordById, StudentFilter } from "../../operations/student";
-import { EvaluationStatus } from "../../shared/enum";  
+import { EvaluationStatus ,NumberOfStudents } from "../../shared/enum";  
 import {  studentMessages } from "../../config/messages"
 import { notFound } from "@hapi/boom";
 import { isNil } from "lodash";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
+
 
 // Input Validation for Create a User
 const createInputValidation = z.object({
@@ -69,7 +70,7 @@ export default {
   country: payload.country,
   countryCode: payload.countryCode,
   learningInterest: payload.learningInterest ?? "defaultLearningInterest" ,
-  numberOfStudents: payload.numberOfStudents ?? 1, 
+  numberOfStudents: Number(payload.numberOfStudents),
   preferredTeacher: payload.preferredTeacher ?? "defaultPreferredTeacher", 
   preferredFromTime: payload.preferredFromTime,
   preferredToTime: payload.preferredToTime,
