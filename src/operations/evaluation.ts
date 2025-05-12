@@ -178,7 +178,7 @@ newEvaluation.classStatus = payload.classStatus;
 newEvaluation.trialClassStatus = payload.trialClassStatus;
  newEvaluation.assignedTeacherId = teacherDetails.teacherId;
  newEvaluation.assignedTeacherEmail = teacherDetails.email;
- newEvaluation.teacherStatus = newEvaluation.teacher.teacherName == "" ? "Assigned": "Not Assigned";
+ newEvaluation.teacherStatus = newEvaluation.teacher.teacherName ? "Assigned": "Not Assigned";
 const createEvaluation = await newEvaluation.save();
 console.log("createEvaluation>>>",createEvaluation)
 
