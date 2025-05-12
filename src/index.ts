@@ -6,7 +6,7 @@ import config from "./config/env";
 import { appPlugins } from "./server/plugins";
 import { serverSettings } from "./config/config";
 import { initializeSocket } from "./shared/socket";
-
+import { startInvoiceConsumer } from './kafka/consumer';
 
 const start = async () => {
   // Create the server with server settings
@@ -25,7 +25,7 @@ const start = async () => {
 
   // Initialize Socket.IO service
   initializeSocket(server.listener);
-
+   startInvoiceConsumer();
   // Initialize and Start the Application
   await server.initialize();
   await server.start();
