@@ -337,13 +337,14 @@ student: {
   createdDate: Date;
   createdBy: string;
 };
+classType: string;
 teacher:{
   teacherId: string;
   teacherName: string;
   teacherEmail: string;
 },
 classDay: any;
-classType: string;
+
 startTime: any;
 endTime: any;
 isLanguageLevel: boolean;
@@ -421,6 +422,7 @@ export interface IEvaluationCreate{
   createdDate: Date;
   createdBy?: string;
 };
+classType: string;
 teacher:{
   teacherName: string;
 },

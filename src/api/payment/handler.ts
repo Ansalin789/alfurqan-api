@@ -271,6 +271,7 @@ export const createStudentPaymentIntent = async (request: Request, h: ResponseTo
         paymentResponse: paymentIntentResponse,
         paymentResponseId: paymentIntent.client_secret,
         paymentDate: new Date(),
+        createdDate:new Date(),
         status: "Active",
         createdBy: "System",
       });
