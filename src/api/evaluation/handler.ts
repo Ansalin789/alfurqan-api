@@ -15,6 +15,7 @@ const createInputValidation = z.object({
     payload: zodEvaluationSchema.pick({
     academicCoachId: true,
     student:true,
+    classType: true,
     teacher: true,
     classDay: true,
     startTime:true,
@@ -122,12 +123,13 @@ export default {
                 createdDate: new Date(),
                 createdBy: payload.student?.createdBy ?? "",
             },
+            classType: payload.classType,
             teacher:{
               teacherName: payload.teacher?.teacherName  ?? ""
             },
-            classDay : classDayValues ?? undefined,
-            startTime:startTimeValues,
-            endTime:endTimeValues,
+            classDay : payload.classType == "REGULARCLASS"? classDayValues : undefined,
+            startTime:payload.classType == "REGULARCLASS"? startTimeValues : undefined ,
+            endTime: payload.classType == "REGULARCLASS"? endTimeValues: undefined,
             isLanguageLevel: payload.isLanguageLevel ?? false,
             languageLevel: payload.languageLevel ?? "",
             isReadingLevel: payload.isReadingLevel ?? false,
@@ -160,7 +162,7 @@ export default {
            invoiceStatus: payload.invoiceStatus ?? "Pending",
            paymentLink: payload.paymentLink ?? "",
            paymentStatus: payload.paymentStatus ?? "Pending",
-           teacherStatus: payload.teacherStatus ?? "Not Assigned",
+           teacherStatus: payload.teacher?.teacherName ? "Assigned" : "Not Assigned",
             status: payload.status,
             createdDate: new Date(),
             createdBy: payload.createdBy,

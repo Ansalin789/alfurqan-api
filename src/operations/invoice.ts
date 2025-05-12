@@ -106,7 +106,7 @@ export const getAllStudetnInVoiceList = async (
     }
   
     const invoices: IStudentInvoice[] = await StudentInvoiceModel.find({
-      invoiceStatus: { $in: ["Paid", "Pending"] },
+      invoiceStatus: { $in: ["Paid"] },
     }).exec();
   
     const revenueMap: Record<string, number> = {};
@@ -360,7 +360,7 @@ export const getAllTotalInvoice = async (): Promise<{ date: string; total: numbe
   const endDate = endOfYear(new Date(currentYear, 0, 1));     // Dec 31
 
   const invoices = await StudentInvoiceModel.find({
-    invoiceStatus: { $in: ["Paid", "Pending"] }
+    invoiceStatus: { $in: ["Paid"] }
   }).exec();
 
   const revenueMap: Record<string, { total: number; paid: number }> = {};

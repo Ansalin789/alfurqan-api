@@ -94,6 +94,10 @@ academicCoachId: {
         required: false,
     }
   },
+  classType: {
+    type: String,
+    required: false, 
+  },
   teacher: {
     teacherId: {
        type: String,
@@ -114,10 +118,7 @@ academicCoachId: {
     type: Array,
     required: false,
   },
-  classType: {
-    type: String,
-    required: false, 
-  },
+  
   startTime:{
     type: Array,
     required: false,
@@ -339,32 +340,31 @@ export const zodEvaluationSchema = z.object({
         createdBy: z.string().optional(),
       
     }),
-
+    classType:z.enum([classType.REGULARCLASS, classType.GROUPCLASS]).optional(),
     teacher:z.object ({
         teacherId: z.string().optional(),
         teacherName: z.string().optional(),
         teacherEmail:z.string().optional()
-      }),
+      }).optional(),
       classDay:z.array(
         z.object({
             label: z.string(),
             value: z.string(),
         })
-    ),
-    classType:z.enum([classType.REGULARCLASS, classType.GROUPCLASS]).optional(),
+    ).optional(),
       totalHourse:z.number().optional(),
       startTime:z.array(
         z.object({
             label: z.string(),
             value: z.string(),
         })
-    ),
+    ).optional(),
       endTime:z.array(
         z.object({
             label: z.string(),
             value: z.string(),
         })
-    ),
+    ).optional(),
     isLanguageLevel: z.boolean(),
     languageLevel: z.string(),
     isReadingLevel: z.boolean(),

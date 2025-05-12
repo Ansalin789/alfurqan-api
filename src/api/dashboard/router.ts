@@ -53,9 +53,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getAdminCount,
         description: dashboardMessages.CARD_COUNT,
         tags: ["api", "dashboard"],
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
+        auth: {
+          strategies: ["jwt"],
+        },
       },
     },
 
