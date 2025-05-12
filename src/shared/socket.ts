@@ -21,33 +21,6 @@ export const initializeSocket = (httpServer: HttpServer): void => {
       AppLogger.info(`👤 User with Socket ID: ${socket.id} joined room: ${userId}`);
     });
   
-    // Join video call room
-    socket.on("join-meeting", ({ meetingId, userId }) => {
-      AppLogger.info(`User ${userId} (Socket: ${socket.id}) joining meeting: ${meetingId}`);
-      socket.join(meetingId);
-      AppLogger.info(`User ${userId} joined meeting: ${meetingId}`);
-      socket.to(meetingId).emit("user-joined", userId); // 👈 emit fake userId now
-    });
-  
-    // WebRTC signaling events
-    socket.on("offer", ({ meetingId, offer }) => {
-      socket.to(meetingId).emit("offer", { from: socket.id, offer });
-    });
-  
-    socket.on("answer", ({ meetingId, answer }) => {
-      socket.to(meetingId).emit("answer", { from: socket.id, answer });
-    });
-  
-    socket.on("ice-candidate", ({ meetingId, candidate }) => {
-      socket.to(meetingId).emit("ice-candidate", { from: socket.id, candidate });
-    });
-  
-    socket.on("leave-meeting", (meetingId: string) => {
-      socket.leave(meetingId);
-      socket.to(meetingId).emit("user-left", socket.id);
-      AppLogger.info(`🚪 User ${socket.id} left meeting: ${meetingId}`);
-    });
-  
     socket.on("disconnect", () => {
       AppLogger.info(`❌ Disconnected - Socket ID: ${socket.id}`);
     });
