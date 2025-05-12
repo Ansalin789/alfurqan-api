@@ -12,6 +12,7 @@ import  ClassScheduleModel  from "../../models/classShedule";
 import { Client } from '@microsoft/microsoft-graph-client';
 import { ClientSecretCredential } from "@azure/identity";
 import Course from "../../models/course";
+import { sendInvoiceEvent } from "../../kafka/producer";
 
 export const createPaymentIntent = async (request: Request, h: ResponseToolkit) => {
   console.log("Received request payload:", request.payload);
@@ -65,6 +66,7 @@ if(paymentIntentResponse){
   
  
   const result = (await invoicePayload) .save();
+  await sendInvoiceEvent(result);
   console.log(result);
 };
 
