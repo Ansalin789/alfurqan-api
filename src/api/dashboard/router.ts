@@ -12,6 +12,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getWidgetsCount,
         description: dashboardMessages.WIDGET_COUNT,
         tags: ["api", "dashboard"],
+        auth: {
+          strategies: ["jwt"],
+        },
       },
     },
 
@@ -23,6 +26,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getWidgetStudentCount,
         description: dashboardMessages.WIDGET_COUNT,
         tags: ["api", "dashboard"],
+        auth: {
+          strategies: ["jwt"],
+        },
       },
     },
 
@@ -33,6 +39,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getWidgetTeacherCount,
         description: dashboardMessages.WIDGET_COUNT,
         tags: ["api", "dashboard"],
+        auth: {
+          strategies: ["jwt"],
+        },
       },
     },
 
@@ -43,6 +52,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getWidgetSupervisorCount,
         description: dashboardMessages.WIDGET_COUNT,
         tags: ["api", "dashboard"],
+        auth: {
+          strategies: ["jwt"],
+        },
       },
     },
 
@@ -66,9 +78,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getTotalTrialRequest,
         description: dashboardMessages.CARD_COUNT,
         tags: ["api", "dashboard"],
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
+        auth: {
+          strategies: ["jwt"],
+        },
       },
     },
    
@@ -79,9 +91,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getTotalClass,
         description: dashboardMessages.CARD_COUNT,
         tags: ["api", "dashboard"],
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
+        auth: {
+           strategies: ["jwt"],
+         },
       },
     },
 

@@ -12,7 +12,9 @@ const register = async (server: Server): Promise<void> => {
       options: {
         handler:handler.sendMessageHandler,  
         tags: ["api", "realtimemessage"],  
-      },
+        auth: {
+          strategies: ["jwt"],
+        }, },
     },
     {
         method: "GET",
@@ -20,7 +22,9 @@ const register = async (server: Server): Promise<void> => {
         options: {
           handler:handler.getMessagesByUserHandler,  
           tags: ["api", "realtimemessage"],  
-        },
+          auth: {
+            strategies: ["jwt"],
+          },  },
       },
   ];
   server.route(routes);

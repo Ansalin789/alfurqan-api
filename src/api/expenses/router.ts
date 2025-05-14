@@ -13,7 +13,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.createExpense,
         // description: userMessages.CREATE,
         tags: ["api", "expense"],
-      },
+        auth: {
+          strategies: ["jwt"],
+        }, },
     },
 
     {
@@ -23,7 +25,9 @@ const register = async (server: Server): Promise<void> => {
           handler: handler.getAllExpenses,
           // description: userMessages.CREATE,
           tags: ["api", "expense"],
-        },
+          auth: {
+            strategies: ["jwt"],
+          }, },
       },
  
 

@@ -14,7 +14,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getAllStudetnInVoiceList,
         description: evaluationMessages.LIST,
         tags: ["api", "evaluationlist"],
-      },
+        auth: {
+          strategies: ["jwt"],
+        }, },
     },
     {
       method: "GET",
@@ -22,7 +24,9 @@ const register = async (server: Server): Promise<void> => {
       options: {
         handler: handler.getStudetnInVoiceDetails,
         tags: ["api", "evaluationlist"],
-      },
+        auth: {
+          strategies: ["jwt"],
+        }, },
     },
     {
       method: "GET",
@@ -31,7 +35,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getAllStudentRevenue,
         description: evaluationMessages.LIST,
         tags: ["api", "evaluationlist"],
-      },
+        auth: {
+          strategies: ["jwt"],
+        }, },
     },
     {
       method: "GET",
@@ -40,7 +46,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getTotalAmountByCountry,
         description: evaluationMessages.LIST,
         tags: ["api", "invoice"],
-      },
+        auth: {
+          strategies: ["jwt"],
+        },  },
     },
 
     {
@@ -50,7 +58,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getTotalAmountByCourse,
         description: evaluationMessages.LIST,
         tags: ["api", "invoice"],
-      },
+        auth: {
+          strategies: ["jwt"],
+        }, },
     },
     {
       method: "GET",
@@ -59,7 +69,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getTotalInvoice,
         description: evaluationMessages.LIST,
         tags: ["api", "invoice"],
-      },
+        auth: {
+          strategies: ["jwt"],
+        }, },
     },
     {
       method: "GET",
@@ -68,7 +80,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getInvoiceCounts,
         description: evaluationMessages.LIST,
         tags: ["api", "invoice"],
-      },
+        auth: {
+          strategies: ["jwt"],
+        }, },
     },
     {
       method: "GET",
@@ -77,15 +91,19 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getInvoiceDueDateBuckets,
         description: evaluationMessages.LIST,
         tags: ["api", "invoice"],
-      },
+        auth: {
+          strategies: ["jwt"],
+        },  },
     },
     {
       method: "POST",
       path: "/invoice/send",
       handler: handler.sendInvoice,
       options: {
-        auth: false, // change based on your needs
         tags: ["api", "invoice"],
+        auth: {
+          strategies: ["jwt"],
+        },
         description: "Create and send invoice to DB",
         payload: {
           maxBytes: 10485760, // 10 MB for the payload size
@@ -101,7 +119,9 @@ const register = async (server: Server): Promise<void> => {
       options: {
         handler: handler.getallstudentinvoiceList,
         tags: ["api", "knowledgeBase"],
-      },
+        auth: {
+          strategies: ["jwt"],
+        },  },
     }
     
     

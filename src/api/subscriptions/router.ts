@@ -36,7 +36,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.createSubscription,
         description: userMessages.CREATE,
         tags: ["api", "shiftschedule"],
-      },
+        auth: {
+          strategies: ["jwt"],
+        }, },
     },
     // {
     //   method: "PUT",

@@ -13,7 +13,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.updateroleAccessById,
         description: roleAccess.UPDATE,
         tags: ["api", "roleAccess"],
-      },
+        auth: {
+          strategies: ["jwt"],
+        }, },
     },
 
     {
@@ -22,7 +24,9 @@ const register = async (server: Server): Promise<void> => {
       options: {
         handler:handler.getsettinglist,  
         tags: ["api", "roleAccess"],  
-      },
+        auth: {
+          strategies: ["jwt"],
+        }, },
     },
 
     {
@@ -32,7 +36,9 @@ const register = async (server: Server): Promise<void> => {
           handler:handler.getsettingById,
           tags: ["api", "role-access"],
           description: "Get settingdetail by Id",
-        },
+          auth: {
+            strategies: ["jwt"],
+          },  },
       },
 
 

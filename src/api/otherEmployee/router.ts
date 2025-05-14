@@ -21,7 +21,9 @@ const register = async (server: Server): Promise<void> => {
           multipart: true,
           allow: "multipart/form-data",
         },
-      },
+        auth: {
+          strategies: ["jwt"],
+        }, },
       
     },
      
@@ -32,7 +34,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getOhterEmpCountries,
         description: userMessages.LIST,
         tags: ["api", "users"],
-      },
+        auth: {
+          strategies: ["jwt"],
+        },  },
     },
 
     {
@@ -42,7 +46,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getOhterEmpById,
         description: userMessages.LIST,
         tags: ["api", "users"],
-      },
+        auth: {
+          strategies: ["jwt"],
+        }, },
     },
 ];
 server.route(routes);

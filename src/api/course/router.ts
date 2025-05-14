@@ -11,7 +11,9 @@ const register = async (server: Server): Promise<void> => {
       options: {
         handler:handler.createCourses,  
         tags: ["api", "course"],  
-      },
+        auth: {
+          strategies: ["jwt"],
+        },  },
     },
 
     {
@@ -20,7 +22,9 @@ const register = async (server: Server): Promise<void> => {
         options: {
           handler:handler.getAllCourse,  
           tags: ["api", "course"],  
-        },
+          auth: {
+            strategies: ["jwt"],
+          }, },
       },
 
       {
@@ -29,7 +33,9 @@ const register = async (server: Server): Promise<void> => {
         options: {
           handler:handler.UpdateAllCourseLevel,  
           tags: ["api", "course"],  
-        },
+          auth: {
+            strategies: ["jwt"],
+          }, },
       },
       {
         method: "GET",
@@ -37,7 +43,9 @@ const register = async (server: Server): Promise<void> => {
         options: {
           handler:handler.getAllCourseLevelByCourseId,  
           tags: ["api", "course"],  
-        },
+          auth: {
+            strategies: ["jwt"],
+          }, },
       },
   ];
 
