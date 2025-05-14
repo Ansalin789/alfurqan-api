@@ -17,6 +17,9 @@ const register = async (server: Server): Promise<void> => {
           allow: "application/json", 
           maxBytes: 50 * 1024 * 1024, // ✅ Optional: Limit request size
         },
+        auth: {
+          strategies: ["jwt"],
+        },
       },
     },
     
@@ -27,6 +30,9 @@ const register = async (server: Server): Promise<void> => {
             handler: handler.getAllMeetings,
             description: addMeetingMessages.LIST,
             tags: ["api", "recruitment"],
+            auth: {
+              strategies: ["jwt"],
+            },
           },
         },
 
@@ -37,6 +43,9 @@ const register = async (server: Server): Promise<void> => {
             handler: handler.getMeetingRecordById,
             description: addMeetingMessages.LIST,
             tags: ["api", "recruitment"],
+            auth: {
+              strategies: ["jwt"],
+            },
           },
         },
         
@@ -53,6 +62,9 @@ const register = async (server: Server): Promise<void> => {
                   parse: true,
                   allow: "application/json", // Ensure JSON is allowed
                   maxBytes: 50 * 1024 * 1024,
+              },
+              auth: {
+                strategies: ["jwt"],
               },
           },
         }

@@ -12,7 +12,9 @@ const register = async (server: Server): Promise<void> => {
       options: {
         handler:handler.getnotificationList,  
         tags: ["api", "notification"],  
-      },
+        auth: {
+          strategies: ["jwt"],
+        }, },
     },
 
     {
@@ -22,7 +24,9 @@ const register = async (server: Server): Promise<void> => {
         handler:handler.getNotificationsHandler,
         tags: ["api", "notifications"],
         description: "Get notifications by receiverId",
-      },
+        auth: {
+          strategies: ["jwt"],
+        },  },
     },
 
     {
@@ -33,7 +37,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.updateNotificationById,
         tags: ["api", "notification"],
         description: "Update a notification's status to seen",
-      }
+        auth: {
+          strategies: ["jwt"],
+        }, }
     }
     
 

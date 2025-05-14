@@ -33,7 +33,9 @@ const register = async (server: Server): Promise<void> => {
          handler: handler.getAllClassSheduleById,
          description: ClassSchedulesMessages.BYID,
          tags: ["api", "classShedule"],
-      },
+         auth: {
+          strategies: ["jwt"],
+        }, },
       },
 
       {
@@ -43,7 +45,9 @@ const register = async (server: Server): Promise<void> => {
           handler: handler.getClassesForStudent,
           description: ClassSchedulesMessages.LIST,
           tags: ["api", "classShedule"],
-        },
+          auth: {
+            strategies: ["jwt"],
+          },  },
       },
 
       {
@@ -53,7 +57,9 @@ const register = async (server: Server): Promise<void> => {
           handler: handler.getClassesForTeacher,
           description: ClassSchedulesMessages.LIST,
           tags: ["api", "classShedule"],
-        },
+          auth: {
+            strategies: ["jwt"],
+          }, },
       },
 
       {
@@ -63,7 +69,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getTeacherStudentCount,
         description: ClassSchedulesMessages.LIST,
         tags: ["api", "classShedule"],
-        }
+        auth: {
+          strategies: ["jwt"],
+        }, }
       },
       {
         method: "PUT",
@@ -72,7 +80,9 @@ const register = async (server: Server): Promise<void> => {
          handler: handler.updateClassSheduleById,
          description: evaluationMessages.UPDATE,
          tags: ["api", "classShedule"],
-      },  
+         auth: {
+          strategies: ["jwt"],
+        }, },  
       },
 
       {
@@ -82,7 +92,9 @@ const register = async (server: Server): Promise<void> => {
          handler: handler.totalhours,
          description: evaluationMessages.GET,
          tags: ["api", "classShedule"],
-      },  
+         auth: {
+          strategies: ["jwt"],
+        }, },  
       },
       {
         method: "GET",
@@ -91,7 +103,9 @@ const register = async (server: Server): Promise<void> => {
          handler: handler.teachingActivity,
          description: evaluationMessages.GET,
          tags: ["api", "classShedule"],
-      },  
+         auth: {
+          strategies: ["jwt"],
+        },  },  
       },
       {
         method: "PUT",
@@ -100,7 +114,9 @@ const register = async (server: Server): Promise<void> => {
          handler: handler.updateteacherreschedule,
          description: evaluationMessages.UPDATE,
          tags: ["api", "classShedule"],
-      },  
+         auth: {
+          strategies: ["jwt"],
+        }, },  
       },
       {
         method: "GET",
@@ -109,7 +125,9 @@ const register = async (server: Server): Promise<void> => {
           handler: handler.getStudentClassesCount,
           description: ClassSchedulesMessages.LIST,
           tags: ["api", "classShedule"],
-        },
+          auth: {
+            strategies: ["jwt"],
+          },  },
       },
 
       {
@@ -119,7 +137,9 @@ const register = async (server: Server): Promise<void> => {
           handler: handler.getTotalClassess,
           description: ClassSchedulesMessages.LIST,
           tags: ["api", "classShedule"],
-        },
+          auth: {
+            strategies: ["jwt"],
+          }, },
       },
 
       {
@@ -129,7 +149,9 @@ const register = async (server: Server): Promise<void> => {
           handler: handler.getClassesStatusCount,
           description: ClassSchedulesMessages.LIST,
           tags: ["api", "classShedule"],
-        },
+          auth: {
+            strategies: ["jwt"],
+          }, },
       },
       {
         method: "GET",
@@ -138,7 +160,9 @@ const register = async (server: Server): Promise<void> => {
           handler: handler.getClassesWiseCount,
           description: ClassSchedulesMessages.LIST,
           tags: ["api", "classShedule"],
-        },
+          auth: {
+            strategies: ["jwt"],
+          }, },
       },
       {
         method: "GET",
@@ -147,7 +171,9 @@ const register = async (server: Server): Promise<void> => {
           handler: handler.getTeacherStudentList,
           description: ClassSchedulesMessages.LIST,
           tags: ["api", "classShedule"],
-        },
+          auth: {
+            strategies: ["jwt"],
+          }, },
       },
 
       

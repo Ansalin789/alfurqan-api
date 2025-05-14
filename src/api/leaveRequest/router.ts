@@ -11,7 +11,9 @@ const register = async (server: Server): Promise<void> => {
       options: {
         handler:handler.createLeaveRequestHandler ,  
         tags: ["api", "leaverequest"],  
-      },
+        auth: {
+          strategies: ["jwt"],
+        },  },
     },
     {
       method: "PUT",
@@ -20,7 +22,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.updateLeaveRequestHandler,
         description: leaveRequestMessages.LIST,
         tags: ["api", "LeaveSummary"],
-      },
+        auth: {
+          strategies: ["jwt"],
+        }, },
     },
     
        {
@@ -30,7 +34,9 @@ const register = async (server: Server): Promise<void> => {
               handler: handler.getleaverequestList,
               description: leaveRequestMessages.LIST,
               tags: ["api", "LeaveSummary"],
-            },
+              auth: {
+                strategies: ["jwt"],
+              },  },
          },
 
          {
@@ -40,7 +46,9 @@ const register = async (server: Server): Promise<void> => {
             handler: handler.getleaveSummaryList,
             description: leaveRequestMessages.LIST,
             tags: ["api", "LeaveSummary"],
-          },
+            auth: {
+              strategies: ["jwt"],
+            },  },
          },
 
          
@@ -52,7 +60,9 @@ const register = async (server: Server): Promise<void> => {
               description: leaveRequestMessages.LIST,
               tags: ["api", "LeaveRequest"],
           
-            },
+              auth: {
+                strategies: ["jwt"],
+              },  },
           },
 
                  
@@ -64,7 +74,9 @@ const register = async (server: Server): Promise<void> => {
               description: leaveRequestMessages.LIST,
               tags: ["api", "LeaveSummary"],
           
-            },
+              auth: {
+                strategies: ["jwt"],
+              },  },
           },
 
 

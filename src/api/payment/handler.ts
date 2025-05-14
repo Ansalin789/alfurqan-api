@@ -121,7 +121,7 @@ async function createStudentPortal(updatedEvaluation: any) {
         package: updatedEvaluation.subscription.subscriptionName,
         city: updatedEvaluation.student.studentCity,
         country: updatedEvaluation.student.studentCountry,
-        gender: "Male"
+        gender: updatedEvaluation.student.gender
       },
       username: updatedEvaluation.student.studentFirstName,
       sessionClassType: "",
@@ -139,6 +139,7 @@ async function createStudentPortal(updatedEvaluation: any) {
    
     // Validate payload
     //const classDay, startTime, endTime, startDate, endDate }  = classSchedule;
+    if(updatedEvaluation.classType == "REGULARCLASS"){
     const classDayValues = updatedEvaluation.classDay;
    const startTimeValues = updatedEvaluation.startTime;
    const endTimeValues = updatedEvaluation.endTime;
@@ -185,7 +186,7 @@ async function createStudentPortal(updatedEvaluation: any) {
               studentFirstName: studentDetails.username,
               studentLastName: studentDetails.username,
               studentEmail: studentDetails.student.studentEmail,
-              gender: "Male",
+              gender: studentDetails.student.gender,
               package: updatedEvaluation.subscription?.subscriptionName
             },
             teacher: {
@@ -228,8 +229,9 @@ async function createStudentPortal(updatedEvaluation: any) {
         results.push({ error });
       }
     }
-
+  }
     return studentPortal;
+
   } catch (error) {
     console.error("Error in createStudentPortal:", error);
     throw error;

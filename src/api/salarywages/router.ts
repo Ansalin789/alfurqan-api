@@ -14,7 +14,9 @@ const register = async (server: Server): Promise<void> => {
           handler: handler.getAllSalaryList,
           // description: userMessages.CREATE,
           tags: ["api", "expense"],
-        },
+          auth: {
+            strategies: ["jwt"],
+          }, },
       },
  
 

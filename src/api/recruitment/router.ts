@@ -21,7 +21,9 @@ const register = async (server: Server): Promise<void> => {
           multipart: true,
           allow: "multipart/form-data",
         },
-      },
+        auth: {
+          strategies: ["jwt"],
+        },},
     },
      {
           method: "GET",
@@ -30,7 +32,9 @@ const register = async (server: Server): Promise<void> => {
             handler: handler.getAllApplicants,
             description: recruitmentMessages.LIST,
             tags: ["api", "recruitment"],
-          },
+            auth: {
+              strategies: ["jwt"],
+            },  },
         },
         {
           method: "GET",
@@ -40,7 +44,9 @@ const register = async (server: Server): Promise<void> => {
             description: recruitmentMessages.LIST,
             tags: ["api", "recruitment"],
         
-          },
+            auth: {
+              strategies: ["jwt"],
+            }, },
         },
 
         {
@@ -58,7 +64,9 @@ const register = async (server: Server): Promise<void> => {
               allow: "multipart/form-data",
             },
 
-          },
+            auth: {
+              strategies: ["jwt"],
+            },  },
         },
         {
           method: "PUT",
@@ -74,9 +82,9 @@ const register = async (server: Server): Promise<void> => {
             //   multipart: true,
             //  // allow: "multipart/form-data",
             // },
-            // auth: {
-            //   strategies: ["jwt"],
-            // },
+            auth: {
+              strategies: ["jwt"],
+            },
           },
         },
         {
@@ -86,7 +94,9 @@ const register = async (server: Server): Promise<void> => {
             handler: handler.getTeacherCountriesCount,
             description: recruitmentMessages.LIST,
             tags: ["api", "recruitment"],
-          },
+            auth: {
+              strategies: ["jwt"],
+            }, },
         },
 
 ];

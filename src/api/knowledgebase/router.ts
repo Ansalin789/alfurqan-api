@@ -18,7 +18,9 @@ const register = async (server: Server): Promise<void> => {
         allow: "application/json",
         output: "data",
       },
-    },
+      auth: {
+        strategies: ["jwt"],
+      }, },
     },
     {
       method: "GET",
@@ -26,7 +28,9 @@ const register = async (server: Server): Promise<void> => {
       options: {
         handler: handler.getknowledgebaseList,
         tags: ["api", "knowledgeBase"],
-      },
+        auth: {
+          strategies: ["jwt"],
+        },},
     }
     
 

@@ -12,7 +12,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.createPackage,
         // description: userMessages.CREATE,
         tags: ["api", "package"],
-      },
+        auth: {
+          strategies: ["jwt"],
+        },  },
     },
 
     {
@@ -22,7 +24,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.updatePackageHandler,
         // description: userMessages.CREATE,
         tags: ["api", "package"],
-      },
+        auth: {
+          strategies: ["jwt"],
+        },  },
     },
 
     {
@@ -32,7 +36,9 @@ const register = async (server: Server): Promise<void> => {
           handler: handler.getAllCreatePackage,
           // description: userMessages.CREATE,
           tags: ["api", "package"],
-        },
+          auth: {
+            strategies: ["jwt"],
+          }, },
       },
  
 

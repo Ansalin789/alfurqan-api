@@ -18,6 +18,9 @@ const register = async (server: Server): Promise<void> => {
               parse: true,
               allow: "application/json", 
             },
+            auth: {
+              strategies: ["jwt"],
+            },
           },
         },
 
@@ -28,7 +31,9 @@ const register = async (server: Server): Promise<void> => {
                 handler: handler.getAllAdminMeeting,
                 description: addAminMeetingMessages.LIST,
                 tags: ["api", "adminmeeting"],
-              },
+                auth: {
+                  strategies: ["jwt"],
+                }, },
           },
 
            {
@@ -38,7 +43,9 @@ const register = async (server: Server): Promise<void> => {
                   handler: handler.getAdminMeetingRecordById,
                   description: addAminMeetingMessages.LIST,
                   tags: ["api", "adminmeeting"],
-                },
+                  auth: {
+                    strategies: ["jwt"],
+                  }, },
            },
           
           {
@@ -54,7 +61,9 @@ const register = async (server: Server): Promise<void> => {
                     allow: "application/json", // Ensure JSON is allowed
                     maxBytes: 50 * 1024 * 1024,
                 },
-            },
+                auth: {
+                  strategies: ["jwt"],
+                }, },
           }
 
 

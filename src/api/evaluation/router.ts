@@ -13,7 +13,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.createEvaluation,
         description: evaluationMessages.CREATE,
         tags: ["api", "student"],
-      },
+        auth: {
+          strategies: ["jwt"],
+        },},
     },
 
     {
@@ -23,7 +25,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getAllEvaluationList,
         description: evaluationMessages.LIST,
         tags: ["api", "evaluationlist"],
-      },
+        auth: {
+          strategies: ["jwt"],
+        },},
     },
     {
       method: "PUT",
@@ -32,7 +36,9 @@ const register = async (server: Server): Promise<void> => {
        handler: handler.updateEvaluation,
        description: evaluationMessages.UPDATE,
        tags: ["api", "evaluation"],
-    },
+       auth: {
+        strategies: ["jwt"],
+      }, },
     },
   
     {
@@ -42,7 +48,9 @@ const register = async (server: Server): Promise<void> => {
        handler: handler.updateInvoice,
        description: evaluationMessages.UPDATE,
        tags: ["api", "evaluation"],
-    },  
+       auth: {
+        strategies: ["jwt"],
+      }, },  
     },
 
     {
@@ -52,7 +60,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getEvaluationRecordById,
         description: evaluationMessages.BYID,
         tags: ["api", "evaluationlist"],
-      },
+        auth: {
+          strategies: ["jwt"],
+        },  },
     },
 
     {
@@ -62,7 +72,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getTotaltrialClassCount,
         description: evaluationMessages.BYID,
         tags: ["api", "evaluationlist"],
-      },
+        auth: {
+          strategies: ["jwt"],
+        },  },
     },
 
     {
@@ -72,7 +84,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getAssignedTeacherCount,
         description: evaluationMessages.BYID,
         tags: ["api", "evaluationlist"],
-      },
+        auth: {
+          strategies: ["jwt"],
+        },},
     },
 
      {
@@ -82,7 +96,9 @@ const register = async (server: Server): Promise<void> => {
             handler: handler.getPreferedTeacher,
             description: evaluationMessages.BYID,
             tags: ["api", "evaluationlist"],
-          },
+            auth: {
+              strategies: ["jwt"],
+            },  },
         },
          
         {
@@ -92,7 +108,9 @@ const register = async (server: Server): Promise<void> => {
             handler: handler.getStudentCourse,
             description: evaluationMessages.BYID,
             tags: ["api", "evaluationlist"],
-          },
+            auth: {
+              strategies: ["jwt"],
+            }, },
         },
         {
           method: "GET",
@@ -101,7 +119,9 @@ const register = async (server: Server): Promise<void> => {
             handler: handler.getCountries,
             description: evaluationMessages.BYID,
             tags: ["api", "evaluationlist"],
-          },
+            auth: {
+              strategies: ["jwt"],
+            },  },
         },
         {
           method: "GET",
@@ -110,7 +130,9 @@ const register = async (server: Server): Promise<void> => {
             handler: handler.getTrialbyTeacher,
             description: evaluationMessages.BYID,
             tags: ["api", "evaluationlist"],
-          },
+            auth: {
+              strategies: ["jwt"],
+            }, },
         },
         {
           method: "GET",
@@ -119,7 +141,9 @@ const register = async (server: Server): Promise<void> => {
             handler: handler.getTrialClass,
             description: evaluationMessages.BYID,
             tags: ["api", "evaluationlist"],
-          },
+            auth: {
+              strategies: ["jwt"],
+            },  },
         },
   ];
   server.route(routes);
