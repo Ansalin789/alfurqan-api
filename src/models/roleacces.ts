@@ -37,6 +37,11 @@ const roleAccess = new Schema<IAccessModel>(
           write: { type: Boolean, required: false },
           delete: { type: Boolean, required: false },
         },
+         meetings: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
         classes: {
           read: { type: Boolean, required: false },
           write: { type: Boolean, required: false },
@@ -70,22 +75,22 @@ const roleAccess = new Schema<IAccessModel>(
           write: { type: Boolean, required: false },
           delete: { type: Boolean, required: false },
         },
-        scheduledevaluation: {
+        trailmanagement: {
           read: { type: Boolean, required: false },
           write: { type: Boolean, required: false },
           delete: { type: Boolean, required: false },
         },
-        scheduledtrail: {
+        schedule: {
           read: { type: Boolean, required: false },
           write: { type: Boolean, required: false },
           delete: { type: Boolean, required: false },
         },
-        students: {
+        managestudents: {
           read: { type: Boolean, required: false },
           write: { type: Boolean, required: false },
           delete: { type: Boolean, required: false },
         },
-        teachers: {
+        manageteachers: {
           read: { type: Boolean, required: false },
           write: { type: Boolean, required: false },
           delete: { type: Boolean, required: false },
@@ -199,6 +204,11 @@ const roleAccess = new Schema<IAccessModel>(
           write: { type: Boolean, required: false },
           delete: { type: Boolean, required: false },
         },
+          messages: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
         support: {
           read: { type: Boolean, required: false },
           write: { type: Boolean, required: false },
@@ -249,6 +259,11 @@ export const zodroleAccessSchema = z.object({
         delete: z.boolean().optional(),
       }).optional(),
       courses: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+        meetings: z.object({
         read: z.boolean().optional(),
         write: z.boolean().optional(),
         delete: z.boolean().optional(),

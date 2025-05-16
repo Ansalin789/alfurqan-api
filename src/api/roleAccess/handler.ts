@@ -34,6 +34,7 @@ export default{
             evaluation: { read: rawPayload.roleAccess?.adminmodules?.evaluation?.read || false, write: rawPayload.roleAccess?.adminmodules?.evaluation?.write || false, delete: rawPayload.roleAccess?.adminmodules?.evaluation?.delete || false },
             student: { read: rawPayload.roleAccess?.adminmodules?.student?.read || false, write: rawPayload.roleAccess?.adminmodules?.student?.write || false, delete: rawPayload.roleAccess?.adminmodules?.student?.delete || false },
             employees: { read: rawPayload.roleAccess?.adminmodules?.employees?.read || false, write: rawPayload.roleAccess?.adminmodules?.employees?.write || false, delete: rawPayload.roleAccess?.adminmodules?.employees?.delete || false },
+            meetings: { read: rawPayload.roleAccess?.adminmodules?.employees?.read || false, write: rawPayload.roleAccess?.adminmodules?.employees?.write || false, delete: rawPayload.roleAccess?.adminmodules?.employees?.delete || false },
             courses: { read: rawPayload.roleAccess?.adminmodules?.courses?.read || false, write: rawPayload.roleAccess?.adminmodules?.courses?.write || false, delete: rawPayload.roleAccess?.adminmodules?.courses?.delete || false },
             classes: { read: rawPayload.roleAccess?.adminmodules?.classes?.read || false, write: rawPayload.roleAccess?.adminmodules?.classes?.write || false, delete: rawPayload.roleAccess?.adminmodules?.classes?.delete || false },
             invoice: { read: rawPayload.roleAccess?.adminmodules?.invoice?.read || false, write: rawPayload.roleAccess?.adminmodules?.invoice?.write || false, delete: rawPayload.roleAccess?.adminmodules?.invoice?.delete || false },
@@ -44,10 +45,10 @@ export default{
           academicCoach: rawPayload.roleAccess?.academicCoach || false,
           academicmodules: {
             dashboard: { read: rawPayload.roleAccess?.academicmodules?.dashboard?.read || false, write: rawPayload.roleAccess?.academicmodules?.dashboard?.write || false, delete: rawPayload.roleAccess?.academicmodules?.dashboard?.delete || false },
-            scheduledevaluation: { read: rawPayload.roleAccess?.academicmodules?.scheduledevaluation?.read || false, write: rawPayload.roleAccess?.academicmodules?.scheduledevaluation?.write || false, delete: rawPayload.roleAccess?.academicmodules?.scheduledevaluation?.delete || false },
-            scheduledtrail: { read: rawPayload.roleAccess?.academicmodules?.scheduledtrail?.read || false, write: rawPayload.roleAccess?.academicmodules?.scheduledtrail?.write || false, delete: rawPayload.roleAccess?.academicmodules?.scheduledtrail?.delete || false },
-            students: { read: rawPayload.roleAccess?.academicmodules?.students?.read || false, write: rawPayload.roleAccess?.academicmodules?.students?.write || false, delete: rawPayload.roleAccess?.academicmodules?.students?.delete || false },
-            teachers: { read: rawPayload.roleAccess?.academicmodules?.teachers?.read || false, write: rawPayload.roleAccess?.academicmodules?.teachers?.write || false, delete: rawPayload.roleAccess?.academicmodules?.teachers?.delete || false },
+            trailmanagement: { read: rawPayload.roleAccess?.academicmodules?.trailmanagement?.read || false, write: rawPayload.roleAccess?.academicmodules?.trailmanagement?.write || false, delete: rawPayload.roleAccess?.academicmodules?.trailmanagement?.delete || false },
+            schedule: { read: rawPayload.roleAccess?.academicmodules?.schedule?.read || false, write: rawPayload.roleAccess?.academicmodules?.schedule?.write || false, delete: rawPayload.roleAccess?.academicmodules?.schedule?.delete || false },
+            managestudents: { read: rawPayload.roleAccess?.academicmodules?.managestudents?.read || false, write: rawPayload.roleAccess?.academicmodules?.managestudents?.write || false, delete: rawPayload.roleAccess?.academicmodules?.managestudents?.delete || false },
+            manageteachers: { read: rawPayload.roleAccess?.academicmodules?.manageteachers?.read || false, write: rawPayload.roleAccess?.academicmodules?.manageteachers?.write || false, delete: rawPayload.roleAccess?.academicmodules?.manageteachers?.delete || false },
             messages: { read: rawPayload.roleAccess?.academicmodules?.messages?.read || false, write: rawPayload.roleAccess?.academicmodules?.messages?.write || false, delete: rawPayload.roleAccess?.academicmodules?.messages?.delete || false },
             support: { read: rawPayload.roleAccess?.academicmodules?.support?.read || false, write: rawPayload.roleAccess?.academicmodules?.support?.write || false, delete: rawPayload.roleAccess?.academicmodules?.support?.delete || false },
           },
@@ -67,7 +68,8 @@ export default{
             assignments: { read: rawPayload.roleAccess?.studentmodules?.assignments?.read || false, write: rawPayload.roleAccess?.studentmodules?.assignments?.write || false, delete: rawPayload.roleAccess?.studentmodules?.assignments?.delete || false },
             payments: { read: rawPayload.roleAccess?.studentmodules?.payments?.read || false, write: rawPayload.roleAccess?.studentmodules?.payments?.write || false, delete: rawPayload.roleAccess?.studentmodules?.payments?.delete || false },
             knowledgebase: { read: rawPayload.roleAccess?.studentmodules?.knowledgebase?.read || false, write: rawPayload.roleAccess?.studentmodules?.knowledgebase?.write || false, delete: rawPayload.roleAccess?.studentmodules?.knowledgebase?.delete || false },
-            support: { read: rawPayload.roleAccess?.studentmodules?.support?.read || false, write: rawPayload.roleAccess?.studentmodules?.support?.write || false, delete: rawPayload.roleAccess?.studentmodules?.support?.delete || false }, // typo preserved
+            messages: { read: rawPayload.roleAccess?.studentmodules?.knowledgebase?.read || false, write: rawPayload.roleAccess?.studentmodules?.knowledgebase?.write || false, delete: rawPayload.roleAccess?.studentmodules?.knowledgebase?.delete || false },
+           support: { read: rawPayload.roleAccess?.studentmodules?.support?.read || false, write: rawPayload.roleAccess?.studentmodules?.support?.write || false, delete: rawPayload.roleAccess?.studentmodules?.support?.delete || false }, // typo preserved
           },
           teacher: rawPayload.roleAccess?.teacher || false,
           teachermodules: {
