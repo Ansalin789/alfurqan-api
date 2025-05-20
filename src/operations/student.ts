@@ -207,21 +207,14 @@ function calculateHours(payload: IStudentCreate) {
   const hours = (toTime.getTime() - fromTime.getTime()) / 3600000; // Convert milliseconds to hours
   return hours;
 }
-
 function parseTimeToDate(timeString: string): Date {
-  const [time, modifier] = timeString.split(' ');
-  let [hours, minutes] = time.split(':').map(Number);
-
-  if (modifier === 'PM' && hours < 12) {
-      hours += 12; // Convert PM hours to 24-hour format
-  } else if (modifier === 'AM' && hours === 12) {
-      hours = 0; // Convert 12 AM to 0 hours
-  }
+  const [hours, minutes] = timeString.split(':').map(Number);
 
   const date = new Date();
-  date.setHours(hours, minutes, 0, 0); // Set hours, minutes, seconds, and milliseconds
+  date.setHours(hours, minutes, 0, 0); // Set hours, minutes, seconds, milliseconds
   return date;
 }
+
 
 
 async function zoomMeetingInvite(savedUser: import("mongoose").Document<unknown, {}, IStudents> & IStudents & { _id: import("mongoose").Types.ObjectId; }) {
