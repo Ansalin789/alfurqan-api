@@ -1593,6 +1593,8 @@ export interface IAccessModel {
       student?: { read?: boolean, write?: boolean, delete?: boolean },
       employees?: { read?: boolean, write?: boolean, delete?: boolean },
       courses?: { read?: boolean, write?: boolean, delete?: boolean },
+            meetings?: { read?: boolean, write?: boolean, delete?: boolean },
+
       classes?: { read?: boolean, write?: boolean, delete?: boolean },
       invoice?: { read?: boolean, write?: boolean, delete?: boolean },
       analytics?: { read?: boolean, write?: boolean, delete?: boolean },
@@ -1602,10 +1604,10 @@ export interface IAccessModel {
     academicCoach?: boolean;
     academicmodules?: {
       dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
-      scheduledevaluation?: { read?: boolean, write?: boolean, delete?: boolean },
-      scheduledtrail?: { read?: boolean, write?: boolean, delete?: boolean },
-      students?: { read?: boolean, write?: boolean, delete?: boolean },
-      teachers?: { read?: boolean, write?: boolean, delete?: boolean },
+      trailmanagement?: { read?: boolean, write?: boolean, delete?: boolean },
+      schedule?: { read?: boolean, write?: boolean, delete?: boolean },
+      managestudents?: { read?: boolean, write?: boolean, delete?: boolean },
+      manageteachers?: { read?: boolean, write?: boolean, delete?: boolean },
       messages?: { read?: boolean, write?: boolean, delete?: boolean },
       support?: { read?: boolean, write?: boolean, delete?: boolean },
     },
@@ -1625,6 +1627,7 @@ export interface IAccessModel {
       assignments?: { read: boolean, write?: boolean, delete?: boolean },
       payments?: { read?: boolean, write?: boolean, delete?: boolean },
       knowledgebase?: { read?: boolean, write?: boolean, delete?: boolean },
+      messages?: { read?: boolean, write?: boolean, delete?: boolean },
       support?: { read?: boolean, write?: boolean, delete?: boolean },
     },
     teacher?: boolean;
@@ -1657,6 +1660,7 @@ export interface IAccessModel extends Document{
       student?: { read?: boolean, write?: boolean, delete?: boolean },
       employees?: { read?: boolean, write?: boolean, delete?: boolean },
       courses?: { read?: boolean, write?: boolean, delete?: boolean },
+      meetings?: { read?: boolean, write?: boolean, delete?: boolean },
       classes?: { read?: boolean, write?: boolean, delete?: boolean },
       invoice?: { read?: boolean, write?: boolean, delete?: boolean },
       analytics?: { read?: boolean, write?: boolean, delete?: boolean },
@@ -1666,10 +1670,10 @@ export interface IAccessModel extends Document{
     academicCoach?: boolean;
     academicmodules?: {
       dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
-      scheduledevaluation?: { read?: boolean, write?: boolean, delete?: boolean },
-      scheduledtrail?: { read?: boolean, write?: boolean, delete?: boolean },
-      students?: { read?: boolean, write?: boolean, delete?: boolean },
-      teachers?: { read?: boolean, write?: boolean, delete?: boolean },
+      trailmanagement?: { read?: boolean, write?: boolean, delete?: boolean },
+      schedule?: { read?: boolean, write?: boolean, delete?: boolean },
+      managestudents?: { read?: boolean, write?: boolean, delete?: boolean },
+      manageteachers?: { read?: boolean, write?: boolean, delete?: boolean },
       messages?: { read?: boolean, write?: boolean, delete?: boolean },
       support?: { read?: boolean, write?: boolean, delete?: boolean },
     },
@@ -1688,7 +1692,9 @@ export interface IAccessModel extends Document{
       classes?: { read?: boolean, write?: boolean, delete?: boolean },
       assignments?: { read: boolean, write?: boolean, delete?: boolean },
       payments?: { read?: boolean, write?: boolean, delete?: boolean },
-      knowledgebase?: { read?: boolean, write?: boolean, delete?: boolean },
+      knowledgebase?: { read?: boolean, write?: boolean, delete?: boolean },     
+       messages?: { read?: boolean, write?: boolean, delete?: boolean },
+
       support?: { read?: boolean, write?: boolean, delete?: boolean },
     },
     teacher?: boolean;
