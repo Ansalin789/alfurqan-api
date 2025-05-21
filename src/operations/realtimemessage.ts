@@ -44,63 +44,66 @@ export const sendMessageOperation = async (
   };
 
 
-  export const getMessagesGroupedByDateTimeOperation = async (userId: string) => {
-    try {
-      
-      const pipeline: PipelineStage[] = [
-        {
-          $match: {
-            $or: [
-              { senderId: userId },
-              { receiverId: userId }
-            ]
-          }
-        },
-        {
-          $sort: { createdDate: -1 }
-        },
-        {
-          $addFields: {
-            dateOnly: {
-              $dateToString: { format: "%Y-%m-%d", date: "$createdDate" }
-            },
-            timeOnly: {
-              $dateToString: { format: "%H:%M", date: "$createdDate" }
-            }
-          }
-        },
-        {
-          $group: {
-            _id: "$dateOnly",
-            messages: {
-              $push: {
-                _id: "$_id",
-                messages: "$messages",
-                senderId: "$senderId",
-                senderName: "$senderName",
-                receiverId: "$receiverId",
-                receiverName: "$receiverName",
-                createdDate: "$createdDate",
-                time: "$timeOnly",
-                notificationStatus: "$notificationStatus",
-                isRead: "$isRead",
-                status: "$status"
-              }
-            }
-          }
-        },
-        {
-          $sort: { _id: -1 }
+  export const getMessagesGroupedByDateTimeOperation = async (
+  senderId: string,
+  receiverId: string
+) => {
+  try {
+    const pipeline: PipelineStage[] = [
+      {
+        $match: {
+          $or: [
+            { senderId: senderId, receiverId: receiverId },
+            { senderId: receiverId, receiverId: senderId }
+          ]
         }
-      ];
-      
-      const result = await realtimemessage.aggregate(pipeline);
-      return result;
-    } catch (error) {
-      console.error("[ERROR] Failed to fetch grouped messages:", error);
-      throw error;
-    }
-  };
+      },
+      {
+        $sort: { createdDate: -1 }
+      },
+      {
+        $addFields: {
+          dateOnly: {
+            $dateToString: { format: "%Y-%m-%d", date: "$createdDate" }
+          },
+          timeOnly: {
+            $dateToString: { format: "%H:%M", date: "$createdDate" }
+          }
+        }
+      },
+      {
+        $group: {
+          _id: "$dateOnly",
+          messages: {
+            $push: {
+              _id: "$_id",
+              messages: "$messages",
+              senderId: "$senderId",
+              senderName: "$senderName",
+              receiverId: "$receiverId",
+              receiverName: "$receiverName",
+              createdDate: "$createdDate",
+              time: "$timeOnly",
+              notificationStatus: "$notificationStatus",
+              isRead: "$isRead",
+              status: "$status"
+            }
+          }
+        }
+      },
+      {
+        $sort: { _id: -1 }
+      }
+    ];
+
+    const result = await realtimemessage.aggregate(pipeline);
+    return result;
+  } catch (error) {
+    console.error("[ERROR] Failed to fetch grouped messages:", error);
+    throw error;
+  }
+};
+
   
   
   
