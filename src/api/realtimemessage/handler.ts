@@ -71,9 +71,8 @@ const updateInputValidation = z.object({
 
   async getMessagesByUserHandler(request: Request, h: ResponseToolkit) {
     try {
-        const { userId } = request.params as { userId: string };
-      const messages = await getMessagesGroupedByDateTimeOperation(userId);
-  
+       const { senderId, receiverId } = request.params as { senderId: string; receiverId: string };
+      const messages = await getMessagesGroupedByDateTimeOperation(senderId, receiverId);
       return h.response({
         status: "success",
         message: "Fetched all messages",

@@ -18,7 +18,7 @@ const register = async (server: Server): Promise<void> => {
     },
     {
         method: "GET",
-        path: "/realtimemessage/{userId}",
+         path: "/realtimemessage/{senderId}/{receiverId}",
         options: {
           handler:handler.getMessagesByUserHandler,  
           tags: ["api", "realtimemessage"],  
