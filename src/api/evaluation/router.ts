@@ -60,9 +60,7 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getEvaluationRecordById,
         description: evaluationMessages.BYID,
         tags: ["api", "evaluationlist"],
-        auth: {
-          strategies: ["jwt"],
-        },  },
+         },
     },
 
     {
