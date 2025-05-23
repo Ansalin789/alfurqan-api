@@ -417,7 +417,7 @@ export interface IEvaluationCreate{
   timeZone: string;
   referralSource: ReferalResource;
   preferredDate?: Date;
-  evaluationStatus: EvaluationStatus;
+  evaluationStatus: any;
   status: Status;
   createdDate: Date;
   createdBy?: string;
@@ -1278,7 +1278,7 @@ export interface IMeeting extends Document{
   selectedDate: Date;
   startTime: any;
   endTime: any;
-  teacher:  string[];
+  teacher: ITeacher[];  // Array of teacher objects
   description: string;
   status: string;
   meetingStatus: string;

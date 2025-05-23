@@ -23,7 +23,8 @@ const register = async (server: Server): Promise<void> => {
         },
         auth: {
           strategies: ["jwt"],
-        },},
+        },
+      },
     },
      {
           method: "GET",
@@ -34,7 +35,8 @@ const register = async (server: Server): Promise<void> => {
             tags: ["api", "recruitment"],
             auth: {
               strategies: ["jwt"],
-            },  },
+            },
+            },
         },
         {
           method: "GET",
@@ -46,7 +48,8 @@ const register = async (server: Server): Promise<void> => {
         
             auth: {
               strategies: ["jwt"],
-            }, },
+            },
+           },
         },
 
         {
@@ -66,7 +69,8 @@ const register = async (server: Server): Promise<void> => {
 
             auth: {
               strategies: ["jwt"],
-            },  },
+            }, 
+           },
         },
         {
           method: "PUT",

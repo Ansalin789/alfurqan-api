@@ -17,47 +17,83 @@ export interface Dashboard {
   totalPending: number;    
 }
 
-export const dashboardWidgetCounts = async (p0: string
+export const dashboardWidgetCounts = async (academicId: string
 ): Promise<{
-    classtype: number;
+    trialAssigned: number;
     status: number;
     totalPending: number;
     totalActive: number;
   }> => {
+
+let totalPendingClasses;
+    let totaltrialpending  = await EvaluationModel.aggregate([
+  {
+    $match: {
+    academicCoachId: academicId,
+      trialClassStatus: "PENDING",
+    }
+  },
+  {
+    $group: {
+      _id: { trialClassStatus: "$trialClassStatus" },
+      count: { $sum: 1 }
+    }
+  }
+]);
+
+ let totalclasspending  = await EvaluationModel.aggregate([
+  {
+    $match: {
+      academicCoachId: academicId,
+      classStatus: "Pending"
+    }
+  },
+  {
+    $group: {
+      _id: { classStatus: "$classStatus" },
+      count: { $sum: 1 }
+    }
+  }
+]);
+
+
+if(totaltrialpending.length != 0 && totalclasspending.length !=0){
+ totalPendingClasses = totaltrialpending[0].count + totalclasspending[0].count || 0
+}
     // Execute all count queries in parallel
     const [
-      classtype,
+      trialclassAssigned,
       evaluationStatusCount,
       pendingCount,
       activeCount
     ] = await Promise.all([
       // Count candidates with meeting status
-      CalendarModel.countDocuments({
-        classType: 'Trail class'  // Changed from 'Trail class' to 'Trial class' and classtype to classType
-      }).exec(),
+   await EvaluationModel.countDocuments({
+      academicCoachId: academicId,
+      trialClassStatus: "PENDING"
+    }).exec(),
       // Count candidates with evaluation status
       EvaluationModel.countDocuments({
-        status: 'active'  // Changed to uppercase if that's how it's stored in DB
-      }).exec(),
-      // Count pending candidates from job profiling
-      StudentModel.countDocuments({
-        evaluationStatus: 'PENDING'  // adjust status as per your enum
+        academicCoachId: academicId,
+        "student.evaluationStatus": "COMPLETED"  // Changed to uppercase if that's how it's stored in DB
       }).exec(),
 
+       EvaluationModel.countDocuments({
+        academicCoachId: academicId,
+        "student.evaluationStatus": "PENDING"  // Changed to uppercase if that's how it's stored in DB
+      }).exec(),
       // Count active candidates
-      StudentModel.countDocuments({
-        status: { $in: ['ACTIVE', 'INACTIVE'] }  // Changed to uppercase if that's how it's stored in DB
-      }).exec()
+      totalPendingClasses
     ]);
-    console.log( 'meetingStatusCount',classtype);
+    console.log( 'trialclassAssigned',trialclassAssigned);
     console.log( 'evaluationStatusCount',evaluationStatusCount);
     console.log( 'pendingCount',pendingCount);
     console.log( 'activeCount',activeCount);  
     return {
-      classtype: classtype,
+      trialAssigned: trialclassAssigned,
       status: evaluationStatusCount,
       totalPending: pendingCount,
-      totalActive: 10
+      totalActive: totalPendingClasses || 0
     };
   };
 

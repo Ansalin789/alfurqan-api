@@ -126,7 +126,7 @@ const assignmentSchema = new Schema<IAssignment>(
   export const assignmentValidationSchema = z.object({
     studentId: z.string().optional(), // Make it optional if it's not always required
     assignmentName: z.string(),
-    assignedTeacher: z.string(),
+    assignedTeacher: z.string().optional(),
     assignmentType: z.object({
       type: z.enum([
         assigmentType.QUIZ, 
@@ -177,10 +177,10 @@ const assignmentSchema = new Schema<IAssignment>(
     courses: z.string(),
     assignedDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
       message: assignemntMessages.INVALID_DATE_FORMAT,
-    }).transform((val) => new Date(val)),
+    }).transform((val) => new Date(val)).optional(),
     dueDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
       message: assignemntMessages.INVALID_DATE_FORMAT,
-    }).transform((val) => new Date(val)),
+    }).transform((val) => new Date(val)).optional(),
     answer: z.string().optional(), // Make it optional if it's not always required
     answerValidation: z.string().optional(), // Make it optional if it's not always required
 
