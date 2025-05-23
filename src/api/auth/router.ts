@@ -68,9 +68,6 @@ const register = async (server: Server): Promise<void> => {
             handler: handler.getAcademicAvaialableTime,
             description: "Get available  time for academic coach",
             tags: ["api", "alstudents"],
-            auth: {
-              strategies: ["jwt"],
-            },
            },
         },
   ];
