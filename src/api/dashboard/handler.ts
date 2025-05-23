@@ -6,7 +6,7 @@ export default {
   // Get widget counts for academic coach
   async getWidgetsCount(req: Request, h: ResponseToolkit) {
     try {
-      const widgetCounts = await dashboardWidgetCounts(req.headers.ACADEMICCOACH as string);
+      const widgetCounts = await dashboardWidgetCounts(req.query.academicCoachId as string);
       return h.response(widgetCounts).code(200);
     } catch (error) {
       console.error("Error in getWidgetsCount:", error);

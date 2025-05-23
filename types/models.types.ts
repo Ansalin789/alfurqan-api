@@ -417,7 +417,7 @@ export interface IEvaluationCreate{
   timeZone: string;
   referralSource: ReferalResource;
   preferredDate?: Date;
-  evaluationStatus: EvaluationStatus;
+  evaluationStatus: any;
   status: Status;
   createdDate: Date;
   createdBy?: string;

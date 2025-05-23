@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
-import { updateUserPassword } from "../../operations/auth";
+import { getAcademicAvaialableTimeList, updateUserPassword } from "../../operations/auth";
 import {
   decryptPassword,
   generateAuthToken,
@@ -310,5 +310,20 @@ console.log(">>>>email", payload.email);
         message: 'Internal Server Error.',
       }).code(500); // 500 - Internal Server Error
     }
-  }
+  },
+
+
+//  async getAcademicAvaialableTime(req: Request, h: ResponseToolkit){
+//   const academicCoachList = await UserModel.find({ 'role': 'ACADEMICCOACH' }).exec();
+
+//    for(const availableTime of academicCoachList){
+// const shiftTime = await ShiftSchedule.find({'role': 'ACADEMICCOACH', })
+//  }
+//  }
+ async getAcademicAvaialableTime(req: Request, h: ResponseToolkit){
+  return getAcademicAvaialableTimeList(req.query.scheduleDate);
+
+ }
+
+  
 };

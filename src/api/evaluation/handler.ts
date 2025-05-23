@@ -118,7 +118,7 @@ export default {
                 timeZone: payload.student?.timeZone ?? "",
                 referralSource: payload.student?.referralSource ?? "",
                 preferredDate: payload.student?.preferredDate,
-                evaluationStatus: payload.student?.evaluationStatus ?? "defaultStatus",
+                evaluationStatus: payload.classStatus || "PENDING",
                 status: payload.student?.status ?? "defaultStatus",
                 createdDate: new Date(),
                 createdBy: payload.student?.createdBy ?? "",
