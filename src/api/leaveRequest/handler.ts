@@ -1,4 +1,4 @@
-import { Request, ResponseToolkit } from '@hapi/hapi'; 
+import { Request, ResponseObject, ResponseToolkit } from '@hapi/hapi'; 
 import { zodleaverequestSchema } from '../../models/leaverequest';
 import { z } from 'zod';
 import { createLeaveRequest, getAllLeaveList, getAllLeaveSummaryList, getLeaveRequestRecordById, getLeaveSummaryRecordById, updateLeaveRequest } from '../../operations/leaveRequest';
@@ -10,6 +10,7 @@ import { notFound } from '@hapi/boom';
 
 const createInputValidation = z.object({
   payload: zodleaverequestSchema.pick({
+    employeeId: true,
     name: true,
     fromDate: true,
     toDate: true,
@@ -25,37 +26,38 @@ const createInputValidation = z.object({
 });
 
 export default {
-    async createLeaveRequestHandler(req: Request, h: ResponseToolkit) {
-      try {
-        const result = createInputValidation.safeParse({ payload: req.payload });
+  async createLeaveRequestHandler( req: Request, h: ResponseToolkit): Promise<ResponseObject> {
+    try {
+      const result = createInputValidation.safeParse({ payload: req.payload });
   
-        if (!result.success) {
-          return h.response({ error: result.error.flatten() }).code(400);
-        }
-  
-        const { payload } = result.data;
-  
-        const leaveRequest = await createLeaveRequest(payload);
-  
-        if ('error' in leaveRequest) {
-          return h.response({ error: leaveRequest.error }).code(400);
-        }
-  
-        // Return the response with employeeId (teacher's _id) and other details
-        return h
-          .response({
-            message: 'Leave request created successfully',
-            data: {
-              ...leaveRequest, // Include all leaveRequest details
-              employeeId: leaveRequest.employeeId // Add employeeId here
-            }
-          })
-          .code(201);
-      } catch (error) {
-        return h.response({ error: error instanceof Error ? error.message : error }).code(400);
+      if (!result.success) {
+        return h.response({ error: result.error.flatten() }).code(400);
       }
-    },
-
+  
+      const { payload } = result.data;
+  
+      const leaveRequest = await createLeaveRequest(payload);
+  
+      if ('error' in leaveRequest) {
+        return h.response({ error: leaveRequest.error }).code(400);
+      }
+  
+      return h
+        .response({
+          message: 'Leave request created successfully',
+          data: {
+            ...leaveRequest,
+            employeeId: leaveRequest.employeeId,
+          },
+        })
+        .code(201);
+    } catch (error) {
+      return h
+        .response({ error: error instanceof Error ? error.message : error })
+        .code(400);
+    }
+  }
+,
 
 //summary API for Leave
 

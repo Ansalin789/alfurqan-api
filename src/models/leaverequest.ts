@@ -5,7 +5,7 @@ import { appStatus, commonMessages, leave, leaveStatus } from "../config/message
 
 const leaverequestSchema = new Schema<ILeaveRequest>(
   {
-    name: {  type: String, required: true },
+    name: {  type: String, required: false },
     employeeId: {  type: String, required: true },
     role: {  type: String, required: true },
     fromDate: { type: Date, required: true, default: Date.now },
@@ -29,7 +29,7 @@ const leaverequestSchema = new Schema<ILeaveRequest>(
 );
 
 export const zodleaverequestSchema = z.object({
-  name: z.string(),
+  name: z.string().optional(),
   employeeId: z.string(),
   role: z.string(),
   fromDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
