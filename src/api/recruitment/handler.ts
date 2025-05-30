@@ -1,10 +1,10 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodRecruitmentSchema } from "../../models/recruitment";
-import { createRecruitment, getAllApplicantsRecords, getApplicantRecordById, getTeacherCountriesCountDetails, updateApplicantByAdminId, updateApplicantById } from "../../operations/recruitment";
+import { createRecruitment, getAllApplicantsRecords, getAllTeacherRecords, getApplicantRecordById, getTeacherCountriesCountDetails, updateApplicantByAdminId, updateApplicantById } from "../../operations/recruitment";
 import { Readable } from "stream";
 import * as Stream from "stream";
-import { zodGetAllApplicantsRecordsQuerySchema, zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
+import { zodGetAllApplicantsRecordsQuerySchema, zodGetAllRecordsQuerySchema, zodGetAllTeachersRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
 import { recruitmentMessages } from "../../config/messages";
 import pdfParse from "pdf-parse";
@@ -82,13 +82,20 @@ const getApplicantsInputValidation = z.object({
   }),
 });
 
+
+const getTeacherInputValidation = z.object({
+  query: zodGetAllTeachersRecordsQuerySchema.pick({
+    teacherGroup: true,
+    supervisorId: true
+  }),
+});
+
+
 export default{
    async createRecruitement (req: Request, h: ResponseToolkit){
        const { payload } = createInputValidation.parse({
              payload: req.payload,
            });
-
-
 
            const rawPayload = req.payload as any;
     
@@ -147,12 +154,6 @@ export default{
   });
   return getAllApplicantsRecords(query);
     },
-
-
-
-
-
-
     
     async getApplicantRecordById(req: Request, h: ResponseToolkit){
       const result = await getApplicantRecordById(String(req.params.applicantId));
@@ -194,6 +195,17 @@ export default{
   
       return result;
     },
+
+  async getTeacherList (req: Request, h: ResponseToolkit){
+      const { query } = getTeacherInputValidation.parse({
+      query: {
+      ...req.query,
+      },
+  });
+  return getAllTeacherRecords(query);
+    },
+
+
 
   async getTeacherCountriesCount(req: Request, h: ResponseToolkit){
       return await getTeacherCountriesCountDetails();

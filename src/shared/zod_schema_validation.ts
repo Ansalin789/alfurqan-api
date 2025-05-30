@@ -66,3 +66,9 @@ export const zodGetAllApplicantsRecordsQuerySchema = z.object({
     .optional()
   })
  });
+
+
+export const zodGetAllTeachersRecordsQuerySchema = z.object({
+  teacherGroup : z.string().optional(),
+  supervisorId: z.string().optional()
+})

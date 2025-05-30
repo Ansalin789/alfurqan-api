@@ -107,4 +107,9 @@ export interface GetAlluserRecordsParams {
   // enddate?: string;
 }
 
+export interface GetAllTeachersRecordsParams {
+  teacherGroup?: string;
+  supervisorId?: string;
+}
+
 export default CustomEnumerator;
