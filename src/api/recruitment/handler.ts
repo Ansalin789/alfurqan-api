@@ -137,7 +137,7 @@ export default{
         preferedWorkingDays: payload.preferedWorkingDays,
         overallRating: payload.overallRating,
         professionalExperience:experience?.workExperience || " ",
-        skills:experience?.skills || " ",
+        skills:payload.skills || " ",
         status:payload.status,
         createdDate: payload.createdDate || new Date(),
         createdBy: payload.createdBy || payload.candidateFirstName,
@@ -236,9 +236,9 @@ const extractResumeDetails = async (fileStream: any) => {
     const text = data.text;
 
     
-    // Extract Skills
-    const skillsMatch = text.match(/Skills([\s\S]*?)(?=(Education|Experience|Projects|$))/i);
-    const skills = skillsMatch ? skillsMatch[1].trim() : 'Not found';
+    // // Extract Skills
+    // const skillsMatch = text.match(/Skills([\s\S]*?)(?=(Education|Experience|Projects|$))/i);
+    // const skills = skillsMatch ? skillsMatch[1].trim() : 'Not found';
 
     // Extract Work Experience
     const workExpMatch = text.match(/EXPERIENCE([\s\S]*?)(?=(Education|Skills|Projects|$))/i);
@@ -247,7 +247,6 @@ const extractResumeDetails = async (fileStream: any) => {
 
     return {
       workExperience,
-      skills,
     };
   } catch (error) {
     console.error('Error extracting resume details:', error);
