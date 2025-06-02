@@ -4,7 +4,7 @@
 import { IRecruitment, IRecruitmentCreate } from "../../types/models.types";
 import RecruitModel from "../models/recruitment"
 import { GetAllApplicationsRecordsParams, GetAllTeachersRecordsParams } from "../shared/enum";
-import { isNil } from "lodash";
+import { forEach, isNil } from "lodash";
 import { applicationStatus, commonMessages, recruitmentMessages } from "../config/messages";
 import AppLogger from "../helpers/logging";
 import { Types } from "mongoose";
@@ -308,5 +308,11 @@ const teacherQuery = await RecruitModel.find({
   ...query
 }).exec();
 
-  return  { teacherQuery };
+const teachers = teacherQuery.map((teacherDetails) => ({
+  teacherId: teacherDetails._id,
+  teacherName: `${teacherDetails.candidateFirstName} ${teacherDetails.candidateLastName}`,
+  teacherEmail: teacherDetails.candidateEmail
+}));
+
+  return  { teachers };
 };
