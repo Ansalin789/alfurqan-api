@@ -69,8 +69,15 @@ const updateInputValidation = z.object({
     }
   },
 
-  async getMessagesByUserHandler(request: Request, h: ResponseToolkit) {
+
+
+
+
+
+  
+  async getMessagesByUserHandler (request: Request, h: ResponseToolkit){
     try {
+
        const { senderId, receiverId } = request.params as { senderId: string; receiverId: string };
       const messages = await getMessagesGroupedByDateTimeOperation(senderId, receiverId);
       return h.response({
@@ -84,6 +91,9 @@ const updateInputValidation = z.object({
         message: error.message,
       }).code(500);
     }
-  }
+  },
+  
+
+  
   
 };
