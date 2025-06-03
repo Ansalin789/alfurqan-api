@@ -1,4 +1,3 @@
-
 import { Server, ServerRoute } from "@hapi/hapi";
 import handler from "./handler";
 
@@ -16,27 +15,16 @@ const register = async (server: Server): Promise<void> => {
           strategies: ["jwt"],
         }, },
     },
-    // {
-    //     method: "GET",
-    //     path: "/realtimemessage/{userId}",
-    //     options: {
-    //       handler:handler.getMessagesByUserHandler,  
-    //       tags: ["api", "realtimemessage"],  
-    //       auth: {
-    //         strategies: ["jwt"],
-    //       },  },
-    //   },
-      {
+    {
         method: "GET",
          path: "/realtimemessage/{senderId}/{receiverId}",
         options: {
-          handler: handler.getMessagesByUserHandler,
-          tags: ["api", "realtimemessage"],
-          // auth: {
-          //   strategies: ["jwt"],
-          // },
-        },
-      }
+          handler:handler.getMessagesByUserHandler,  
+          tags: ["api", "realtimemessage"],  
+          auth: {
+            strategies: ["jwt"],
+          },  },
+      },
   ];
   server.route(routes);
 };
@@ -45,4 +33,3 @@ export = {
   name: "api-realtimemessage",
   register,
 };
-
