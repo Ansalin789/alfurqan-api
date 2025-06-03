@@ -146,7 +146,7 @@ export const evaluationStatus: Record<string, any> = Object.freeze({
   export const applicationStatus: Record<string, any> = Object.freeze({
     NEWAPPLICATION:"NEWAPPLICATION",
     SHORTLISTED:"SHORTLISTED",
-    RIJECTED:"REJECTED",
+    REJECTED:"REJECTED",
     WAITING:"WAITING",
     SENDAPPROVAL: "SENDAPPROVAL",
     APPROVED: "APPROVED"

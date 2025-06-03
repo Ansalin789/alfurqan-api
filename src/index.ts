@@ -6,7 +6,8 @@ import config from "./config/env";
 import { appPlugins } from "./server/plugins";
 import { serverSettings } from "./config/config";
 import { initializeSocket } from "./shared/socket";
-import { startInvoiceConsumer } from './kafka/consumer';
+import { shutdownKafkaConsumer, startInvoiceConsumer } from './kafka/consumer';
+import { connectProducer, disconnectProducer } from "./kafka/producer";
 
 const start = async () => {
   // Create the server with server settings
@@ -22,9 +23,9 @@ const start = async () => {
 
   // Sentry Connection Establish
   //initializeSentry();
-
   // Initialize Socket.IO service
   initializeSocket(server.listener);
+   await connectProducer();
    startInvoiceConsumer();
   // Initialize and Start the Application
   await server.initialize();
@@ -40,5 +41,10 @@ process.on("unhandledRejection", (err) => {
   AppLogger.error("unhandledRejection", err);
   process.exit(1);
 });
-
+process.on('SIGINT', async () => {
+  console.log('Shutting down...');
+  await shutdownKafkaConsumer();
+  await disconnectProducer();
+  process.exit(0);
+});
 start();

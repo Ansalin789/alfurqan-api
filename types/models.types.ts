@@ -1776,6 +1776,7 @@ export interface IPackageCreate {
   updatedBy: string;
 }
 export interface ILeaveRequestCreate {
+  employeeId: string,
   name: string,
   role:string,
   fromDate: Date,
@@ -1795,7 +1796,7 @@ export interface ILeaveRequestCreate {
 
 
 export interface ILeaveRequest extends Document {
-  employeeId: any;
+  employeeId: string;
   name: string,
   role:string,
   fromDate: Date,

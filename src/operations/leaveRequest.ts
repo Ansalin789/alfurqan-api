@@ -6,15 +6,18 @@ import LeaveSummaryModel from "../models/leavesummary"
 import AppLogger from "../helpers/logging";
 
 export const createLeaveRequest = async (
-    payload: Partial<ILeaveRequestCreate> & { name: string }
+    payload: Partial<ILeaveRequestCreate> 
   ): Promise<ILeaveRequest | { error: any }> => {
     try {
       // 1. Find employee by name
-      const employee = await User.findOne({ userName: payload.name }).exec();
+      const employee = await User.findOne({ _id: new Types.ObjectId(payload.employeeId) }).exec();
+            console.log(">>>", employee);
+
       if (!employee) {
         return { error: "Employee not found with the given name." };
       }
-  
+
+
       // 2. Find admin by createdBy
       const admin = await User.findOne({
         userName: payload.createdBy,
@@ -27,6 +30,7 @@ export const createLeaveRequest = async (
       // 3. Build payload
       const fullPayload: ILeaveRequestCreate = {
         ...payload,
+        name:employee.userName,
         employeeId: employee._id.toString(),  // Save employeeId (teacher's _id)
         role: Array.isArray(employee.role) ? employee.role[0] : employee.role,
         approvedId: admin._id.toString(),

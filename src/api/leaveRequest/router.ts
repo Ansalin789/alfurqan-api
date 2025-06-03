@@ -13,7 +13,8 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "leaverequest"],  
         auth: {
           strategies: ["jwt"],
-        },  },
+        }, 
+       },
     },
     {
       method: "PUT",

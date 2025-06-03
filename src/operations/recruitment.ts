@@ -3,8 +3,8 @@
 
 import { IRecruitment, IRecruitmentCreate } from "../../types/models.types";
 import RecruitModel from "../models/recruitment"
-import { GetAllApplicationsRecordsParams } from "../shared/enum";
-import { isNil } from "lodash";
+import { GetAllApplicationsRecordsParams, GetAllTeachersRecordsParams } from "../shared/enum";
+import { forEach, isNil } from "lodash";
 import { applicationStatus, commonMessages, recruitmentMessages } from "../config/messages";
 import AppLogger from "../helpers/logging";
 import { Types } from "mongoose";
@@ -290,4 +290,29 @@ export const getTeacherCountriesCountDetails = async() =>{
   
   return { teacherCount, studentCountByCountry: results };
 
+};
+
+export const getAllTeacherRecords  = async( params: GetAllTeachersRecordsParams
+) =>{
+ const { teacherGroup, supervisorId } = params;
+
+  // Construct query object based on filters
+  const query: any = {};
+if(teacherGroup){
+  query.positionApplied = teacherGroup
+}
+
+const teacherQuery = await RecruitModel.find({
+  'supervisor.supervisorId': supervisorId,
+   applicationStatus: "APPROVED",
+  ...query
+}).exec();
+
+const teachers = teacherQuery.map((teacherDetails) => ({
+  teacherId: teacherDetails._id,
+  teacherName: `${teacherDetails.candidateFirstName} ${teacherDetails.candidateLastName}`,
+  teacherEmail: teacherDetails.candidateEmail
+}));
+
+  return  { teachers };
 };
