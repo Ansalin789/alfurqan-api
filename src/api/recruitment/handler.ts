@@ -153,10 +153,9 @@ export default{
     if ("error" in result) {
       return h.response({ message: "Recruitment creation failed", error: result.error }).code(400);
     }
-
+    const supervisorId = result.supervisor.supervisorId;
     // ✅ Only access result.supervisor if no error
-    await supervisorCardCount(result.supervisor.supervisorId);
-
+    await supervisorCardCount({supervisorId});
     return h.response(result).code(201);
 
   } catch (error) {
@@ -200,7 +199,7 @@ export default{
         return notFound(recruitmentMessages.USER_NOT_FOUND);
       }
       const supervisorId = result.supervisor.supervisorId;
-      await supervisorCardCount(supervisorId);
+      await supervisorCardCount({supervisorId});
       return result;
     },
 

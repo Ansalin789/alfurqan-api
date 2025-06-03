@@ -12,10 +12,12 @@ export const disconnectProducer = async () =>{
   console.log("producer disconnected");
 }
 
-export const sendMessage = async (topic : string , message :string) => {
+export const sendMessage = async (topic: string, message: any) => {
+  const value = JSON.stringify(message);
   await producer.send({
     topic,
-    messages : [{value : JSON.stringify(message)}]
+    messages: [{ value }],
   });
-  console.log(`topic is ${topic}`); 
-}
+  console.log(`📤 Kafka Producer Topic: ${topic}`);
+  console.log("📤 Kafka Producer Message:", message);  // This will show the object
+};

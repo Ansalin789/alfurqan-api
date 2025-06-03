@@ -11,7 +11,8 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
         emitEventToClient('revenueUpdated', latestRevenue,"6805da8c06542aa33858b889");
     },
 
-    'supervisorcardcount' : async (data :any)=>{
+    'supervisorcardcount': async (data :any)=>{
+        console.log('running supervisor card count');
        const cardcount = await dashboardWidgetSupervisorCounts(data.supervisorId);
        console.log("cardcount" ,cardcount);
        emitEventToClient('supervisordashboardcount',cardcount,data.supervisorId);
