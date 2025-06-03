@@ -8,7 +8,8 @@ import { zodGetAllApplicantsRecordsQuerySchema, zodGetAllRecordsQuerySchema, zod
 import { notFound } from "@hapi/boom";
 import { recruitmentMessages } from "../../config/messages";
 import pdfParse from "pdf-parse";
-import { isNil } from "lodash";
+import { isNil, result } from "lodash";
+import { supervisorCardCount } from "../../kafka/producers/supervisorProducer";
 
 const createInputValidation = z.object({
   payload: zodRecruitmentSchema.pick({
@@ -92,58 +93,78 @@ const getTeacherInputValidation = z.object({
 
 
 export default{
-   async createRecruitement (req: Request, h: ResponseToolkit){
-       const { payload } = createInputValidation.parse({
-             payload: req.payload,
-           });
+  async createRecruitement(req: Request, h: ResponseToolkit) {
+  try {
+    const { payload } = createInputValidation.parse({
+      payload: req.payload,
+    });
 
-           const rawPayload = req.payload as any;
-    
-           const uploadFileBuffer = rawPayload.uploadResume
-           ? await streamToBuffer(rawPayload.uploadResume)
-           : null;
-                
-           const  experience = rawPayload.uploadResume? await extractResumeDetails(uploadFileBuffer) :  null
-          //console.log("Resume",uploadFileBuffer)
+    const rawPayload = req.payload as any;
 
-           return await createRecruitment({  
-            supervisor:{
-              supervisorId: payload.supervisor?.supervisorId || " ",
-              supervisorName: payload.supervisor?.supervisorName || " ",
-              supervisorEmail: payload.supervisor?.supervisorEmail || " ",
-              supervisorRole: payload.supervisor?.supervisorRole || " "
-            }  , 
-        candidateFirstName: payload.candidateFirstName,
-        candidateLastName: payload.candidateLastName,
-        gender: payload.gender || undefined,
-        applicationDate: payload.applicationDate || new Date(),
-        candidateEmail: payload.candidateEmail,
-        candidatePhoneNumber: payload.candidatePhoneNumber,
-        candidateCountry: payload.candidateCountry,
-        candidateCity: payload.candidateCity,
-        positionApplied: payload.positionApplied ,
-        currency: payload.currency, 
-        expectedSalary: payload.expectedSalary, 
-        preferedWorkingHours: payload.preferedWorkingHours,
-        uploadResume: uploadFileBuffer ? Buffer.from(uploadFileBuffer) : undefined ,
-        comments: payload.comments || "",
-        applicationStatus: payload.applicationStatus,
-        level: payload.level, 
-        quranReading: payload.quranReading, // Provide a default value for startDate
-        tajweed: payload.tajweed, // Use a valid EvaluationStatus value
-        arabicWriting: payload.arabicWriting, // Provide a default value for status
-        arabicSpeaking: payload.arabicSpeaking,
-        englishSpeaking: payload.englishSpeaking,
-        preferedWorkingDays: payload.preferedWorkingDays,
-        overallRating: payload.overallRating,
-        professionalExperience:experience?.workExperience || " ",
-        skills:payload.skills || " ",
-        status:payload.status,
-        createdDate: payload.createdDate || new Date(),
-        createdBy: payload.createdBy || payload.candidateFirstName,
-        updatedDate: payload.updatedDate
-         }) 
-    },
+    const uploadFileBuffer = rawPayload.uploadResume
+      ? await streamToBuffer(rawPayload.uploadResume)
+      : null;
+
+    const experience = rawPayload.uploadResume
+      ? await extractResumeDetails(uploadFileBuffer)
+      : null;
+
+    const result = await createRecruitment({
+      supervisor: {
+        supervisorId: payload.supervisor?.supervisorId || "67a467bcc346aaaea402f760",
+        supervisorName: payload.supervisor?.supervisorName || " ",
+        supervisorEmail: payload.supervisor?.supervisorEmail || " ",
+        supervisorRole: payload.supervisor?.supervisorRole || " ",
+      },
+      candidateFirstName: payload.candidateFirstName,
+      candidateLastName: payload.candidateLastName,
+      gender: payload.gender || undefined,
+      applicationDate: payload.applicationDate || new Date(),
+      candidateEmail: payload.candidateEmail,
+      candidatePhoneNumber: payload.candidatePhoneNumber,
+      candidateCountry: payload.candidateCountry,
+      candidateCity: payload.candidateCity,
+      positionApplied: payload.positionApplied,
+      currency: payload.currency,
+      expectedSalary: payload.expectedSalary,
+      preferedWorkingHours: payload.preferedWorkingHours,
+      uploadResume: uploadFileBuffer
+        ? Buffer.from(uploadFileBuffer)
+        : undefined,
+      comments: payload.comments || "",
+      applicationStatus: payload.applicationStatus,
+      level: payload.level,
+      quranReading: payload.quranReading,
+      tajweed: payload.tajweed,
+      arabicWriting: payload.arabicWriting,
+      arabicSpeaking: payload.arabicSpeaking,
+      englishSpeaking: payload.englishSpeaking,
+      preferedWorkingDays: payload.preferedWorkingDays,
+      overallRating: payload.overallRating,
+      professionalExperience: experience?.workExperience || " ",
+      skills: payload.skills || " ",
+      status: payload.status,
+      createdDate: payload.createdDate || new Date(),
+      createdBy: payload.createdBy || payload.candidateFirstName,
+      updatedDate: payload.updatedDate,
+    });
+
+    // ✅ Check if result has an error before proceeding
+    if ("error" in result) {
+      return h.response({ message: "Recruitment creation failed", error: result.error }).code(400);
+    }
+
+    // ✅ Only access result.supervisor if no error
+    await supervisorCardCount(result.supervisor.supervisorId);
+
+    return h.response(result).code(201);
+
+  } catch (error) {
+    console.error("Recruitment creation error:", error);
+    return h.response({ message: "Internal Server Error", error }).code(500);
+  }
+},
+
 
     async getAllApplicants (req: Request, h: ResponseToolkit){
       const { query } = getApplicantsInputValidation.parse({
@@ -178,7 +199,8 @@ export default{
       if (isNil(result)) {
         return notFound(recruitmentMessages.USER_NOT_FOUND);
       }
-  
+      const supervisorId = result.supervisor.supervisorId;
+      await supervisorCardCount(supervisorId);
       return result;
     },
 
