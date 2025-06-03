@@ -8,6 +8,7 @@ import feedback from "../models/feedback";
 import alstudents from "../models/alstudents";
 import tenantUser from "../models/users";
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, format, eachDayOfInterval, eachMonthOfInterval } from "date-fns";
+import { Types } from "mongoose";
 
 
 export interface Dashboard {
@@ -223,10 +224,10 @@ export const dashboardWidgetSupervisorCounts = async (supervisorId: string): Pro
 }> => {
   // Fetch counts in parallel
   const [shortlisted, rejected,waiting ,totalApplication] = await Promise.all([
-    recruitment.countDocuments({ supervisorId, applicationStatus: "SHORTLISTED" }).exec(),
-    recruitment.countDocuments({ supervisorId, applicationStatus: "REJECTED" }).exec(),
-    recruitment.countDocuments({ supervisorId, applicationStatus: "WAITING" }).exec(),
-    recruitment.countDocuments({ supervisorId }).exec(),
+    recruitment.countDocuments({ 'supervisor.supervisorId': new Types.ObjectId(supervisorId), applicationStatus: "SHORTLISTED" }).exec(),
+    recruitment.countDocuments({ 'supervisor.supervisorId': new Types.ObjectId(supervisorId), applicationStatus: "REJECTED" }).exec(),
+    recruitment.countDocuments({ 'supervisor.supervisorId': new Types.ObjectId(supervisorId), applicationStatus: "WAITING" }).exec(),
+    recruitment.countDocuments({ 'supervisor.supervisorId': new Types.ObjectId(supervisorId) }).exec(),
   ]);
 
   return {
