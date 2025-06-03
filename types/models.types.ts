@@ -1195,7 +1195,14 @@ export interface IRecruitment extends Document{
   englishSpeaking?: string;
   preferedWorkingDays?: string;
   overallRating?: number;
-  professionalExperience?: string;
+ professionalExperience:{
+    jobRole?: string;
+    organizationName?: string;
+    jobLocation?: string;
+    fromDate?: Date;
+    toDate?: Date;
+    jobDescription?: string;
+  }[];
   skills?: string;
   status: string;
   createdDate: Date;
@@ -1234,7 +1241,14 @@ export interface IRecruitmentCreate{
   englishSpeaking?: string;
   preferedWorkingDays?: string;
   overallRating?: number;
-  professionalExperience?: string;
+  professionalExperience:{
+    jobRole?: string;
+    organizationName?: string;
+    jobLocation?: string;
+    fromDate?: Date;
+    toDate?: Date;
+    jobDescription?: string;
+  };
   skills?: string;
   status?: string;
   createdDate: Date;
