@@ -6,6 +6,7 @@ import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
 import { addMeetingMessages } from "../../config/messages";
 import { checkMeetingConflict, getMeetingById, mergeMeetingPayload } from "../../shared/utils/meetingUtils";
+import { supervisorAddMeeting } from "../../kafka/producers/supervisorProducer";
 
 
 const createInputValidation = z.object({
@@ -58,7 +59,10 @@ export default {
         updatedDate: payload.updatedDate || new Date(),
         meetingId: ""
       });
-
+      if(meeting){
+        await supervisorAddMeeting({event : 'create' , data : meeting});
+      }
+      
       return h.response({ message: "Meeting created successfully", data: meeting }).code(201);
     } catch (error) {
       return h.response({ error }).code(400);
