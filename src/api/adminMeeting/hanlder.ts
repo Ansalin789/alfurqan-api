@@ -119,7 +119,7 @@ async updateAdminMeetingRecordById(req: Request, h: ResponseToolkit) {
       selectedDate: new Date(selectedDate),
       startTime,
       endTime,
-      meetingStatus: meetingStatus ?? "rescheduled",
+      meetingStatus: meetingStatus ?? "Rescheduled",
       updatedBy: updatedBy ?? "admin",
       updatedDate: updatedDate ?? new Date(),
       meetingName, // Optional field

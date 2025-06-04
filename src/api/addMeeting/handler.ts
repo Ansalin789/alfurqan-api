@@ -25,7 +25,7 @@ const createInputValidation = z.object({
   }),
 });
 
- const updateMeetingInputValidation = z.object({
+const updateMeetingInputValidation = z.object({
   payload: zodAddMeetingSchema.pick({
     meetingName: true,
     selectedDate: true,
@@ -35,9 +35,10 @@ const createInputValidation = z.object({
     status: true,
     meetingStatus: true,
     updatedDate: true,
-    updatedBy:true,
-  }),
- })
+    updatedBy: true,
+  }).partial(), // <- makes all fields optional ✅
+});
+
 
 export default {
   async createMeeting(req: Request, h: ResponseToolkit) {
@@ -104,7 +105,7 @@ async updateMeetingRecordById(req: Request, h: ResponseToolkit) {
     console.log("Received Payload:", payload);
 
     // Validate and parse payload using Zod
-    const validatedPayload = updateMeetingInputValidation.parse({ payload });
+const validatedPayload = updateMeetingInputValidation.parse({ payload }); // ✅ correct
 
     // Fetch existing meeting record
     const existingMeeting = await getMeetingById(req.params.meetingId);
@@ -113,7 +114,8 @@ async updateMeetingRecordById(req: Request, h: ResponseToolkit) {
     }
 
     // Merge existing values if not provided in the payload
-    const updatedPayload = mergeMeetingPayload(validatedPayload.payload, existingMeeting);
+const updatedPayload = mergeMeetingPayload(validatedPayload.payload, existingMeeting);
+
 
     // Check if time has changed
     const isTimeChanged =
@@ -144,7 +146,7 @@ async updateMeetingRecordById(req: Request, h: ResponseToolkit) {
         return h.response({ message: "Reschedule failed: Time slot already occupied" }).code(400);
       }
 
-      updatedPayload.meetingStatus = "rescheduled";
+      updatedPayload.meetingStatus = "Rescheduled";
     }
 
     // Update meeting in the database
