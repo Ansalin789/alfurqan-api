@@ -175,7 +175,17 @@ const register = async (server: Server): Promise<void> => {
             strategies: ["jwt"],
           }, },
       },
-
+  {
+        method: "GET",
+        path: "/classstudentsattendancecounts",
+        options: {
+          handler: handler.getStudentsAttendanceCounts,
+          description: ClassSchedulesMessages.LIST,
+          tags: ["api", "classShedule"],
+          auth: {
+            strategies: ["jwt"],
+          }, },
+      },
       
     ];
     server.route(routes);
