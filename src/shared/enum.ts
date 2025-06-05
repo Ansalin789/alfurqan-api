@@ -94,9 +94,15 @@ export interface GetAllApplicationsRecordsParams {
   offset?: string | null;
   limit?: string | null;
   filterValues?: {
-    applicationStatus?: string;
+    applicationStatus?: string[];       // Array of statuses (e.g., ["Pending", "Approved"])
+    positionApplied?: string[];         // Array of positions (e.g., ["Teacher", "Admin"])
+    dateRange?: {
+      from: string;                     // Start date (e.g., "2024-01-01")
+      to: string;                       // End date (e.g., "2024-12-31")
+    };
   };
 }
+
 
 
 export interface GetAlluserRecordsParams {
