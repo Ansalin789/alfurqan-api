@@ -18,19 +18,14 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
        emitEventToClient('supervisordashboardcount',cardcount,data.supervisorId);
     },
 
-    'recruitmentlist': async({event , data} :{ event : string, data : any})=>{
+    'recruitmentlist': async(data : any)=>{
         console.log('running recruitment list');
-        if(event === 'create'){
-            console.log('create event');
-        }else if(event === 'update'){
-            console.log('update event');
-        }
-        emitEventToClient('recruitmentlist',{event,data})
+        emitEventToClient('recruitmentlist',data)
     },
 
-    'addmeeting':async({event,data} : {event : string, data : any})=>{
+    'addmeeting':async(data : any)=>{
       console.log('add meeting');
-      emitEventToClient('addmeeting',{event,data},data.supervisor.supervisorId);
+      emitEventToClient('addmeeting',data,data.supervisor.supervisorId);
     },
 
     'supervisorteacherlist' : async(data : any)=>{
