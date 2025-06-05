@@ -17,4 +17,24 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
        console.log("cardcount" ,cardcount);
        emitEventToClient('supervisordashboardcount',cardcount,data.supervisorId);
     },
+
+    'recruitmentlist': async(data : any)=>{
+        console.log('running recruitment list');
+        emitEventToClient('recruitmentlist',data)
+    },
+
+    'addmeeting':async(data : any)=>{
+      console.log('add meeting');
+      emitEventToClient('addmeeting',data,data.supervisor.supervisorId);
+    },
+
+    'supervisorteacherlist' : async(data : any)=>{
+        console.log('supervisorteacherlist');
+        emitEventToClient('supervisorteacherlist',data);
+    },
+
+    'supervisorfeedbacklist' : async (data : any) =>{
+        console.log('supervisorfeedbacklist');
+        emitEventToClient('supervisorfeedbacklist',data);
+    }
 };
