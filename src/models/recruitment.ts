@@ -81,6 +81,7 @@ comments:{
     type: String,
     required: true,
 },
+
 applicationStatus:{
     type: String,
     required: false,
@@ -117,10 +118,35 @@ overallRating:{
     type: Number,
     required: false,
 },
-professionalExperience:{
-    type: String,
-    required: false,
-},
+professionalExperience:[{
+
+    jobRole: {
+      type: String,
+      required: false, 
+    },
+    organizationName: {
+      type: String,
+      required: false,
+    },
+    jobLocation: {
+      type: String,
+      required: false,
+    },
+    fromDate: {
+      type:Date,
+      required: false,
+    },
+      toDate: {
+      type:Date,
+      required: false,
+    },
+
+    jobDescription: {
+      type: String,
+      required: false,
+    },
+}],
+
 skills:{
     type: String,
     required: false,
@@ -178,7 +204,6 @@ export const zodRecruitmentSchema = z.object({
         z.number()
       ),
       preferedWorkingHours: z.string(),
-   
       comments: z.string().optional(),
       applicationStatus: z.enum([applicationStatus.NEWAPPLICATION, applicationStatus.SHORTLISTED, applicationStatus.REJECTED, applicationStatus.WAITING, applicationStatus.SENDAPPROVAL, applicationStatus.APPROVED ]).optional(),
       level: z.string().optional(),
@@ -192,7 +217,19 @@ export const zodRecruitmentSchema = z.object({
         (val) => (typeof val === "string" ? parseInt(val, 10) : val), 
         z.number()
       ).optional(),
-      professionalExperience: z.string().optional(),
+    //   professionalExperience:z.array(z.object({
+    //     jobRole: z.string().optional(),
+    //     organizationName: z.string().optional(),
+    //     jobLocation: z.string().optional(),
+    //     fromDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    //     message: commonMessages.INVALID_DATE_FORMAT,
+    //   }).transform((val) => new Date(val)).optional(),
+    //     toDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    //     message: commonMessages.INVALID_DATE_FORMAT,
+    //   }).transform((val) => new Date(val)).optional(),
+    //     jobDescription:  z.string().optional()
+    //   })
+    // ).optional(),
       skills: z.string().optional(),
       status: z.enum([appStatus.ACTIVE, appStatus.IN_ACTIVE, appStatus.DELETED]).optional(),
       createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {

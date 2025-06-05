@@ -1,4 +1,3 @@
-
 import {getIO } from "../shared/socket";
 import { RealTimeMessage } from "../../types/models.types";
 import realtimemessage from "../models/realtimemessage";
@@ -103,7 +102,3 @@ export const sendMessageOperation = async (
     throw error;
   }
 };
-
-  
-  
-  

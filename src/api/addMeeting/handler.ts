@@ -6,6 +6,7 @@ import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
 import { addMeetingMessages } from "../../config/messages";
 import { checkMeetingConflict, getMeetingById, mergeMeetingPayload } from "../../shared/utils/meetingUtils";
+import { supervisorAddMeeting } from "../../kafka/producers/supervisorProducer";
 
 
 const createInputValidation = z.object({
@@ -24,7 +25,7 @@ const createInputValidation = z.object({
   }),
 });
 
- const updateMeetingInputValidation = z.object({
+const updateMeetingInputValidation = z.object({
   payload: zodAddMeetingSchema.pick({
     meetingName: true,
     selectedDate: true,
@@ -34,9 +35,10 @@ const createInputValidation = z.object({
     status: true,
     meetingStatus: true,
     updatedDate: true,
-    updatedBy:true,
-  }),
- })
+    updatedBy: true,
+  }).partial(), // <- makes all fields optional ✅
+});
+
 
 export default {
   async createMeeting(req: Request, h: ResponseToolkit) {
@@ -58,7 +60,10 @@ export default {
         updatedDate: payload.updatedDate || new Date(),
         meetingId: ""
       });
-
+      if(meeting){
+        await supervisorAddMeeting({event : 'create' , data : meeting});
+      }
+      
       return h.response({ message: "Meeting created successfully", data: meeting }).code(201);
     } catch (error) {
       return h.response({ error }).code(400);
@@ -100,7 +105,7 @@ async updateMeetingRecordById(req: Request, h: ResponseToolkit) {
     console.log("Received Payload:", payload);
 
     // Validate and parse payload using Zod
-    const validatedPayload = updateMeetingInputValidation.parse({ payload });
+const validatedPayload = updateMeetingInputValidation.parse({ payload }); // ✅ correct
 
     // Fetch existing meeting record
     const existingMeeting = await getMeetingById(req.params.meetingId);
@@ -109,7 +114,8 @@ async updateMeetingRecordById(req: Request, h: ResponseToolkit) {
     }
 
     // Merge existing values if not provided in the payload
-    const updatedPayload = mergeMeetingPayload(validatedPayload.payload, existingMeeting);
+const updatedPayload = mergeMeetingPayload(validatedPayload.payload, existingMeeting);
+
 
     // Check if time has changed
     const isTimeChanged =
@@ -140,7 +146,7 @@ async updateMeetingRecordById(req: Request, h: ResponseToolkit) {
         return h.response({ message: "Reschedule failed: Time slot already occupied" }).code(400);
       }
 
-      updatedPayload.meetingStatus = "rescheduled";
+      updatedPayload.meetingStatus = "Rescheduled";
     }
 
     // Update meeting in the database

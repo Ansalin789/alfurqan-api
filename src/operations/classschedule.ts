@@ -935,4 +935,103 @@ export const getClassesWiseCount = async() => {
 };
 
 
+export const getTeacherAttendanceSummary = async (
+  teacherId: string
+): Promise<{
+  totalStudents: number;
+  totalClasses: number;
+  totalAttendance: number;
+  totalWorkingHours: number;
+  overallPerformance: number;
+  students: {
+    studentId: string;
+    studentFirstname: string;
+    studentLastName: string;
+  }[];
+}> => {
+  if (!teacherId) {
+    throw new Error("Teacher ID is required");
+  }
+
+  const DEFAULT_SESSION_DURATION_MINUTES = 30;
+
+  try {
+    const classSchedules = await ClassScheduleModel.find(
+      { "teacher.teacherId": teacherId },
+      {
+        student: 1,
+        sessionStarttime: 1,
+        sessionsEndtime: 1,
+        scheduleStatus: 1
+      }
+    ).lean();
+
+    let totalWorkingMinutes = 0;
+    let totalAttendance = 0;
+
+    const students: {
+      studentId: string;
+      studentFirstname: string;
+      studentLastName: string;
+    }[] = [];
+
+    for (const cls of classSchedules) {
+      const student = cls.student;
+
+      if (student?.studentId) {
+        students.push({
+          studentId: student.studentId,
+          studentFirstname: student.studentFirstName,
+          studentLastName: student.studentLastName
+        });
+      }
+
+      if (cls.scheduleStatus === "Completed") {
+        totalAttendance++;
+
+        let sessionDuration = DEFAULT_SESSION_DURATION_MINUTES;
+
+        if (cls.sessionStarttime && cls.sessionsEndtime) {
+          const [startH, startM] = cls.sessionStarttime.replace(/[^0-9:]/g, '').split(":").map(Number);
+          const [endH, endM] = cls.sessionsEndtime.replace(/[^0-9:]/g, '').split(":").map(Number);
+
+          if (
+            !isNaN(startH) && !isNaN(startM) &&
+            !isNaN(endH) && !isNaN(endM)
+          ) {
+            const startMinutes = startH * 60 + startM;
+            const endMinutes = endH * 60 + endM;
+            const calculated = Math.max(0, endMinutes - startMinutes);
+            sessionDuration = calculated > 0 ? calculated : DEFAULT_SESSION_DURATION_MINUTES;
+          }
+        }
+
+        totalWorkingMinutes += sessionDuration;
+      }
+    }
+
+    const totalWorkingHours = parseFloat((totalWorkingMinutes / 60).toFixed(2));
+
+    // ✅ Your custom performance formula
+    const overallPerformance = parseFloat(
+      (((totalAttendance + totalWorkingHours) / 2)).toFixed(2)
+    );
+
+    return {
+      totalStudents: students.length,
+      totalClasses: classSchedules.length,
+      totalAttendance,
+      totalWorkingHours,
+      overallPerformance,
+      students
+    };
+  } catch (error) {
+    console.error("Error generating teacher summary:", error);
+    throw new Error("Failed to generate teacher attendance summary");
+  }
+};
+
+
+
+
 

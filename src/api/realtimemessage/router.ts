@@ -1,4 +1,3 @@
-
 import { Server, ServerRoute } from "@hapi/hapi";
 import handler from "./handler";
 
@@ -34,4 +33,3 @@ export = {
   name: "api-realtimemessage",
   register,
 };
-

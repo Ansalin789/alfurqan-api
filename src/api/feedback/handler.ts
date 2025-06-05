@@ -3,6 +3,7 @@ import { ResponseToolkit, Request } from "@hapi/hapi";
 import { zodFeedbackSchema } from "../../models/feedback";
 import { createFeedback, createSupervisorFeedback, createTeacherFeedback, getAllFeedbackRecords, getAllSupervisorRecords, getcreateAllTeacherFeedback } from "../../operations/feedback";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
+import { supervisorFeedBackList } from "../../kafka/producers/supervisorProducer";
 
 const createFeedbackValidation = z.object({
   payload: zodFeedbackSchema.pick({
@@ -76,9 +77,10 @@ export default {
           readingAbility: payload.teacherRatings?.readingAbility || 0,
           overallPerformance: payload.teacherRatings?.overallPerformance || 0,
         },
-      
       });
-
+      if(result){
+          await supervisorFeedBackList({result});
+        }
       return h.response({ message: "Feedback created successfully", data: result }).code(201);
     } catch (error) {
       console.error("Error creating feedback:", error);

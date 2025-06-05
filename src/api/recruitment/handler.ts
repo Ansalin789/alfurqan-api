@@ -9,7 +9,7 @@ import { notFound } from "@hapi/boom";
 import { recruitmentMessages } from "../../config/messages";
 import pdfParse from "pdf-parse";
 import { isNil, result } from "lodash";
-import { supervisorCardCount } from "../../kafka/producers/supervisorProducer";
+import { supervisorCardCount, supervisorRecruitmentList, supervisorTeacherList } from "../../kafka/producers/supervisorProducer";
 
 const createInputValidation = z.object({
   payload: zodRecruitmentSchema.pick({
@@ -36,7 +36,6 @@ const createInputValidation = z.object({
     englishSpeaking: true,
     preferedWorkingDays: true,
     overallRating: true,
-    professionalExperience: true,
     skills: true,
     status: true,
     createdDate: true,
@@ -141,7 +140,7 @@ export default{
       englishSpeaking: payload.englishSpeaking,
       preferedWorkingDays: payload.preferedWorkingDays,
       overallRating: payload.overallRating,
-      professionalExperience: experience?.workExperience || " ",
+      professionalExperience: JSON.parse(rawPayload.professionalExperience),
       skills: payload.skills || " ",
       status: payload.status,
       createdDate: payload.createdDate || new Date(),
@@ -153,9 +152,11 @@ export default{
     if ("error" in result) {
       return h.response({ message: "Recruitment creation failed", error: result.error }).code(400);
     }
-    const supervisorId = result.supervisor.supervisorId;
-    // ✅ Only access result.supervisor if no error
+    if(result){
+     const supervisorId = result.supervisor.supervisorId;
     await supervisorCardCount({supervisorId});
+    await supervisorRecruitmentList({event :"create", data : result});
+    }
     return h.response(result).code(201);
 
   } catch (error) {
@@ -198,8 +199,11 @@ export default{
       if (isNil(result)) {
         return notFound(recruitmentMessages.USER_NOT_FOUND);
       }
-      const supervisorId = result.supervisor.supervisorId;
+      if(result){
+       const supervisorId = result.supervisor.supervisorId;
       await supervisorCardCount({supervisorId});
+      await supervisorRecruitmentList({event : "update", data : result});
+      }
       return result;
     },
 
@@ -213,7 +217,9 @@ export default{
       if (isNil(result)) {
         return notFound(recruitmentMessages.USER_NOT_FOUND);
       }
-  
+      if(result){
+        await supervisorTeacherList({result});
+            }
       return result;
     },
 

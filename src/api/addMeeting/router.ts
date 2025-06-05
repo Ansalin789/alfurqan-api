@@ -43,9 +43,9 @@ const register = async (server: Server): Promise<void> => {
             handler: handler.getMeetingRecordById,
             description: addMeetingMessages.LIST,
             tags: ["api", "recruitment"],
-            auth: {
-              strategies: ["jwt"],
-            },
+            // auth: {
+            //   strategies: ["jwt"],
+            // },
           },
         },
         
@@ -63,9 +63,9 @@ const register = async (server: Server): Promise<void> => {
                   allow: "application/json", // Ensure JSON is allowed
                   maxBytes: 50 * 1024 * 1024,
               },
-              auth: {
-                strategies: ["jwt"],
-              },
+              // auth: {
+              //   strategies: ["jwt"],
+              // },
           },
         }
        
