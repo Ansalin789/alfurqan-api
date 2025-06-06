@@ -66,63 +66,99 @@ export const createRecruitment = async (  payload: IRecruitmentCreate
 export const getAllApplicantsRecords = async (
   params: GetAllApplicationsRecordsParams
 ): Promise<{ totalCount: number; applicants: IRecruitment[] }> => {
-  const { searchText,  sortBy,
-    sortOrder,offset, limit, filterValues } = params;
-
-  // Construct query object based on filters
+  const { searchText, offset, limit, filterValues } = params;
   const query: any = {};
 
+ if (searchText?.trim()) {
+  const escapedSearch = searchText.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+  const searchRegex = new RegExp(escapedSearch, 'i');
+  const isDate = !isNaN(Date.parse(searchText));
+  const orConditions: any[] = [
+    { candidateFirstName: searchRegex },
+    { candidateLastName: searchRegex },
+    { candidateEmail: searchRegex },
+    { candidateCity: searchRegex },
+    { positionApplied: searchRegex }
+  ];
 
-  // Add searchText to the query if provided
-  if (searchText) {
-    query.$or = [
-      { name: { $regex: searchText, $options: "i" } }, // Search by name
-      { email: { $regex: searchText, $options: "i" } }, // Search by email (if applicable)
-    ];
+  // Only add phone number if searchText is a number
+  if (!isNaN(Number(searchText))) {
+    orConditions.push({ candidatePhoneNumber: Number(searchText) });
   }
 
-  // Add filters to the query
-  if (filterValues) {
-    console.log("Filter Values:", filterValues); // Log filter values
-    if (filterValues.applicationStatus) {
-      query.applicationStatus = { $in: filterValues.applicationStatus }; // Filter by course
-    }
-  }
-  
-  console.log("Constructed Query:", JSON.stringify(query, null, 2)); // Log the constructed query
-
-  const sortOptions: any = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
-
-  const studentQuery = RecruitModel.find(query).sort(sortOptions);
-
-  
-  if (!isNil(offset) && !isNil(limit)) {
-    const skip = Math.max(
-      0,
-      ((Number(offset) ?? Number(commonMessages.OFFSET)) - 1) *
-      (Number(limit) ?? Number(commonMessages.LIMIT))
-    );
-    studentQuery
-      .skip(skip)
-      .limit(Number(limit) ?? Number(commonMessages.LIMIT));
+  if (isDate) {
+    const date = new Date(searchText);
+    const nextDay = new Date(date);
+    nextDay.setDate(date.getDate() + 1);
+    orConditions.push({ applicationDate: { $gte: date, $lt: nextDay } });
   }
 
-  // Use Promise.all to perform both query and count operations concurrently
+  query.$or = orConditions;
+}
+
+// --- Application Status ---
+if (filterValues?.applicationStatus) {
+  const values = Array.isArray(filterValues.applicationStatus)
+    ? filterValues.applicationStatus
+    : [filterValues.applicationStatus];
+  if (values.length > 0) {
+    query.applicationStatus = { $in: values.map(v => new RegExp(`^${v}$`, "i")) };
+  }
+}
+
+// --- Position Applied ---
+if (filterValues?.positionApplied) {
+  const values = Array.isArray(filterValues.positionApplied)
+    ? filterValues.positionApplied
+    : [filterValues.positionApplied];
+  if (values.length > 0) {
+    query.positionApplied = { $in: values.map(v => new RegExp(`^${v}$`, "i")) };
+  }
+}
+
+ // Date Range
+  if (
+    filterValues?.dateRange?.from &&
+    filterValues?.dateRange?.to &&
+    !isNaN(Date.parse(filterValues.dateRange.from)) &&
+    !isNaN(Date.parse(filterValues.dateRange.to))
+  ) {
+    const fromDate = new Date(filterValues.dateRange.from);
+    const toDate = new Date(filterValues.dateRange.to);
+    toDate.setHours(23, 59, 59, 999); // End of day
+    query.applicationDate = {
+      $gte: fromDate,
+      $lte: toDate
+    };
+  }
+
+  // --- Pagination ---
+  const safeOffset = Math.max(1, Number(offset) || 1);
+  const safeLimit = Math.max(1, Math.min(Number(limit) || 10, 100)); // Max 100/page
+  const skip = (safeOffset - 1) * safeLimit;
+
+  // --- Query Execution ---
   const [applicants, totalCount] = await Promise.all([
-    // Fetch students with pagination
-    studentQuery.exec(),
-    // Count total records for the query
-    RecruitModel.countDocuments(query).exec(),
+    RecruitModel.find(query)
+      .sort({ applicationDate: -1 })
+      .skip(skip)
+      .limit(safeLimit)
+      .lean()
+      .exec(),
+    RecruitModel.countDocuments(query).exec()
   ]);
 
-  // Log successful retrieval
-  AppLogger.info(recruitmentMessages.GET_ALL_LIST_SUCCESS, {
-    totalCount: totalCount,
-  });
-
-  // Return total count and fetched students
-  return { totalCount, applicants };
+  return {
+    totalCount,
+    applicants: applicants as IRecruitment[]
+  };
 };
+
+
+
+
+
+
 
 export const getApplicantRecordById = async (
   id: string

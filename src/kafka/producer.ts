@@ -17,11 +17,16 @@ export const disconnectProducer = async () =>{
 }
 
 export const sendMessage = async (topic: string, message: any) => {
-  const value = JSON.stringify(message);
-  await producer.send({
-    topic,
-    messages: [{ value }],
-  });
-  console.log(`📤 Kafka Producer Topic: ${topic}`);
-  console.log("📤 Kafka Producer Message:", message);  // This will show the object
+  try {
+    const value = JSON.stringify(message);
+    await producer.send({
+      topic,
+      messages: [{ value }],
+    });
+    console.log(`📤 Kafka Producer sent to topic: ${topic}`);
+    console.log("📤 Message:", message);
+  } catch (err) {
+    console.error("❌ Kafka Producer Error:", err);
+  }
 };
+

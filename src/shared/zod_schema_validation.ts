@@ -54,18 +54,38 @@ export const zodAlStudentInvoiceSchemaValidation = z.object({
 
 
 export const zodGetAllApplicantsRecordsQuerySchema = z.object({
-
   searchText: z.string().default(""),
   sortBy: z.string().default("positionApplied"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
-  offset: z.string().nullable().default(null),
-  limit: z.string().nullable().default(null),
-  filterValues : z.object({
-    // Filter for status: Array of enums, optional, with default values
-    applicationStatus: z.string()
-    .optional()
-  })
- });
+  offset: z.coerce.number().nullable().default(null),
+  limit: z.coerce.number().nullable().default(null),
+  filterValues: z
+    .object({
+      applicationStatus: z
+        .union([z.string(), z.array(z.string())])
+        .optional()
+        .transform((val) =>
+          val === undefined ? undefined : Array.isArray(val) ? val : [val]
+        ),
+      positionApplied: z
+        .union([z.string(), z.array(z.string())])
+        .optional()
+        .transform((val) =>
+          val === undefined ? undefined : Array.isArray(val) ? val : [val]
+        ),
+      dateRange: z
+        .object({
+          from: z.string().refine((date) => !isNaN(Date.parse(date)), {
+            message: "Invalid from date",
+          }),
+          to: z.string().refine((date) => !isNaN(Date.parse(date)), {
+            message: "Invalid to date",
+          }),
+        })
+        .optional(),
+    })
+    .optional(),
+});
 
 
 export const zodGetAllTeachersRecordsQuerySchema = z.object({

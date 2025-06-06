@@ -166,16 +166,62 @@ export default{
 },
 
 
-    async getAllApplicants (req: Request, h: ResponseToolkit){
-      const { query } = getApplicantsInputValidation.parse({
-      query: {
+ async getAllApplicants(req: Request, h: ResponseToolkit) {
+  // Parse filterValues from either a JSON string or flat query params
+  let filterValues: any = {};
+
+  if (typeof req.query.filterValues === "string") {
+    try {
+      filterValues = JSON.parse(req.query.filterValues);
+    } catch {
+      filterValues = {};
+    }
+  } else {
+    filterValues = {
+      applicationStatus: req.query.applicationStatus,
+      positionApplied: req.query.positionApplied,
+      dateRange:
+        req.query["dateRange.from"] && req.query["dateRange.to"]
+          ? {
+              from: req.query["dateRange.from"],
+              to: req.query["dateRange.to"],
+            }
+          : undefined,
+    };
+  }
+
+  // Build the full query object for validation
+  const input = {
+    query: {
       ...req.query,
-      filterValues: req.query?.filterValues ? JSON.parse(req.query.filterValues) : {},
-      },
-  });
-  return getAllApplicantsRecords(query);
+      filterValues,
     },
-    
+  };
+
+  // Validate and normalize query
+  const { query } = getApplicantsInputValidation.parse(input);
+
+  // ---- Fix: Convert offset and limit to string or null ----
+  const queryForService = {
+    ...query,
+    offset:
+      query.offset !== null && query.offset !== undefined
+        ? String(query.offset)
+        : null,
+    limit:
+      query.limit !== null && query.limit !== undefined
+        ? String(query.limit)
+        : null,
+  };
+
+  // Call your service function
+  return getAllApplicantsRecords(queryForService);
+}
+
+,
+
+
+
     async getApplicantRecordById(req: Request, h: ResponseToolkit){
       const result = await getApplicantRecordById(String(req.params.applicantId));
 
