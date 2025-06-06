@@ -1,4 +1,4 @@
-import { IMeeting, IMeetingCreate } from "../../types/models.types";
+import { IMeeting, IMeetingCreate, ITeacher } from "../../types/models.types";
 
 import Meeting from "../models/addmeeting";
 
@@ -19,6 +19,12 @@ export interface IMeetingUpdate{
     updatedBy?:string,
     description:string,
     }
+
+export interface IMeetingMinutesUpdate {
+  meetingminutes: string;
+  teacher: ITeacher[];  // Fix this from `string` to `ITeacher[]`
+}
+
 
 /**
  * Creates a new meeting.
@@ -46,67 +52,57 @@ export const getAllMeetingRecords = async (): Promise<{ totalCount: number; meet
 
 
 
-export const createMeeting = async (payload: IMeetingCreate): Promise<IMeeting | { error: any }> => {
-    try {
-        // Find the supervisor details from User model
-        const supervisor = await User.findOne({
-            userName: payload.createdBy,
-            role: "SUPERVISOR",
-        }).exec();
+export const createMeeting = async ( payload: IMeetingCreate): Promise<IMeeting | { error: any }> => {
+  try {
+    // Extract and sanitize supervisor fields from payload
+    const supervisor = {
+      supervisorId: payload.supervisor?.supervisorId ?? "",
+      supervisorName: payload.supervisor?.supervisorName ?? "",
+      supervisorEmail: payload.supervisor?.supervisorEmail ?? "",
+    };
 
-        console.log("Supervisor Details >>>>", supervisor);
+    // Convert selectedDate to a Date object
+    const meetingDate = new Date(payload.selectedDate);
+    const { startTime, endTime } = payload;
 
-        if (!supervisor) {
-            return { error: "No supervisor found." };
-        }
+    // Check for overlapping meeting
+    const conflictingMeeting = await Meeting.findOne({
+      selectedDate: meetingDate,
+      $or: [
+        { startTime: { $lt: endTime }, endTime: { $gt: startTime } },
+      ],
+    });
 
-        // Convert selectedDate to a Date object
-        const meetingDate = new Date(payload.selectedDate);
-        const startTime = payload.startTime;
-        const endTime = payload.endTime;
-
-        // Check for existing meetings that overlap with the new meeting
-        const conflictingMeeting = await Meeting.findOne({
-            selectedDate: meetingDate, // Ensure date format matches
-            $or: [
-                { startTime: { $lt: endTime }, endTime: { $gt: startTime } } // Overlapping time
-            ]
-        });
-
-        if (conflictingMeeting) {
-            return { error: "A meeting is already scheduled at this time. Please choose a different time slot." };
-        }
-
-        // Generate meeting name dynamically
-        const meetingNames = `weeklymeeting-${supervisor._id}`;
-        console.log("meetingNames>>>",meetingNames);
-        // Create the meeting object with supervisor details
-        let newMeeting = new Meeting({
-            ...payload,
-            supervisor: {
-                supervisorId: supervisor._id.toString(),
-                supervisorName: supervisor.userName,
-                supervisorEmail: supervisor.email,
-                supervisorRole: Array.isArray(supervisor.role) ? supervisor.role[0] : supervisor.role, // Ensure it's a string
-            },
-            meetingId: meetingNames,
-        });
-
-      
-
-        // Ensure selectedDate is in the future
-        if (newMeeting.selectedDate < new Date()) {
-            return { error: "Meeting date cannot be in the past. Please select a future date." };
-        }
-
-        // Save the new meeting
-        const savedMeeting = await newMeeting.save();
-        return savedMeeting;
-    } catch (error) {
-        console.error("Error creating meeting:", error);
-        return { error };
+    if (conflictingMeeting) {
+      return {
+        error:
+          "A meeting is already scheduled at this time. Please choose a different time slot.",
+      };
     }
+
+    // Generate meetingId
+    const meetingId = `weeklymeeting-${supervisor.supervisorId || "unknown"}`;
+
+    // Check for past date
+    if (meetingDate < new Date()) {
+      return { error: "Meeting date cannot be in the past. Please select a future date." };
+    }
+
+    // Create meeting document
+    const newMeeting = new Meeting({
+      ...payload,
+      supervisor, // ✅ Use directly from payload
+      meetingId,
+    });
+
+    const savedMeeting = await newMeeting.save();
+    return savedMeeting;
+  } catch (error) {
+    console.error("Error creating meeting:", error);
+    return { error };
+  }
 };
+
 
 
 // Auto Schedule Weekly Meeting - for ALL teachers (new, old, logged-in or not)
@@ -209,15 +205,6 @@ cron.schedule("55 23 * * *", async () => {
 
 
 
-
-
-
-
-
-
-
-//test the 
-
 //Get by ID
 
 export const getMeetingRecordById = async (
@@ -241,3 +228,28 @@ export const updateMeetingById = async (
     { new: true }
   ).lean();
 }
+
+
+//Update meeting minutes
+
+export const updateMeetingMinutesAndAttendees = async (
+  id: string,
+  meetingminutes: string,
+  teacher: ITeacher[],
+  updatedBy?: string
+): Promise<IMeetingMinutesUpdate | null> => {
+  const updated = await addmeeting.findOneAndUpdate(
+    { _id: new Types.ObjectId(id) },
+    {
+      $set: {
+        meetingminutes,
+        teacher,
+        updatedBy,
+        updatedDate: new Date(), // set server-side
+      },
+    },
+    { new: true, projection: { meetingminutes: 1, teacher: 1, _id: 0 } } // return only relevant fields
+  ).lean();
+
+  return updated;
+};
