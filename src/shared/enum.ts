@@ -62,10 +62,10 @@ export class CustomEnumerator {
 }
 
 export interface GetAllRecordsParams {
-  groupId?:string;
-  roomId?:string;
-  supervisorId?:string;
-  teacherId?:string;
+  groupId?: string;
+  roomId?: string;
+  supervisorId?: string;
+  teacherId?: string;
   studentId?: string;
   academicCoachId?: string;
   searchText?: string;
@@ -78,13 +78,16 @@ export interface GetAllRecordsParams {
   trialClassStatus?: any;
   userid?: any;
   filterValues?: {
-    studentId?: string; // This is important if you're passing the studentId here
-    course?: string;
+    studentId?: string;
+    course?: {
+      courseName?: string | string[]; // ✅ Fix: course is now an object
+    };
     country?: string;
     teacher?: string;
     status?: string;
   };
 }
+
 
 
 export interface GetAllApplicationsRecordsParams {
