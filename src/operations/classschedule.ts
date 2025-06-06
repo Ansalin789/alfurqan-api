@@ -144,29 +144,96 @@ export const getAllClassShedule = async (
   // Construct query object based on filters
   const query: any = {};
 
-  // Add searchText to the query if provided
-  if (searchText) {
-    query.$or = [
-      { name: { $regex: searchText, $options: "i" } }, // Search by name
-      { email: { $regex: searchText, $options: "i" } }, // Search by email (if applicable)
-    ];
+  if (searchText?.trim()) {
+  const escapedSearch = searchText.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+  const searchRegex = new RegExp(escapedSearch, 'i');
+  const isDate = !isNaN(Date.parse(searchText));
+  const orConditions: any[] = [
+  { "student.studentFirstName": searchRegex },
+      { "student.studentLastName": searchRegex },
+      { "student.studentEmail": searchRegex },
+      { "teacher.teacherName": searchRegex },
+      { "teacher.teacherEmail": searchRegex },
+      { "course.courseName": searchRegex },
+      { "classDay": searchRegex },
+      {"scheduleStatus": searchRegex },
+
+  ];
+
+  // Only add phone number if searchText is a number
+  if (!isNaN(Number(searchText))) {
+    orConditions.push({ candidatePhoneNumber: Number(searchText) });
   }
 
-  // Add filters to the query
-  if (filterValues) {
-    if (filterValues.course) {
-      query.course = { $in: filterValues.course }; // Filter by course
-    }
-    if (filterValues.country) {
-      query.country = { $in: filterValues.country }; // Filter by country
-    }
-    if (filterValues.teacher) {
-      query.teacher = { $in: filterValues.teacher }; // Filter by teacher IDs
-    }
-    if (filterValues.status) {
-      query.status = { $in: filterValues.status }; // Filter by status
-    }
+  if (isDate) {
+    const date = new Date(searchText);
+    const nextDay = new Date(date);
+    nextDay.setDate(date.getDate() + 1);
+    orConditions.push({ applicationDate: { $gte: date, $lt: nextDay } });
   }
+
+  query.$or = orConditions;
+}
+
+  // Add filters to the query
+if (filterValues?.course?.courseName) {
+  const values = Array.isArray(filterValues.course.courseName)
+    ? filterValues.course.courseName
+    : [filterValues.course.courseName];
+  if (values.length > 0) {
+    query["course.courseName"] = { $in: values.map(v => new RegExp(`^${v}$`, "i")) };
+  }
+}
+if (filterValues?.sessionClassType) {
+  const values = Array.isArray(filterValues.sessionClassType)
+    ? filterValues.sessionClassType
+    : [filterValues.sessionClassType];
+  if (values.length > 0) {
+    query["sessionClassType"] = { $in: values.map(v => new RegExp(`^${v}$`, "i")) };
+  }
+}
+
+// --- scheduleStatus filter ---
+if (filterValues?.scheduleStatus) {
+  const values = Array.isArray(filterValues.scheduleStatus)
+    ? filterValues.scheduleStatus
+    : [filterValues.scheduleStatus];
+  if (values.length > 0 && values[0]) {
+    query["scheduleStatus"] = { $in: values.map(v => new RegExp(`^${v}$`, "i")) };
+  }
+}
+
+// --- startTime filter ---
+if (filterValues?.startTime) {
+  const values = Array.isArray(filterValues.startTime)
+    ? filterValues.startTime
+    : [filterValues.startTime];
+  // Remove empty/undefined values
+  const cleaned = values.filter(v => typeof v === "string" && v.trim().length > 0);
+  if (cleaned.length > 0) {
+    // Use exact match (case-insensitive) for each time string
+    query["startTime"] = { $in: cleaned.map(v => new RegExp(`^${v}$`, "i")) };
+  }
+}
+
+
+
+// --- Date Range filter (use startDate) ---
+if (
+  filterValues?.dateRange?.from &&
+  filterValues?.dateRange?.to &&
+  !isNaN(Date.parse(filterValues.dateRange.from)) &&
+  !isNaN(Date.parse(filterValues.dateRange.to))
+) {
+  const fromDate = new Date(filterValues.dateRange.from);
+  const toDate = new Date(filterValues.dateRange.to);
+  toDate.setHours(23, 59, 59, 999);
+  query.startDate = { // <-- Correct field name
+    $gte: fromDate,
+    $lte: toDate
+  };
+}
+
 
   console.log("Constructed Query:", JSON.stringify(query, null, 2)); // Log the constructed query
 

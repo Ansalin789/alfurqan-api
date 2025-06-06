@@ -1260,6 +1260,7 @@ export interface ITeacher {
   teacherId: string;
   teacherName: string;
   teacherEmail: string;
+  attendee: string;
 }
 
 export interface IMeetingCreate {
@@ -1268,14 +1269,23 @@ export interface IMeetingCreate {
   selectedDate: Date;
   startTime: string;
   endTime: string;
-  teacher: ITeacher[];  // Array of teacher objects
+  teacher: ITeacher[];
+   supervisor:{
+    supervisorId?: string;
+    supervisorName?: string;
+    supervisorEmail?: string;
+   
+  };
   description: string;
+  meetingminutes: string;
   status: string;
   meetingStatus: string;
   createdDate: Date;
   createdBy: string;
   updatedDate?: Date;
   updatedBy?: string;
+
+  
 }
 
 
@@ -1296,6 +1306,7 @@ export interface IMeeting extends Document{
   description: string;
   status: string;
   meetingStatus: string;
+  meetingminutes: string;
   createdDate: Date;
   createdBy: string;
   updatedDate?: Date;

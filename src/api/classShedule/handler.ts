@@ -152,40 +152,85 @@ async getClassesForTeacher(req: Request, h: ResponseToolkit) {
 }
 ,
 
-
-
-
-
 async getAllClassShedule(req: Request, h: ResponseToolkit) {
-  try {
-    // Cast `req` to `Request` with query properties
-    const parsedQuery = getAllClassSheduleInput.parse({
-      query: {
-        ...((req as any).query), // Cast req.query to 'any' or a more specific type if needed
-        filterValues: (() => {
-          try {
-            return req.query?.filterValues
-              ? JSON.parse(req.query.filterValues as string)
-              : {};
-          } catch {
-            throw new Error("Invalid filterValues JSON format.");
-          }
-        })(),
-      },
-    });
+  let filterValues: any = {};
 
-    const query = parsedQuery.query;
+  // 1. Parse filterValues from query if present as a string
+  if (typeof req.query.filterValues === "string") {
+    try {
+      filterValues = JSON.parse(req.query.filterValues);
+    } catch {
+      filterValues = {};
+    }
+  } else {
+    filterValues = {};
 
-    // Call your service or database function to fetch data
-    const result = await getAllClassShedule(query);
+    // --- Normalize course filter ---
+    if (req.query.course) {
+      filterValues.course = {
+        courseName: Array.isArray(req.query.course)
+          ? req.query.course
+          : [req.query.course]
+      };
+    }
 
-    // Return the response
-    return h.response(result).code(200);
-  } catch (error) {
-    // Handle errors (validation or other errors)
-    return h.response({ error }).code(400);
+    // --- Normalize sessionClassType filter ---
+    if (req.query.sessionClassType) {
+      filterValues.sessionClassType = Array.isArray(req.query.sessionClassType)
+        ? req.query.sessionClassType
+        : [req.query.sessionClassType];
+    }
+
+    // --- Normalize scheduleStatus filter ---
+    if (req.query.scheduleStatus) {
+      filterValues.scheduleStatus = Array.isArray(req.query.scheduleStatus)
+        ? req.query.scheduleStatus
+        : [req.query.scheduleStatus];
+    }
+
+    // --- Normalize startTime filter ---
+    if (req.query.startTime) {
+      filterValues.startTime = Array.isArray(req.query.startTime)
+        ? req.query.startTime
+        : [req.query.startTime];
+    }
+
+    // --- Normalize dateRange filter ---
+    if (req.query["dateRange.from"] && req.query["dateRange.to"]) {
+      filterValues.dateRange = {
+        from: req.query["dateRange.from"],
+        to: req.query["dateRange.to"]
+      };
+    }
   }
+
+  // 3. Build the full query object for validation
+  const queryObj = {
+    ...req.query,
+    filterValues,
+  };
+
+  // 4. Validate the query parameters using Zod
+  const { query } = getAllClassSheduleInput.parse({ query: queryObj });
+
+  // 5. Ensure offset and limit are strings or null
+  const queryForService = {
+    ...query,
+    offset:
+      query.offset !== null && query.offset !== undefined
+        ? String(query.offset)
+        : null,
+    limit:
+      query.limit !== null && query.limit !== undefined
+        ? String(query.limit)
+        : null,
+  };
+
+  // 6. Call the service with the normalized and validated query
+  return getAllClassShedule(queryForService);
 }
+
+
 ,
 
   // Handler for getting student by ID

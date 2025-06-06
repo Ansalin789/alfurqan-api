@@ -3,14 +3,14 @@
 import { kafka } from './client';
 import { topicHandler } from './topicHandlerMap';
 
-const consumer = kafka.consumer({ groupId: 'invoice-group' });
+const consumer = kafka.consumer({ groupId: 'Alfurqan' });
 
 export const startInvoiceConsumer = async () => {
   await consumer.connect();
   console.log("kakfa consumer is connected");
 
   for(const topic of Object.keys(topicHandler)){
-    await consumer.subscribe({topic , fromBeginning : true});
+    await consumer.subscribe({topic , fromBeginning : false});
     console.log(`topic is ruunning of ${topic}`);
   }
   await consumer.run({
