@@ -10,7 +10,7 @@ export const startInvoiceConsumer = async () => {
   console.log("kakfa consumer is connected");
 
   for(const topic of Object.keys(topicHandler)){
-    await consumer.subscribe({topic , fromBeginning : false});
+    await consumer.subscribe({topic , fromBeginning : true});
     console.log(`topic is ruunning of ${topic}`);
   }
   await consumer.run({
