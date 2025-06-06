@@ -20,13 +20,23 @@ export const zodGetAllRecordsQuerySchema = z.object({
           courseName: z.union([z.string(), z.array(z.string())]).optional(),
         })
         .optional(),
-      country: z.string().optional(),
+      sessionClassType: z.union([z.string(), z.array(z.string())]).optional(),
+      scheduleStatus: z.union([z.string(), z.array(z.string())]).optional(),
+      timing: z.string().optional(), // If timing is a string, adjust as needed
       teacher: z.string().optional(),
+       startTime: z.union([z.string(), z.array(z.string())]).optional(),
       status: z.string().optional(),
+        dateRange: z
+      .object({
+        from: z.string(),
+        to: z.string(),
+      })
+      .optional(),
     })
     .optional()
     .default({}), 
 });
+
 export const zodGetAllUserRecordsQuerySchema = z.object({
   role: z.string().min(3),
   date:z.string().optional(),

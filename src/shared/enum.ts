@@ -82,9 +82,17 @@ export interface GetAllRecordsParams {
     course?: {
       courseName?: string | string[]; // ✅ Fix: course is now an object
     };
-    country?: string;
+   country?: string;
     teacher?: string;
     status?: string;
+    sessionClassType?: string | string[];
+    scheduleStatus?: string | string[];
+    startTime?: string | string[];
+    timing?: string;
+    dateRange?: {
+      from: string;
+      to: string;
+    };
   };
 }
 
