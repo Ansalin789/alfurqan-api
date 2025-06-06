@@ -1,11 +1,11 @@
 import { z } from "zod";
 
 export const zodGetAllRecordsQuerySchema = z.object({
-  courseId:z.string().optional(),
-  roomId:z.string().optional(),
-  teacherId:z.string().optional(),
-  studentId:z.string().optional(),
-  supervisorId:z.string().optional(),
+  courseId: z.string().optional(),
+  roomId: z.string().optional(),
+  teacherId: z.string().optional(),
+  studentId: z.string().optional(),
+  supervisorId: z.string().optional(),
   academicCoachId: z.string().optional(),
   searchText: z.string().default(""),
   sortBy: z.string().default("lastUpdatedDate"),
@@ -13,24 +13,20 @@ export const zodGetAllRecordsQuerySchema = z.object({
   offset: z.string().nullable().default(null),
   limit: z.string().nullable().default(null),
   trialClassStatus: z.string().optional(),
-  filterValues : z.object({
-    // Filter for courses: Array of course names or IDs, optional
-    course: z.string()
-      .optional(),
-    // Filter for countries: Array of country codes or names, optional
-    country: z.string()
-      .optional(),
-    // Filter for teachers: Array of Object IDs, optional, validated with regex
-    teacher: z.string()
-    .optional(),
-    // Filter for status: Array of enums, optional, with default values
-    status: z.string()
-    .optional(),
-    
-  })
-
- });
-
+  filterValues: z
+    .object({
+      course: z
+        .object({
+          courseName: z.union([z.string(), z.array(z.string())]).optional(),
+        })
+        .optional(),
+      country: z.string().optional(),
+      teacher: z.string().optional(),
+      status: z.string().optional(),
+    })
+    .optional()
+    .default({}), 
+});
 export const zodGetAllUserRecordsQuerySchema = z.object({
   role: z.string().min(3),
   date:z.string().optional(),
