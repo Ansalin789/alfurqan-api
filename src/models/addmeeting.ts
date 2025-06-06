@@ -118,6 +118,23 @@ export const zodAddMeetingSchema = z.object({
     .transform((val) => (val ? new Date(val) : undefined)),
 
   updatedBy: z.string().optional(),
+ filterValues: z
+    .object({
+      course: z
+        .object({
+          courseName: z.union([z.string(), z.array(z.string())]).optional(),
+        })
+        .optional(),
+      meetingStatus: z.union([z.string(), z.array(z.string())]).optional(),
+      startTime: z.union([z.string(), z.array(z.string())]).optional(),
+      dateRange: z
+        .object({
+          from: z.string().refine(val => !isNaN(Date.parse(val))),
+          to: z.string().refine(val => !isNaN(Date.parse(val)))
+        })
+        .optional(),
+    })
+    .optional(),
 });
 
 // ✅ Zod schema for updating a meeting (everything optional)

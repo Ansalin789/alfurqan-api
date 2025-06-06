@@ -24,6 +24,7 @@ export const zodGetAllRecordsQuerySchema = z.object({
       scheduleStatus: z.union([z.string(), z.array(z.string())]).optional(),
       timing: z.string().optional(), // If timing is a string, adjust as needed
       teacher: z.string().optional(),
+meetingStatus: z.union([z.string(), z.array(z.string())]).optional(),
        startTime: z.union([z.string(), z.array(z.string())]).optional(),
       status: z.string().optional(),
         dateRange: z
@@ -98,3 +99,4 @@ export const zodGetAllTeachersRecordsQuerySchema = z.object({
   teacherGroup : z.string().optional(),
   supervisorId: z.string().optional()
 })
+

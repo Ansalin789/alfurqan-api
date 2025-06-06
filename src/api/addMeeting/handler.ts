@@ -39,8 +39,18 @@ const updateMeetingInputValidation = z.object({
     meetingStatus: true,
     updatedDate: true,
     updatedBy: true,
-  }).partial(), // <- makes all fields optional ✅
+    filterValues: true,
+  })
+  .extend({
+    offset: z.string().optional().nullable(),
+    limit: z.string().optional().nullable(),
+    searchText: z.string().optional(),
+    sortBy: z.string().optional(), // Add sortBy as optional
+  })
+  .partial(),
 });
+
+ 
 
 
 export default {
@@ -97,15 +107,62 @@ async createMeeting(req: Request, h: ResponseToolkit) {
 },
 
 
-  async getAllMeetings(req: Request, h: ResponseToolkit) {
-    try {
-      const meetings = await getAllMeetingRecords();
-      return h.response({ message: "Meetings retrieved successfully", data: meetings }).code(200);
-    } catch (error) {
-      return h.response({ error }).code(500);
-    }
-  },
+async getAllMeetings(req: Request, h: ResponseToolkit) {
+  let filterValues: any = {};
 
+  // Parse filterValues if present as string
+  if (typeof req.query.filterValues === "string") {
+    try {
+      filterValues = JSON.parse(req.query.filterValues);
+    } catch {
+      filterValues = {};
+    }
+  } else {
+    filterValues = {};
+    if (req.query.meetingStatus) {
+      filterValues.meetingStatus = Array.isArray(req.query.meetingStatus)
+        ? req.query.meetingStatus
+        : [req.query.meetingStatus];
+    }
+    if (req.query.startTime) {
+      filterValues.startTime = Array.isArray(req.query.startTime)
+        ? req.query.startTime
+        : [req.query.startTime];
+    }
+    if (req.query["dateRange.from"] && req.query["dateRange.to"]) {
+      filterValues.dateRange = {
+        from: req.query["dateRange.from"],
+        to: req.query["dateRange.to"]
+      };
+    }
+    // Add more filter normalizations as needed
+  }
+
+  const queryObj = {
+    ...req.query,
+    filterValues,
+  };
+
+  const { payload } = updateMeetingInputValidation.parse({ payload: queryObj });
+
+  const queryForService = {
+    ...payload,
+    offset:
+      payload.offset !== null && payload.offset !== undefined
+        ? String(payload.offset)
+        : null,
+    limit:
+      payload.limit !== null && payload.limit !== undefined
+        ? String(payload.limit)
+        : null,
+    sortBy: payload.sortBy ?? "createdDate", // Add a default sortBy if not provided
+  };
+
+  return getAllMeetingRecords(queryForService);
+}
+
+
+,
 
   //get by ID
       async getMeetingRecordById(req: Request, h: ResponseToolkit){
