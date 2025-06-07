@@ -470,3 +470,73 @@ const teachers = teacherQuery.map((teacherDetails) => ({
 
   return  { teachers };
 };
+
+
+
+export const getTeacherListFemaleMale = async (params: GetAllTeachersRecordsParams) => {
+  const preferredTeachers = await RecruitModel.aggregate([
+    {
+      $match: {
+        status: "Active",
+      },
+    },
+    {
+      $group: {
+        _id: {
+          position: "$positionApplied",
+          gender: "$gender",         },
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const summary = {
+    total: 0,
+    subjects: {} as Record<
+      string,
+      {
+        total: number;
+        male: number;
+        female: number;
+      }
+    >,
+  };
+
+  preferredTeachers.forEach(({ _id, count }) => {
+    const position = _id.position || "Unknown";
+    const gender = _id.gender?.toLowerCase();
+
+    if (!summary.subjects[position]) {
+      summary.subjects[position] = { total: 0, male: 0, female: 0 };
+    }
+
+    summary.subjects[position].total += count;
+    summary.total += count;
+
+    if (gender === "male") summary.subjects[position].male += count;
+    else if (gender === "female") summary.subjects[position].female += count;
+  });
+
+  const subjectPercentages = Object.entries(summary.subjects).map(([subject, data]) => ({
+    subject,
+    total: data.total,
+    percentage: ((data.total / summary.total) * 100).toFixed(2),
+  }));
+
+  const genderBreakdownBySubject = Object.entries(summary.subjects).map(([subject, data]) => {
+    const total = data.total || 1;
+    return {
+      subject,
+      male: data.male,
+      female: data.female,
+      malePercentage: ((data.male / total) * 100).toFixed(2),
+      femalePercentage: ((data.female / total) * 100).toFixed(2),
+    };
+  });
+
+  return {
+    totalApplicants: summary.total,
+    subjectPercentages,
+    genderBreakdownBySubject,
+  };
+};
