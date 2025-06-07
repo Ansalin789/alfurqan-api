@@ -1,7 +1,7 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodRecruitmentSchema } from "../../models/recruitment";
-import { createRecruitment, getAllApplicantsRecords, getAllTeacherRecords, getApplicantRecordById, getTeacherCountriesCountDetails, updateApplicantByAdminId, updateApplicantById } from "../../operations/recruitment";
+import { createRecruitment, getAllApplicantsRecords, getAllTeacherRecords, getApplicantRecordById, getApplicationStatusData, getTeacherCountriesCountDetails, updateApplicantByAdminId, updateApplicantById } from "../../operations/recruitment";
 import { Readable } from "stream";
 import * as Stream from "stream";
 import { zodGetAllApplicantsRecordsQuerySchema, zodGetAllRecordsQuerySchema, zodGetAllTeachersRecordsQuerySchema } from "../../shared/zod_schema_validation";
@@ -282,7 +282,11 @@ export default{
 
   async getTeacherCountriesCount(req: Request, h: ResponseToolkit){
       return await getTeacherCountriesCountDetails();
-    }
+    },
+
+   async getApplicationData(req: Request, h: ResponseToolkit){
+     return await getApplicationStatusData(req.query.fromDate, req.query.toDate);
+   }
 
 };
 

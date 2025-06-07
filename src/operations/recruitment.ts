@@ -11,6 +11,7 @@ import { Types } from "mongoose";
 import User from "../models/users";
 import EmailTemplate from "../models/emailTemplate";
 import { sendEmailClient } from "../shared/email";
+import { eachDayOfInterval, eachMonthOfInterval, format } from "date-fns";
 
 export interface IRecruitmentUpdate{
   supervisor:{
@@ -327,6 +328,123 @@ export const getTeacherCountriesCountDetails = async() =>{
   return { teacherCount, studentCountByCountry: results };
 
 };
+
+
+// export const getApplicationStatusData = async(fromDate:  string, toDate: string): Promise<
+//   { date: string; totalApplied: number; shortlisted: number}[]
+// > => {
+//   let startDate: Date = new Date(fromDate);
+//   let endDate: Date = new Date(toDate); // Default to today
+//   let dateFormat: string;
+//   let intervalFn: (interval: { start: Date; end: Date }) => Date[];
+//   let outputFormat: string;
+
+//   // Determine start and end dates based on dateRange
+
+//       dateFormat = "%d-%m"; // MongoDB format for months
+//       intervalFn = eachMonthOfInterval;
+//       outputFormat = "dd-yyyy"; // Output format for months
+  
+//   console.log(`Fetching results from ${startDate.toISOString()} to ${endDate.toISOString()}`);
+
+//   // Aggregation query to count class statuses per date/month
+//   const result = await RecruitModel.aggregate([
+//     {
+//       $match: {
+//         status: "Active",
+//         startDate: { $gte: startDate, $lte: endDate },
+//       },
+//     },
+//     {
+//       $group: {
+//         _id: { date: { $dateToString: { format: dateFormat, date: "$startDate" } }, status: "$applicationStatus" },
+//         count: { $sum: 1 },
+//       },
+//     },
+//   ]);
+
+//   let finalResult: any;
+//     // Convert aggregation results into a structured object
+//     const groupedResults: Record<string, any> = {};
+//     result.forEach(({ _id, count }) => {
+//       const date = format(new Date(_id.date), outputFormat); // Convert to correct format safely
+//       if (!groupedResults[date]) {
+//         groupedResults[date] = {
+//           date,
+//           totalApplied: 0,
+//           shortlisted: 0,
+//         };
+//       }
+//       if (_id.status === "SHORTLISTED") groupedResults[date].shortlisted += count;
+//     });
+
+//     // Ensure all intervals are included (fill missing values with 0)
+//     const allDates = intervalFn({ start: startDate, end: endDate }).map((d) => format(d, outputFormat));
+//     finalResult = allDates.map((date) => groupedResults[date] || { date, shortlisted: 0});
+
+
+//     return finalResult;
+ 
+ 
+// };
+
+export const getApplicationStatusData = async (
+  fromDate: string,
+  toDate: string
+): Promise<{ date: string; totalApplied: number; shortlisted: number }[]> => {
+  const startDate: Date = new Date(fromDate);
+  const endDate: Date = new Date(toDate);
+  const mongoDateFormat = "%Y-%m-%d"; // Proper format for MongoDB $dateToString
+  const outputFormat = "yyyy-MM-dd"; // Output date string format for chart/display
+
+  console.log(`Fetching results from ${startDate.toISOString()} to ${endDate.toISOString()}`);
+
+  const result = await RecruitModel.aggregate([
+    {
+      $match: {
+        status: "Active",
+        applicationDate: { $gte: startDate, $lte: endDate },
+      },
+    },
+    {
+      $group: {
+        _id: {
+          date: { $dateToString: { format: mongoDateFormat, date: "$applicationDate" } },
+          status: "$applicationStatus",
+        },
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  // Organize results by date
+  const groupedResults: Record<string, { date: string; totalApplied: number; shortlisted: number }> = {};
+
+  for (const { _id, count } of result) {
+    const date = _id.date; // already formatted by MongoDB
+    if (!groupedResults[date]) {
+      groupedResults[date] = {
+        date,
+        totalApplied: 0,
+        shortlisted: 0,
+      };
+    }
+    groupedResults[date].totalApplied += count;
+    if (_id.status === "SHORTLISTED") {
+      groupedResults[date].shortlisted += count;
+    }
+  }
+
+  // Ensure all dates in range are returned
+  const allDates = eachDayOfInterval({ start: startDate, end: endDate }).map((d) => format(d, outputFormat));
+
+  const finalResult = allDates.map((date: any) =>
+    groupedResults[date] || { date, totalApplied: 0, shortlisted: 0 }
+  );
+
+  return finalResult;
+};
+
 
 export const getAllTeacherRecords  = async( params: GetAllTeachersRecordsParams
 ) =>{
