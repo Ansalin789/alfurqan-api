@@ -1,7 +1,7 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodRecruitmentSchema } from "../../models/recruitment";
-import { createRecruitment, getAllApplicantsRecords, getAllTeacherRecords, getApplicantRecordById, getApplicationStatusData, getTeacherCountriesCountDetails, updateApplicantByAdminId, updateApplicantById } from "../../operations/recruitment";
+import { createRecruitment, getAllApplicantsRecords, getAllTeacherRecords, getApplicantRecordById, getApplicationStatusData, getTeacherCountriesCountDetails, getTeacherListFemaleMale, updateApplicantByAdminId, updateApplicantById } from "../../operations/recruitment";
 import { Readable } from "stream";
 import * as Stream from "stream";
 import { zodGetAllApplicantsRecordsQuerySchema, zodGetAllRecordsQuerySchema, zodGetAllTeachersRecordsQuerySchema } from "../../shared/zod_schema_validation";
@@ -317,8 +317,13 @@ export default{
   });
   return getAllTeacherRecords(query);
     },
+    
 
-
+  async getTeacherListFemaleMale(req: Request, h: ResponseToolkit) {
+  const { query } = getTeacherInputValidation.parse({ query: req.query });
+  return await getTeacherListFemaleMale(query);
+}
+,
 
   async getTeacherCountriesCount(req: Request, h: ResponseToolkit){
       return await getTeacherCountriesCountDetails();
@@ -369,6 +374,6 @@ const extractResumeDetails = async (fileStream: any) => {
     console.error('Error extracting resume details:', error);
     throw error;
   }
-
+  
    
 };
