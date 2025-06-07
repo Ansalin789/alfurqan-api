@@ -10,6 +10,7 @@ import { recruitmentMessages } from "../../config/messages";
 import pdfParse from "pdf-parse";
 import { isNil, result } from "lodash";
 import { supervisorCardCount, supervisorRecruitmentList, supervisorTeacherList } from "../../kafka/producers/supervisorProducer";
+import { sendNotification } from "../../operations/notification";
 
 const createInputValidation = z.object({
   payload: zodRecruitmentSchema.pick({
@@ -110,7 +111,7 @@ export default{
 
     const result = await createRecruitment({
       supervisor: {
-        supervisorId: payload.supervisor?.supervisorId || "67a467bcc346aaaea402f760",
+        supervisorId: payload.supervisor?.supervisorId || " ",
         supervisorName: payload.supervisor?.supervisorName || " ",
         supervisorEmail: payload.supervisor?.supervisorEmail || " ",
         supervisorRole: payload.supervisor?.supervisorRole || " ",
@@ -263,9 +264,48 @@ export default{
       if (isNil(result)) {
         return notFound(recruitmentMessages.USER_NOT_FOUND);
       }
-      if(result){
-        await supervisorTeacherList({result});
+       if(result.applicationStatus === "APPROVED"){
+           const supervisorId = result.supervisor.supervisorId;
+          await supervisorTeacherList({data: result});
+          await supervisorCardCount({supervisorId});
+          await sendNotification({
+            messages: `Admin gaves Approval to ${result.candidateFirstName} teacher !.`,
+            senderId: req.params.id.toString(),
+            senderName: result.candidateFirstName,
+            senderEmail: result.candidateEmail,
+            isRead : false,
+            receiverId: [result.supervisor.supervisorId],
+            receiverName: [result.supervisor.supervisorName],
+            receiverEmail: [result.supervisor.supervisorEmail],
+          
+            notificationType: "TEACHER_ADDED",
+            notificationStatus: "Unseen",
+            status: "active",
+            createdBy: "system",
+            updatedBy: "system",
+          });
+          await supervisorRecruitmentList({event : "update", data : result});
+        }else {
+         const supervisorId = result.supervisor.supervisorId;
+         await supervisorCardCount({supervisorId});
+         await sendNotification({
+            messages: `Admin added ${result.candidateFirstName} teacher in your team !.`,
+            senderId: req.params.id.toString(),
+            senderName: result.candidateFirstName,
+            senderEmail: result.candidateEmail,
+            isRead : false,
+            receiverId: [result.supervisor.supervisorId],
+            receiverName: [result.supervisor.supervisorName],
+            receiverEmail: [result.supervisor.supervisorEmail],
+            notificationType: "TEACHER_ADDED",
+            notificationStatus: "Unseen",
+            status: "active",
+            createdBy: "system",
+            updatedBy: "system",
+          });
+           await supervisorRecruitmentList({event : "update", data : result});
             }
+
       return result;
     },
 
