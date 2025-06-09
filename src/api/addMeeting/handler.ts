@@ -93,7 +93,9 @@ async createMeeting(req: Request, h: ResponseToolkit) {
       createdDate: payload.createdDate || new Date(),
       createdBy: payload.createdBy,
       updatedDate: payload.updatedDate || new Date(),
-      meetingId: ""
+      meetingId: "",
+      duration: ""
+
     });
 
     if (meeting) {
