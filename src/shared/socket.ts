@@ -2,9 +2,11 @@ import { Server as SocketIOServer, Socket } from "socket.io";
 import { Server as HttpServer } from "http";
 import AppLogger from "../helpers/logging";
 
+// Map to track sockets connected per userId
+const userSocketsMap = new Map<string, Set<string>>();
+
 let ioConnection: SocketIOServer | null = null;
 
-// ✅ Initialize Socket.IO with HTTP server
 export const initializeSocket = (httpServer: HttpServer): void => {
   ioConnection = new SocketIOServer(httpServer, {
     cors: {
@@ -15,20 +17,37 @@ export const initializeSocket = (httpServer: HttpServer): void => {
 
   ioConnection.on("connection", (socket: Socket) => {
     AppLogger.info(`🔌 User connected - Socket ID: ${socket.id}`);
-  
+
     socket.on("subscribe", (userId: string) => {
+      // Add socket to room and map
       socket.join(userId);
-      AppLogger.info(`👤 User with Socket ID: ${socket.id} joined room: ${userId}`);
+
+      if (!userSocketsMap.has(userId)) {
+        userSocketsMap.set(userId, new Set());
+      }
+      userSocketsMap.get(userId)!.add(socket.id);
+
+      AppLogger.info(`👤 Socket ${socket.id} subscribed to userId: ${userId}`);
     });
-  
+
     socket.on("disconnect", () => {
-      AppLogger.info(`❌ Disconnected - Socket ID: ${socket.id}`);
+      // Remove socket from all user mappings
+      for (const [userId, socketSet] of userSocketsMap.entries()) {
+        if (socketSet.has(socket.id)) {
+          socketSet.delete(socket.id);
+          AppLogger.info(`❌ Socket ${socket.id} disconnected and removed from userId: ${userId}`);
+
+          if (socketSet.size === 0) {
+            userSocketsMap.delete(userId);
+            AppLogger.info(`🗑️ No more sockets for userId: ${userId}, cleaned up`);
+          }
+          break; // Exit after found to optimize
+        }
+      }
     });
   });
-  
 };
 
-// ✅ Safe getter for io instance (instead of exporting mutable variable)
 export const getIO = (): SocketIOServer => {
   if (!ioConnection) {
     throw new Error("Socket.IO not initialized");
@@ -36,13 +55,21 @@ export const getIO = (): SocketIOServer => {
   return ioConnection;
 };
 
-// ✅ Emit to user or globally
+// Emit event to all sockets for a given userId
 export const emitEventToClient = (event: string, data: any, userId?: string): void => {
   try {
     const io = getIO();
+
     if (userId) {
-      io.to(userId).emit(event, data);
-      AppLogger.info(`📡 Event '${event}' sent to userId: ${userId} - Data: ${JSON.stringify(data)}`);
+      const socketSet = userSocketsMap.get(userId);
+      if (socketSet && socketSet.size > 0) {
+        socketSet.forEach((socketId) => {
+          io.to(socketId).emit(event, data);
+        });
+        AppLogger.info(`📡 Event '${event}' sent to userId: ${userId} - Sockets: ${[...socketSet]} - Data: ${JSON.stringify(data)}`);
+      } else {
+        AppLogger.warn(`⚠️ No active sockets found for userId: ${userId}. Event '${event}' not sent.`);
+      }
     } else {
       io.emit(event, data);
       AppLogger.info(`📡 Global emit for event '${event}' - Data: ${JSON.stringify(data)}`);
