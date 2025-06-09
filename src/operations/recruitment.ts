@@ -133,21 +133,12 @@ if (filterValues?.positionApplied) {
     };
   }
 
-  // --- Pagination ---
-  const safeOffset = Math.max(1, Number(offset) || 1);
-  const safeLimit = Math.max(1, Math.min(Number(limit) || 10, 100)); // Max 100/page
-  const skip = (safeOffset - 1) * safeLimit;
+  const applicants = await RecruitModel.find(query)
+  .sort({ applicationDate: -1 })
+  .lean()
+  .exec();
 
-  // --- Query Execution ---
-  const [applicants, totalCount] = await Promise.all([
-    RecruitModel.find(query)
-      .sort({ applicationDate: -1 })
-      .skip(skip)
-      .limit(safeLimit)
-      .lean()
-      .exec(),
-    RecruitModel.countDocuments(query).exec()
-  ]);
+const totalCount = applicants.length;
 
   return {
     totalCount,

@@ -25,7 +25,7 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
 
     'addmeeting':async(data : any)=>{
       console.log('add meeting');
-      emitEventToClient('addmeeting',data,data.supervisor.supervisorId);
+      emitEventToClient('addmeeting',data,data.data.supervisor.supervisorId);
     },
 
     'supervisorteacherlist' : async(data : any)=>{
