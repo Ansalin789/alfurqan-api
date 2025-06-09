@@ -258,6 +258,8 @@ async updateMeetingMinutesRecordById(req: Request, h: ResponseToolkit) {
 
     const meetingId = req.params.meetingbyId;
     const payload = req.payload as {
+      duration: string;
+      meetingStatus: string;
       meetingminutes: string;
       teacher: ITeacher[];
       updatedBy?: string;
@@ -270,6 +272,8 @@ async updateMeetingMinutesRecordById(req: Request, h: ResponseToolkit) {
     const result = await updateMeetingMinutesAndAttendees(
       meetingId,
       payload.meetingminutes,
+      payload.duration,
+      payload.meetingStatus,
       payload.teacher,
       payload.updatedBy
     );

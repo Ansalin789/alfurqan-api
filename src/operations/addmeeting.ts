@@ -20,6 +20,7 @@ export interface IMeetingUpdate{
     }
 
 export interface IMeetingMinutesUpdate {
+  meetingStatus: string;
   duration: string;
   meetingminutes: string;
   teacher: ITeacher[];  // Fix this from `string` to `ITeacher[]`
@@ -156,7 +157,7 @@ export const createMeeting = async ( payload: IMeetingCreate): Promise<IMeeting 
     }
 
     // Generate meetingId
-    const meetingId = `weeklymeeting-${supervisor.supervisorId || "unknown"}`;
+    const meetingId = `teacher-${supervisor.supervisorId || "unknown"}`;
 
     // Check for past date
     if (meetingDate < new Date()) {
@@ -310,6 +311,7 @@ export const updateMeetingById = async (
 export const updateMeetingMinutesAndAttendees = async (
   id: string,
   meetingminutes: string,
+  meetingStatus: string,
   duration: string,
   teacher: ITeacher[],
   updatedBy?: string
@@ -320,6 +322,7 @@ export const updateMeetingMinutesAndAttendees = async (
       $set: {
         duration,
         meetingminutes,
+        meetingStatus,
         teacher,
         updatedBy,
         updatedDate: new Date(), // set server-side
