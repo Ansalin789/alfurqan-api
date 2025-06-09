@@ -20,6 +20,7 @@ export interface IMeetingUpdate{
     }
 
 export interface IMeetingMinutesUpdate {
+  duration: string;
   meetingminutes: string;
   teacher: ITeacher[];  // Fix this from `string` to `ITeacher[]`
 }
@@ -309,6 +310,7 @@ export const updateMeetingById = async (
 export const updateMeetingMinutesAndAttendees = async (
   id: string,
   meetingminutes: string,
+  duration: string,
   teacher: ITeacher[],
   updatedBy?: string
 ): Promise<IMeetingMinutesUpdate | null> => {
@@ -316,6 +318,7 @@ export const updateMeetingMinutesAndAttendees = async (
     { _id: new Types.ObjectId(id) },
     {
       $set: {
+        duration,
         meetingminutes,
         teacher,
         updatedBy,
