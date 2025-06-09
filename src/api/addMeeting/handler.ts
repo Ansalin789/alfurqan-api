@@ -24,6 +24,7 @@ const createInputValidation = z.object({
     meetingminutes: true,
     createdDate: true,
     createdBy: true,
+    duartion:true,
     updatedDate: true,
   }),
 });
@@ -94,12 +95,12 @@ async createMeeting(req: Request, h: ResponseToolkit) {
       createdBy: payload.createdBy,
       updatedDate: payload.updatedDate || new Date(),
       meetingId: "",
-      duration: ""
+      duration: payload.duartion || "",
 
     });
 
     if (meeting) {
-      await supervisorAddMeeting({ event: "create", data: meeting });
+     await supervisorAddMeeting({data: meeting });
     }
 
     return h.response({ message: "Meeting created successfully", data: meeting }).code(201);

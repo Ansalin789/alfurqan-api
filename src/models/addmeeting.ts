@@ -34,7 +34,7 @@ const addMeetingSchema = new Schema<IMeeting>(
     description: { type: String, required: true },
     meetingStatus: { type: String, required: true },
     meetingminutes: { type: String, required: true },
-    duration: { type: String, required: true },
+    duration: { type: String, required: false },
     status: {
       type: String,
       required: false,
@@ -56,7 +56,7 @@ const addMeetingSchema = new Schema<IMeeting>(
 export const zodAddMeetingSchema = z.object({
   meetingName: z.string(),
   meetingId: z.string().optional(),
-
+  duartion: z.string().optional(),
   supervisor: z
     .object({
       supervisorId: z.string().optional(),
@@ -126,7 +126,7 @@ export const zodAddMeetingSchema = z.object({
         })
         .optional(),
       meetingStatus: z.union([z.string(), z.array(z.string())]).optional(),
-      duartion: z.union([z.string(), z.array(z.string())]).optional(),
+   
       startTime: z.union([z.string(), z.array(z.string())]).optional(),
       dateRange: z
         .object({
