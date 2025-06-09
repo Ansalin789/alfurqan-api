@@ -220,7 +220,11 @@ export const dashboardWidgetSupervisorCounts = async (supervisorId: string): Pro
   totalApplication: number;
   shortlisted: number;
   rejected: number;
-  waiting:number
+  waiting:number;
+  shortlistedPercentage: number;
+  rejectedPercentage: number;
+  waitingPercentage:number
+
 }> => {
   // Fetch counts in parallel
   const [shortlisted, rejected,waiting ,totalApplication] = await Promise.all([
@@ -240,6 +244,9 @@ export const dashboardWidgetSupervisorCounts = async (supervisorId: string): Pro
     shortlisted,
     rejected,
     waiting,
+    shortlistedPercentage,
+    rejectedPercentage,
+    waitingPercentage
   };
 };
 
