@@ -114,12 +114,7 @@ export const getAllMeetingRecords = async (
     }
 
     // --- MongoDB Query Execution with Pagination ---
-    const skip = offset && limit ? (Number(offset) - 1) * Number(limit) : 0;
-    const meetings = await Meeting.find(query)
-      .sort({ createdDate: -1 })
-      .skip(skip)
-      .limit(limit ? Number(limit) : 0);
-
+     const meetings = await Meeting.find(query).sort({ createdDate: -1 });
     const totalCount = await Meeting.countDocuments(query);
 
     return { totalCount, meetings };

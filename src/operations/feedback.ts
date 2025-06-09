@@ -274,8 +274,6 @@ export const getAllFeedbackRecords = async (
     searchText,
     sortBy,
     sortOrder,
-    offset,
-    limit,
     filterValues = {} // ✅ fix #1
   } = params;
 
@@ -322,13 +320,6 @@ if (filterValues?.course?.courseName) {
 
   const feedbackQuery = feedback.find(query).sort(sortOptions);
 
-  if (offset !== undefined && limit !== undefined) {
-    const skip = Math.max(
-      0,
-      ((Number(offset) ?? 0) - 1) * (Number(limit) ?? 10)
-    );
-    feedbackQuery.skip(skip).limit(Number(limit) ?? 10);
-  }
 
   const [feedbackRecords, totalCount] = await Promise.all([
     feedbackQuery.exec(),
