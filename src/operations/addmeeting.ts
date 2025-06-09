@@ -1,10 +1,9 @@
 import { IMeeting, IMeetingCreate, ITeacher } from "../../types/models.types";
 
 import Meeting from "../models/addmeeting";
-
 import User from "../models/users";
 import cron from "node-cron";
-
+import { GetAllRecordsParams } from "../shared/enum";
 import { Types } from "mongoose";
 const addmeeting = Meeting;
 
@@ -21,6 +20,8 @@ export interface IMeetingUpdate{
     }
 
 export interface IMeetingMinutesUpdate {
+  meetingStatus: string;
+  duration: string;
   meetingminutes: string;
   teacher: ITeacher[];  // Fix this from `string` to `ITeacher[]`
 }
@@ -38,10 +39,85 @@ export interface IMeetingMinutesUpdate {
 /**
  * Retrieves all meeting records with optional filters.
  */
-export const getAllMeetingRecords = async (): Promise<{ totalCount: number; meetings: IMeeting[] }> => {
+
+export const getAllMeetingRecords = async (
+  params: GetAllRecordsParams
+): Promise<{ totalCount: number; meetings: IMeeting[] }> => {
   try {
-    const meetings = await Meeting.find().sort({ createdDate: -1 });
-    const totalCount = await Meeting.countDocuments();
+    const { searchText, filterValues = {}, offset, limit } = params;
+    const query: any = {};
+
+    // --- Search Text Handling ---
+    if (searchText?.trim()) {
+      const escapedSearch = searchText.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const searchRegex = new RegExp(escapedSearch, 'i');
+      const isDate = !isNaN(Date.parse(searchText));
+      const orConditions: any[] = [
+        { "student.studentFirstName": searchRegex },
+        { "student.studentLastName": searchRegex },
+        { "student.studentEmail": searchRegex },
+        { "teacher.teacherName": searchRegex },
+        { "teacher.teacherEmail": searchRegex },
+        { "course.courseName": searchRegex },
+        { "classDay": searchRegex },
+        { "meetingStatus": searchRegex },
+      ];
+
+      if (!isNaN(Number(searchText))) {
+        orConditions.push({ candidatePhoneNumber: Number(searchText) });
+      }
+
+      if (isDate) {
+        const date = new Date(searchText);
+        const nextDay = new Date(date);
+        nextDay.setDate(date.getDate() + 1);
+        orConditions.push({ applicationDate: { $gte: date, $lt: nextDay } });
+      }
+
+      query.$or = orConditions;
+    }
+
+    // --- meetingStatus filter ---
+    if (filterValues.meetingStatus) {
+      const values = Array.isArray(filterValues.meetingStatus)
+        ? filterValues.meetingStatus
+        : [filterValues.meetingStatus];
+      const cleaned = values.filter(v => typeof v === "string" && v.trim().length > 0);
+      if (cleaned.length > 0) {
+        query["meetingStatus"] = { $in: cleaned.map(v => new RegExp(`^${v}$`, "i")) };
+      }
+    }
+
+    // --- startTime filter ---
+    if (filterValues.startTime) {
+      const values = Array.isArray(filterValues.startTime)
+        ? filterValues.startTime
+        : [filterValues.startTime];
+      const cleaned = values.filter(v => typeof v === "string" && v.trim().length > 0);
+      if (cleaned.length > 0) {
+        query["startTime"] = { $in: cleaned.map(v => new RegExp(`^${v}$`, "i")) };
+      }
+    }
+
+    // --- Date Range filter (use startDate) ---
+    if (
+      filterValues.dateRange?.from &&
+      filterValues.dateRange?.to &&
+      !isNaN(Date.parse(filterValues.dateRange.from)) &&
+      !isNaN(Date.parse(filterValues.dateRange.to))
+    ) {
+      const fromDate = new Date(filterValues.dateRange.from);
+      const toDate = new Date(filterValues.dateRange.to);
+      toDate.setHours(23, 59, 59, 999);
+      query.selectedDate={
+        $gte: fromDate,
+        $lte: toDate
+      };
+    }
+
+    // --- MongoDB Query Execution with Pagination ---
+     const meetings = await Meeting.find(query).sort({ createdDate: -1 });
+    const totalCount = await Meeting.countDocuments(query);
 
     return { totalCount, meetings };
   } catch (error) {
@@ -81,7 +157,7 @@ export const createMeeting = async ( payload: IMeetingCreate): Promise<IMeeting 
     }
 
     // Generate meetingId
-    const meetingId = `weeklymeeting-${supervisor.supervisorId || "unknown"}`;
+    const meetingId = `teacher-${supervisor.supervisorId || "unknown"}`;
 
     // Check for past date
     if (meetingDate < new Date()) {
@@ -131,8 +207,8 @@ const autoScheduleMeeting = async () => {
       return date;
     });
 
-    const startTime = "10:00 AM";
-    const endTime = "10:30 AM";
+    const startTime = "10:00";
+    const endTime = "10:30";
 
     const supervisor = await User.findOne({ role: "SUPERVISOR" });
     if (!supervisor) {
@@ -235,6 +311,8 @@ export const updateMeetingById = async (
 export const updateMeetingMinutesAndAttendees = async (
   id: string,
   meetingminutes: string,
+  meetingStatus: string,
+  duration: string,
   teacher: ITeacher[],
   updatedBy?: string
 ): Promise<IMeetingMinutesUpdate | null> => {
@@ -242,7 +320,9 @@ export const updateMeetingMinutesAndAttendees = async (
     { _id: new Types.ObjectId(id) },
     {
       $set: {
+        duration,
         meetingminutes,
+        meetingStatus,
         teacher,
         updatedBy,
         updatedDate: new Date(), // set server-side

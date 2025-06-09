@@ -105,6 +105,31 @@ const register = async (server: Server): Promise<void> => {
             },
         },
 
+          {
+          method: "GET",
+          path: "/aaplication",
+          options: {
+            handler: handler.getApplicationData,
+            description: recruitmentMessages.LIST,
+            tags: ["api", "recruitment"],
+            // auth: {
+            //   strategies: ["jwt"],
+            // },
+            },
+        },
+
+   {
+          method: "GET",
+          path: "/teacherfemalemale",
+          options: {
+            handler: handler.getTeacherListFemaleMale,
+            description: recruitmentMessages.LIST,
+            tags: ["api", "recruitment"],
+            auth: {
+              strategies: ["jwt"],
+            },
+            },
+        },
 ];
 server.route(routes);
 };

@@ -242,15 +242,7 @@ if (
 
   // Create the query with sorting
   const studentQuery = ClassScheduleModel.find(query).sort(sortOptions);
-  // Apply pagination (offset and limit)
-  if (!isNil(offset) && !isNil(limit)) {
-    const skip = Math.max(
-      0,
-      ((Number(offset) ?? Number(commonMessages.OFFSET)) - 1) *
-      (Number(limit) ?? Number(commonMessages.LIMIT))
-    );
-    studentQuery.skip(skip).limit(Number(limit) ?? Number(commonMessages.LIMIT));
-  }
+
 
   // Execute the query and count concurrently
   const [students, totalCount] = await Promise.all([
@@ -266,6 +258,8 @@ if (
   // Return total count and fetched students
   return { totalCount, students };
 };
+
+
 
  export const getAllClassSheduleById = async (
     _id: string

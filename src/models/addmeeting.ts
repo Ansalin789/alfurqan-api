@@ -34,7 +34,7 @@ const addMeetingSchema = new Schema<IMeeting>(
     description: { type: String, required: true },
     meetingStatus: { type: String, required: true },
     meetingminutes: { type: String, required: true },
-
+    duration: { type: String, required: false },
     status: {
       type: String,
       required: false,
@@ -56,7 +56,7 @@ const addMeetingSchema = new Schema<IMeeting>(
 export const zodAddMeetingSchema = z.object({
   meetingName: z.string(),
   meetingId: z.string().optional(),
-
+  duartion: z.string().optional(),
   supervisor: z
     .object({
       supervisorId: z.string().optional(),
@@ -118,6 +118,24 @@ export const zodAddMeetingSchema = z.object({
     .transform((val) => (val ? new Date(val) : undefined)),
 
   updatedBy: z.string().optional(),
+ filterValues: z
+    .object({
+      course: z
+        .object({
+          courseName: z.union([z.string(), z.array(z.string())]).optional(),
+        })
+        .optional(),
+      meetingStatus: z.union([z.string(), z.array(z.string())]).optional(),
+   
+      startTime: z.union([z.string(), z.array(z.string())]).optional(),
+      dateRange: z
+        .object({
+          from: z.string().refine(val => !isNaN(Date.parse(val))),
+          to: z.string().refine(val => !isNaN(Date.parse(val)))
+        })
+        .optional(),
+    })
+    .optional(),
 });
 
 // ✅ Zod schema for updating a meeting (everything optional)

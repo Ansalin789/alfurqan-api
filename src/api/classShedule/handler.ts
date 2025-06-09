@@ -237,7 +237,7 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
   async getAllClassSheduleById(req: Request, h: ResponseToolkit) {
     try {
       // Fetch the student by ID
-      const result = await getAllClassSheduleById(String(req.params.alstudentsId));
+      const result = await getAllClassSheduleById(String(req.params.classSheduleId));
 
       // Handle not found case
       if (isNil(result)) {

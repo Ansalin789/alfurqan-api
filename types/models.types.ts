@@ -1278,6 +1278,7 @@ export interface IMeetingCreate {
   };
   description: string;
   meetingminutes: string;
+  duration: string;
   status: string;
   meetingStatus: string;
   createdDate: Date;
@@ -1307,6 +1308,7 @@ export interface IMeeting extends Document{
   status: string;
   meetingStatus: string;
   meetingminutes: string;
+  duration: string;
   createdDate: Date;
   createdBy: string;
   updatedDate?: Date;

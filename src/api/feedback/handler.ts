@@ -79,7 +79,7 @@ export default {
         },
       });
       if(result){
-          await supervisorFeedBackList({result});
+          await supervisorFeedBackList({data : result});
         }
       return h.response({ message: "Feedback created successfully", data: result }).code(201);
     } catch (error) {

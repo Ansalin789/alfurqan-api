@@ -78,10 +78,12 @@ export interface GetAllRecordsParams {
   trialClassStatus?: any;
   userid?: any;
   filterValues?: {
-    studentId?: string;
+  meetingStatus?: string | string[],
+      studentId?: string;
     course?: {
       courseName?: string | string[]; // ✅ Fix: course is now an object
     };
+    
    country?: string;
     teacher?: string;
     status?: string;
