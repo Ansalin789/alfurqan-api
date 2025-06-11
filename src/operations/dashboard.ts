@@ -21,9 +21,9 @@ export interface Dashboard {
 export const dashboardWidgetCounts = async (academicId: string
 ): Promise<{
     trialAssigned: number;
-    status: number;
+    evaluationCompleted: number;
+    evaluationPending: number;
     totalPending: number;
-    totalActive: number;
   }> => {
 
 let totalPendingClasses;
@@ -64,9 +64,9 @@ if(totaltrialpending.length != 0 && totalclasspending.length !=0){
     // Execute all count queries in parallel
     const [
       trialclassAssigned,
-      evaluationStatusCount,
-      pendingCount,
-      activeCount
+      evaluationCompletedCount,
+      evaluationPendingCount,
+      totalPendingCount
     ] = await Promise.all([
       // Count candidates with meeting status
    await EvaluationModel.countDocuments({
@@ -87,14 +87,14 @@ if(totaltrialpending.length != 0 && totalclasspending.length !=0){
       totalPendingClasses
     ]);
     console.log( 'trialclassAssigned',trialclassAssigned);
-    console.log( 'evaluationStatusCount',evaluationStatusCount);
-    console.log( 'pendingCount',pendingCount);
-    console.log( 'activeCount',activeCount);  
+    console.log( 'evaluationStatusCount',evaluationCompletedCount);
+    console.log( 'pendingCount',evaluationPendingCount);
+    console.log( 'totalPendingCount',totalPendingCount);  
     return {
       trialAssigned: trialclassAssigned,
-      status: evaluationStatusCount,
-      totalPending: pendingCount,
-      totalActive: totalPendingClasses || 0
+      evaluationCompleted: evaluationCompletedCount,
+      evaluationPending: evaluationPendingCount,
+      totalPending: totalPendingClasses || 0
     };
   };
 
