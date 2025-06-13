@@ -15,6 +15,7 @@ const createInputValidation = z.object({
   payload: zodStudentSchema.pick({
     firstName: true,
     lastName: true,
+    academicCoach: true,
     email: true,
     gender:true,
     phoneNumber: true,
@@ -63,6 +64,9 @@ export default {
     return createStudent({     
   firstName: payload.firstName,
   lastName: payload.lastName,
+  academicCoach: {
+    academicCoachId: payload.academicCoach.academicCoachId
+   },
   email: payload.email,
   gender: payload.gender,
   phoneNumber: payload.phoneNumber,

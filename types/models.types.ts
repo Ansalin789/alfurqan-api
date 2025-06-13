@@ -111,6 +111,9 @@ export interface IStudents extends Document {
 export interface IStudentCreate {
   firstName: string;
   lastName: string;
+  academicCoach: {
+    academicCoachId: string;
+  };
   email: string;
   gender: string;
   phoneNumber: number;
