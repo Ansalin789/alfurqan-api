@@ -143,6 +143,9 @@ const studentSchema = new Schema<IStudents>(
 export const zodStudentSchema = z.object({
   firstName: z.string().min(3),
   lastName: z.string().min(1),
+  academicCoach: z.object({
+    academicCoachId : z.string()
+  }),
   email: z.string().email(),
   gender: z.string(),
   phoneNumber: z.number().min(10),

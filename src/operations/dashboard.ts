@@ -1,6 +1,4 @@
 import EvaluationModel from "../models/evaluation";
-import StudentModel from "../models/student";
-import CalendarModel from "../models/calendar";
 import classShedule from "../models/classShedule";
 import usershiftschedule from "../models/usershiftschedule";
 import recruitment from "../models/recruitment";
@@ -9,21 +7,42 @@ import alstudents from "../models/alstudents";
 import tenantUser from "../models/users";
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, format, eachDayOfInterval, eachMonthOfInterval } from "date-fns";
 import { Types } from "mongoose";
+import meetingschedule from "../models/calendar"
 
 
-export interface Dashboard {
-  status: string;
-  Status: string;
-  evaluationStatus: string;
-  totalPending: number;    
-}
+// export interface Dashboard {
+//   status: string;
+//   Status: string;
+//   evaluationStatus: string;
+//   totalPending: number;    
+// }
 
+export interface EvaluationDetails{
+  academicCoach:{
+    academicCoachId: string;
+    name: string;
+    email: string;
+  };
+  student: {
+    studentId: string;
+    name: string;
+    email: string;
+    meetingLink: string;
+  };
+  _id: string;
+  classType: string;
+  scheduledStartDate: string;
+  scheduledEndDate: string;
+  scheduledFrom: string;
+  scheduledTo: string;
+  timeZone: string;
+  }
 export const dashboardWidgetCounts = async (academicId: string
 ): Promise<{
     trialAssigned: number;
-    status: number;
+    evaluationCompleted: number;
+    evaluationPending: number;
     totalPending: number;
-    totalActive: number;
   }> => {
 
 let totalPendingClasses;
@@ -64,9 +83,9 @@ if(totaltrialpending.length != 0 && totalclasspending.length !=0){
     // Execute all count queries in parallel
     const [
       trialclassAssigned,
-      evaluationStatusCount,
-      pendingCount,
-      activeCount
+      evaluationCompletedCount,
+      evaluationPendingCount,
+      totalPendingCount
     ] = await Promise.all([
       // Count candidates with meeting status
    await EvaluationModel.countDocuments({
@@ -86,15 +105,12 @@ if(totaltrialpending.length != 0 && totalclasspending.length !=0){
       // Count active candidates
       totalPendingClasses
     ]);
-    console.log( 'trialclassAssigned',trialclassAssigned);
-    console.log( 'evaluationStatusCount',evaluationStatusCount);
-    console.log( 'pendingCount',pendingCount);
-    console.log( 'activeCount',activeCount);  
+
     return {
       trialAssigned: trialclassAssigned,
-      status: evaluationStatusCount,
-      totalPending: pendingCount,
-      totalActive: totalPendingClasses || 0
+      evaluationCompleted: evaluationCompletedCount,
+      evaluationPending: evaluationPendingCount,
+      totalPending: totalPendingClasses || 0
     };
   };
 
@@ -161,12 +177,6 @@ if(totaltrialpending.length != 0 && totalclasspending.length !=0){
       // Ensure valid values from aggregation (if no result, set to 0)
       const totalHoursValue = hoursCount || 0;
       const totalEarningsValue = earnings || 0;
-  
-      // Log results for debugging purposes
-      console.log("totalclasses:", classesCount);
-      console.log("totalstudents:", studentsCount);
-      console.log("totalhours:", totalHoursValue);
-      console.log("totalearnings:", totalEarningsValue);
   
       return {
         totalclasses: classesCount,
@@ -412,3 +422,44 @@ export const totalClassCount = async (
  
  
 };
+
+ export const acUpcomingClassList = async (
+  academicCoachId: string
+)=>{
+
+const currentDate = new Date();
+const formattedDate = currentDate.toISOString().split('T')[0];  
+      const startOfDayIST = `${formattedDate}T00:00:00.000+00:00`;
+      const endOfDayIST = `${formattedDate}T23:59:59.999+00:00`;
+
+ const getUpcomingClass = await meetingschedule.find({
+  ['academicCoach.academicCoachId']: academicCoachId,
+     scheduledStartDate: {
+          $gte: startOfDayIST,
+          $lte: endOfDayIST
+        }
+}).sort({ scheduledFrom: 1 });
+
+const upcomingClass: EvaluationDetails[] = getUpcomingClass.map((item: any) => ({
+  academicCoach: {
+    academicCoachId: item.academicCoach?.academicCoachId || '',
+    name: item.academicCoach?.name || '',
+    email: item.academicCoach?.email || ''
+  },
+  student: {
+    studentId: item.student?.studentId || '',
+    name: item.student?.name || '',
+    email: item.student?.email || '',
+    meetingLink: item.student?.meetingLink || ''
+  },
+  _id: item._id?.toString(),
+  classType: item.classType || '',
+  scheduledStartDate: item.scheduledStartDate || '',
+  scheduledEndDate: item.scheduledEndDate || '',
+  scheduledFrom: item.scheduledFrom || '',
+  scheduledTo: item.scheduledTo || '',
+  timeZone: item.timeZone || ''
+}));
+
+return upcomingClass
+}

@@ -2,7 +2,6 @@ import { IStudentCreate, IStudents } from "../../types/models.types";
 import StudentModel from "../models/student";
 import { commonMessages, studentMessages } from "../config/messages";
 import { badRequest } from "@hapi/boom";
-import UserShiftSchedule from "../models/usershiftschedule"; // Add this import
 import { isNil } from "lodash";
 import EmailTemplate from "../models/emailTemplate";
 import { sendEmailClient } from "../shared/email";
@@ -14,6 +13,7 @@ import { GetAllRecordsParams } from "../shared/enum";
 import AppLogger from "../helpers/logging";
 import { Types } from "mongoose";
 import { sendNotification } from "./notification";
+import UserModel from "../models/users";
 
 
 
@@ -45,45 +45,50 @@ export const createStudent = async (
             error: badRequest('Evaluation class is not allowed to current date. Select another date'),
         };
     }
-    const shiftScheduleRecord = await UserShiftSchedule.find({
-      role: "ACADEMICCOACH",
-    });
-    console.log(shiftScheduleRecord);
-    let academicCoachDetails: any = null;
+    // const shiftScheduleRecord = await UserShiftSchedule.find({
+    //   role: "ACADEMICCOACH",
+    // });
+    // console.log(shiftScheduleRecord);
+    // let academicCoachDetails: any = null;
 
-    if (shiftScheduleRecord.length > 0) {
+    // if (shiftScheduleRecord.length > 0) {
         
-        for (const shiftSchedule of shiftScheduleRecord) { // Use for...of instead of forEach
-            if (payload.startDate >= shiftSchedule.startdate && payload.startDate <= shiftSchedule.enddate) {
-                await validateHours(shiftSchedule.startdate, shiftSchedule.enddate, shiftSchedule.fromtime, shiftSchedule.totime, payload);
-             const meetingAvailability = await MeetingSchedule.findOne({
-                academicCoachId: shiftSchedule.academicCoachId,
-                startDate: shiftSchedule.startdate,
-                endDate: shiftSchedule.enddate, 
-                fromtime: shiftSchedule.fromtime,
-                totime: shiftSchedule.totime,
-             }) 
-             if(!meetingAvailability){
-              academicCoachDetails = {
-                academicCoachId: shiftSchedule.academicCoachId,
-                name: shiftSchedule.name,
-                role: shiftSchedule.role,
-                email: shiftSchedule.email
-            };
-             }
+    //     for (const shiftSchedule of shiftScheduleRecord) { // Use for...of instead of forEach
+    //         if (payload.startDate >= shiftSchedule.startdate && payload.startDate <= shiftSchedule.enddate) {
+    //             await validateHours(shiftSchedule.startdate, shiftSchedule.enddate, shiftSchedule.fromtime, shiftSchedule.totime, payload);
+    //          const meetingAvailability = await MeetingSchedule.findOne({
+    //             academicCoachId: shiftSchedule.academicCoachId,
+    //             startDate: shiftSchedule.startdate,
+    //             endDate: shiftSchedule.enddate, 
+    //             fromtime: shiftSchedule.fromtime,
+    //             totime: shiftSchedule.totime,
+    //          }) 
+    //          if(!meetingAvailability){
+    //           academicCoachDetails = {
+    //             academicCoachId: shiftSchedule.academicCoachId,
+    //             name: shiftSchedule.name,
+    //             role: shiftSchedule.role,
+    //             email: shiftSchedule.email
+    //         };
+    //          }
                 
-                break; // Exit the loop once a valid academic coach is found
-            }
-        }
-    } else{
-        return {error: badRequest('Academic coach not available')};
-    }
+    //             break; // Exit the loop once a valid academic coach is found
+    //         }
+    //     }
+    // } else{
+    //     return {error: badRequest('Academic coach not available')};
+    // }
 
+    const academicCoach = await UserModel.findOne({
+      userId : payload.academicCoach.academicCoachId 
+    });
+
+      console.log("academicCoach>>>>", academicCoach);
     newUser.academicCoach = {
-        academicCoachId: academicCoachDetails?.academicCoachId, // Provide a default value if undefined
-        name: academicCoachDetails?.name,                       // Provide a default value if undefined
-        role: academicCoachDetails?.role, // Provide a default value if undefined
-        email: academicCoachDetails?.email // Provide a default value if undefined
+        academicCoachId: academicCoach?._id.toString() || " ", // Provide a default value if undefined
+        name: academicCoach?.userName || " ",                       // Provide a default value if undefined
+        role: academicCoach?.role[0] || " ", // Provide a default value if undefined
+        email: academicCoach?.email || " " // Provide a default value if undefined
     };
     const savedUser = await newUser.save(); 
     await sendNotification({
@@ -127,10 +132,10 @@ export const createStudent = async (
         const CreatemeetingDetails = await MeetingSchedule.create(
           {
             academicCoach: {
-            academicCoachId: academicCoachDetails?.academicCoachId,
-            name: academicCoachDetails?.name,
-            role: academicCoachDetails?.role,
-            email: academicCoachDetails?.email
+            academicCoachId: savedUser?.academicCoach.academicCoachId,
+            name: savedUser?.academicCoach.name,
+            role: savedUser?.academicCoach.role,
+            email:savedUser?.academicCoach.email
             },
           teacher: {
             teacherId: null,
