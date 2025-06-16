@@ -450,7 +450,7 @@ const upcomingClass: EvaluationDetails[] = getUpcomingClass.map((item: any) => (
     studentId: item.student?.studentId || '',
     name: item.student?.name || '',
     email: item.student?.email || '',
-    meetingLink: item.student?.meetingLink || ''
+    meetingLink: item.meetingLink|| ''
   },
   _id: item._id?.toString(),
   classType: item.classType || '',
@@ -462,4 +462,4 @@ const upcomingClass: EvaluationDetails[] = getUpcomingClass.map((item: any) => (
 }));
 
 return upcomingClass
-}
+};

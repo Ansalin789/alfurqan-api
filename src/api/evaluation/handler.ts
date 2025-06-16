@@ -4,8 +4,9 @@ import { z } from "zod";
 import { createEvaluationRecord,getAllEvaluationRecords,getCountriesCount,getEvaluationRecordById, getPreferedTeacherPercentage, getStudentCourseCount, getTeacherStatusCount, getTotalTrialClassRequestCount, getTrialbyTeacherCount, getTrialClassCount, updateStudentEvaluation, updateStudentInvoice} from "../../operations/evaluation";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { evaluationMessages } from "../../config/messages";
-import { isNil } from "lodash";
+import { isNil, result } from "lodash";
 import { notFound } from "@hapi/boom";
+import { academicDashboardCard, academicStudentList } from "../../kafka/producers/academicProducer";
 
 
 
@@ -98,7 +99,7 @@ export default {
         const startTimeValues = payload.startTime?.map((time: { value: string; label: string }) => time.value);
         const endTimeValues = payload.endTime?.map((time: { value: string; label: string }) => time.value);
 
-        return createEvaluationRecord({
+        const result = await createEvaluationRecord({
           academicCoachId: payload.academicCoachId ?? "",
             student: { // Ensure studentId is included
                 studentId: payload.student?.studentId ?? "", 
@@ -169,6 +170,12 @@ export default {
             updatedDate: new Date(),
            updatedBy: "Admin",
         });
+        if(result){
+          const academicCoachId = payload.academicCoachId;
+           await academicDashboardCard({academicCoachId});
+            await academicStudentList({event : "update", data : result ,sender : payload.academicCoachId});
+        }
+        return result;
     },
 
  // Update a new Evaluation
@@ -177,7 +184,7 @@ export default {
     payload: req.payload,
  });
 
-  return updateStudentEvaluation(String(req.params.evaluationId),{   
+  const result = await updateStudentEvaluation(String(req.params.evaluationId),{   
     student: { // Ensure studentId is included
       studentId: payload.student?.studentId ?? "", 
       studentFirstName: payload.student?.studentFirstName ?? "",
@@ -237,6 +244,11 @@ export default {
   updatedDate: new Date(),
  updatedBy: "Admin"
 });
+if(result){
+  const academicCoachId = payload.academicCoachId;
+  await academicDashboardCard({academicCoachId});
+  await academicStudentList({event : "update", data : result , sender : result.academicCoachId});
+}
 
 },
 

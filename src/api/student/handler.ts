@@ -8,6 +8,7 @@ import {  studentMessages } from "../../config/messages"
 import { notFound } from "@hapi/boom";
 import { isNil } from "lodash";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
+import { academicDashboardCard, academicStudentList } from "../../kafka/producers/academicProducer";
 
 
 // Input Validation for Create a User
@@ -61,7 +62,7 @@ export default {
     const { payload } = createInputValidation.parse({
       payload: req.payload,
     });
-    return createStudent({     
+    const result = await createStudent({     
   firstName: payload.firstName,
   lastName: payload.lastName,
   academicCoach: {
@@ -88,6 +89,12 @@ export default {
   createdBy: payload.createdBy,
   lastUpdatedBy: payload.lastUpdatedBy
   })
+  if(result){
+    const academicCoachId = payload.academicCoach.academicCoachId;
+    await academicDashboardCard({academicCoachId});
+    await academicStudentList({event : "create", data : result , sender : academicCoachId});
+  }
+  return result;
 },
 
 // Retrieve all the students list
