@@ -66,13 +66,13 @@ export const emitEventToClient = (event: string, data: any, userId?: string): vo
         socketSet.forEach((socketId) => {
           io.to(socketId).emit(event, data);
         });
-        AppLogger.info(`📡 Event '${event}' sent to userId: ${userId} - Sockets: ${[...socketSet]} - Data: ${JSON.stringify(data)}`);
+        AppLogger.info(`📡 Event '${event}' sent to userId: ${userId} - Sockets: ${[...socketSet]}`);
       } else {
         AppLogger.warn(`⚠️ No active sockets found for userId: ${userId}. Event '${event}' not sent.`);
       }
     } else {
       io.emit(event, data);
-      AppLogger.info(`📡 Global emit for event '${event}' - Data: ${JSON.stringify(data)}`);
+      AppLogger.info(`📡 Global emit for event '${event}'`);
     }
   } catch (err) {
     AppLogger.error(`🚨 Failed to emit event: ${(err as Error).message}`);

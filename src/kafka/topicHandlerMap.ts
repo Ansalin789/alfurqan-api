@@ -1,4 +1,4 @@
-import { dashboardWidgetSupervisorCounts } from "../operations/dashboard";
+import { dashboardWidgetCounts, dashboardWidgetSupervisorCounts } from "../operations/dashboard";
 import { getTotalAmountByCourse } from "../operations/invoice";
 import { emitEventToClient } from "../shared/socket";
 
@@ -36,5 +36,25 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
     'supervisorfeedbacklist' : async (data : any) =>{
         console.log('supervisorfeedbacklist');
         emitEventToClient('supervisorfeedbacklist',data);
+    },
+
+    'academicDashboardCard' : async (data : any) =>{
+        console.log('academicDashboardCard');
+        const cardcount =  await dashboardWidgetCounts(data.academicCoachId);
+        console.log("fetched  academic dashboard card");
+        console.log('data ',data);
+        emitEventToClient('academicDashboardCard',cardcount,data.academicCoachId);
+    },
+
+    'academicStudentList' : async ( data: any)=>{
+        console.log('academicStudentList');
+        console.log('data ',data);
+        emitEventToClient('academicStudentList',data,data.sender)
+    },
+
+    'academicStudentProfile' : async (data : any ) =>{
+        console.log('academicStudentProfile');
+        console.log('data ',data);
+        emitEventToClient('academicStudentProfile',data , data.sender);
     }
 };

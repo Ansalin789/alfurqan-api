@@ -13,6 +13,7 @@ import { Client } from '@microsoft/microsoft-graph-client';
 import { ClientSecretCredential } from "@azure/identity";
 import Course from "../../models/course";
 import { sendInvoiceEvent } from "../../kafka/producers/adminProducer";
+import { academicDashboardCard, academicStudentList, academicStudentProfile } from "../../kafka/producers/academicProducer";
 
 export const createPaymentIntent = async (request: Request, h: ResponseToolkit) => {
   console.log("Received request payload:", request.payload);
@@ -80,8 +81,11 @@ const updateEvaluationDetails = await EvaluationModel.findByIdAndUpdate(
 );
 console.log("updateEvaluationDetails>>", updateEvaluationDetails);
     if(paymentIntentResponse.status == "succeeded" && evaluationDetails && evaluationDetails.studentStatus == "JOINED" && evaluationDetails.classStatus == "COMPLETED" ){
-      createStudentPortal(updateEvaluationDetails);
-
+      const result = await createStudentPortal(updateEvaluationDetails);
+      const academicCoachId = updateEvaluationDetails?.academicCoachId;
+      await academicDashboardCard({academicCoachId});
+      await academicStudentList({event : "update", data : updateEvaluationDetails ,sender : academicCoachId});
+      await academicStudentProfile({data : result , sender : academicCoachId});  
     }
     console.log("Created Stripe PaymentIntent:", paymentIntent);
     
