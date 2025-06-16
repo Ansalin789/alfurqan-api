@@ -79,7 +79,7 @@ const updateEvaluationDetails = await EvaluationModel.findByIdAndUpdate(
   { new: true }
 );
 console.log("updateEvaluationDetails>>", updateEvaluationDetails);
-    if(paymentIntentResponse.status == "succeeded" && evaluationDetails && evaluationDetails.studentStatus == "JOINED" && evaluationDetails.classStatus == "Completed" ){
+    if(paymentIntentResponse.status == "succeeded" && evaluationDetails && evaluationDetails.studentStatus == "JOINED" && evaluationDetails.classStatus == "COMPLETED" ){
       createStudentPortal(updateEvaluationDetails);
 
     }
@@ -121,12 +121,11 @@ async function createStudentPortal(updatedEvaluation: any) {
         package: updatedEvaluation.subscription.subscriptionName,
         city: updatedEvaluation.student.studentCity,
         country: updatedEvaluation.student.studentCountry,
-        gender: updatedEvaluation.student.gender
+        gender: updatedEvaluation.student.studentGender
       },
       username: updatedEvaluation.student.studentFirstName,
       sessionClassType: "",
-      sessionStarttime: "",
-      sessionsEndtime: "",
+     
       password: password,
       role: "Student",
       status: "Active",
