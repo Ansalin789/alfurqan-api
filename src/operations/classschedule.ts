@@ -574,7 +574,7 @@ export const teacherStudentCount = async() =>{
        {
          $group: {
            _id: "$teacher.teacherId", // Group by teacherEmail
-           teacherId: { $first: req.query },
+           teacherId: { $first: "$teacher.teacherId" },
            teacherName: { $first: "$teacher.teacherName" },
            teacherEmail: { $first: "$teacher.teacherEmail" },
            uniqueStudents: { 
