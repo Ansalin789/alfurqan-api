@@ -193,7 +193,7 @@ async function createStudentPortal(updatedEvaluation: any) {
               package: updatedEvaluation.subscription?.subscriptionName
             },
             teacher: {
-              teacherId: teacherDetails?._id,
+              teacherId: teacherDetails?.userId,
               teacherName: teacherDetails?.userName,
               teacherEmail: teacherDetails?.email
             },
@@ -215,7 +215,7 @@ async function createStudentPortal(updatedEvaluation: any) {
             endDate: classDate,
             createdBy: updatedEvaluation.createdBy,
             status: "Active",
-            scheduleStatus: "Active",
+            scheduleStatus:"Scheduled" ,
             totalHours: updatedEvaluation.accomplishmentTime,
             preferredTeacher: updatedEvaluation.student?.preferredTeacher
           });
