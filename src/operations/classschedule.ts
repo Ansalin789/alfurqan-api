@@ -569,12 +569,12 @@ export const getStudentClassHours = async (
   }
 };
 
-export const teacherStudentCount = async( teacherId: string) =>{
+export const teacherStudentCount = async() =>{
   const teachers = await classShedule.aggregate([
        {
          $group: {
            _id: "$teacher.teacherId", // Group by teacherEmail
-           teacherId: { $first: teacherId },
+           teacherId: { $first: "$teacher.teacherId" },
            teacherName: { $first: "$teacher.teacherName" },
            teacherEmail: { $first: "$teacher.teacherEmail" },
            uniqueStudents: { 
