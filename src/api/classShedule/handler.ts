@@ -5,7 +5,7 @@ import { ClassSchedulesMessages } from "../../config/messages";
 import { isNil } from "lodash";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
-import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount, getTotalClassesCount, getClassesStatusCount, getClassesWiseCount, getStudentList, getTeacherAttendanceSummary} from "../../operations/classschedule";
+import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount, getTotalClassesCount, getClassesStatusCount, getClassesWiseCount, getStudentList, getTeacherAttendanceSummary, teacherStudentCount} from "../../operations/classschedule";
 
 
 const createInputValidation = z.object({
@@ -306,50 +306,7 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
 async getTeacherStudentCount(req: Request, h: ResponseToolkit) {
   try {
     console.log("Query parameters received:", req.query);
-
-    const teachers = await classShedule.aggregate([
-      {
-        $group: {
-          _id: "$teacher.teacherId", // Group by teacherEmail
-          teacherId: { $first: req.query },
-          teacherName: { $first: "$teacher.teacherName" },
-          teacherEmail: { $first: "$teacher.teacherEmail" },
-          uniqueStudents: { 
-            $addToSet: { 
-              studentId: "$student.studentId", 
-              gender: "$student.gender" 
-            } 
-          } // Collect unique student IDs and gender
-        }
-      },
-      {
-        $project: {
-          teacherId: 1,
-          teacherName: 1,
-          teacherEmail: 1,
-          studentCount: { $size: "$uniqueStudents" }, // Total unique students
-          maleCount: {
-            $size: {
-              $filter: {
-                input: "$uniqueStudents",
-                as: "student",
-                cond: { $eq: ["$$student.gender", "MALE"] }
-              }
-            }
-          }, // Count only male students
-          femaleCount: {
-            $size: {
-              $filter: {
-                input: "$uniqueStudents",
-                as: "student",
-                cond: { $eq: ["$$student.gender", "FEMALE"] }
-              }
-            }
-          }, // Count only female students
-        }
-      }
-    ]);
-
+    const teachers = await teacherStudentCount();
     return h.response({
       success: true,
       data: teachers,

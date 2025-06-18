@@ -6,7 +6,7 @@ import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation"
 import { evaluationMessages } from "../../config/messages";
 import { isNil, result } from "lodash";
 import { notFound } from "@hapi/boom";
-import { academicDashboardCard, academicStudentList } from "../../kafka/producers/academicProducer";
+import { academicDashboardCard, academicDashboardTeachersStudentCount, academicStudentList, academicTeacherStudentList } from "../../kafka/producers/academicProducer";
 
 
 
@@ -172,8 +172,11 @@ export default {
         });
         if(result){
           const academicCoachId = payload.academicCoachId;
+          const classType = payload.classType;
            await academicDashboardCard({academicCoachId});
             await academicStudentList({event : "update", data : result ,sender : payload.academicCoachId});
+            await academicDashboardTeachersStudentCount({classType});
+            await academicTeacherStudentList({data : result});
         }
         return result;
     },
@@ -245,7 +248,7 @@ export default {
  updatedBy: "Admin"
 });
 if(result){
-  const academicCoachId = payload.academicCoachId;
+  const academicCoachId = result.academicCoachId;
   await academicDashboardCard({academicCoachId});
   await academicStudentList({event : "update", data : result , sender : result.academicCoachId});
 }

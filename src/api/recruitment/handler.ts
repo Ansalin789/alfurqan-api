@@ -154,8 +154,6 @@ export default{
       return h.response({ message: "Recruitment creation failed", error: result.error }).code(400);
     }
     if(result){
-     const supervisorId = result.supervisor.supervisorId;
-    await supervisorCardCount({supervisorId});
     await supervisorRecruitmentList({event :"create", data : result});
     }
     return h.response(result).code(201);
