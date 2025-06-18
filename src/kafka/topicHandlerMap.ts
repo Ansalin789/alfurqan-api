@@ -1,3 +1,4 @@
+import { getStudentList, teacherStudentCount } from "../operations/classschedule";
 import { dashboardWidgetCounts, dashboardWidgetSupervisorCounts } from "../operations/dashboard";
 import { getTotalAmountByCourse } from "../operations/invoice";
 import { emitEventToClient } from "../shared/socket";
@@ -56,5 +57,21 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
         console.log('academicStudentProfile');
         console.log('data ',data);
         emitEventToClient('academicStudentProfile',data , data.sender);
+    },
+
+    'academicDashboardTeachersStudentCount' : async (data : any ) =>{
+        console.log('academicDashboardTeachersStudentCount');
+        console.log('data ', data);
+        if(data.classType == "REGULARCLASS" || data.classType == "GROUPCLASS"){
+        const getTeacherStudentCount =  teacherStudentCount();
+        emitEventToClient('academicDashboardTeachersStudentCount',getTeacherStudentCount);
+        }
+    },
+
+    'academicTeacherStudentList' : async (data : any ) =>{
+        console.log('academicTeacherStudentList');
+        const teacherId  = data.data.assignedTeacherId;
+        const getTeacherStudentList =  getStudentList(teacherId);
+        emitEventToClient('academicTeacherStudentList',getTeacherStudentList);
     }
 };

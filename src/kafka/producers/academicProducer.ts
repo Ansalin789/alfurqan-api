@@ -12,7 +12,10 @@ export const academicStudentProfile = async( payload : any ) =>{
     await sendMessage('academicStudentProfile',payload);
 }
 
-//this one is not used yet
-export const academicDashboardTeachersCount = async (payload : any) =>{
-    await sendMessage('academicDashboardTeachersCount',payload);
+export const academicDashboardTeachersStudentCount = async (payload : any) =>{
+    await sendMessage('academicDashboardTeachersStudentCount',payload);
+}
+
+export const academicTeacherStudentList = async (payload : any) =>{
+    await sendMessage('academicTeacherStudentList',payload);
 }
