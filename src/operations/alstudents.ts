@@ -74,15 +74,24 @@ export const getAllalstudentsList = async (
 const studentsWithClassScheduleCount = await Promise.all(
   students.map(async (student) => {
     const classScheduleCount = await ClassScheduleModel.countDocuments({
-      'student.studentId': student._id.toString()
+      'student.studentId': student._id.toString() // ✅ Correct based on how you store it
     }).exec();
-      return {
+
+    // Fetch teacher and sessionClassType using same logic
+    const classSchedule = await ClassScheduleModel.findOne(
+      { 'student.studentId': student._id.toString() },  // ✅ must match same way as countDocuments
+      { 'teacher.teacherName': 1, 'sessionClassType': 1 }
+    ).sort({ _id: -1 }).lean();
+
+    return {
       ...student.toObject(),
-      classScheduleCount,
-      
+      classScheduleCount, // ✅ original logic
+      teacherName: classSchedule?.teacher?.teacherName || null,  // ✅ correct
+      sessionClassType: classSchedule?.sessionClassType || null      // ✅ correct
     };
   })
 );
+
 
   // Log successful retrieval
   AppLogger.info(alstudentsMessages.GET_ALL_LIST_SUCCESS, {
