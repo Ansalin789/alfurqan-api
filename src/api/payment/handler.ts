@@ -14,6 +14,9 @@ import { ClientSecretCredential } from "@azure/identity";
 import Course from "../../models/course";
 import { sendInvoiceEvent } from "../../kafka/producers/adminProducer";
 import { academicDashboardCard, academicStudentList, academicStudentProfile } from "../../kafka/producers/academicProducer";
+import { sendEmailClient } from "../../shared/email";
+import EmailTemplate from "../../models/emailTemplate"; 
+
 
 export const createPaymentIntent = async (request: Request, h: ResponseToolkit) => {
   console.log("Received request payload:", request.payload);
@@ -193,7 +196,7 @@ async function createStudentPortal(updatedEvaluation: any) {
               package: updatedEvaluation.subscription?.subscriptionName
             },
             teacher: {
-              teacherId: teacherDetails?.userId,
+              teacherId: teacherDetails?._id,
               teacherName: teacherDetails?.userName,
               teacherEmail: teacherDetails?.email
             },
@@ -215,7 +218,7 @@ async function createStudentPortal(updatedEvaluation: any) {
             endDate: classDate,
             createdBy: updatedEvaluation.createdBy,
             status: "Active",
-            scheduleStatus:"Scheduled" ,
+            scheduleStatus: "Active",
             totalHours: updatedEvaluation.accomplishmentTime,
             preferredTeacher: updatedEvaluation.student?.preferredTeacher
           });
@@ -233,6 +236,7 @@ async function createStudentPortal(updatedEvaluation: any) {
       }
     }
   }
+  await StudentPortalMail(studentPortal);
     return studentPortal;
 
   } catch (error) {
@@ -242,6 +246,32 @@ async function createStudentPortal(updatedEvaluation: any) {
 
 
 }
+
+
+async function StudentPortalMail(studentPortal:any){
+
+      try{
+              const emailTemplate = await EmailTemplate.findOne({
+                     templateKey: 'Student Portal',
+                 }).exec();
+                 if(emailTemplate){
+                     const emailTo = [
+                         { email: studentPortal.student.studentEmail }
+                     ];
+                     const subject = "Welcome To Alfurqan Team";
+                     const htmlPart = emailTemplate.templateContent.replace('<password>',studentPortal.password ).replace('<username>',studentPortal.username);
+                     console.log("emailTemplate>>>>",emailTemplate);
+                     sendEmailClient(emailTo, subject,htmlPart);
+                 }
+      }
+      catch(error){
+        console.error("Mail not sented to the Student");
+        throw error;
+      }
+    }
+
+
+
 
 export const createStudentPaymentIntent = async (request: Request, h: ResponseToolkit) => {
   console.log("Received request payload:", request.payload);
@@ -402,5 +432,3 @@ async function createEvent(newClassSchedule: any): Promise<void> {
       }
   }
 }
-
-
