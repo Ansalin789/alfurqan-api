@@ -131,7 +131,7 @@ async function createStudentPortal(updatedEvaluation: any) {
         gender: updatedEvaluation.student.studentGender
       },
       username: updatedEvaluation.student.studentFirstName,
-      sessionClassType: "",
+      sessionClassType: updatedEvaluation.classType,
      
       password: password,
       role: "Student",
@@ -200,7 +200,7 @@ async function createStudentPortal(updatedEvaluation: any) {
               teacherName: teacherDetails?.userId,
               teacherEmail: teacherDetails?.email
             },
-            sessionClassType: "",
+            sessionClassType: updatedEvaluation.classType,
             sessionStarttime: "",
             sessionsEndtime: "",
             
