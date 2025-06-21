@@ -196,8 +196,8 @@ async function createStudentPortal(updatedEvaluation: any) {
               package: updatedEvaluation.subscription?.subscriptionName
             },
             teacher: {
-              teacherId: teacherDetails?._id,
-              teacherName: teacherDetails?.userId,
+              teacherId: teacherDetails?.userId,
+              teacherName: teacherDetails?.userName,
               teacherEmail: teacherDetails?.email
             },
             sessionClassType: updatedEvaluation.classType,
@@ -228,6 +228,7 @@ async function createStudentPortal(updatedEvaluation: any) {
 
           // Save schedule
           const savedClassSchedule = await newClassSchedule.save();
+
           results.push(savedClassSchedule);
         }
       } catch (error) {
