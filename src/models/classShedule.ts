@@ -224,7 +224,11 @@ export const zodClassScheduleSchema = z.object({
     sessionStatus:z.string().optional(),
     package:z.string(),
     preferedTeacher:z.string().optional(),
-    course:z.string(),
+    course:z.object({
+        courseId:z.string().optional(),
+        courseName:z.string().optional()
+    }     
+    ),
     totalHourse: z.number().optional(),
     classhour: z.string().optional(),
     currency: z.string().optional(),

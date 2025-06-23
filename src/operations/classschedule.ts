@@ -721,7 +721,7 @@ export const updateteacherreschedule = async (
     // Fetch teacher details
     const teacherDetails = await UserModel.findOne({
       role: "TEACHER",
-      userName: payload.teacher?.teacherName,
+      userId : payload.teacher?.teacherId,
     }).exec();
     if (!teacherDetails) {
       throw new Error("Teacher not found.");
@@ -759,6 +759,8 @@ export const updateteacherreschedule = async (
             endTime: newEndTime,
             package: payload.package,
             course: payload.course,
+            startDate : payload.startDate,
+            endDate: payload.endDate,
             sessionClassType: payload.sessionClassType,
             sessionStarttime: payload.sessionStarttime,
             sessionsEndtime: payload.sessionsEndtime,
