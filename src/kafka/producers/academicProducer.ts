@@ -19,3 +19,7 @@ export const academicDashboardTeachersStudentCount = async (payload : any) =>{
 export const academicTeacherStudentList = async (payload : any) =>{
     await sendMessage('academicTeacherStudentList',payload);
 }
+
+export const academicAvailableTeachers = async (payload : any) =>{
+    await sendMessage('academicAvailableTeachers',payload);
+}

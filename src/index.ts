@@ -10,6 +10,8 @@ import { shutdownKafkaConsumer, startInvoiceConsumer } from './kafka/consumer';
 import { connectProducer, disconnectProducer } from "./kafka/producer";
 import Meeting from "../src/models/addmeeting";
 import cron from "node-cron";
+import { cleanupOldDates } from "./redis/manage/autoClearSlots";
+import { restoreCacheFromDb } from "./redis/manage/restoreCache";
 
 const start = async () => {
   // Create the server with server settings
@@ -22,7 +24,9 @@ const start = async () => {
   await initializeMongoDatabase();
 
   // RedisDB Connection Establish
-
+(async () => {
+  await restoreCacheFromDb(); 
+})();
   // Sentry Connection Establish
   //initializeSentry();
   // Initialize Socket.IO service
@@ -54,6 +58,10 @@ start();
 
 
 //meetingstatus cronjob
+cron.schedule("0 0 * * 0", async () => {
+  console.log("🧹 Weekly Redis + MongoDB cleanup");
+  await cleanupOldDates(7);
+});
 
 
 cron.schedule("*/5 * * * *", async () => {

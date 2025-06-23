@@ -1,6 +1,8 @@
+import dayjs from "dayjs";
 import { getStudentList, teacherStudentCount } from "../operations/classschedule";
 import { dashboardWidgetCounts, dashboardWidgetSupervisorCounts } from "../operations/dashboard";
 import { getTotalAmountByCourse } from "../operations/invoice";
+import { bookSlot, getAllSlotByDate, getAllSlots } from "../redis/handler/teacherSlotHander";
 import { emitEventToClient } from "../shared/socket";
 
 export const topicHandler: Record<string, (data: any) => Promise<void>> = {
@@ -73,5 +75,60 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
         const teacherId  = data.data.assignedTeacherId;
         const getTeacherStudentList =  getStudentList(teacherId);
         emitEventToClient('academicTeacherStudentList',getTeacherStudentList);
+    },
+
+  'academicAvailableTeachers': async (data: any) => {
+    console.log('academicAvailableTeachers');
+
+  try {
+    if (data.event === 'create') {
+      const academicAvailableTeachers = await getAllSlots();
+      emitEventToClient('academicAvailableTeachers', academicAvailableTeachers);
+    } else {
+       const { date, teacherId, from, to } = data.data;
+       const teacherList = Array.isArray(teacherId) ? teacherId : [teacherId];
+      const formattedDate = dayjs(date).format('YYYY-MM-DD');
+
+      const fromTime = dayjs(`${formattedDate} ${from}`);
+      const toTime = dayjs(`${formattedDate} ${to}`);
+
+      const timeSlots: { from: string; to: string }[] = [];
+      let slotStart = fromTime;
+
+      while (slotStart.isBefore(toTime)) {
+      const slotEnd = slotStart.add(30, 'minute');
+
+
+    if (slotEnd.isAfter(toTime)) break;
+
+    timeSlots.push({
+    from: slotStart.format('HH:mm'),
+    to: slotEnd.format('HH:mm'),
+    });
+
+    slotStart = slotEnd;
+  }
+
+
+  for (const teacher of teacherList) {
+    const id = typeof teacher === 'string' ? teacher : teacher.teacherId;
+    if (!id) {
+    console.warn("⚠️ Skipping teacher with missing ID:", teacher);
+    continue;
     }
+
+  for (const slot of timeSlots) {
+    await bookSlot(formattedDate, id, slot.from, slot.to, false);
+    }
+  }
+      const academicAvailableTeachers = await getAllSlotByDate(formattedDate);
+      emitEventToClient('academicAvailableTeachers', {
+        date: data.data.date,
+        slots: academicAvailableTeachers,
+      });
+    }
+  } catch (err: any) {
+    console.error("❌ Redis/Kafka handler error:", err.message);
+  } 
+ }
 };

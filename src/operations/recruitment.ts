@@ -12,6 +12,9 @@ import User from "../models/users";
 import EmailTemplate from "../models/emailTemplate";
 import { sendEmailClient } from "../shared/email";
 import { eachDayOfInterval, eachMonthOfInterval, format } from "date-fns";
+import ShiftSchedule from "../models/usershiftschedule"
+import { generateSlotsFromUserSchedule } from "../redis/handler/teacherSlotHander";
+import { academicAvailableTeachers } from "../kafka/producers/academicProducer";
 
 export interface IRecruitmentUpdate{
   supervisor:{
@@ -251,6 +254,7 @@ else if(approvalData &&  approvalData.applicationStatus == applicationStatus.SHO
     email:updateData.candidateEmail,
     password: password,
     profileImage: null,
+    userId:updateData._id,
     role: "TEACHER",
     gender: updateData.gender,
     status: "Active",
@@ -274,9 +278,44 @@ else if(approvalData &&  approvalData.applicationStatus == applicationStatus.SHO
            sendEmailClient(emailTo, subject,htmlPart);
        }
 
-const saveStudent = createStudentPortal.save()
+const saveStudent = await createStudentPortal.save()
+const result = await createShiftSchedule(saveStudent, updateData);
+await generateSlotsFromUserSchedule(result);
+await academicAvailableTeachers({event : 'create'});
 console.log("Student portal",saveStudent )
-  return saveStudent;
+return saveStudent;
+};
+
+async function createShiftSchedule(saveStudent: any ,updateData : any) {
+  console.log("savestudent",saveStudent);
+  console.log("updateData",updateData);
+  const startDate = new Date();
+  const endDate = new Date(startDate);
+  const workhrs = updateData.preferedWorkingHours; 
+const [startTime, endTime] = workhrs.split(" - ");
+ // endDate.setFullYear(startDate.getFullYear() + 1);
+ endDate.setDate(startDate.getDate() + 10); 
+  let createShift = await ShiftSchedule.create({
+        academicCoachId : null,
+        teacherId : saveStudent.userId,
+        supervisorId: null,
+        employeeId: null,
+        name: saveStudent.userName,
+        email: saveStudent.email,
+        role: "TEACHER",
+        workhrs: updateData.preferedWorkingHours,
+        startdate: startDate,
+        enddate : endDate, 
+        fromtime: startTime,
+        totime: endTime,
+        createdDate: new Date(),
+        createdBy: "Admin",
+        lastUpdatedBy: "Admin"
+    }
+     );
+     console.log("createShift", createShift);
+
+     return createShift;
 };
 
 export const getTeacherCountriesCountDetails = async() =>{

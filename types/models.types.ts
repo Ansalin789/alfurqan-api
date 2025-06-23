@@ -1887,3 +1887,18 @@ export interface IleaveSummary  extends Document {
   updatedBy?: string,
 
 }
+
+export interface TeacherTimeSlots {
+  from : string,
+  to : string,
+  isStatus : boolean,
+}
+
+export interface TeacherAvaliableSlots extends Document {
+   date: string,
+   teacherId : string,
+   from : string,
+   to : string,
+   isStatus : boolean,
+   createdDate? : Date,
+}

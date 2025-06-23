@@ -13,7 +13,7 @@ import { Client } from '@microsoft/microsoft-graph-client';
 import { ClientSecretCredential } from "@azure/identity";
 import Course from "../../models/course";
 import { sendInvoiceEvent } from "../../kafka/producers/adminProducer";
-import { academicDashboardCard, academicStudentList, academicStudentProfile } from "../../kafka/producers/academicProducer";
+import { academicAvailableTeachers, academicDashboardCard, academicStudentList, academicStudentProfile } from "../../kafka/producers/academicProducer";
 import { sendEmailClient } from "../../shared/email";
 import EmailTemplate from "../../models/emailTemplate"; 
 
@@ -228,7 +228,7 @@ async function createStudentPortal(updatedEvaluation: any) {
 
           // Save schedule
           const savedClassSchedule = await newClassSchedule.save();
-
+          await academicAvailableTeachers({event : 'update' , data : {date : classDate , teacherId : teacherDetails?.userId ,from : start , to : end }});
           results.push(savedClassSchedule);
         }
       } catch (error) {
