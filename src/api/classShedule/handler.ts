@@ -6,7 +6,7 @@ import { isNil } from "lodash";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
 import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount, getTotalClassesCount, getClassesStatusCount, getClassesWiseCount, getStudentList, getTeacherAttendanceSummary, teacherStudentCount} from "../../operations/classschedule";
-import { academicAvailableTeachers } from "../../kafka/producers/academicProducer";
+import { academicAvailableTeachers, academicTeacherSchedule } from "../../kafka/producers/academicProducer";
 
 
 const createInputValidation = z.object({
@@ -433,8 +433,10 @@ async updateteacherreschedule(req: Request, h: ResponseToolkit){
   );
   if(classReschudle){
     await academicAvailableTeachers({ event : "update" , data :{ date :payload.startDate , teacherId :payload.teacher?.teacherId , from  : startTimeValues , to : endTimeValues}});
+    await academicTeacherSchedule({ data: classReschudle });
   }
   return classReschudle;
+  
 },
 
 async getStudentClassesCount (req: Request, h: ResponseToolkit){
