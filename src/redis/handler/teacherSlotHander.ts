@@ -45,6 +45,8 @@ export async function generateSlotsFromUserSchedule(schedule: UserSchedule) {
     const start = dayjs(startdate).startOf("day");
     const end = dayjs(enddate).startOf("day");
     const startTimeFormat = "hh:mm";
+    const mongoDocs: any[] = [];
+    const redisData = await getAllSlots();
 
     for (
       let currentDate = start.clone();
@@ -70,40 +72,57 @@ export async function generateSlotsFromUserSchedule(schedule: UserSchedule) {
       while (time.isBefore(endTime)) {
         const from = time.format("HH:mm");
         const to = time.add(30, "minute").format("HH:mm");
-        await addSlots(dateStr, teacherId, from, to, true);
+        const isNew = addSlots(redisData, dateStr, teacherId, from, to, true);
+        if (isNew) {
+       mongoDocs.push({
+       date: dateStr,
+       teacherId,
+       from,
+       to,
+       isStatus: true,
+     });
+      }
         time = time.add(30, "minute");
       }
     }
 
+      await redis.set(REDIS_KEY, JSON.stringify(redisData));
+      await teacheravaliableslots.insertMany(mongoDocs);
     console.log("✅ All slots generated and stored in Redis");
   } catch (err) {
     console.error("❌ Error in generateSlotsFromUserSchedule:", err);
   }
 }
 
-export async function addSlots(date: string, teacherId: string, from: string, to: string, isStatus: boolean) {
+export function addSlots(
+  redisData: Record<string, any>,
+  date: string,
+  teacherId: string,
+  from: string,
+  to: string,
+  isStatus: boolean
+): boolean {
   try {
-    const data = await getAllSlots();
-    data[date] ??= {};
-    data[date][teacherId] ??= [];
-    console.log(`🔍 Redis before add | date: ${date}, teacher: ${teacherId}`);
+    redisData[date] ??= {};
+    redisData[date][teacherId] ??= [];
 
-    const exist = data[date][teacherId].some(
+    const exists = redisData[date][teacherId].some(
       (slot: TeacherTimeSlots) => slot.from === from && slot.to === to
     );
 
-    if (!exist) {
-      data[date][teacherId].push({ from, to, isStatus });
-      await redis.set(REDIS_KEY, JSON.stringify(data));
-      await teacheravaliableslots.create({ date, teacherId, from, to, isStatus });
-      console.log("✅ Slot added to Redis + MongoDB");
-    } else {
-      console.log("⚠️ Slot already exists, skipped");
+    if (exists) {
+      console.log(`⚠️ Slot already exists: ${date} ${teacherId} ${from}-${to}`);
+      return false;
     }
+
+    redisData[date][teacherId].push({ from, to, isStatus });
+    return true;
   } catch (err) {
-    console.error("❌ Error in addSlots:", err);
+    console.error("❌ Error in addSlotsInMemory:", err);
+    return false;
   }
 }
+
 
 export async function bookSlot(date: string, teacherId: string, from: string, to: string, isStatus: boolean) {
   try {

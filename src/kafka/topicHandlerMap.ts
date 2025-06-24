@@ -135,9 +135,10 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
             continue;
           }
 
-          for (const slot of timeSlots) {
-            await bookSlot(formattedDate, id, slot.from, slot.to, false);
-          }
+          await Promise.all(
+            timeSlots.map((slot) =>
+              bookSlot(formattedDate, id, slot.from, slot.to, false))
+          );
         }
         const academicAvailableTeachers = await getAllSlotByDate(formattedDate);
         emitEventToClient("academicAvailableTeachers", {
