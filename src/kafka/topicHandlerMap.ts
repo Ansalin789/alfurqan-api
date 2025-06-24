@@ -150,8 +150,14 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
     }
   },
 
-  academicTeacherSchedule: async (data: any) => {
-    console.log("academicTeacherSchedule");
-    emitEventToClient("academicTeacherSchedule", data);
+  'academicTeacherReSchedule' : async (data: any) => {
+    console.log("academicTeacherReSchedule");
+    emitEventToClient("academicTeacherReSchedule", data);
   },
+
+   'academicStudentReSchedule' : async (data: any) => {
+    console.log("academicStudentReSchedule");
+    emitEventToClient("academicStudentReSchedule", data);
+  },
+
 };

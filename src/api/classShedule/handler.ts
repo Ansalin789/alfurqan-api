@@ -6,7 +6,7 @@ import { isNil } from "lodash";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
 import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount, getTotalClassesCount, getClassesStatusCount, getClassesWiseCount, getStudentList, getTeacherAttendanceSummary, teacherStudentCount} from "../../operations/classschedule";
-import { academicAvailableTeachers, academicTeacherSchedule } from "../../kafka/producers/academicProducer";
+import { academicAvailableTeachers, academicStudentReSchedule, academicTeacherReSchedule } from "../../kafka/producers/academicProducer";
 
 
 const createInputValidation = z.object({
@@ -300,7 +300,11 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
     if (isNil(result)) {
       return notFound(ClassSchedulesMessages.CANDIDATE_NOT_FOUND);
     }
-  
+    if(result){
+      await academicStudentReSchedule({data : result});
+       await academicAvailableTeachers({ event : "update" , data :{ date :payload.startDate , teacherId :payload.teacher?.teacherId , from  : startTimeValues , to : endTimeValues}}); 
+    }
+
     return result;
    },
 
@@ -433,7 +437,7 @@ async updateteacherreschedule(req: Request, h: ResponseToolkit){
   );
   if(classReschudle){
     await academicAvailableTeachers({ event : "update" , data :{ date :payload.startDate , teacherId :payload.teacher?.teacherId , from  : startTimeValues , to : endTimeValues}});
-    await academicTeacherSchedule({ data: classReschudle });
+    await academicTeacherReSchedule({ data: classReschudle });
   }
   return classReschudle;
   
