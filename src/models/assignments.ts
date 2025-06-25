@@ -11,6 +11,10 @@ const assignmentSchema = new Schema<IAssignment>(
         type: String,
         required: false,
       },
+      studentName:{
+        type: String,
+        required: false,
+      },
       assignmentName: {
         type: String,
         required: false,
@@ -125,6 +129,7 @@ const assignmentSchema = new Schema<IAssignment>(
 
   export const assignmentValidationSchema = z.object({
     studentId: z.string().optional(), // Make it optional if it's not always required
+    studentName: z.string().optional(),
     assignmentName: z.string(),
     assignedTeacher: z.string().optional(),
     assignmentType: z.object({
