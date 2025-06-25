@@ -734,9 +734,9 @@ export const updateteacherreschedule = async (
       throw new Error("Class schedule not found.");
     }
 
-    for (let i = 0; i < startTime.length; i++) {
-      const newStartTime = startTime[i];
-      const newEndTime = endTime[i];
+   if (Array.isArray(startTime) && startTime.length > 0) {
+      const newStartTime = startTime[0];
+      const newEndTime = endTime[0];
 
       // Validate if reschedule status requires a new start time
       if (scheduleStatus === "Reschedule" && currentSchedule.startTime === newStartTime) {
@@ -751,7 +751,7 @@ export const updateteacherreschedule = async (
         {
           $set: {
             teacher: {
-              teacherId: teacherDetails._id,
+              teacherId: teacherDetails.userId,
               teacherName: teacherDetails.userName,
               teacherEmail: teacherDetails.email,
             },
