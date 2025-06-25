@@ -1,8 +1,7 @@
 import dayjs from "dayjs";
 import {
   getStudentList,
-  teacherStudentCount,
-  updateteacherreschedule,
+  teacherStudentCount
 } from "../operations/classschedule";
 import {
   dashboardWidgetCounts,
@@ -17,6 +16,7 @@ import {
 import { emitEventToClient } from "../shared/socket";
 
 export const topicHandler: Record<string, (data: any) => Promise<void>> = {
+
   "invoice-paid": async (data: any) => {
     console.log("invioce data ", data);
     const latestRevenue = await getTotalAmountByCourse("yearly");
@@ -156,9 +156,39 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
     emitEventToClient("academicTeacherReSchedule", data);
   },
 
-   'academicStudentReSchedule' : async (data: any) => {
+  'academicStudentReSchedule' : async (data: any) => {
     console.log("academicStudentReSchedule");
     emitEventToClient("academicStudentReSchedule", data);
   },
+
+  'teacherDashboardCardCount' : async ( data : any) =>{
+    console.log("teacherDashboardCardCount");
+    // not complete i need api method for count
+    emitEventToClient("teacherDashboardCardCount", data , data.data.sender);
+  },
+
+  'teacherStudentMeeting' : async ( data : any) =>{
+    console.log("teacherStudentMeeting");
+    // sending data to client in all students / particular student
+    emitEventToClient("teacherStudentMeeting", data );
+  },
+
+  'teacherReScheduleNotify' : async ( data : any) => {
+    console.log('teacherReScheduleNotify');
+    // sender will be academic coach
+    emitEventToClient("teacherReScheduleNotify", data);
+  },
+
+  'teacherAssignmentCard' : async ( data : any) => {
+    console.log('teacherAssignmentCard');
+    // send to teacher and handler for count
+    emitEventToClient("teacherAssignmentCard", data);
+  },
+
+  'teacherAnalysisCard' : async ( data : any) => {
+    console.log('teacherAnalysisCard');
+    // send to teacher and handler for count
+    emitEventToClient("teacherAnalysisCard", data);
+  }
 
 };

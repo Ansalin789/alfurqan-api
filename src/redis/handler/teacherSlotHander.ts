@@ -44,7 +44,7 @@ export async function generateSlotsFromUserSchedule(schedule: UserSchedule) {
 
     const start = dayjs(startdate).startOf("day");
     const end = dayjs(enddate).startOf("day");
-    const startTimeFormat = "hh:mm";
+    const startTimeFormat = "HH:mm";
     const mongoDocs: any[] = [];
     const redisData = await getAllSlots();
 
