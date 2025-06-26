@@ -298,9 +298,10 @@ console.log("getTrailclass>>", getTrailclass[0]);
         student: {
           studentId: createEvaluation.student.studentId,
           name: createEvaluation.student.studentFirstName + ' ' + createEvaluation.student.studentLastName,
-          email: createEvaluation.student.email,
+          email: createEvaluation.student.studentEmail,
           city : createEvaluation.student.studentCity,
-          country: createEvaluation.student.studentCountry
+          country: createEvaluation.student.studentCountry,
+          phonenumber: createEvaluation.student.studentPhone
         },
         trialId: createEvaluation._id,
         subject: "Student First class",

@@ -55,7 +55,12 @@ const meetingScheduleSchema = new Schema<IMeetingSchedule>(
       country:{
         type: String,
         required: false,
+      },
+      phonenumber:{
+        type: String,
+        required: false,
       }
+
     },
     trialId:{
       type: String,
@@ -177,7 +182,8 @@ export const scheduleSchema = z.object({
       name: z.string().optional(),
       email: z.string().email().optional(),
       city: z.string().optional(),
-      country: z.string().optional()
+      country: z.string().optional(),
+      phonenumber: z.string().optional()
     }),
   trialId: z.string().optional(),
   subject: z.string(),
