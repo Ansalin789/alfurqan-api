@@ -17,6 +17,7 @@ import Course from "../models/course";
 import { config } from "../config/env";
 import User from "../models/users";
 import teacherAvaliableSlots from "../models/teacheravaliableslots"
+import { academicAvailableTeachers } from "../kafka/producers/academicProducer";
 
 
 
@@ -327,6 +328,12 @@ console.log("getTrailclass>>", getTrailclass[0]);
         lastUpdatedBy: "Admin",
   });
   await CreatemeetingDetails.save();
+  if(CreatemeetingDetails){
+    const teacherId = CreatemeetingDetails.teacher.teacherId;
+    const from = CreatemeetingDetails.scheduledFrom;
+    const to = CreatemeetingDetails.scheduledTo;
+    await academicAvailableTeachers({event : "update" , data : {nextDay, teacherId, from , to}});
+  }
 }
 async function zoomMeetingInvite(newEvaluation: any, getTrailclass: any) {
 const token = await getZoomAccessToken();
