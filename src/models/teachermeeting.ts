@@ -8,14 +8,14 @@ const TeacherMeetingSchema = new Schema<TeacherMeeting>(
     meetingId: { type: String, required: true },
     meetingName: { type: String, required: true },
     teacher: {
-      teacherId: { type: String, required: true },
-      teacherName: { type: String, required: true },
-      teacherEmail: { type: String, required: true },
+      teacherId: { type: String, required: false },
+      teacherName: { type: String, required: false },
+      teacherEmail: { type: String, required: false },
     },
     participants: {
-      studentId: { type: String, require: true },
-      studentName: { type: String, require: true },
-      studentEmail: { type: String, require: true },
+      studentId: { type: String, require: false },
+      studentName: { type: String, require: false },
+      studentEmail: { type: String, require: false },
     },
     meetingdate: { type: Date, required: true },
     fromTime: { type: String, required: true },
@@ -59,12 +59,11 @@ export const zodTeacherMeetingSchema = z.object({
   participants: z
     .array(
       z.object({
-        studentId: z.string().optional(),
-        studentName: z.string().optional(),
-        studentEmail: z.string().optional(),
+        studentId: z.string(),
+        studentName: z.string(),
+        studentEmail: z.string(),
       })
-    )
-    .optional(),
+    ).optional(),
   meetingDate: z.string(),
   fromTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
   toTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),

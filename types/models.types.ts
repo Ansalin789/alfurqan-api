@@ -1908,40 +1908,44 @@ export interface TeacherAvaliableSlots extends Document {
    createdDate? : Date,
 }
 
-export interface TeacherMeetingCreate {
-  meetingName:string;
-  teacher: {
-    teacherId:string;
-    teacherName:string;
-    teacherEmail:string;
-  }
-  participants:{
+export interface IParticipants {
     studentId:string;
     studentName:string;
     studentEmail:string;
-  }
-  meetingdate:Date;
+}
+
+export interface TeacherMeetingCreate {
+  meetingId: string;
+  meetingName:string;
+  participants: IParticipants[];
+  teacher: {
+    teacherId?: string;
+    teacherName?: string;
+    teacherEmail?: string;
+  };
+  meetingDate:Date;
   fromTime:string;
   toTime:string;
   description:string;
   meetingStatus:string;
   status:string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate: Date;
+
 }
 
 
 export interface TeacherMeeting extends Document {
   meetingId:string;
   meetingName:string;
+
+  participants:string[];
   teacher: {
-    teacherId:string;
-    teacherName:string;
-    teacherEmail:string;
-  }
-  participants:{
-    studentId:string;
-    studentName:string;
-    studentEmail:string;
-  }
+    teacherId?:string;
+    teacherName?:string;
+    teacherEmail?:string;
+  };
   meetingdate:Date;
   fromTime:string;
   toTime:string;
