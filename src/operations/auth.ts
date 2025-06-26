@@ -5,6 +5,8 @@ import { appStatus } from "../config/messages";
 import ShiftSchedule from "../models/usershiftschedule";
 import MeetingSchedule from "../models/calendar";
 import moment from "moment";
+import teacherAvaliableSlots from "../models/teacheravaliableslots"
+
 
 /**
  * Updates a user's password by their ID.
@@ -89,4 +91,35 @@ for(const shiftTime of shiftTimeList){
  return result;
  }
 
-}
+};
+
+
+export const teacherAvailableTimeList = async (
+  scheduleDate: string,
+  position: string
+) => {
+  const getAvailableTimeSlots = await teacherAvaliableSlots.find({
+    date: scheduleDate,
+    isStatus: true
+  }).exec();
+
+  const teacherAvailableTime: any[] = [];
+
+  for (const availableTime of getAvailableTimeSlots) {
+    const user = await UserModel.findOne({
+      userId: availableTime.teacherId,
+      position: position
+    }).exec();
+
+    if (user) {
+      teacherAvailableTime.push({
+        fromTime: availableTime.from,
+        toTime: availableTime.to,
+        teacherName: user.userName,
+        teacherId: user.userId,
+        isStatus: true
+      });
+    }
+  }
+  return teacherAvailableTime;
+};

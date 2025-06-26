@@ -238,7 +238,10 @@ async function createStudentPortal(updatedEvaluation: any) {
     }
   }
   await StudentPortalMail(studentPortal);
-    return studentPortal;
+    return {studentdetails: studentPortal,
+      teacherId: updatedEvaluation.teacher.teacherId,
+      teacherName: updatedEvaluation.teacher.teacherName
+    };
 
   } catch (error) {
     console.error("Error in createStudentPortal:", error);

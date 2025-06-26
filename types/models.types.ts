@@ -48,6 +48,7 @@ export interface IUser extends Document {
   email: string;
   password: string;
   role: string[];
+  position: string,
   profileImage?: string | null;
   lastLoginDate?: Date;
   country?: string;
@@ -145,6 +146,7 @@ export interface IUsershiftschedule extends Document{
   name: string;
   email: string;
   role: string;
+  position: string;
   workhrs: string;
   startdate: Date;
   enddate: Date;
@@ -427,7 +429,7 @@ export interface IEvaluationCreate{
 };
 classType: string;
 teacher:{
-  teacherName: string;
+  teacherId: string;
 },
 classDay?: string[];
 startTime?: string[];

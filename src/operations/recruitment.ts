@@ -249,13 +249,14 @@ else if(approvalData &&  approvalData.applicationStatus == applicationStatus.SHO
   
     const password = `${firstThreeChars}${randomSpecial}${randomNum}${reversedUsername}`;
 
-  let createStudentPortal = await User.create({
+  let createTeacherPortal = await User.create({
     userName: updateData.candidateFirstName,
     email:updateData.candidateEmail,
     password: password,
     profileImage: null,
     userId:updateData._id,
     role: "TEACHER",
+    position: updateData.positionApplied,
     gender: updateData.gender,
     status: "Active",
     createdBy: "Admin",
@@ -270,39 +271,37 @@ else if(approvalData &&  approvalData.applicationStatus == applicationStatus.SHO
        }).exec();
        if(emailTemplate){
            const emailTo = [
-               { email: createStudentPortal.email }
+               { email: createTeacherPortal.email }
            ];
            const subject = "Welcome To Alfurqan Team";
-           const htmlPart = emailTemplate.templateContent.replace('<username>', createStudentPortal.userName).replace('<password>',createStudentPortal.password );
-           console.log("emailTemplate>>>>",emailTemplate);
+           const htmlPart = emailTemplate.templateContent.replace('<username>', createTeacherPortal.userName).replace('<password>',createTeacherPortal.password );
            sendEmailClient(emailTo, subject,htmlPart);
        }
 
-const saveStudent = await createStudentPortal.save()
-const result = await createShiftSchedule(saveStudent, updateData);
+const saveTeacher = await createTeacherPortal.save()
+const result = await createShiftSchedule(saveTeacher, updateData);
 await generateSlotsFromUserSchedule(result);
 await academicAvailableTeachers({event : 'create'});
-console.log("Student portal",saveStudent )
-return saveStudent;
+console.log("teacher portal",saveTeacher )
+return saveTeacher;
 };
 
-async function createShiftSchedule(saveStudent: any ,updateData : any) {
-  console.log("savestudent",saveStudent);
-  console.log("updateData",updateData);
+async function createShiftSchedule(saveTeacher: any ,updateData : any) {
   const startDate = new Date();
   const endDate = new Date(startDate);
   const workhrs = updateData.preferedWorkingHours; 
 const [startTime, endTime] = workhrs.split(" - ");
  // endDate.setFullYear(startDate.getFullYear() + 1);
- endDate.setDate(startDate.getDate() + 10); 
+ endDate.setDate(startDate.getDate() + 40); 
   let createShift = await ShiftSchedule.create({
         academicCoachId : null,
-        teacherId : saveStudent.userId,
+        teacherId : saveTeacher.userId,
         supervisorId: null,
         employeeId: null,
-        name: saveStudent.userName,
-        email: saveStudent.email,
+        name: saveTeacher.userName,
+        email: saveTeacher.email,
         role: "TEACHER",
+        position: saveTeacher.position,
         workhrs: updateData.preferedWorkingHours,
         startdate: startDate,
         enddate : endDate, 
