@@ -86,8 +86,8 @@ const studentsWithClassScheduleCount = await Promise.all(
     return {
       ...student.toObject(),
       classScheduleCount, // ✅ original logic
-      teacherName: classSchedule?.teacher?.teacherName || null,  // ✅ correct
-      sessionClassType: classSchedule?.sessionClassType || null      // ✅ correct
+      teacherName: classSchedule?.teacher?.teacherName || "",  // Ensure string
+      sessionClassType: classSchedule?.sessionClassType || ""  // Ensure string
     };
   })
 );
