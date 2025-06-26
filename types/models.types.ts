@@ -661,6 +661,7 @@ export interface IAlStudents extends Document{
   username: string,
   password: string;
   role: string;
+  sessionClassType:string;
   startDate: Date;
   endDate:Date;
   status: string;
