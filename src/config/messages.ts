@@ -89,6 +89,16 @@ export const appStatus: Record<string, any> = Object.freeze({
   NEW: "New"
 });
 
+export const teacherStatus: Record<string, any> = Object.freeze({
+  ACTIVE: "Active",
+  IN_ACTIVE: "Inactive",
+  DELETED: "Deleted",
+  ARCHIVED: "Archived",
+  NEW: "New",
+  SCHEDULED: "Scheduled",
+  RESCHEDULED: "Re-Scheduled",
+});
+
 export const classType: Record<string, any> = Object.freeze({
   REGULARCLASS: "REGULARCLASS",
   GROUPCLASS: "GROUPCLASS",
