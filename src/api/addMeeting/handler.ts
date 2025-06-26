@@ -8,6 +8,7 @@ import { addMeetingMessages } from "../../config/messages";
 import { checkMeetingConflict, getMeetingById, mergeMeetingPayload } from "../../shared/utils/meetingUtils";
 import { supervisorAddMeeting } from "../../kafka/producers/supervisorProducer";
 import { ITeacher } from "../../../types/models.types";
+import { academicAvailableTeachers } from "../../kafka/producers/academicProducer";
 
 
 const createInputValidation = z.object({
@@ -101,6 +102,7 @@ async createMeeting(req: Request, h: ResponseToolkit) {
 
     if (meeting) {
      await supervisorAddMeeting({data: meeting });
+     await academicAvailableTeachers({event : 'update' , data : {date : payload.selectedDate , teacherId : payload.teacher ,from : payload.startTime ,to :payload.endTime }} );
     }
 
     return h.response({ message: "Meeting created successfully", data: meeting }).code(201);

@@ -40,6 +40,10 @@ const userSchema = new Schema<IUser>(
       type: [String],
       required: true
     },
+    position:{
+     type: String,
+      required: false,
+    },
     profileImage: {
       type: String,
       default: null
@@ -90,6 +94,7 @@ export const zodUserSchema = z.object({
     .string()
     .min(8),
   role: z.array(z.string()).min(1),
+  position: z.string().optional(),
   profileImage: z.string().nullable(),
   lastLoginDate: z.string().nullable(),
   country: z.string().optional(),

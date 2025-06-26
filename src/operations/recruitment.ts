@@ -12,6 +12,9 @@ import User from "../models/users";
 import EmailTemplate from "../models/emailTemplate";
 import { sendEmailClient } from "../shared/email";
 import { eachDayOfInterval, eachMonthOfInterval, format } from "date-fns";
+import ShiftSchedule from "../models/usershiftschedule"
+import { generateSlotsFromUserSchedule } from "../redis/handler/teacherSlotHander";
+import { academicAvailableTeachers } from "../kafka/producers/academicProducer";
 
 export interface IRecruitmentUpdate{
   supervisor:{
@@ -246,12 +249,14 @@ else if(approvalData &&  approvalData.applicationStatus == applicationStatus.SHO
   
     const password = `${firstThreeChars}${randomSpecial}${randomNum}${reversedUsername}`;
 
-  let createStudentPortal = await User.create({
+  let createTeacherPortal = await User.create({
     userName: updateData.candidateFirstName,
     email:updateData.candidateEmail,
     password: password,
     profileImage: null,
+    userId:updateData._id,
     role: "TEACHER",
+    position: updateData.positionApplied,
     gender: updateData.gender,
     status: "Active",
     createdBy: "Admin",
@@ -266,17 +271,50 @@ else if(approvalData &&  approvalData.applicationStatus == applicationStatus.SHO
        }).exec();
        if(emailTemplate){
            const emailTo = [
-               { email: createStudentPortal.email }
+               { email: createTeacherPortal.email }
            ];
            const subject = "Welcome To Alfurqan Team";
-           const htmlPart = emailTemplate.templateContent.replace('<username>', createStudentPortal.userName).replace('<password>',createStudentPortal.password );
-           console.log("emailTemplate>>>>",emailTemplate);
+           const htmlPart = emailTemplate.templateContent.replace('<username>', createTeacherPortal.userName).replace('<password>',createTeacherPortal.password );
            sendEmailClient(emailTo, subject,htmlPart);
        }
 
-const saveStudent = createStudentPortal.save()
-console.log("Student portal",saveStudent )
-  return saveStudent;
+const saveTeacher = await createTeacherPortal.save()
+const result = await createShiftSchedule(saveTeacher, updateData);
+await generateSlotsFromUserSchedule(result);
+await academicAvailableTeachers({event : 'create'});
+console.log("teacher portal",saveTeacher )
+return saveTeacher;
+};
+
+async function createShiftSchedule(saveTeacher: any ,updateData : any) {
+  const startDate = new Date();
+  const endDate = new Date(startDate);
+  const workhrs = updateData.preferedWorkingHours; 
+const [startTime, endTime] = workhrs.split(" - ");
+ // endDate.setFullYear(startDate.getFullYear() + 1);
+ endDate.setDate(startDate.getDate() + 40); 
+  let createShift = await ShiftSchedule.create({
+        academicCoachId : null,
+        teacherId : saveTeacher.userId,
+        supervisorId: null,
+        employeeId: null,
+        name: saveTeacher.userName,
+        email: saveTeacher.email,
+        role: "TEACHER",
+        position: saveTeacher.position,
+        workhrs: updateData.preferedWorkingHours,
+        startdate: startDate,
+        enddate : endDate, 
+        fromtime: startTime,
+        totime: endTime,
+        createdDate: new Date(),
+        createdBy: "Admin",
+        lastUpdatedBy: "Admin"
+    }
+     );
+     console.log("createShift", createShift);
+
+     return createShift;
 };
 
 export const getTeacherCountriesCountDetails = async() =>{

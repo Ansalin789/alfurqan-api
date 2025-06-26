@@ -1,7 +1,7 @@
 import { ResponseToolkit,Request } from "@hapi/hapi";
 import  { zodEvaluationSchema } from "../../models/evaluation";
 import { z } from "zod";
-import { createEvaluationRecord,getAllEvaluationRecords,getCountriesCount,getEvaluationRecordById, getPreferedTeacherPercentage, getStudentCourseCount, getTeacherStatusCount, getTotalTrialClassRequestCount, getTrialbyTeacherCount, getTrialClassCount, updateStudentEvaluation, updateStudentInvoice} from "../../operations/evaluation";
+import { createEvaluationRecord,getAllEvaluationRecords,getCountriesCount,getEvaluationRecordById, getPreferedTeacherPercentage, getStudentCourseCount, getTeacherStatusCount, getTotalTrialClassRequestCount, getTrialbyTeacherCount, getTrialClassCount, getTrialClassRecordById, updateStudentEvaluation, updateStudentInvoice} from "../../operations/evaluation";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { evaluationMessages } from "../../config/messages";
 import { isNil, result } from "lodash";
@@ -126,7 +126,7 @@ export default {
             },
             classType: payload.classType,
             teacher:{
-              teacherName: payload.teacher?.teacherName  ?? ""
+              teacherId: payload.teacher?.teacherId  ?? ""
             },
             classDay : payload.classType == "REGULARCLASS"? classDayValues : undefined,
             startTime:payload.classType == "REGULARCLASS"? startTimeValues : undefined ,
@@ -325,6 +325,16 @@ if(result){
       });
       return getTrialClassCount(query);
 
+    },
+
+   async getTrialClassByTeacher(req: Request, h: ResponseToolkit){
+    const result = await getTrialClassRecordById(req.query.teacherId);
+  
+    if (isNil(result)) {
+      return notFound(evaluationMessages.EVALUATIONS_NOT_FOUND);
+    }
+  
+    return result;
     }
   }
 

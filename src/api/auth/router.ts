@@ -70,6 +70,17 @@ const register = async (server: Server): Promise<void> => {
             tags: ["api", "alstudents"],
            },
         },
+        {
+          method: "GET",
+          path: "/teacher/availabletime",
+          options: {
+            handler: handler.getTeacherAvaialableTime,
+            description: "Get available  time for academic coach",
+            tags: ["api", "alstudents"],
+           },
+        },
+
+
   ];
   server.route(routes);
 };

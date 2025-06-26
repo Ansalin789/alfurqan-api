@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
-import { getAcademicAvaialableTimeList, updateUserPassword } from "../../operations/auth";
+import { getAcademicAvaialableTimeList, teacherAvailableTimeList, updateUserPassword } from "../../operations/auth";
 import {
   decryptPassword,
   generateAuthToken,
@@ -323,7 +323,10 @@ console.log(">>>>email", payload.email);
  async getAcademicAvaialableTime(req: Request, h: ResponseToolkit){
   return getAcademicAvaialableTimeList(req.query.scheduleDate);
 
- }
+ },
 
-  
+   async getTeacherAvaialableTime(req: Request, h: ResponseToolkit){
+  return teacherAvailableTimeList(req.query.scheduleDate, req.query.position);
+
+ }
 };

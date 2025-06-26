@@ -11,6 +11,7 @@ import { notFound } from "@hapi/boom";
 const getAssignmnentListInputValidation = z.object({
   query: z.object({
     studentId: z.string().optional(),
+    studentName:z.string().optional(),
     assignmentName: z.string().optional(),
     assignedTeacher: z.string().optional(),
     assignmentType: z.object({
@@ -91,42 +92,49 @@ async createAssignment(req: Request, h: ResponseToolkit) {
       : null;
 
     // **Ensure options is parsed correctly**
-    let options = {};
-    try {
-      options = typeof rawPayload.options === "string" ? JSON.parse(rawPayload.options) : rawPayload.options;
-    } catch (error) {
-      console.error("Error parsing options:", error);
-      return h.response({ error: "Invalid options format" }).code(400);
-    }
+   // Parse options
+let options = {};
+try {
+  console.log("➡️ rawPayload.options BEFORE parsing:", rawPayload.options);
 
-    console.log("Parsed Options:", options); // Debugging
+  options = typeof rawPayload.options === "string"
+    ? JSON.parse(rawPayload.options)
+    : rawPayload.options;
+
+  console.log("✅ Parsed Options:", options);
+} catch (error) {
+  console.error("❌ Error parsing options:", error);
+  return h.response({ error: "Invalid options format" }).code(400);
+}
+
 
     // Create assignment logic
-    return createAssignment({
-      studentId: rawPayload.studentId || "",
-      assignmentName: rawPayload.assignmentName || "",
-      assignedTeacher: rawPayload.assignedTeacher || "",
-      assignmentType: rawPayload.assignmentType || {},
-      chooseType, // Parsed boolean
-      trueorfalseType, // Parsed boolean
-      question: rawPayload.question || "",
-      hasOptions: rawPayload.hasOptions,
-      options, // Parsed options object
-      audioFile: audioFileBuffer ? Buffer.from(audioFileBuffer) : undefined,
-      uploadFile: uploadFileBuffer ? Buffer.from(uploadFileBuffer) : undefined,
-      status: rawPayload.status || "",
-      createdDate: rawPayload.createdDate || new Date(),
-      createdBy: rawPayload.createdBy || "",
-      updatedDate: rawPayload.updatedDate || new Date(),
-      updatedBy: rawPayload.updatedBy || "",
-      level: rawPayload.level || "",
-      courses: rawPayload.courses || "",
-      assignedDate: rawPayload.assignedDate || new Date(),
-      dueDate: rawPayload.dueDate || new Date(),
-      answer: rawPayload.answer || "",
-      answerValidation: rawPayload.answerValidation || "",
-      assignmentStatus: rawPayload.assignmentStatus || "",
-    });
+  return createAssignment({
+  studentId: rawPayload.studentId || "", 
+  studentName:rawPayload.studentName || "",
+  assignmentName: rawPayload.assignmentName || "",
+  assignedTeacher: rawPayload.assignedTeacher || "",
+  assignmentType: rawPayload.assignmentType || {},
+  chooseType,
+  trueorfalseType,
+  question: rawPayload.question || "",
+  hasOptions: rawPayload.hasOptions,
+  options,
+  audioFile: audioFileBuffer ? Buffer.from(audioFileBuffer) : undefined,
+  uploadFile: uploadFileBuffer ? Buffer.from(uploadFileBuffer) : undefined,
+  status: rawPayload.status || "",
+  createdDate: rawPayload.createdDate || new Date(),
+  createdBy: rawPayload.createdBy || "",
+  updatedDate: rawPayload.updatedDate || new Date(),
+  updatedBy: rawPayload.updatedBy || "",
+  level: rawPayload.level || "",
+  courses: rawPayload.courses || "",
+  assignedDate: rawPayload.assignedDate || new Date(),
+  dueDate: rawPayload.dueDate || new Date(),
+  answer: rawPayload.answer || "",
+  answerValidation: rawPayload.answerValidation || "",
+  assignmentStatus: rawPayload.assignmentStatus || "",
+});
   } catch (error) {
     console.error("Error creating assignment:", error);
     return h.response({ error: "Invalid payload" }).code(400);
@@ -161,7 +169,8 @@ async updateAssignment(req: Request, h: ResponseToolkit) {
    
     return  updateStudentAssignment(String(req.params.assinmentId),{
       
-      studentId :rawPayload.studentId || "",
+      studentId: rawPayload?.studentId || "",
+      studentName: rawPayload?.studentName || "",
       assignmentName: rawPayload.assignmentName || "",
       assignedTeacher: rawPayload.assignedTeacher || "",
       assignmentType: rawPayload.assignmentType || {},

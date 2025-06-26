@@ -4,6 +4,7 @@ import assignment from "../models/assignments";
 import userModel from "../models/users";
 import alstudents from "../models/alstudents";
 import { Types } from "mongoose";
+import student from "../models/student";
 /**
  * Creates a new assignment record in the database.
  * @param {IAssignmentCreate} payload - The data required to create a new assignment record.
@@ -13,47 +14,65 @@ export const createAssignment = async (
   payload: IAssignmentCreate
 ): Promise<{ totalCount: number; assignments: IAssignment[] } | { error: any }> => {
   try {
-    // Validate assignment due date
-    // if (payload.dueDate && payload.dueDate === new Date()) {
-    //   throw badRequest("Assignment due date cannot be today. Please select another date.");
-    // }
+    // ✅ Log what you received
+    console.log("➡️ Received Payload.student:", payload.studentId);
+    console.log("Received options:", payload.options);
 
-    // Log the incoming payload for debugging
-   // console.log("Incoming Payload:", payload.options);
-   let studentDetails;
-if(payload.studentId){
-  studentDetails = await alstudents.findOne({_id: payload.studentId}).exec();
-}
-    
-   
-    //console.log("studentDetails>>>>", studentDetails);
-    let assignedTeacher 
-if(payload.assignedTeacher){
-  assignedTeacher  = await userModel.findOne({userName: payload.assignedTeacher, role : 'TEACHER'}).exec();
-}
-   // console.log("assignedTeacher>>>>", assignedTeacher);
+let studentDetails;
+let studentName = "";
+let studentId = "";
 
-    //console.log("optionAnswer>>>>", payload.options); // Logs the fetched audio file
-    
-    // Create a new assignment
+if (payload.studentId) {
+  console.log("📌 Fetching student by _id:", payload.studentId);
+
+  studentDetails = await alstudents.findById(payload.studentId).exec();
+
+  if (studentDetails) {
+    studentName = studentDetails.username;
+    studentId = studentDetails._id.toString(); // ✅ Convert ObjectId to string
+  } else {
+    console.warn("⚠️ Student not found for the provided _id");
+  }
+}
+
+
+    let assignedTeacher;
+    let assignedTeacherId = "";
+
+    if (payload.assignedTeacher) {
+      console.log("📌 Fetching teacher by username:", payload.assignedTeacher);
+
+      assignedTeacher = await userModel.findOne({
+        userName: payload.assignedTeacher,
+        role: { $in: ["TEACHER"] }, // supports array role
+      }).exec();
+
+      if (assignedTeacher) {
+        assignedTeacherId = assignedTeacher.userId || ""; // ✅ use custom userId instead of _id
+      }
+
+      console.log("✅ assignedTeacher from DB:", assignedTeacher);
+    }
+
     const newAssignment = new assignment({
-
-      studentId:studentDetails?._id || "",
+       studentId, 
+       studentName,
       assignmentName: payload.assignmentName || "",
-      assignedTeacher: assignedTeacher?.userName || "", // Save the teacher's userName in the assignment
-      assignedTeacherId:assignedTeacher?._id,
-      assignmentType: payload.assignmentType, // Use the entire object { type, name }
-      chooseType: payload.chooseType,
-      trueorfalseType: payload.trueorfalseType,
+      assignedTeacher: assignedTeacher?.userName || "",
+      assignedTeacherId: assignedTeacher?.userId || "",
+      assignmentType: payload.assignmentType || {},
+      chooseType: payload.chooseType || false,
+      trueorfalseType: payload.trueorfalseType || false,
       question: payload.question || "",
-      hasOptions: payload.hasOptions,
-      options:{
+      hasOptions: payload.hasOptions || false,
+      options: {
         optionOne: payload.options?.optionOne || "",
         optionTwo: payload.options?.optionTwo || "",
-        optionThree:  payload.options?.optionThree || "",
-        optionFour:  payload.options?.optionFour || "",
-      } ,
-      audioFile: payload.audioFile || "", // Save the audio file ID in the database
+        optionThree: payload.options?.optionThree || "",
+        optionFour: payload.options?.optionFour || "",
+      },
+      
+      audioFile: payload.audioFile || "",
       uploadFile: payload.uploadFile || "",
       status: payload.status || "Pending",
       createdDate: new Date(),
@@ -64,26 +83,28 @@ if(payload.assignedTeacher){
       courses: payload.courses || "",
       assignedDate: payload.assignedDate || new Date(),
       dueDate: payload.dueDate || new Date(),
-      answer:payload.answer || "",
+      answer: payload.answer || "",
       answerValidation: payload.answerValidation || "",
       assignmentStatus: payload.assignmentStatus || "Not Assigned",
     });
 
-    console.log(newAssignment.options.optionOne);
- 
 
-    // Save the new assignment to the database
+    console.log("Received options:", payload.options);
+    console.log("🆕 Prepared newAssignment object:", newAssignment);
+
     const assignmentRecord = await newAssignment.save();
-    console.log("assignmentRecord>>>>", assignmentRecord);
-
-    // Count total assignments in the database
     const totalCount = await assignment.countDocuments();
+
+    console.log("✅ Assignment successfully created:", assignmentRecord);
 
     return { totalCount, assignments: [assignmentRecord] };
   } catch (error) {
+    console.error("❌ Error in createAssignment:", error);
     return { error };
   }
 };
+
+
 
 
 //Update Assignments
@@ -129,7 +150,9 @@ export const updateStudentAssignment = async (
     // Updating the Assignment
     const updatedAssignment = await assignment.findByIdAndUpdate(String(id),
       {
-        studentId: studentDetails?._id || "",
+         
+    studentId: studentDetails?._id || "",
+    studentName: studentDetails?.username|| "",
         assignmentName: payload.assignmentName || "",
         assignedTeacher,
         assignmentType: payload.assignmentType,

@@ -1,5 +1,5 @@
 import { badRequest } from "@hapi/boom";
-import { IEvaluation, IEvaluationCreate, IStudents } from "../../types/models.types"
+import { IEvaluation, IEvaluationCreate, IMeetingSchedule, IStudents } from "../../types/models.types"
 import EvaluationModel from "../models/evaluation"
 import StudentModel from "../models/student"
 import UserShiftSchedule from "../models/usershiftschedule"; // Add this import
@@ -16,7 +16,8 @@ import { sendEmailClient } from "../shared/email";
 import Course from "../models/course";
 import { config } from "../config/env";
 import User from "../models/users";
-
+import teacherAvaliableSlots from "../models/teacheravaliableslots"
+import { academicAvailableTeachers } from "../kafka/producers/academicProducer";
 
 
 
@@ -48,13 +49,14 @@ export const createEvaluationRecord = async (
         };
     }
 
-    const loginUser = await User.findOne({userName: payload.createdBy,role : 'ACADEMICCOACH'}).exec();
-   
-    let teacherDetails: any = null;
+    const loginUser = await User.findOne({userId: payload.academicCoachId,role : 'ACADEMICCOACH'}).exec();
+    const teacherDetails = await User.findOne({userId: payload.teacher.teacherId,role : 'TEACHER'}).exec();
+
+
       if(loginUser){
           newStudent.academicCoach = {
 
-              academicCoachId: loginUser._id.toString(), // Provide a default value if undefined
+              academicCoachId: loginUser.userId || " ", // Provide a default value if undefined
               name: loginUser?.userName,                       // Provide a default value if undefined
               role: 'ACADEMICCOACH', // Provide a default value if undefined
               email: loginUser?.email // Provide a default value if undefined
@@ -134,59 +136,29 @@ const subscriptonDetaails = await SubscriptionModel.findOne({
             subscriptionEndDate: new Date(Date.now() + 28 * 24 * 60 * 60 * 1000) 
         };
     }
- 
-    newEvaluation.expectedFinishingDate = 28
-    const shiftScheduleRecord = await UserShiftSchedule.find({
-      role: 'TEACHER'
-}).exec();
+newEvaluation.teacher = {
+  teacherId: teacherDetails?.userId || " ",
+  teacherName: teacherDetails?.userName || " ",
+  teacherEmail: teacherDetails?.email || " ",
 
-if (shiftScheduleRecord.length > 0) {
-        
-  for (const shiftSchedule of shiftScheduleRecord) { // Use for...of instead of forEach
-       const meetingAvailability = await MeetingSchedule.findOne({
-          teacherId: shiftSchedule.teacherId,
-       }) 
-
-       if(!meetingAvailability){
-        teacherDetails = {
-        teacherId: shiftSchedule.teacherId,
-        name: shiftSchedule.name,
-        role: shiftSchedule.role,
-        email: shiftSchedule.email
-    };
-     }
-
-       if(meetingAvailability && shiftSchedule.startdate>=meetingAvailability.scheduledStartDate 
-          && shiftSchedule.startdate>=meetingAvailability.scheduledStartDate ){
-            if(meetingAvailability.scheduledFrom != shiftSchedule.fromtime || meetingAvailability.scheduledFrom != shiftSchedule.totime ){
-              teacherDetails = {
-                teacherId: shiftSchedule.teacherId,
-                name: shiftSchedule.name,
-                role: shiftSchedule.role,
-                email: shiftSchedule.email
-            };
-           }
-          }
-
-      
-  }
-} 
-
-newEvaluation.assignedTeacher = teacherDetails.name;
+}
+newEvaluation.expectedFinishingDate = 28
+newEvaluation.assignedTeacher =teacherDetails?.userName || " ";
 newEvaluation.studentStatus = payload.studentStatus;
 newEvaluation.classStatus = payload.classStatus;
 newEvaluation.trialClassStatus = payload.trialClassStatus;
- newEvaluation.assignedTeacherId = teacherDetails.teacherId;
- newEvaluation.assignedTeacherEmail = teacherDetails.email;
- newEvaluation.teacherStatus = newEvaluation.teacher.teacherName ? "Assigned": "Not Assigned";
+newEvaluation.assignedTeacherId = teacherDetails?.userId || " ";
+newEvaluation.assignedTeacherEmail = teacherDetails?.email || " ";
+newEvaluation.teacherStatus = newEvaluation.teacher.teacherName ? "Assigned": "Not Assigned";
 const createEvaluation = await newEvaluation.save();
 console.log("createEvaluation>>>",createEvaluation)
 
-    if(newEvaluation.studentStatus == "Joined" && newEvaluation.classStatus == "Completed" ){
-      await trialClassAssigned(createEvaluation, teacherDetails)
-    }
-   
+    if(newEvaluation.studentStatus == "JOINED" && newEvaluation.classStatus == "COMPLETED" ){
 
+      await trialClassAssigned(createEvaluation, teacherDetails)
+
+    }
+  
     return createEvaluation;
   };
 
@@ -215,35 +187,35 @@ console.log("createEvaluation>>>",createEvaluation)
     const shiftScheduleRecord = await UserShiftSchedule.find({
       role: 'TEACHER'
 }).exec();
-let teacherDetails: any = null;
-if (shiftScheduleRecord.length > 0) {
-  for (const shiftSchedule of shiftScheduleRecord) { // Use for...of instead of forEach
-       const meetingAvailability = await MeetingSchedule.findOne({
-        teacherId: shiftSchedule.teacherId,
-       }) 
 
-       if(!meetingAvailability){
-        teacherDetails = {
-        teacherId: shiftSchedule.teacherId,
-        name: shiftSchedule.name,
-        role: shiftSchedule.role,
-        email: shiftSchedule.email
-    };
-     }
+// if (shiftScheduleRecord.length > 0) {
+//   for (const shiftSchedule of shiftScheduleRecord) { // Use for...of instead of forEach
+//        const meetingAvailability = await MeetingSchedule.findOne({
+//         teacherId: shiftSchedule.teacherId,
+//        }) 
 
-       if(meetingAvailability && shiftSchedule.startdate>=meetingAvailability.scheduledStartDate 
-          && shiftSchedule.startdate>=meetingAvailability.scheduledStartDate ){
-            if(meetingAvailability.scheduledFrom != shiftSchedule.fromtime || meetingAvailability.scheduledFrom != shiftSchedule.totime ){
-              teacherDetails = {
-                teacherId: shiftSchedule.teacherId,
-                name: shiftSchedule.name,
-                role: shiftSchedule.role,
-                email: shiftSchedule.email
-            };
-            }
-          }       
-  }
-} 
+//        if(!meetingAvailability){
+//         teacherDetails = {
+//         teacherId: shiftSchedule.teacherId,
+//         name: shiftSchedule.name,
+//         role: shiftSchedule.role,
+//         email: shiftSchedule.email
+//     };
+//      }
+
+//        if(meetingAvailability && shiftSchedule.startdate>=meetingAvailability.scheduledStartDate 
+//           && shiftSchedule.startdate>=meetingAvailability.scheduledStartDate ){
+//             if(meetingAvailability.scheduledFrom != shiftSchedule.fromtime || meetingAvailability.scheduledFrom != shiftSchedule.totime ){
+//               teacherDetails = {
+//                 teacherId: shiftSchedule.teacherId,
+//                 name: shiftSchedule.name,
+//                 role: shiftSchedule.role,
+//                 email: shiftSchedule.email
+//             };
+//             }
+//           }       
+//   }
+// } 
 
 const evaluation = await EvaluationModel.findOne({
  _id: new Types.ObjectId(id)
@@ -278,26 +250,37 @@ if(emailTemplate && payload.student && payload.subscription && evaluation ){
    
 };
 
-async function trialClassAssigned(newEvaluation: any, teacherDetails: any) {
+async function trialClassAssigned(createEvaluation: any, teacherDetails: any) {
 
-  const meetingDetails = await zoomMeetingInvite();
-  const zoomMailTemplate = await EmailTemplate.findOne({
-    templateKey: 'trailmanagement',
-}).exec();
+//const meetingTiming = await getTeacherAvaialbleTime()
 
 const today = new Date();
 const nextDay = new Date(today);
 nextDay.setDate(today.getDate() + 1);
+const formattedDate = nextDay.toISOString().split('T')[0];
+
+const getTrailclass = await teacherAvaliableSlots.find({
+teacherId: createEvaluation.teacher.teacherId,
+isStatus: true,
+date: formattedDate.toString()
+}).exec();
+
+console.log("getTrailclass>>", getTrailclass[0]);
+  const meetingDetails = await zoomMeetingInvite(createEvaluation, getTrailclass);
+  const zoomMailTemplate = await EmailTemplate.findOne({
+    templateKey: 'trailmanagement',
+}).exec();
+
   const subject = 'Trail class';
-      const htmlPart = zoomMailTemplate?.templateContent.replace('<date>', nextDay.toString()).replace('<meetingTime>', "10.00 AM").replace('<zoomlink>', meetingDetails.join_url);
+      const htmlPart = zoomMailTemplate?.templateContent.replace('<date>', getTrailclass[0].date).replace('<meetingTime>', getTrailclass[0].from).replace('<zoomlink>', meetingDetails.join_url);
       const emailTo = [
-        { email: teacherDetails.email}, { email: newEvaluation.student.studentEmail }
+        { email: teacherDetails.email}, { email: createEvaluation.student.studentEmail }
     ];
       if(htmlPart){
           sendEmailClient(emailTo, subject,htmlPart);
      }
       const course = await Course.findOne({
-        courseName: newEvaluation.student.learningInterest,
+        courseName: createEvaluation.student.learningInterest,
       });
       const CreatemeetingDetails = await MeetingSchedule.create(
         {
@@ -308,18 +291,18 @@ nextDay.setDate(today.getDate() + 1);
           email: null
           },
         teacher: {
-          teacherId: teacherDetails.teacherId,
-          name: teacherDetails.name,
+          teacherId: teacherDetails.userId,
+          name: teacherDetails.userName,
           email: teacherDetails.email,
         },
         student: {
-          studentId: newEvaluation.student.studentId,
-          name: newEvaluation.student.studentFirstName + ' ' + newEvaluation.student.studentLastName,
-          email: newEvaluation.student.email,
-          city : newEvaluation.student.studentCity,
-          country: newEvaluation.student.studentCountry
+          studentId: createEvaluation.student.studentId,
+          name: createEvaluation.student.studentFirstName + ' ' + createEvaluation.student.studentLastName,
+          email: createEvaluation.student.email,
+          city : createEvaluation.student.studentCity,
+          country: createEvaluation.student.studentCountry
         },
-        trialId: newEvaluation._id,
+        trialId: createEvaluation._id,
         subject: "Student First class",
         meetingLocation: 'Zoom',
         course: {
@@ -330,32 +313,38 @@ nextDay.setDate(today.getDate() + 1);
         meetingType: 'Online',
         meetingLink: meetingDetails.join_url,
         isScheduledMeeting: true,
-       scheduledStartDate: nextDay,
+        scheduledStartDate: nextDay,
         scheduledEndDate: nextDay,
-        scheduledFrom: "10.00 AM",
-        scheduledTo: "10.30 AM",
-        timeZone: newEvaluation.student.timeZone,
+        scheduledFrom: getTrailclass[0].from,
+        scheduledTo: getTrailclass[0].to,
+        timeZone: createEvaluation.student.timeZone,
         description: 'Test Description',
         meetingStatus: 'Scheduled',
-        studentResponse: 'Pending',
+        studentResponse: 'PENDING',
         status: 'Active',
         createdDate: new Date(),
-        createdBy: newEvaluation.createdBy,
+        createdBy: createEvaluation.createdBy,
         lastUpdatedDate: new Date(),
         lastUpdatedBy: "Admin",
   });
   await CreatemeetingDetails.save();
+  if(CreatemeetingDetails){
+    const teacherId = CreatemeetingDetails.teacher.teacherId;
+    const from = CreatemeetingDetails.scheduledFrom;
+    const to = CreatemeetingDetails.scheduledTo;
+    await academicAvailableTeachers({event : "update" , data : {nextDay, teacherId, from , to}});
+  }
 }
-async function zoomMeetingInvite() {
+async function zoomMeetingInvite(newEvaluation: any, getTrailclass: any) {
 const token = await getZoomAccessToken();
 const response = await axios.post(
  'https://api.zoom.us/v2/users/me/meetings',
   {
-   topic: 'Evaluation Meeting',
+   topic: 'Teacher Meeting',
     type: 2,
-    start_time: "10.00", // Start in 10 minutes
+    start_time: getTrailclass[0].from, // Start in 10 minutes
     duration: 60,
-    timezone: 'Asia/Kolkata',
+    timezone: newEvaluation.student.timeZone,
     settings: {
       join_before_host: true,
       participant_video: true,
@@ -722,3 +711,34 @@ export const getTrialClassCount = async (
 
   return { totalCount, evaluation };
 };
+
+//evaluationRecordBYId
+  export const getTrialClassRecordById = async (
+    teacherId : string
+  ) => {
+
+    const currentDate = new Date();
+const formattedDate = currentDate.toISOString().split('T')[0];  
+console.log("formattedDate", formattedDate);
+      const startOfDayIST = `${formattedDate}T00:00:00.000+00:00`;
+      const endOfDayIST = `${formattedDate}T23:59:59.999+00:00`;
+   const trialClass = await MeetingSchedule.find({
+      ['teacher.teacherId']:teacherId ,
+      scheduledStartDate:  {
+          $gte: startOfDayIST,
+          $lte: endOfDayIST
+        }
+    }).sort({ scheduledFrom: 1 });
+
+    return trialClass  ;
+  };
+
+// async function getTeacherAvaialbleTime() {
+ 
+// const getAvailableTime = await MeetingSchedule.find({
+//   classType: "Trail class"
+// }).exec();
+
+
+// }
+

@@ -48,6 +48,7 @@ export interface IUser extends Document {
   email: string;
   password: string;
   role: string[];
+  position: string,
   profileImage?: string | null;
   lastLoginDate?: Date;
   country?: string;
@@ -145,6 +146,7 @@ export interface IUsershiftschedule extends Document{
   name: string;
   email: string;
   role: string;
+  position: string;
   workhrs: string;
   startdate: Date;
   enddate: Date;
@@ -427,7 +429,7 @@ export interface IEvaluationCreate{
 };
 classType: string;
 teacher:{
-  teacherName: string;
+  teacherId: string;
 },
 classDay?: string[];
 startTime?: string[];
@@ -708,6 +710,7 @@ export interface CreatePaymentDetails{
 
 export interface IAssignment  extends Document{
   studentId: string;
+  studentName :string;
   assignmentName: string;
   assignedTeacher: string;
   assignedTeacherId: string;
@@ -747,6 +750,7 @@ export interface IAssignment  extends Document{
 }
 export interface IallAssignment {
   studentId: string;
+  studentName :string;
   assignmentName: string;
   assignedTeacher: string;
   assignedTeacherId: string;
@@ -783,6 +787,7 @@ export interface IallAssignment {
 }
 export interface IAssignmentCreate {
   studentId?: string;
+  studentName :string;
   assignmentName: string;
   assignedTeacher?: string;
   assignmentType: { 
@@ -1886,4 +1891,19 @@ export interface IleaveSummary  extends Document {
   updatedDate?: Date,
   updatedBy?: string,
 
+}
+
+export interface TeacherTimeSlots {
+  from : string,
+  to : string,
+  isStatus : boolean,
+}
+
+export interface TeacherAvaliableSlots extends Document {
+   date: string,
+   teacherId : string,
+   from : string,
+   to : string,
+   isStatus : boolean,
+   createdDate? : Date,
 }

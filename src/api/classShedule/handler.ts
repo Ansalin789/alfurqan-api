@@ -6,6 +6,7 @@ import { isNil } from "lodash";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
 import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount, getTotalClassesCount, getClassesStatusCount, getClassesWiseCount, getStudentList, getTeacherAttendanceSummary, teacherStudentCount} from "../../operations/classschedule";
+import { academicAvailableTeachers, academicStudentReSchedule, academicTeacherReSchedule } from "../../kafka/producers/academicProducer";
 
 
 const createInputValidation = z.object({
@@ -85,7 +86,7 @@ async createandUpdateSchedule(req: Request, h: ResponseToolkit){
     classDay :classDayValues,
     package: payload.package,
     preferedTeacher: payload.preferedTeacher,
-     course:payload.course,
+    // course:payload.course,
      sessionClassType: payload.sessionClassType || "",
      sessionStarttime: payload.sessionStarttime || "",
      sessionsEndtime: payload?.sessionsEndtime || "",
@@ -299,7 +300,11 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
     if (isNil(result)) {
       return notFound(ClassSchedulesMessages.CANDIDATE_NOT_FOUND);
     }
-  
+    if(result){
+      await academicStudentReSchedule({data : result});
+       await academicAvailableTeachers({ event : "update" , data :{ date :payload.startDate , teacherId :payload.teacher?.teacherId , from  : startTimeValues , to : endTimeValues}}); 
+    }
+
     return result;
    },
 
@@ -406,7 +411,7 @@ async updateteacherreschedule(req: Request, h: ResponseToolkit){
  const endTimeValues = payload.endTime?.map((time: { value: string; label: string }) => time.value);
 
 
- return await updateteacherreschedule(String(req.params.classSheduleId),{ 
+ const classReschudle = await updateteacherreschedule(String(req.params.classSheduleId),{ 
   teacher :{
     teacherId: payload.teacher?.teacherId ?? "",
     teacherName: payload.teacher?.teacherName ?? "",
@@ -415,7 +420,7 @@ async updateteacherreschedule(req: Request, h: ResponseToolkit){
   classDay :classDayValues,
   package: payload.package,
   preferedTeacher: payload.preferedTeacher,
-   course:payload.course,
+  // course:payload.course,
    sessionClassType: payload.sessionClassType || "",
    sessionStarttime: payload.sessionStarttime || "",
    sessionsEndtime: payload?.sessionsEndtime || "",
@@ -430,6 +435,12 @@ async updateteacherreschedule(req: Request, h: ResponseToolkit){
  
    }
   );
+  if(classReschudle){
+    await academicAvailableTeachers({ event : "update" , data :{ date :payload.startDate , teacherId :payload.teacher?.teacherId , from  : startTimeValues , to : endTimeValues}});
+    await academicTeacherReSchedule({ data: classReschudle });
+  }
+  return classReschudle;
+  
 },
 
 async getStudentClassesCount (req: Request, h: ResponseToolkit){

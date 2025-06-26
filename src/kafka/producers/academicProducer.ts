@@ -19,3 +19,15 @@ export const academicDashboardTeachersStudentCount = async (payload : any) =>{
 export const academicTeacherStudentList = async (payload : any) =>{
     await sendMessage('academicTeacherStudentList',payload);
 }
+
+export const academicAvailableTeachers = async (payload : any) =>{
+    await sendMessage('academicAvailableTeachers',payload);
+}
+
+export const academicTeacherReSchedule =  async (payload : any) =>{
+    await sendMessage('academicTeacherReSchedule',payload)
+}
+
+export const academicStudentReSchedule = async ( payload : any)=>{
+    await sendMessage('academicStudentReSchedule',payload)
+}
