@@ -11,7 +11,7 @@ const register = async (server: Server): Promise<void> => {
       options: {
         handler: handler.createMeeting,
         description: addMeetingMessages.CREATE,
-        tags: ["api", "recruitment"],
+        tags: ["api", "addmeeting"],
         payload: {
           parse: true,
           allow: "application/json", 

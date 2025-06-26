@@ -1907,3 +1907,50 @@ export interface TeacherAvaliableSlots extends Document {
    isStatus : boolean,
    createdDate? : Date,
 }
+
+export interface TeacherMeetingCreate {
+  meetingName:string;
+  teacher: {
+    teacherId:string;
+    teacherName:string;
+    teacherEmail:string;
+  }
+  participants:{
+    studentId:string;
+    studentName:string;
+    studentEmail:string;
+  }
+  meetingdate:Date;
+  fromTime:string;
+  toTime:string;
+  description:string;
+  meetingStatus:string;
+  status:string;
+}
+
+
+export interface TeacherMeeting extends Document {
+  meetingId:string;
+  meetingName:string;
+  teacher: {
+    teacherId:string;
+    teacherName:string;
+    teacherEmail:string;
+  }
+  participants:{
+    studentId:string;
+    studentName:string;
+    studentEmail:string;
+  }
+  meetingdate:Date;
+  fromTime:string;
+  toTime:string;
+  description:string;
+  meetingStatus:string;
+  status:string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+
+}
