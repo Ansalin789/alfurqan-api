@@ -196,6 +196,7 @@ export interface IMeetingSchedule extends Document {
     email: string;
     city: string;
     country: string;
+    phonenumber: string;
   };
   trialId: string;
   classStatus: string;
@@ -242,6 +243,8 @@ export interface IMeetingScheduleCreate {
     email: string;
     city: string;
     country: string;
+    phonenumber: string;
+
   };
   trialId: string;
   classStatus: string;
