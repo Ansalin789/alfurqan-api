@@ -710,6 +710,7 @@ export interface CreatePaymentDetails{
 
 export interface IAssignment  extends Document{
   studentId: string;
+  studentName :string;
   assignmentName: string;
   assignedTeacher: string;
   assignedTeacherId: string;
@@ -749,6 +750,7 @@ export interface IAssignment  extends Document{
 }
 export interface IallAssignment {
   studentId: string;
+  studentName :string;
   assignmentName: string;
   assignedTeacher: string;
   assignedTeacherId: string;
@@ -785,6 +787,7 @@ export interface IallAssignment {
 }
 export interface IAssignmentCreate {
   studentId?: string;
+  studentName :string;
   assignmentName: string;
   assignedTeacher?: string;
   assignmentType: { 
