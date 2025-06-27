@@ -33,6 +33,8 @@ import salaryandwagesAPI from "../api/salarywages/router";
 
 import packageAPI from "../api/package/router"
 import leaveRequestAPI from "../api/leaveRequest/router";
+import TeachermeetingAPI from "../api/teacherMeeting/router"
+
 
 
 export const appPlugins = [
@@ -136,5 +138,8 @@ export const appPlugins = [
   },
   {
    plugin:leaveRequestAPI,
+  },
+  {
+    plugin:TeachermeetingAPI,
   }
 ];

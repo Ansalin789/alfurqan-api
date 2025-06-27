@@ -101,9 +101,7 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
       if (data.event === "create") {
         const academicAvailableTeachers = await getAllSlots();
         emitEventToClient(
-          "academicAvailableTeachers",
-          academicAvailableTeachers
-        );
+          "academicAvailableTeachers",{event : "create", data: academicAvailableTeachers});
       } else {
         const { date, teacherId, from, to } = data.data;
         const teacherList = Array.isArray(teacherId) ? teacherId : [teacherId];
@@ -142,6 +140,7 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
         }
         const academicAvailableTeachers = await getAllSlotByDate(formattedDate);
         emitEventToClient("academicAvailableTeachers", {
+          event : "update",
           date: data.data.date,
           slots: academicAvailableTeachers,
         });

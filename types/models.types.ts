@@ -196,6 +196,7 @@ export interface IMeetingSchedule extends Document {
     email: string;
     city: string;
     country: string;
+    phonenumber: string;
   };
   trialId: string;
   classStatus: string;
@@ -242,6 +243,8 @@ export interface IMeetingScheduleCreate {
     email: string;
     city: string;
     country: string;
+    phonenumber: string;
+
   };
   trialId: string;
   classStatus: string;
@@ -658,6 +661,7 @@ export interface IAlStudents extends Document{
   username: string,
   password: string;
   role: string;
+  sessionClassType:string;
   startDate: Date;
   endDate:Date;
   status: string;
@@ -711,6 +715,8 @@ export interface CreatePaymentDetails{
 export interface IAssignment  extends Document{
   studentId: string;
   studentName :string;
+    sessionClassType:string;
+
   assignmentName: string;
   assignedTeacher: string;
   assignedTeacherId: string;
@@ -751,6 +757,8 @@ export interface IAssignment  extends Document{
 export interface IallAssignment {
   studentId: string;
   studentName :string;
+    sessionClassType:string;
+
   assignmentName: string;
   assignedTeacher: string;
   assignedTeacherId: string;
@@ -788,6 +796,8 @@ export interface IallAssignment {
 export interface IAssignmentCreate {
   studentId?: string;
   studentName :string;
+    sessionClassType:string;
+
   assignmentName: string;
   assignedTeacher?: string;
   assignmentType: { 
@@ -1906,4 +1916,55 @@ export interface TeacherAvaliableSlots extends Document {
    to : string,
    isStatus : boolean,
    createdDate? : Date,
+}
+
+export interface IParticipants {
+    studentId:string;
+    studentName:string;
+    studentEmail:string;
+}
+
+export interface TeacherMeetingCreate {
+  meetingId: string;
+  meetingName:string;
+  participants: IParticipants[];
+  teacher: {
+    teacherId?: string;
+    teacherName?: string;
+    teacherEmail?: string;
+  };
+  meetingDate:Date;
+  fromTime:string;
+  toTime:string;
+  description:string;
+  meetingStatus:string;
+  status:string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate: Date;
+  updatedBy: string;
+
+}
+
+
+export interface TeacherMeeting extends Document {
+  meetingId:string;
+  meetingName:string;
+
+  participants:string[];
+  teacher: {
+    teacherId?:string;
+    teacherName?:string;
+    teacherEmail?:string;
+  };
+  meetingdate:Date;
+  fromTime:string;
+  toTime:string;
+  description:string;
+  meetingStatus:string;
+  status:string;
+  createdDate: Date;  // ✅ Made optional if handled in backend
+  createdBy: string;  // ✅ Made optional if handled in backend
+  updatedDate: Date;  // ✅ Made optional
+  updatedBy: string;
 }

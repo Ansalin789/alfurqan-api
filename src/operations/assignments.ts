@@ -21,15 +21,21 @@ export const createAssignment = async (
 let studentDetails;
 let studentName = "";
 let studentId = "";
+let sessionClassType = "";
+
+    console.log("sessionClassType to be saved:", sessionClassType);
 
 if (payload.studentId) {
   console.log("📌 Fetching student by _id:", payload.studentId);
-
   studentDetails = await alstudents.findById(payload.studentId).exec();
 
   if (studentDetails) {
     studentName = studentDetails.username;
-    studentId = studentDetails._id.toString(); // ✅ Convert ObjectId to string
+    studentId = studentDetails._id.toString();
+    sessionClassType = studentDetails.sessionClassType;
+
+    // ✅ Now log after assigning
+    console.log("✅ Found student sessionClassType:", sessionClassType);
   } else {
     console.warn("⚠️ Student not found for the provided _id");
   }
@@ -53,11 +59,13 @@ if (payload.studentId) {
 
       console.log("✅ assignedTeacher from DB:", assignedTeacher);
     }
+    console.log("sessionClassType to be saved in new", sessionClassType);
 
     const newAssignment = new assignment({
        studentId, 
        studentName,
-      assignmentName: payload.assignmentName || "",
+  sessionClassType: sessionClassType || "", // 👈 use this!      
+  assignmentName: payload.assignmentName || "",
       assignedTeacher: assignedTeacher?.userName || "",
       assignedTeacherId: assignedTeacher?.userId || "",
       assignmentType: payload.assignmentType || {},
@@ -91,6 +99,7 @@ if (payload.studentId) {
 
     console.log("Received options:", payload.options);
     console.log("🆕 Prepared newAssignment object:", newAssignment);
+    console.log("sessionClassType to be saved sesion:", sessionClassType);
 
     const assignmentRecord = await newAssignment.save();
     const totalCount = await assignment.countDocuments();
@@ -153,6 +162,7 @@ export const updateStudentAssignment = async (
          
     studentId: studentDetails?._id || "",
     studentName: studentDetails?.username|| "",
+    sessionClassType:studentDetails?.sessionClassType || "",
         assignmentName: payload.assignmentName || "",
         assignedTeacher,
         assignmentType: payload.assignmentType,

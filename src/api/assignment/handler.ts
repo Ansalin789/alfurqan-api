@@ -12,6 +12,7 @@ const getAssignmnentListInputValidation = z.object({
   query: z.object({
     studentId: z.string().optional(),
     studentName:z.string().optional(),
+    sessionClassType:z.string().optional(),
     assignmentName: z.string().optional(),
     assignedTeacher: z.string().optional(),
     assignmentType: z.object({
@@ -112,6 +113,7 @@ try {
   return createAssignment({
   studentId: rawPayload.studentId || "", 
   studentName:rawPayload.studentName || "",
+  sessionClassType:rawPayload.sessionClassType || "",
   assignmentName: rawPayload.assignmentName || "",
   assignedTeacher: rawPayload.assignedTeacher || "",
   assignmentType: rawPayload.assignmentType || {},
@@ -171,6 +173,8 @@ async updateAssignment(req: Request, h: ResponseToolkit) {
       
       studentId: rawPayload?.studentId || "",
       studentName: rawPayload?.studentName || "",
+        sessionClassType:rawPayload.sessionClassType || "",
+
       assignmentName: rawPayload.assignmentName || "",
       assignedTeacher: rawPayload.assignedTeacher || "",
       assignmentType: rawPayload.assignmentType || {},

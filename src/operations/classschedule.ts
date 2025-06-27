@@ -65,7 +65,6 @@ export const updateStudentClassSchedule = async (
         _id: new Types.ObjectId(id)
       }).exec();
 
-      console.log("studentDetails>>>", studentDetails);
 
       // Fetch teacher details
       const teacherDetails = await UserModel.findOne({
@@ -73,7 +72,6 @@ export const updateStudentClassSchedule = async (
         userName: payload.teacher?.teacherName
       }).exec();
 
-      console.log("teacherDetails>>>", teacherDetails);
 
       // Map day name to numeric day (0=Sunday, 1=Monday, ..., 6=Saturday)
       const dayIndex = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].indexOf(day);
@@ -120,10 +118,8 @@ export const updateStudentClassSchedule = async (
         });
 
          const eventDetails = await createEvent(newClassSchedule);
-         console.log("eventDetails>>>", eventDetails);
 
         const savedClassSchedule = await newClassSchedule.save();
-        console.log("savedClassSchedule>>>>", savedClassSchedule);
         results.push(savedClassSchedule);
       }
     } catch (error) {
@@ -380,15 +376,15 @@ if (startTime && endTime) {
   const duration = endMinutes - startMinutes;
 
   if (duration > 0) {
-    if (classType === "regular") {
+    if (classType === "REGULARCLASS") {
       amount = (duration / 60) * 4;
-    } else if (classType === "group") {
+    } else if (classType === "GROUPCLASS") {
       amount = (duration / 60) * 6;
-    } else if (classType === "trial") {
+    } else if (classType === "TRAILCLASS") {
       amount = 2;
     }
 
-    sessionStatus = "Completed";
+    sessionStatus = "COMPLETED";
   }
 }
 
@@ -416,23 +412,21 @@ const convertTimeToMinutes = (timeStr: string): number => {
     return NaN;
   }
 
-  // Replace dot (.) with colon (:) if present (fix potential formatting issue)
+  // Fix formatting issue if time uses "." instead of ":"
   timeStr = timeStr.replace(".", ":");
 
-  const [time, modifier] = timeStr.split(" ");
-  const [hours, minutes] = time.split(":").map(Number);
+  const [hoursStr, minutesStr] = timeStr.split(":");
+  const hours = Number(hoursStr);
+  const minutes = Number(minutesStr);
 
   if (isNaN(hours) || isNaN(minutes)) {
     console.error("Invalid time format:", timeStr);
     return NaN;
   }
 
-  let totalMinutes = hours * 60 + minutes;
-  if (modifier === "PM" && hours !== 12) totalMinutes += 12 * 60;
-  if (modifier === "AM" && hours === 12) totalMinutes -= 12 * 60;
-
-  return totalMinutes;
+  return hours * 60 + minutes;
 };
+
 
 
 
@@ -617,10 +611,6 @@ export const teacherStudentCount = async() =>{
 
 };
 
-
-
-
-
 export const teachingActivity = async (
   studentId: string
 ): Promise<{ month: string; completedHours: number; pendingHours: number; totalHours: number }[]> => {
@@ -792,7 +782,7 @@ export const updateteacherreschedule = async (
 
 
 export const getStudentClassCount  = async(studentId: string) =>{
-
+try{
   const studentClassCount= await ClassScheduleModel.aggregate([
     {
       $match: {
@@ -864,6 +854,10 @@ export const getStudentClassCount  = async(studentId: string) =>{
    const totalduration = (studentDurationCount[0].totalDuration).toFixed(2);
 
   return {totalClasses, totalAttendance, level, totalduration};
+
+}catch(e){
+  console.log("error: ", e);
+}
 };
 
 
@@ -1012,14 +1006,13 @@ export const getClassesWiseCount = async() => {
       { "teacher.teacherId": teacherId },
       { student: 1 }
     ).lean();
-
     const uniqueStudentsMap = new Map();
 
     for (const cls of classSchedules) {
       const student = cls.student;
       if (student?.studentId && !uniqueStudentsMap.has(student.studentId)) {
         const alstudent = await AlStudenModel.findOne({
-          "student.studentId": cls.student.studentId
+         _id: cls.student.studentId
         }).exec();
         let evaluation 
         if(alstudent){
