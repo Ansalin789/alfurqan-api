@@ -37,10 +37,11 @@ const TeacherMeetingSchema = new Schema<TeacherMeeting>(
         teacherStatus.NEW,
       ],
     },
-    createdDate: { type: Date, required: true },
+   
+    createdDate: { type: Date, required: true, default: Date.now },
     createdBy: { type: String, required: true },
-    updatedDate: { type: String, required: true },
-    updatedBy: { type: String, required: true },
+    updatedDate: { type: Date, required: true, default: Date.now },
+    updatedBy: { type: String, required: false },
   },
   {
     collection: "teacherMeeting",
@@ -70,24 +71,11 @@ export const zodTeacherMeetingSchema = z.object({
   description: z.string(),
   meetingStatus: z.enum([teacherStatus.SCHEDULED, teacherStatus.RESCHEDULED]),
   status: z.enum([teacherStatus.ACTIVE, teacherStatus.IN_ACTIVE]),
-  createdDate: z
-    .string()
-    .refine((val) => !isNaN(Date.parse(val)), {
-      message: commonMessages.INVALID_DATE_FORMAT,
-    })
-    .transform((val) => new Date(val)),
-
-  createdBy: z.string(),
-
-  updatedDate: z
-    .string()
-    .optional()
-    .refine((val) => (val ? !isNaN(Date.parse(val)) : true), {
-      message: commonMessages.INVALID_DATE_FORMAT,
-    })
-    .transform((val) => (val ? new Date(val) : undefined)),
-
+  createdDate: z.string().optional(),
+  createdBy: z.string().optional(),
+  updatedDate: z.string().optional(),
   updatedBy: z.string().optional(),
+  
 });
 
 export const zodUpdateMeetingSchema = zodTeacherMeetingSchema.partial();

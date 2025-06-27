@@ -5,50 +5,58 @@ import AppLogger from '../helpers/logging';
 import {GetAllRecordsParams} from "../shared/enum";
 import { isNil } from 'lodash';
 
-export const createTeacherMeeting = async (payload : TeacherMeetingCreate): Promise<TeacherMeeting | {error : any}> => {
-    try {
-        const teacher = {
-            teacherId: payload.teacher?.teacherId ?? "",
-            teacherName: payload.teacher?.teacherName ?? "",
-            teacherEmail: payload.teacher?.teacherEmail ?? "",
-          };
-          const meetingDate = new Date(payload.meetingDate);
-          const {fromTime, toTime} = payload;
+export const createTeacherMeeting = async (
+  payload: TeacherMeetingCreate
+): Promise<TeacherMeeting | { error: any }> => {
+  try {
+    const teacher = {
+      teacherId: payload.teacher?.teacherId ?? "",
+      teacherName: payload.teacher?.teacherName ?? "",
+      teacherEmail: payload.teacher?.teacherEmail ?? ""
+    };
 
-          const conflictingMeeting = await teacherMeeting.findOne({
-            selectedDate : meetingDate,
-            $or:[
-                {
-                    fromTime : {$lt : toTime}, toTime : {$gt : fromTime}
-                },
-            ]
-          });
-          if (conflictingMeeting) {
-            return {
-              error:
-                "A meeting is already scheduled at this time. Please choose a different time slot.",
-            };
-          }
-          const meetingId = `participants-${teacher.teacherId || "unknown"}`;
-          if (meetingDate < new Date()) {
-            return { error: "Meeting date cannot be in the past. Please select a future date." };
-          }
+    const meetingDate = new Date(payload.meetingDate);
+    const { fromTime, toTime } = payload;
 
-          const newMeeting = new teacherMeeting({
-            ...payload,
-            teacher,
-            meetingId   
-          })
+    const conflictingMeeting = await teacherMeeting.findOne({
+      meetingDate,
+      $or: [
+        { fromTime: { $lt: toTime }, toTime: { $gt: fromTime } }
+      ]
+    });
 
-          const savedMeeting = await newMeeting.save();
-          return savedMeeting;
+    if (conflictingMeeting) {
+      return {
+        error: "A meeting is already scheduled at this time. Please choose a different time slot."
+      };
+    }
 
+    if (meetingDate < new Date()) {
+      return { error: "Meeting date cannot be in the past. Please select a future date." };
+    }
 
-    } catch (error) {
-        console.error("Error creating meeting:", error);
-        return { error };
-      }
+    const meetingId = `participants-${teacher.teacherId || "unknown"}`;
+    const createdDate = payload.createdDate ? new Date(payload.createdDate) : new Date();
+    const updatedDate = payload.updatedDate ? new Date(payload.updatedDate) : new Date();
+
+    const newMeeting = new teacherMeeting({
+      ...payload,
+      teacher,
+      meetingId,
+      createdDate,
+      updatedDate,
+      createdBy: payload.createdBy ?? "system",
+      updatedBy: payload.updatedBy ?? "system"
+    });
+
+    const savedMeeting = await newMeeting.save();
+    return savedMeeting;
+  } catch (error) {
+    console.error("Error creating meeting:", error);
+    return { error };
+  }
 };
+
 
 export const getallTeachermeeting = async (
   params: GetAllRecordsParams

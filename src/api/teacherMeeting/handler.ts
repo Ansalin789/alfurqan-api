@@ -2,6 +2,7 @@ import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import teachermeeting, {zodTeacherMeetingSchema} from "../../models/teachermeeting";
 import { createTeacherMeeting, getallTeachermeeting } from "../../operations/teacherMeeting"
+import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 
 
 const createInputValidation = z.object({
@@ -12,40 +13,49 @@ const createInputValidation = z.object({
         participants : true,
         meetingDate : true,
         fromTime : true,
+        toTime:true,
         description : true,
         meetingStatus : true,
         status : true,
         createdDate : true,
         createdBy : true,
-        updatedDate : true,
-        updatedBy : true,
+        updatedDate: true,
+        updatedBy: true,
+        
 
     })
 });
 
-const updateTeacherMeetingValidation = z.object({
-    payload : zodTeacherMeetingSchema.pick({
-        meetingId : true,
-        meetingName : true,
-        teacher : true,
-        participants : true,
-        meetingDate : true,
-        fromTime : true,
-        description : true,
-        meetingStatus : true,
-        status : true,
-        createdDate : true,
-        createdBy : true,
-        updatedDate : true,
-        updatedBy : true, 
-    })  .extend({
-        offset: z.string().optional().nullable(),
-        limit: z.string().optional().nullable(),
-        searchText: z.string().optional(),
-        sortBy: z.string().optional(), // Add sortBy as optional
-      })
-      .partial(),
-})
+const getallTeachermeetingInputValidation = z.object({
+    payload: zodGetAllRecordsQuerySchema.pick({
+   meetingId:true,
+ sortBy:true,
+    }),
+  });
+
+// const updateTeacherMeetingValidation = z.object({
+//     payload : zodTeacherMeetingSchema.pick({
+//         meetingId : true,
+//         meetingName : true,
+//         teacher : true,
+//         participants : true,
+//         meetingDate : true,
+//         fromTime : true,
+//         description : true,
+//         meetingStatus : true,
+//         status : true,
+//         createdDate : true,
+//         createdBy : true,
+//         updatedDate : true,
+//         updatedBy : true, 
+//     })  .extend({
+//         offset: z.string().optional().nullable(),
+//         limit: z.string().optional().nullable(),
+//         searchText: z.string().optional(),
+//         sortBy: z.string().optional(), // Add sortBy as optional
+//       })
+//       .partial(),
+// })
 
 export default {
     async createTeacherMeeting(req: Request, h:ResponseToolkit){
@@ -72,22 +82,23 @@ export default {
             //     };
             //   }
 
-              const meeting = await createTeacherMeeting({
-                meetingId : "",
-                meetingName : payload.meetingName,
-                participants : Array.isArray(payload.participants) ? payload.participants : [],
+            const meeting = await createTeacherMeeting({
+                meetingId: "",
+                meetingName: payload.meetingName,
+                participants: Array.isArray(payload.participants) ? payload.participants : [],
                 teacher,
-                description : payload.description,
-                meetingDate : new Date(payload.meetingDate),
-                fromTime : payload.fromTime,
-                toTime : payload.fromTime,
-                meetingStatus : payload.meetingStatus ?? 'Scheduled',
-                status : payload.status,
-                createdDate : payload.createdDate || new Date(),
-                createdBy: payload.createdBy,
-                updatedDate: payload.updatedDate || new Date(),
-
-              })
+                description: payload.description,
+                meetingDate: new Date(payload.meetingDate),
+                fromTime: payload.fromTime,
+                toTime: payload.toTime,
+                meetingStatus: payload.meetingStatus ?? 'Scheduled',
+                status: payload.status,
+                createdDate: payload.createdDate ? new Date(payload.createdDate) : new Date(),
+                createdBy: payload.createdBy ?? "system",
+                updatedDate: payload.updatedDate ? new Date(payload.updatedDate) : new Date(),
+                updatedBy: payload.updatedBy ?? "system"
+              });
+              
         } catch (error) {
             return h.response({error}).code(400);
         }

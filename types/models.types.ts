@@ -1942,6 +1942,7 @@ export interface TeacherMeetingCreate {
   createdDate: Date;
   createdBy: string;
   updatedDate: Date;
+  updatedBy: string;
 
 }
 
@@ -1962,9 +1963,8 @@ export interface TeacherMeeting extends Document {
   description:string;
   meetingStatus:string;
   status:string;
-  createdDate: Date;
-  createdBy: string;
-  updatedDate?: Date;
-  updatedBy?: string;
-
+  createdDate: Date;  // ✅ Made optional if handled in backend
+  createdBy: string;  // ✅ Made optional if handled in backend
+  updatedDate: Date;  // ✅ Made optional
+  updatedBy: string;
 }
