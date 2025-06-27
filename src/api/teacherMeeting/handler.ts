@@ -1,7 +1,7 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import teachermeeting, {zodTeacherMeetingSchema} from "../../models/teachermeeting";
-import { createTeacherMeeting } from "../../operations/teacherMeeting"
+import { createTeacherMeeting, getallTeachermeeting } from "../../operations/teacherMeeting"
 
 
 const createInputValidation = z.object({
@@ -91,5 +91,39 @@ export default {
         } catch (error) {
             return h.response({error}).code(400);
         }
-    }
+    },
+
+    async getallTeachermeeting(req: Request, h: ResponseToolkit) {
+        try {
+          // Parse and validate the request query using zod
+          const parsedQuery = getallTeachermeetingInputValidation.parse({
+            payload: {
+              ...req.query,
+              filterValues: (() => {
+                try {
+                  return req.query?.filterValues
+                    ? JSON.parse(req.query.filterValues as string)
+                    : {};
+                } catch {
+                  throw new Error("Invalid filterValues JSON format.");
+                }
+              })(),
+            },
+          });
+    
+          const query = parsedQuery.payload;
+    
+          // Call your service or database function to fetch data
+          const result = await getallTeachermeeting(query);
+    
+          // Return the response
+          return h.response(result).code(200);
+        } catch (error) {
+          // Handle errors (validation or other errors)
+          return h
+            .response({ error })
+            .code(400);
+        }
+      }
+    
 }

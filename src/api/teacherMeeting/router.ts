@@ -12,7 +12,19 @@ const register = async (server:Server): Promise <void> => {
                 description:addMeetingMessages.CREATE,
                 tags: ['api', 'teacherMeeting']
             },
-        }
+        },
+        {
+            method: 'GET',
+            path:'/teacherMeeting',
+            options: {
+                handler: handler.getallTeachermeeting,
+                description:addMeetingMessages.CREATE,
+                tags: ['api', 'teacherMeeting'],
+                 auth: {
+        strategies: ["jwt"],
+      },
+            },
+        }
     ];
     server.route(routes);
 };  
