@@ -203,7 +203,8 @@ async function createStudentPortal(updatedEvaluation: any) {
             sessionClassType: updatedEvaluation.classType,
             sessionStarttime: "",
             sessionsEndtime: "",
-            
+            teacherAttendee:"",
+            studentAttendee: "",
             classLink: meetingId,
             classDay: day,
             startTime: start,

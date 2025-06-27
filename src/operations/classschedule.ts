@@ -376,15 +376,15 @@ if (startTime && endTime) {
   const duration = endMinutes - startMinutes;
 
   if (duration > 0) {
-    if (classType === "regular") {
+    if (classType === "REGULARCLASS") {
       amount = (duration / 60) * 4;
-    } else if (classType === "group") {
+    } else if (classType === "GROUPCLASS") {
       amount = (duration / 60) * 6;
-    } else if (classType === "trial") {
+    } else if (classType === "TRAILCLASS") {
       amount = 2;
     }
 
-    sessionStatus = "Completed";
+    sessionStatus = "COMPLETED";
   }
 }
 
@@ -412,23 +412,21 @@ const convertTimeToMinutes = (timeStr: string): number => {
     return NaN;
   }
 
-  // Replace dot (.) with colon (:) if present (fix potential formatting issue)
+  // Fix formatting issue if time uses "." instead of ":"
   timeStr = timeStr.replace(".", ":");
 
-  const [time, modifier] = timeStr.split(" ");
-  const [hours, minutes] = time.split(":").map(Number);
+  const [hoursStr, minutesStr] = timeStr.split(":");
+  const hours = Number(hoursStr);
+  const minutes = Number(minutesStr);
 
   if (isNaN(hours) || isNaN(minutes)) {
     console.error("Invalid time format:", timeStr);
     return NaN;
   }
 
-  let totalMinutes = hours * 60 + minutes;
-  if (modifier === "PM" && hours !== 12) totalMinutes += 12 * 60;
-  if (modifier === "AM" && hours === 12) totalMinutes -= 12 * 60;
-
-  return totalMinutes;
+  return hours * 60 + minutes;
 };
+
 
 
 
