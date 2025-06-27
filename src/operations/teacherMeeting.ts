@@ -9,17 +9,28 @@ export const createTeacherMeeting = async (
   payload: TeacherMeetingCreate
 ): Promise<TeacherMeeting | { error: any }> => {
   try {
+    // Ensure teacher object is preserved
     const teacher = {
       teacherId: payload.teacher?.teacherId ?? "",
       teacherName: payload.teacher?.teacherName ?? "",
       teacherEmail: payload.teacher?.teacherEmail ?? ""
     };
 
-    const meetingDate = new Date(payload.meetingDate);
+    // Ensure participants is an array of objects
+    const participants = Array.isArray(payload.participants)
+      ? payload.participants.map(p => ({
+          studentId: p.studentId ?? "",
+          studentName: p.studentName ?? "",
+          studentEmail: p.studentEmail ?? ""
+        }))
+      : [];
+
+    const meetingDate = new Date(payload.meetingdate);
     const { fromTime, toTime } = payload;
 
+    // Check for meeting conflict
     const conflictingMeeting = await teacherMeeting.findOne({
-      meetingDate,
+      meetingdate: meetingDate,
       $or: [
         { fromTime: { $lt: toTime }, toTime: { $gt: fromTime } }
       ]
@@ -36,16 +47,21 @@ export const createTeacherMeeting = async (
     }
 
     const meetingId = `participants-${teacher.teacherId || "unknown"}`;
-    const createdDate = payload.createdDate ? new Date(payload.createdDate) : new Date();
-    const updatedDate = payload.updatedDate ? new Date(payload.updatedDate) : new Date();
 
     const newMeeting = new teacherMeeting({
-      ...payload,
-      teacher,
       meetingId,
-      createdDate,
-      updatedDate,
+      meetingName: payload.meetingName,
+      teacher,
+      participants,
+      meetingdate: meetingDate,
+      fromTime,
+      toTime,
+      description: payload.description,
+      meetingStatus: payload.meetingStatus ?? "Scheduled",
+      status: payload.status,
+      createdDate: payload.createdDate ? new Date(payload.createdDate) : new Date(),
       createdBy: payload.createdBy ?? "system",
+      updatedDate: payload.updatedDate ? new Date(payload.updatedDate) : new Date(),
       updatedBy: payload.updatedBy ?? "system"
     });
 
@@ -56,6 +72,7 @@ export const createTeacherMeeting = async (
     return { error };
   }
 };
+
 
 
 export const getallTeachermeeting = async (

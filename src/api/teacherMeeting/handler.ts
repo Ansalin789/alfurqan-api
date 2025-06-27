@@ -11,7 +11,7 @@ const createInputValidation = z.object({
         meetingName : true,
         teacher : true,
         participants : true,
-        meetingDate : true,
+        meetingdate : true,
         fromTime : true,
         toTime:true,
         description : true,
@@ -58,51 +58,36 @@ const getallTeachermeetingInputValidation = z.object({
 // })
 
 export default {
-    async createTeacherMeeting(req: Request, h:ResponseToolkit){
-        try {
-            const {payload} = createInputValidation.parse({payload:req.payload});
-            let teacher : {teacherId?: string, teacherName?: string, teacherEmail?:string} = {};
 
-            // if (typeof payload.teacher === "string") {
-            //     try {
-            //       const parsed = JSON.parse(payload.teacher);
-            //       teacher = {
-            //         teacherId: parsed.teacherId,
-            //         teacherName: parsed.teacherName,
-            //         teacherEmail: parsed.teacherEmail
-            //       };
-            //     } catch (err) {
-            //       console.error("Failed to parse teacher string:", err);
-            //     }
-            //   } else if (typeof payload.teacher === "object" && payload.teacher !== null) {
-            //     teacher = {
-            //         teacherId: payload.teacher.teacherId,
-            //         teacherName: payload.teacher.teacherName,
-            //         teacherEmail: payload.teacher.teacherEmail
-            //     };
-            //   }
 
-            const meeting = await createTeacherMeeting({
-                meetingId: "",
-                meetingName: payload.meetingName,
-                participants: Array.isArray(payload.participants) ? payload.participants : [],
-                teacher,
-                description: payload.description,
-                meetingDate: new Date(payload.meetingDate),
-                fromTime: payload.fromTime,
-                toTime: payload.toTime,
-                meetingStatus: payload.meetingStatus ?? 'Scheduled',
-                status: payload.status,
-                createdDate: payload.createdDate ? new Date(payload.createdDate) : new Date(),
-                createdBy: payload.createdBy ?? "system",
-                updatedDate: payload.updatedDate ? new Date(payload.updatedDate) : new Date(),
-                updatedBy: payload.updatedBy ?? "system"
-              });
-              
-        } catch (error) {
-            return h.response({error}).code(400);
-        }
-    },
+   async createTeacherMeeting(req: Request, h: ResponseToolkit) {
+  try {
+    const { payload } = createInputValidation.parse({ payload: req.payload });
+
+    const meeting = await createTeacherMeeting({
+      meetingId: "",
+      meetingName: payload.meetingName,
+      participants: Array.isArray(payload.participants) ? payload.participants : [],
+      teacher: payload.teacher, // ✅ Directly assign parsed teacher data
+      description: payload.description,
+      meetingdate: new Date(payload.meetingdate),
+      fromTime: payload.fromTime,
+      toTime: payload.toTime,
+      meetingStatus: payload.meetingStatus ?? "Scheduled",
+      status: payload.status,
+      createdDate: payload.createdDate ? new Date(payload.createdDate) : new Date(),
+      createdBy: payload.createdBy ?? "system",
+      updatedDate: payload.updatedDate ? new Date(payload.updatedDate) : new Date(),
+      updatedBy: payload.updatedBy ?? "system"
+    });
+
+    return h.response({ meeting }).code(200);
+  } catch (error) {
+    console.error("Create Meeting Error:", error);
+    return h.response({ error }).code(400);
+  }
+}
+,
 
     async getallTeachermeeting(req: Request, h: ResponseToolkit) {
         try {

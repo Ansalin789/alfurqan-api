@@ -13,10 +13,16 @@ const TeacherMeetingSchema = new Schema<TeacherMeeting>(
       teacherEmail: { type: String, required: false },
     },
     participants: {
-      studentId: { type: String, require: false },
-      studentName: { type: String, require: false },
-      studentEmail: { type: String, require: false },
+      type: [
+        {
+          studentId: { type: String, required: false },
+          studentName: { type: String, required: false },
+          studentEmail: { type: String, required: false },
+        }
+      ],
+      required: false,
     },
+    
     meetingdate: { type: Date, required: true },
     fromTime: { type: String, required: true },
     toTime: { type: String, required: true },
@@ -37,7 +43,6 @@ const TeacherMeetingSchema = new Schema<TeacherMeeting>(
         teacherStatus.NEW,
       ],
     },
-   
     createdDate: { type: Date, required: true, default: Date.now },
     createdBy: { type: String, required: true },
     updatedDate: { type: Date, required: true, default: Date.now },
@@ -49,6 +54,7 @@ const TeacherMeetingSchema = new Schema<TeacherMeeting>(
   }
 );
 
+
 export const zodTeacherMeetingSchema = z.object({
   meetingId: z.string().optional(),
   meetingName: z.string(),
@@ -58,14 +64,15 @@ export const zodTeacherMeetingSchema = z.object({
     teacherEmail: z.string().optional(),
   }),
   participants: z
-    .array(
-      z.object({
-        studentId: z.string(),
-        studentName: z.string(),
-        studentEmail: z.string(),
-      })
-    ).optional(),
-  meetingDate: z.string(),
+  .array(
+    z.object({
+      studentId: z.string().optional(),
+      studentName: z.string().optional(),
+      studentEmail: z.string().optional()
+    })
+  ).optional(),
+
+  meetingdate: z.string(),
   fromTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
   toTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
   description: z.string(),
