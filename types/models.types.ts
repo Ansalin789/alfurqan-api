@@ -1918,53 +1918,54 @@ export interface TeacherAvaliableSlots extends Document {
    createdDate? : Date,
 }
 
+
 export interface IParticipants {
-    studentId:string;
-    studentName:string;
-    studentEmail:string;
+  studentId?: string;
+  studentName?: string;
+  studentEmail?: string;
 }
+
 
 export interface TeacherMeetingCreate {
   meetingId: string;
-  meetingName:string;
-  participants: IParticipants[];
+  meetingName: string;
+  participants: IParticipants[]; // ✅ Keep object array
   teacher: {
     teacherId?: string;
     teacherName?: string;
     teacherEmail?: string;
   };
-  meetingDate:Date;
-  fromTime:string;
-  toTime:string;
-  description:string;
-  meetingStatus:string;
-  status:string;
+  meetingdate: Date;
+  fromTime: string;
+  toTime: string;
+  description: string;
+  meetingStatus: string;
+  status: string;
   createdDate: Date;
   createdBy: string;
   updatedDate: Date;
   updatedBy: string;
-
 }
 
 
-export interface TeacherMeeting extends Document {
-  meetingId:string;
-  meetingName:string;
 
-  participants:string[];
+export interface TeacherMeeting extends Document {
+  meetingId: string;
+  meetingName: string;
+  participants: IParticipants[]; // ✅ Changed from string[] to object[]
   teacher: {
-    teacherId?:string;
-    teacherName?:string;
-    teacherEmail?:string;
+    teacherId?: string;
+    teacherName?: string;
+    teacherEmail?: string;
   };
-  meetingdate:Date;
-  fromTime:string;
-  toTime:string;
-  description:string;
-  meetingStatus:string;
-  status:string;
-  createdDate: Date;  // ✅ Made optional if handled in backend
-  createdBy: string;  // ✅ Made optional if handled in backend
-  updatedDate: Date;  // ✅ Made optional
+  meetingdate: Date;
+  fromTime: string;
+  toTime: string;
+  description: string;
+  meetingStatus: string;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate: Date;
   updatedBy: string;
 }
