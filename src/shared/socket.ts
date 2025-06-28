@@ -1,6 +1,7 @@
 import { Server as SocketIOServer, Socket } from "socket.io";
 import { Server as HttpServer } from "http";
 import AppLogger from "../helpers/logging";
+import { academicAvailableTeachersList } from "../kafka/producers/academicProducer";
 
 // Map to track sockets connected per userId
 const userSocketsMap = new Map<string, Set<string>>();
@@ -28,6 +29,17 @@ export const initializeSocket = (httpServer: HttpServer): void => {
       userSocketsMap.get(userId)!.add(socket.id);
 
       AppLogger.info(`👤 Socket ${socket.id} subscribed to userId: ${userId}`);
+    });
+    socket.on("availableTeachersListRequest", async(data)=>{
+       try{
+            if(!data.startDate || !data.WeeklySlots || !data.requestId) {
+            AppLogger.error("Invalid request for available teachers list", data);
+           return;
+        }
+            await academicAvailableTeachersList(data);
+       }catch(error){ 
+        AppLogger.error(`Error fetching available teachers list`, error);
+       }
     });
 
     socket.on("disconnect", () => {

@@ -4,7 +4,7 @@ import handler from './handler';
 
 const register = async (server:Server): Promise <void> => {
     const routes: ServerRoute[] = [
-        {
+        {   
             method: 'POST',
             path:'/teacherMeeting',
             options: {
@@ -23,8 +23,17 @@ const register = async (server:Server): Promise <void> => {
                  auth: {
         strategies: ["jwt"],
       },
-            },
-        }
+        },
+    },
+    {   
+        method: 'PUT',
+        path:'/updateTeacherMeeting/{id}',
+        options: {
+            handler: handler.updateTeacherMeeting,
+            description:addMeetingMessages.CREATE,
+            tags: ['api', 'teacherMeeting']
+        },
+    },
     ];
     server.route(routes);
 };  

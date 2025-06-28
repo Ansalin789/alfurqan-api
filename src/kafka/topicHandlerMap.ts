@@ -12,6 +12,7 @@ import {
   bookSlot,
   getAllSlotByDate,
   getAllSlots,
+  getUniqueTeacherList,
 } from "../redis/handler/teacherSlotHander";
 import { emitEventToClient } from "../shared/socket";
 
@@ -188,6 +189,12 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
     console.log('teacherAnalysisCard');
     // send to teacher and handler for count
     emitEventToClient("teacherAnalysisCard", data);
+  },
+
+  'academicAvailableTeachersList' : async ( data : any) =>{
+    console.log('academicAvailableTeachersList');
+    const teacherLsit = await getUniqueTeacherList(data.startDate , data.WeeklySlots);
+    emitEventToClient("availableTeachersListResponse", teacherLsit ,data.requestId);
   }
 
 };

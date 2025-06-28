@@ -23,6 +23,22 @@ const assignmentSchema = new Schema<IAssignment>(
         type: String,
         required: false,
       },
+      questionName: {
+        type: String,
+        required: false,
+      }, 
+      questionType: {
+        type: String,
+        required: false,
+      }, 
+      typeofQuestion: {
+        type: String,
+        required: false,
+      },
+      title: {
+        type: String,
+        required: false,
+      },
       assignedTeacher: {
         type: String,
         required: false,
@@ -135,7 +151,11 @@ const assignmentSchema = new Schema<IAssignment>(
     studentId: z.string().optional(), 
     studentName: z.string().optional(),
     sessionClassType: z.string().optional(),
+    title: z.string().optional(),
     assignmentName: z.string(),
+    questionName: z.string().optional(),
+    questionType: z.string().optional(),
+    typeofQuestion: z.string().optional(),
     assignedTeacher: z.string().optional(),
     assignmentType: z.object({
       type: z.enum([

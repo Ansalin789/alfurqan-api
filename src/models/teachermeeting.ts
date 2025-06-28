@@ -82,6 +82,33 @@ export const zodTeacherMeetingSchema = z.object({
   createdBy: z.string().optional(),
   updatedDate: z.string().optional(),
   updatedBy: z.string().optional(),
+  selectedDate: z
+    .string()
+    .refine((val) => !isNaN(Date.parse(val)), {
+      message: commonMessages.INVALID_DATE_FORMAT,
+    })
+    .transform((val) => new Date(val)),
+
+  startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
+  endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
+  filterValues: z
+  .object({
+    course: z
+      .object({
+        courseName: z.union([z.string(), z.array(z.string())]).optional(),
+      })
+      .optional(),
+    meetingStatus: z.union([z.string(), z.array(z.string())]).optional(),
+ 
+    startTime: z.union([z.string(), z.array(z.string())]).optional(),
+    dateRange: z
+      .object({
+        from: z.string().refine(val => !isNaN(Date.parse(val))),
+        to: z.string().refine(val => !isNaN(Date.parse(val)))
+      })
+      .optional(),
+  })
+  .optional(),
   
 });
 

@@ -13,11 +13,17 @@ dayjs.extend(isSameOrBefore);
 
 interface UserSchedule {
   teacherId: string;
+  name : string;
   startdate: string | Date;
   enddate: string | Date;
   fromtime: string;
   totime: string;
 }
+
+type TimeSlot = { from: string; to: string };
+type WeeklySlotMap = {
+  [day: string]: TimeSlot[];
+};
 
 export async function getAllSlots() {
   try {
@@ -32,10 +38,11 @@ export async function getAllSlots() {
 
 export async function generateSlotsFromUserSchedule(schedule: UserSchedule) {
   try {
-    const { teacherId, startdate, enddate, fromtime, totime } = schedule;
+    const { teacherId, name, startdate, enddate, fromtime, totime } = schedule;
 
     console.log("🟡 Starting slot generation for:", {
       teacherId,
+      name,
       startdate,
       enddate,
       fromtime,
@@ -72,11 +79,12 @@ export async function generateSlotsFromUserSchedule(schedule: UserSchedule) {
       while (time.isBefore(endTime)) {
         const from = time.format("HH:mm");
         const to = time.add(30, "minute").format("HH:mm");
-        const isNew = addSlots(redisData, dateStr, teacherId, from, to, true);
+        const isNew = addSlots(redisData, dateStr, teacherId, name, from, to, true);
         if (isNew) {
        mongoDocs.push({
        date: dateStr,
        teacherId,
+       name,
        from,
        to,
        isStatus: true,
@@ -98,6 +106,7 @@ export function addSlots(
   redisData: Record<string, any>,
   date: string,
   teacherId: string,
+  name: string,
   from: string,
   to: string,
   isStatus: boolean
@@ -115,7 +124,7 @@ export function addSlots(
       return false;
     }
 
-    redisData[date][teacherId].push({ from, to, isStatus });
+    redisData[date][teacherId].push({ name ,from, to, isStatus });
     return true;
   } catch (err) {
     console.error("❌ Error in addSlotsInMemory:", err);
@@ -148,6 +157,50 @@ export async function bookSlot(date: string, teacherId: string, from: string, to
     console.error("❌ Error in bookSlot:", err);
   }
 }
+  export async function getUniqueTeacherList(startDate : string , WeeklySlots : WeeklySlotMap )  {
+      const start = dayjs(startDate).startOf("day");
+      const end  = start.add(27,'day');
+      const redisData = await getAllSlots();
+      const uniqueTeachersMap = new Map<string, string>();
+
+      for (
+        let current = start.clone();
+        current.isSameOrBefore(end);
+        current = current.add(1, "day")
+      ){
+          const dateStr = current.format("YYYY-MM-DD");
+          const dayName = current.format("dddd");
+          const daySlots = WeeklySlots[dayName];
+          if(!daySlots || daySlots.length === 0) continue;
+          if(!redisData[dateStr]) continue;
+
+          for(const {from , to } of daySlots){
+            for (const teacherId in redisData[dateStr]) {
+              const slots = redisData[dateStr][teacherId];
+             const slot = slots.find((slot: TeacherTimeSlots) => {
+              return slot.from === from && slot.to === to && slot.isStatus === true;
+               });
+
+                if(slot){
+                  const teacherName = slot.name ?? "Unknown"; 
+                  uniqueTeachersMap.set(teacherId, teacherName);
+                }
+            }
+          }
+      }
+      return Array.from(uniqueTeachersMap, ([teacherId, teacherName]) => ({
+      teacherId,
+      teacherName,
+      }));
+  }
+
+// export async function removeBookedSlots(date : string , teacherId : string , fromTime : string , toTime : string ){
+//   try{
+
+//   }catch(error){
+//     console.error("❌ Error in removeBookedSlots:", error);
+//   }
+// }
 
 export async function getAllSlotByDate(date: string) {
   try {
