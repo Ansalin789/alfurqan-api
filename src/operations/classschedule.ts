@@ -1134,6 +1134,69 @@ export const getTeacherAttendanceSummary = async (
 };
 
 
+//Analytics cardcount with calculation
+export const getgetAnalyticscardCalculation = async (
+  teacherId: string
+): Promise<{
+  totalStudents: number;
+  totalClasses: number;
+  totalAmount: number;
+  students: {
+    studentId: string;
+    studentFirstname: string;
+    studentLastName: string;
+  }[];
+}> => {
+  if (!teacherId) {
+    throw new Error("Teacher ID is required");
+  }
+
+  try {
+    const classSchedules = await ClassScheduleModel.find(
+      { "teacher.teacherId": teacherId },
+      {
+        student: 1,
+        amount: 1,
+      }
+    ).lean();
+
+    const studentMap = new Map<string, { studentId: string; studentFirstname: string; studentLastName: string }>();
+    let totalAmount = 0;
+
+ for (const cls of classSchedules) {
+  const student = cls.student;
+
+  if (student?.studentId) {
+    if (!studentMap.has(student.studentId)) {
+      studentMap.set(student.studentId, {
+        studentId: student.studentId,
+        studentFirstname: student.studentFirstName,
+        studentLastName: student.studentLastName,
+      });
+    }
+  }
+
+  const cleanedAmount = (cls.amount || "0").replace(/[^0-9.-]+/g, "");
+  const amountValue = parseFloat(cleanedAmount);
+
+  if (!isNaN(amountValue)) {
+    totalAmount += amountValue;
+  }
+}
+
+
+    return {
+      totalClasses: classSchedules.length,
+      totalStudents: studentMap.size,
+      totalAmount: parseFloat(totalAmount.toFixed(2)),
+      students: Array.from(studentMap.values()),
+    };
+  } catch (error) {
+    console.error("Error generating teacher analytics:", error);
+    throw new Error("Failed to generate teacher analytics summary");
+  }
+};
+
 
 
 

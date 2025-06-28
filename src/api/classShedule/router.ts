@@ -69,9 +69,10 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getTeacherStudentCount,
         description: ClassSchedulesMessages.LIST,
         tags: ["api", "classShedule"],
-        auth: {
-          strategies: ["jwt"],
-        }, }
+        // auth: {
+        //   strategies: ["jwt"],
+        // },
+       }
       },
       {
         method: "PUT",
@@ -185,6 +186,19 @@ const register = async (server: Server): Promise<void> => {
           auth: {
             strategies: ["jwt"],
           }, },
+      },
+
+        {
+        method: "GET",
+        path: "/analyticscardcount",
+        options: {
+          handler: handler.getAnalyticscardcount,
+          description: ClassSchedulesMessages.LIST,
+          tags: ["api", "classShedule"],
+          // auth: {
+          //   strategies: ["jwt"],
+          // },
+         },
       },
       
     ];
