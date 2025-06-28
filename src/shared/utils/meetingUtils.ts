@@ -1,4 +1,5 @@
 import addmeeting from "../../models/addmeeting";
+import teachermeeting from "../../models/teachermeeting";
 
 
 /**
@@ -9,7 +10,9 @@ import addmeeting from "../../models/addmeeting";
 export async function getMeetingById(meetingId: string) {
   return await addmeeting.findById(meetingId);
 }
-
+export async function getTeacherMeetingById(meetingId: string) {
+  return await teachermeeting.findById(meetingId);
+}
 /**
  * Merge existing meeting details with update payload.
  * @param payload - The new update payload.
@@ -19,11 +22,15 @@ export async function getMeetingById(meetingId: string) {
 export function mergeMeetingPayload(payload: any, existingMeeting: any) {
   return {
     meetingName: payload.meetingName ?? existingMeeting.meetingName,
+    participants: payload.participants ?? existingMeeting.participants,
     supervisor: payload.supervisor ?? existingMeeting.supervisor,
     teacher: payload.teacher ?? existingMeeting.teacher,
+    meetingdate: payload.meetingdate ?? existingMeeting.meetingdate,
     selectedDate: payload.selectedDate ?? existingMeeting.selectedDate,
     startTime: payload.startTime ?? existingMeeting.startTime,
     endTime: payload.endTime ?? existingMeeting.endTime,
+    fromTime: payload.fromTime ?? existingMeeting.fromTime,
+    toTime: payload.toTime ?? existingMeeting.toTime,
     description: payload.description ?? existingMeeting.description,
     meetingStatus: payload.meetingStatus ?? existingMeeting.meetingStatus,
     updatedDate: new Date(),
@@ -46,6 +53,7 @@ export function mergeMeetingPayload(payload: any, existingMeeting: any) {
 export async function checkMeetingConflict(
   teacherId: string,
   supervisorId: string,
+  studentId:string,
   selectedDate: string,
   startTime: string,
   endTime: string,
@@ -57,7 +65,8 @@ export async function checkMeetingConflict(
       {
         $or: [
           { "teacher.teacherId": teacherId }, // Check teacher conflict
-          { "supervisor.supervisorId": supervisorId }, // Check supervisor conflict
+          { "supervisor.supervisorId": supervisorId },
+          {'participants.studentId':studentId}, // Check supervisor conflict
         ],
       },
       {
