@@ -69,6 +69,11 @@ if (payload.studentId) {
       assignedTeacher: assignedTeacher?.userName || "",
       assignedTeacherId: assignedTeacher?.userId || "",
       assignmentType: payload.assignmentType || {},
+      questionName:payload.questionName || "",
+      questionType:payload.questionType || "",
+      typeofQuestion:payload.typeofQuestion || "",   
+      title:payload.typeofQuestion || "",  
+
       chooseType: payload.chooseType || false,
       trueorfalseType: payload.trueorfalseType || false,
       question: payload.question || "",
@@ -166,6 +171,11 @@ export const updateStudentAssignment = async (
         assignmentName: payload.assignmentName || "",
         assignedTeacher,
         assignmentType: payload.assignmentType,
+        questionName:payload.questionName || "",
+        questionType:payload.questionType || "",
+        typeofQuestion:payload.typeofQuestion || "",  
+        title:payload.typeofQuestion || "",  
+
         chooseType: payload.chooseType,
         trueorfalseType: payload.trueorfalseType,
         question: payload.question || "",

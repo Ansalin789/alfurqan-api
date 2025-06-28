@@ -715,8 +715,11 @@ export interface CreatePaymentDetails{
 export interface IAssignment  extends Document{
   studentId: string;
   studentName :string;
-    sessionClassType:string;
-
+  sessionClassType:string;
+ questionName:string;
+ questionType:string;
+ title:string;
+  typeofQuestion:string;
   assignmentName: string;
   assignedTeacher: string;
   assignedTeacherId: string;
@@ -757,8 +760,12 @@ export interface IAssignment  extends Document{
 export interface IallAssignment {
   studentId: string;
   studentName :string;
-    sessionClassType:string;
+  title:string;
 
+    sessionClassType:string;
+    questionName:string;
+    questionType:string;
+     typeofQuestion:string;
   assignmentName: string;
   assignedTeacher: string;
   assignedTeacherId: string;
@@ -797,7 +804,10 @@ export interface IAssignmentCreate {
   studentId?: string;
   studentName :string;
     sessionClassType:string;
-
+    questionName:string;
+    questionType:string;
+     typeofQuestion:string;
+     title:string;
   assignmentName: string;
   assignedTeacher?: string;
   assignmentType: { 

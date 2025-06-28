@@ -4,7 +4,20 @@ import { alstudentsMessages,commonMessages } from '../config/messages';
 import AppLogger from '../helpers/logging';
 import {GetAllRecordsParams} from "../shared/enum";
 import { isNil } from 'lodash';
-
+import { Types } from 'mongoose';
+import teachermeeting from '../models/teachermeeting';
+const addmeeting = teachermeeting;
+export interface ITeacherMeetingUpdate{
+  meetingName:string,
+  selectedDate: Date,
+  status?:string,
+  meetingStatus?: string,
+  startTime:string,
+  endTime:string,
+  updatedDate?:Date,
+  updatedBy?:string,
+  description:string,
+  }
 export const createTeacherMeeting = async (
   payload: TeacherMeetingCreate
 ): Promise<TeacherMeeting | { error: any }> => {
@@ -134,3 +147,15 @@ export const getallTeachermeeting = async (
 
   return { totalCount, students: student };
 };
+
+
+export const updateAllTeacherMeeting = async (
+  id: string,
+  payload: Partial<ITeacherMeetingUpdate>
+): Promise<TeacherMeeting | null> => {
+  return addmeeting.findOneAndUpdate(
+    { _id: new Types.ObjectId(id) },
+    { $set: payload },
+    { new: true }
+  ).lean();
+}
