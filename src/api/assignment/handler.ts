@@ -14,6 +14,10 @@ const getAssignmnentListInputValidation = z.object({
     studentName:z.string().optional(),
     sessionClassType:z.string().optional(),
     assignmentName: z.string().optional(),
+    questionName: z.string().optional(),
+    title: z.string().optional(),
+    questionType: z.string().optional(),
+    typeofQuestion: z.string().optional(),
     assignedTeacher: z.string().optional(),
     assignmentType: z.object({
       type: z.string(), // Ensure type is required
@@ -117,6 +121,11 @@ try {
   assignmentName: rawPayload.assignmentName || "",
   assignedTeacher: rawPayload.assignedTeacher || "",
   assignmentType: rawPayload.assignmentType || {},
+  questionName:rawPayload.questionName || {},
+  questionType:rawPayload.questionType || {},
+  typeofQuestion:rawPayload.typeofQuestion || {},
+  title:rawPayload.title || {},
+
   chooseType,
   trueorfalseType,
   question: rawPayload.question || "",
@@ -173,11 +182,15 @@ async updateAssignment(req: Request, h: ResponseToolkit) {
       
       studentId: rawPayload?.studentId || "",
       studentName: rawPayload?.studentName || "",
-        sessionClassType:rawPayload.sessionClassType || "",
-
+      sessionClassType:rawPayload.sessionClassType || "",
       assignmentName: rawPayload.assignmentName || "",
       assignedTeacher: rawPayload.assignedTeacher || "",
       assignmentType: rawPayload.assignmentType || {},
+      questionName:rawPayload.questionName || {},
+      questionType:rawPayload.questionType || {},
+      typeofQuestion:rawPayload.typeofQuestion || {},
+      title:rawPayload.title || {},
+
       chooseType, // Parsed boolean
       trueorfalseType, // Parsed boolean
       question: rawPayload.question || "",
