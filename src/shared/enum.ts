@@ -120,7 +120,7 @@ export interface GetAllApplicationsRecordsParams {
 
 export interface GetAlluserRecordsParams {
   date?: string;
-  role: string;
+  role?: string;
   studentId?:string;
   // startdate?: string;
   // enddate?: string;

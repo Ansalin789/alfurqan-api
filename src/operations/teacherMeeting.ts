@@ -14,6 +14,8 @@ export interface ITeacherMeetingUpdate{
   meetingStatus?: string,
   startTime:string,
   endTime:string,
+  fromTime:string,
+  toTime:string,
   updatedDate?:Date,
   updatedBy?:string,
   description:string,

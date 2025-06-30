@@ -104,6 +104,7 @@ const updateInputValidation = z.object({
 
       const { role, date } = query;
 
+      console.log(">>>>>>>>>>>>", role);
       // Build the filter object
       const filter: GetAlluserRecordsParams = {
         role,
@@ -111,6 +112,10 @@ const updateInputValidation = z.object({
       };
       if (date) {
         filter.date = date;
+      }
+      if(role){
+        filter.role = role;
+
       }
 
       // Fetch user records using the filter
