@@ -40,7 +40,7 @@ meetingStatus: z.union([z.string(), z.array(z.string())]).optional(),
 });
 
 export const zodGetAllUserRecordsQuerySchema = z.object({
-  role: z.string().min(3),
+  role: z.string().min(3).optional(),
   date:z.string().optional(),
 });
 

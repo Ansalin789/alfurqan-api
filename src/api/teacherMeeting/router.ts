@@ -1,5 +1,5 @@
 import { Server, ServerRoute } from '@hapi/hapi';
-import { addMeetingMessages } from '../../config/messages'
+import { addMeetingMessages, evaluationMessages } from '../../config/messages'
 import handler from './handler';
 
 const register = async (server:Server): Promise <void> => {
@@ -25,6 +25,20 @@ const register = async (server:Server): Promise <void> => {
       },
         },
     },
+
+    {
+        method: "GET",
+        path: "/teacherMeetinglist",
+        options: {
+          handler: handler.getTeachermeetingById,
+          description: evaluationMessages.LIST,
+          tags: ["api", "teacherMeetinglist"],
+          auth: {
+            strategies: ["jwt"],
+          },  
+        },
+      },
+  
     {   
         method: 'PUT',
         path:'/updateTeacherMeeting/{id}',

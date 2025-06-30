@@ -12,6 +12,8 @@ import Meeting from "../src/models/addmeeting";
 import cron from "node-cron";
 import { cleanupOldDates } from "./redis/manage/autoClearSlots";
 import { restoreCacheFromDb } from "./redis/manage/restoreCache";
+import { loggerPlugin } from "./plugins/auditlog";
+
 
 const start = async () => {
   // Create the server with server settings
@@ -36,6 +38,7 @@ const start = async () => {
   // Initialize and Start the Application
   await server.initialize();
   await server.start();
+  await server.register([loggerPlugin]);
 
   AppLogger.info(
     `Application is running on ${config.server.host}:${config.server.port}`

@@ -1914,6 +1914,7 @@ export interface IleaveSummary  extends Document {
 }
 
 export interface TeacherTimeSlots {
+  name : string,
   from : string,
   to : string,
   isStatus : boolean,
@@ -1979,4 +1980,17 @@ export interface TeacherMeeting extends Document {
   createdBy: string;
   updatedDate: Date;
   updatedBy: string;
+}
+
+export interface LogDocument extends Document {
+  userId: string;
+  logType: 'SUCCESS' | 'REDIRECT' | 'ERROR' | 'INFO';
+  action?: string;       
+  description?: string;   
+  route?: string;        
+  errorMessage?: string;  
+  stack?: string;         
+  ip?: string;
+  meta?: any;
+  createdDate: Date;
 }

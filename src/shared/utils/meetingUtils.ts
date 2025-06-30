@@ -51,12 +51,14 @@ export function mergeMeetingPayload(payload: any, existingMeeting: any) {
  * @returns Boolean indicating whether a scheduling conflict exists.
  */
 export async function checkMeetingConflict(
-  teacherId: string,
-  supervisorId: string,
-  studentId:string,
-  selectedDate: string,
-  startTime: string,
-  endTime: string,
+  teacherId?: string,
+  supervisorId?: string,
+  studentId?:string,
+  fromTime?:string,
+  toTime?:string,
+  selectedDate?: string,
+  startTime?: string,
+  endTime?: string,
   meetingId?: string
 ): Promise<boolean> {
   const conflictingMeeting = await addmeeting.findOne({

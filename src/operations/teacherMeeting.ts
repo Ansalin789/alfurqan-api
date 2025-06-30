@@ -14,6 +14,8 @@ export interface ITeacherMeetingUpdate{
   meetingStatus?: string,
   startTime:string,
   endTime:string,
+  fromTime:string,
+  toTime:string,
   updatedDate?:Date,
   updatedBy?:string,
   description:string,
@@ -147,6 +149,14 @@ export const getallTeachermeeting = async (
 
   return { totalCount, students: student };
 };
+
+export const getTeachermeetingById = async (
+  id: string
+): Promise<TeacherMeeting | null> => {
+  return teacherMeeting.findOne({
+    _id: id,
+  }).lean();
+  };
 
 
 export const updateAllTeacherMeeting = async (

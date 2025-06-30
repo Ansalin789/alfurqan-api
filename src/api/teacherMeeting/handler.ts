@@ -1,10 +1,12 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import teachermeeting, {zodTeacherMeetingSchema} from "../../models/teachermeeting";
-import { createTeacherMeeting, getallTeachermeeting, updateAllTeacherMeeting } from "../../operations/teacherMeeting"
+import { createTeacherMeeting, getallTeachermeeting, getTeachermeetingById, updateAllTeacherMeeting } from "../../operations/teacherMeeting"
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
-import { addMeetingMessages } from "../../config/messages";
+import { addMeetingMessages, evaluationMessages } from "../../config/messages";
 import { checkMeetingConflict, getMeetingById, getTeacherMeetingById, mergeMeetingPayload } from "../../shared/utils/meetingUtils";
+import { isNil } from "lodash";
+import { notFound } from "@hapi/boom";
 
 
 const createInputValidation = z.object({
@@ -122,68 +124,83 @@ export default {
         }
     }
     ,
+
+    async getTeachermeetingById(req: Request , h: ResponseToolkit) {
+      const result = await getTeachermeetingById(String(req.params.meetingId));
     
-    async updateTeacherMeeting(req: Request, h: ResponseToolkit) {
-      try {
-        const meetingId = req.params.id;
-    
-        if (!meetingId) {
-          return h.response({ message: "Meeting ID is missing in path" }).code(400);
-        }
-    
-        const payload = req.payload as any;
-        if (!payload) {
-          return h.response({ message: "Request payload is missing" }).code(400);
-        }
-    
-        const validatedPayload = updateMeetingInputValidation.parse({ payload });
-    
-        const existingMeeting = await getTeacherMeetingById(meetingId);
-        if (!existingMeeting) {
-          return h.response({ message: addMeetingMessages.USER_NOT_FOUND }).code(404);
-        }
-    
-        const updatedPayload = mergeMeetingPayload(validatedPayload.payload, existingMeeting);
-    
-        const isTimeChanged =
-          updatedPayload.fromTime !== existingMeeting.fromTime ||
-          updatedPayload.toTime !== existingMeeting.toTime;
-    
-        if (isTimeChanged) {
-          if (
-            !updatedPayload.teacher?.teacherId ||
-            !updatedPayload.supervisor?.supervisorId
-          ) {
-            return h.response({ message: "Invalid teacher or supervisor details" }).code(400);
-          }
-    
-          const hasConflict = await checkMeetingConflict(
-            updatedPayload.teacher.teacherId,
-            updatedPayload.supervisor.supervisorId,
-            updatedPayload.meetingdate,
-            updatedPayload.fromTime,
-            updatedPayload.toTime,
-            meetingId
-          );
-    
-          if (hasConflict) {
-            return h.response({ message: "Reschedule failed: Time slot already occupied" }).code(400);
-          }
-    
-          updatedPayload.meetingStatus = "Re-scheduled";
-        }
-    
-        const result = await updateAllTeacherMeeting(meetingId, updatedPayload);
-        if (!result) {
-          return h.response({ message: addMeetingMessages.USER_NOT_FOUND }).code(404);
-        }
-    
-        return h.response(result).code(200);
-      } catch (error) {
-        console.error("Error updating meeting:", error);
-        return h.response({ message: "Internal Server Error", error }).code(500);
+      if (isNil(result)) {
+        return notFound(evaluationMessages.EVALUATIONS_NOT_FOUND);
       }
+    
+      return result;
+    },
+    
+  async updateTeacherMeeting(req: Request, h: ResponseToolkit) {
+    try {
+      const meetingId = req.params.id;
+  
+      if (!meetingId) {
+        return h.response({ message: "Meeting ID is missing in path" }).code(400);
+      }
+  
+      const payload = req.payload as any;
+      if (!payload) {
+        return h.response({ message: "Request payload is missing" }).code(400);
+      }
+  
+      // Validate using Zod
+      const validatedPayload = updateMeetingInputValidation.parse({ payload });
+  
+      // Fetch existing meeting
+      const existingMeeting = await getTeacherMeetingById(meetingId);
+      if (!existingMeeting) {
+        return h.response({ message: addMeetingMessages.USER_NOT_FOUND }).code(404);
+      }
+  
+      // Merge payload with existing meeting
+      const updatedPayload = mergeMeetingPayload(validatedPayload.payload, existingMeeting);
+  
+      // Detect time change
+      const isTimeChanged =
+        updatedPayload.fromTime !== existingMeeting.fromTime ||
+        updatedPayload.toTime !== existingMeeting.toTime;
+  
+      if (isTimeChanged) {
+        const teacherId = updatedPayload.teacher?.teacherId;
+        const studentId = updatedPayload.participants?.[0]?.studentId;
+  
+        if (!teacherId || !studentId) {
+          return h.response({ message: "Invalid teacher or student details" }).code(400);
+        }
+  
+        const hasConflict = await checkMeetingConflict(
+          studentId,
+          updatedPayload.selectedDate,
+          updatedPayload.fromTime,
+          updatedPayload.toTime,
+          meetingId
+        );
+  
+        if (hasConflict) {
+          return h.response({ message: "Reschedule failed: Time slot already occupied" }).code(400);
+        }
+  
+        updatedPayload.meetingStatus = "Re-Scheduled";
+      }
+  
+      // Update in DB
+      const result = await updateAllTeacherMeeting(meetingId, updatedPayload);
+      if (!result) {
+        return h.response({ message: addMeetingMessages.USER_NOT_FOUND }).code(404);
+      }
+  
+      return h.response(result).code(200);
+    } catch (error) {
+      console.error("Error updating meeting:", error);
+      return h.response({ message: "Internal Server Error", error }).code(500);
     }
+  }
+  
     
     
 }

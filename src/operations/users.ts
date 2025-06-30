@@ -22,19 +22,25 @@ export const getAllUserRecords = async (
   const { role } = params;
 
   // Construct query based on role if provided
-  const query: any = {};
-  if (role) {
-    query.role = role;
-  }
+  const query: any = { role };
   
-  console.log(">>>>",query.date);
+  
+  console.log(">>>>",query);
   // Fetch all users matching the query and return plain JavaScript objects using .lean()
-  const users = await UserModel.find({
-    role: query.role,
-  }).exec();
- // console.log("users>>>>>>>>",users);
+  let users;
+  let totalCount;
+  if(query.length == 0){
+    users  = await UserModel.find(query).exec();
+    totalCount = await UserModel.countDocuments(query);
+
+
+  }else{
+    users  = await UserModel.find().exec();
+     totalCount = await UserModel.countDocuments();
+
+  }
+ console.log("users>>>>>>>>",users);
   // Get the total count of users matching the query
-  const totalCount = await UserModel.countDocuments(query); // Count users matching the role
 
   return { users, totalCount }; // Return both users and totalCount
 };

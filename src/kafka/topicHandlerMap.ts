@@ -15,6 +15,7 @@ import {
   getUniqueTeacherList,
 } from "../redis/handler/teacherSlotHander";
 import { emitEventToClient } from "../shared/socket";
+import AuditLog from "../models/auditlog";
 
 export const topicHandler: Record<string, (data: any) => Promise<void>> = {
 
@@ -195,6 +196,28 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
     console.log('academicAvailableTeachersList');
     const teacherLsit = await getUniqueTeacherList(data.startDate , data.WeeklySlots);
     emitEventToClient("availableTeachersListResponse", teacherLsit ,data.requestId);
+  },
+
+  'sendLogsToKafka' : async ( data : any) =>{
+    console.log('sendLogsToKafka');
+    try{
+    const log = new AuditLog({
+      userId: data.data.userId ?? 'anonymous', 
+      logType: data.data.logType,
+      action: data.data.action,
+      description: data.data.description,
+      route: data.data.route,
+      errorMessage: data.data.errorMessage,
+      stack: data.data.stack,
+      ip: data.data.ip,
+      meta: data.data.meta,
+      createdDate: data.data.createdDate ?? new Date()
+    });
+
+    await log.save();
+    }catch(error){
+      console.error('❌ Failed to save log:', error);
+    }
   }
 
 };
