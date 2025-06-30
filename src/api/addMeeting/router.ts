@@ -58,9 +58,9 @@ const register = async (server: Server): Promise<void> => {
               description: addMeetingMessages.LIST,
               tags: ["api", "recruitment"],
               payload: {
-                  output: "data",  // Ensure payload is treated as parsed data
+                  output: "data",  
                   parse: true,
-                  allow: "application/json", // Ensure JSON is allowed
+                  allow: "application/json", 
               },
               // auth: {
               //   strategies: ["jwt"],
