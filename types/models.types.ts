@@ -1914,6 +1914,7 @@ export interface IleaveSummary  extends Document {
 }
 
 export interface TeacherTimeSlots {
+  name : string,
   from : string,
   to : string,
   isStatus : boolean,
