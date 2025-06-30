@@ -1981,3 +1981,16 @@ export interface TeacherMeeting extends Document {
   updatedDate: Date;
   updatedBy: string;
 }
+
+export interface LogDocument extends Document {
+  userId: string;
+  logType: 'SUCCESS' | 'REDIRECT' | 'ERROR' | 'INFO';
+  action?: string;       
+  description?: string;   
+  route?: string;        
+  errorMessage?: string;  
+  stack?: string;         
+  ip?: string;
+  meta?: any;
+  createdDate: Date;
+}
