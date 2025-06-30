@@ -148,6 +148,14 @@ export const getallTeachermeeting = async (
   return { totalCount, students: student };
 };
 
+export const getTeachermeetingById = async (
+  id: string
+): Promise<TeacherMeeting | null> => {
+  return teacherMeeting.findOne({
+    _id: id,
+  }).lean();
+  };
+
 
 export const updateAllTeacherMeeting = async (
   id: string,

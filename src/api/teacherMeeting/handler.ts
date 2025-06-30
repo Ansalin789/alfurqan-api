@@ -1,10 +1,12 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import teachermeeting, {zodTeacherMeetingSchema} from "../../models/teachermeeting";
-import { createTeacherMeeting, getallTeachermeeting, updateAllTeacherMeeting } from "../../operations/teacherMeeting"
+import { createTeacherMeeting, getallTeachermeeting, getTeachermeetingById, updateAllTeacherMeeting } from "../../operations/teacherMeeting"
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
-import { addMeetingMessages } from "../../config/messages";
+import { addMeetingMessages, evaluationMessages } from "../../config/messages";
 import { checkMeetingConflict, getMeetingById, getTeacherMeetingById, mergeMeetingPayload } from "../../shared/utils/meetingUtils";
+import { isNil } from "lodash";
+import { notFound } from "@hapi/boom";
 
 
 const createInputValidation = z.object({
@@ -122,6 +124,16 @@ export default {
         }
     }
     ,
+
+    async getTeachermeetingById(req: Request , h: ResponseToolkit) {
+      const result = await getTeachermeetingById(String(req.params.evaluationId));
+    
+      if (isNil(result)) {
+        return notFound(evaluationMessages.EVALUATIONS_NOT_FOUND);
+      }
+    
+      return result;
+    },
     
     async updateTeacherMeeting(req: Request, h: ResponseToolkit) {
       try {
