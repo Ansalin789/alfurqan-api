@@ -1948,8 +1948,8 @@ export interface TeacherMeetingCreate {
     teacherEmail?: string;
   };
   meetingdate: Date;
-  fromTime: string;
-  toTime: string;
+  startTime: string;
+  endTime: string;
   description: string;
   meetingStatus: string;
   status: string;
@@ -1971,8 +1971,8 @@ export interface TeacherMeeting extends Document {
     teacherEmail?: string;
   };
   meetingdate: Date;
-  fromTime: string;
-  toTime: string;
+  startTime: string;
+  endTime: string;
   description: string;
   meetingStatus: string;
   status: string;
