@@ -16,8 +16,8 @@ const createInputValidation = z.object({
         teacher : true,
         participants : true,
         meetingdate : true,
-        fromTime : true,
-        toTime:true,
+        startTime : true,
+        endTime:true,
         description : true,
         meetingStatus : true,
         status : true,
@@ -41,8 +41,8 @@ const getallTeachermeetingInputValidation = z.object({
   payload: zodTeacherMeetingSchema.pick({
     meetingName: true,
     meetingdate: true,         // ✅ Replaces 'selectedDate'
-    fromTime: true,            // ✅ Replaces 'startTime'
-    toTime: true,              // ✅ Replaces 'endTime'
+    startTime: true,            // ✅ Replaces 'startTime'
+    endTime: true,              // ✅ Replaces 'endTime'
     description: true,
     status: true,
     meetingStatus: true,
@@ -73,8 +73,8 @@ export default {
       teacher: payload.teacher, // ✅ Directly assign parsed teacher data
       description: payload.description,
       meetingdate: new Date(payload.meetingdate),
-      fromTime: payload.fromTime,
-      toTime: payload.toTime,
+      startTime: payload.startTime,
+      endTime: payload.endTime,
       meetingStatus: payload.meetingStatus ?? "Scheduled",
       status: payload.status,
       createdDate: payload.createdDate ? new Date(payload.createdDate) : new Date(),
@@ -162,8 +162,8 @@ export default {
   
       // Detect time change
       const isTimeChanged =
-        updatedPayload.fromTime !== existingMeeting.fromTime ||
-        updatedPayload.toTime !== existingMeeting.toTime;
+        updatedPayload.startTime !== existingMeeting.startTime ||
+        updatedPayload.endTime !== existingMeeting.endTime;
   
       if (isTimeChanged) {
         const teacherId = updatedPayload.teacher?.teacherId;
@@ -176,8 +176,8 @@ export default {
         const hasConflict = await checkMeetingConflict(
           studentId,
           updatedPayload.selectedDate,
-          updatedPayload.fromTime,
-          updatedPayload.toTime,
+          updatedPayload.startTime,
+          updatedPayload.endTime,
           meetingId
         );
   

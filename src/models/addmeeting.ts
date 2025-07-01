@@ -67,7 +67,7 @@ export const zodAddMeetingSchema = z.object({
     .optional(),
 
   selectedDate: z
-    .string()
+     .string()
     .refine((val) => !isNaN(Date.parse(val)), {
       message: commonMessages.INVALID_DATE_FORMAT,
     })

@@ -22,6 +22,12 @@ export const loggerPlugin: Plugin<{}> = {
         : (response as any)?.statusCode ?? 200;
 
       const logType = getLogTypeByStatus(statusCode);
+      const forwardedIp = request.headers['x-forwarded-for'];
+      const remoteIp = request.info.remoteAddress;
+
+      const clientIp = forwardedIp
+      ? forwardedIp.split(',')[0].trim()
+      : remoteIp;
 
       const logPayload = {
         userId: request.auth?.credentials?.id ?? 'anonymous',
@@ -34,7 +40,7 @@ export const loggerPlugin: Plugin<{}> = {
             : `Request ${request.method.toUpperCase()} to ${request.path}`,
         errorMessage: isBoomError ? response.message : undefined,
         stack: isBoomError ? response.stack : undefined,
-        ip: request.info.remoteAddress,
+        ip: clientIp,
         meta: {
           method: request.method,
           path: request.path,

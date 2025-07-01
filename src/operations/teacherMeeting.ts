@@ -14,8 +14,6 @@ export interface ITeacherMeetingUpdate{
   meetingStatus?: string,
   startTime:string,
   endTime:string,
-  fromTime:string,
-  toTime:string,
   updatedDate?:Date,
   updatedBy?:string,
   description:string,
@@ -41,13 +39,13 @@ export const createTeacherMeeting = async (
       : [];
 
     const meetingDate = new Date(payload.meetingdate);
-    const { fromTime, toTime } = payload;
+    const { startTime, endTime } = payload;
 
     // Check for meeting conflict
     const conflictingMeeting = await teacherMeeting.findOne({
       meetingdate: meetingDate,
       $or: [
-        { fromTime: { $lt: toTime }, toTime: { $gt: fromTime } }
+        { startTime: { $lt: endTime }, endTime: { $gt: startTime } }
       ]
     });
 
@@ -69,8 +67,8 @@ export const createTeacherMeeting = async (
       teacher,
       participants,
       meetingdate: meetingDate,
-      fromTime,
-      toTime,
+      startTime,
+      endTime,
       description: payload.description,
       meetingStatus: payload.meetingStatus ?? "Scheduled",
       status: payload.status,

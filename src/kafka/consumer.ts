@@ -18,7 +18,6 @@ export const startInvoiceConsumer = async () => {
       if(!message.value) return;
       try{
         const raw = message.value?.toString();
-         console.log(`📥 Kafka Received | topic: ${topic} | value: ${raw}`);
         const data = JSON.parse(raw);
         const handler = topicHandler[topic];
         if(handler){

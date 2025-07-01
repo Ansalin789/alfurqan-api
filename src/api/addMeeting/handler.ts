@@ -30,27 +30,26 @@ const createInputValidation = z.object({
   }),
 });
 
-const updateMeetingInputValidation = z.object({
-  payload: zodAddMeetingSchema.pick({
-    meetingName: true,
-    selectedDate: true,
-    startTime: true,
-    endTime: true,
-    description: true,
-    status: true,
-    meetingStatus: true,
-    updatedDate: true,
-    updatedBy: true,
-    filterValues: true,
-  })
-  .extend({
-    offset: z.string().optional().nullable(),
-    limit: z.string().optional().nullable(),
-    searchText: z.string().optional(),
-    sortBy: z.string().optional(), // Add sortBy as optional
-  })
-  .partial(),
-});
+const updateMeetingInputValidation = zodAddMeetingSchema.pick({
+  meetingName: true,
+  selectedDate: true,
+  startTime: true,
+  endTime: true,
+  description: true,
+  status: true,
+  meetingStatus: true,
+  updatedDate: true,
+  updatedBy: true,
+  filterValues: true,
+})
+.extend({
+  offset: z.string().optional().nullable(),
+  limit: z.string().optional().nullable(),
+  searchText: z.string().optional(),
+  sortBy: z.string().optional(),
+})
+.partial(); // ✅ allow partial updates
+
 
  
 
@@ -115,7 +114,6 @@ async createMeeting(req: Request, h: ResponseToolkit) {
 async getAllMeetings(req: Request, h: ResponseToolkit) {
   let filterValues: any = {};
 
-  // Parse filterValues if present as string
   if (typeof req.query.filterValues === "string") {
     try {
       filterValues = JSON.parse(req.query.filterValues);
@@ -123,7 +121,6 @@ async getAllMeetings(req: Request, h: ResponseToolkit) {
       filterValues = {};
     }
   } else {
-    filterValues = {};
     if (req.query.meetingStatus) {
       filterValues.meetingStatus = Array.isArray(req.query.meetingStatus)
         ? req.query.meetingStatus
@@ -140,7 +137,6 @@ async getAllMeetings(req: Request, h: ResponseToolkit) {
         to: req.query["dateRange.to"]
       };
     }
-    // Add more filter normalizations as needed
   }
 
   const queryObj = {
@@ -148,7 +144,8 @@ async getAllMeetings(req: Request, h: ResponseToolkit) {
     filterValues,
   };
 
-  const { payload } = updateMeetingInputValidation.parse({ payload: queryObj });
+  // ✅ Remove payload wrapper
+  const payload = updateMeetingInputValidation.parse(queryObj);
 
   const queryForService = {
     ...payload,
@@ -160,11 +157,12 @@ async getAllMeetings(req: Request, h: ResponseToolkit) {
       payload.limit !== null && payload.limit !== undefined
         ? String(payload.limit)
         : null,
-    sortBy: payload.sortBy ?? "createdDate", // Add a default sortBy if not provided
+    sortBy: payload.sortBy ?? "createdDate",
   };
 
   return getAllMeetingRecords(queryForService);
 }
+
 
 
 ,
@@ -180,77 +178,99 @@ async getAllMeetings(req: Request, h: ResponseToolkit) {
     return result;
       },
 
-//Update
+//Update Meeting 
 
-async updateMeetingRecordById(req: Request, h: ResponseToolkit) {
+async  updateMeetingRecordById(req: Request, h: ResponseToolkit) {
   try {
-    // Directly use req.payload without destructuring
-    const payload = req.payload as any;
-    
-    if (!payload) {
-      return h.response({ message: "Request payload is missing" }).code(400);
-    }
+const payload = req.payload as any;
 
-    console.log("Received Payload:", payload);
+if (!payload) {
+  return h.response({ message: "Request payload is missing" }).code(400);
+}
 
-    // Validate and parse payload using Zod
-const validatedPayload = updateMeetingInputValidation.parse({ payload }); // ✅ correct
+// ✅ Step 1: Validate BEFORE merging (Zod expects strings, not Dates)
+const validatedPayload = updateMeetingInputValidation.parse(payload);
 
-    // Fetch existing meeting record
-    const existingMeeting = await getMeetingById(req.params.meetingId);
-    if (!existingMeeting) {
-      return h.response({ message: addMeetingMessages.USER_NOT_FOUND }).code(404);
-    }
+// ✅ Step 2: Fetch the existing meeting
+const existingMeeting = await getMeetingById(req.params.meetingId);
+if (!existingMeeting) {
+  return h.response({ message: addMeetingMessages.USER_NOT_FOUND }).code(404);
+}
 
-    // Merge existing values if not provided in the payload
-const updatedPayload = mergeMeetingPayload(validatedPayload.payload, existingMeeting);
+// ✅ Step 3: Merge Zod-validated payload into existing object
+const updatedPayload = {
+  ...existingMeeting.toObject(),
+  ...validatedPayload, // ⛔️ This might overwrite fields incorrectly
+};
 
+ 
 
-    // Check if time has changed
+    // 🔍 Check if time has changed
     const isTimeChanged =
       updatedPayload.startTime !== existingMeeting.startTime ||
       updatedPayload.endTime !== existingMeeting.endTime;
 
     if (isTimeChanged) {
-      // ✅ FIX: Correct teacher and supervisor validation
+      console.log("Checking teacher and supervisor details", updatedPayload.teacher, updatedPayload.supervisor);
+
       if (
-        !updatedPayload.teacher?.length ||  // Ensure teacher array exists and is not empty
-        !updatedPayload.teacher[0]?.teacherId ||  // Access first teacher's teacherId
+        !updatedPayload.teacher?.length ||
+        !updatedPayload.teacher[0]?.teacherId ||
         !updatedPayload.supervisor?.supervisorId
       ) {
-        return h.response({ message: "Invalid teacher or supervisor details" }).code(400);
+        return h
+          .response({ message: "Invalid teacher or supervisor details" })
+          .code(400);
       }
 
-      // Check for conflicts before rescheduling
+      console.log("Checking for conflict:", {
+        teacherId: updatedPayload.teacher[0].teacherId,
+        supervisorId: updatedPayload.supervisor.supervisorId,
+        selectedDate: updatedPayload.selectedDate,
+        startTime: updatedPayload.startTime,
+        endTime: updatedPayload.endTime,
+        meetingId: req.params.meetingId,
+      });
+const studentId = " "; // Assuming teacherId is used as studentId
+      const meetingdate = new Date(updatedPayload.selectedDate);
+      console.log("Meeting date:", meetingdate);
       const hasConflict = await checkMeetingConflict(
-        updatedPayload.teacher[0].teacherId,  // Use first teacher's ID
+        updatedPayload.teacher[0].teacherId,
         updatedPayload.supervisor.supervisorId,
-        updatedPayload.selectedDate,
+        studentId,
+        meetingdate.toString(),
         updatedPayload.startTime,
         updatedPayload.endTime,
         req.params.meetingId
       );
 
+      console.log("hasConflict:", hasConflict);
+
       if (hasConflict) {
-        return h.response({ message: "Reschedule failed: Time slot already occupied" }).code(400);
+        return h
+          .response({ message: "Reschedule failed: Time slot already occupied" })
+          .code(400);
       }
 
       updatedPayload.meetingStatus = "Rescheduled";
     }
 
-    // Update meeting in the database
+    // ✅ Update DB
     const result = await updateMeetingById(req.params.meetingId, updatedPayload);
 
     if (!result) {
       return h.response({ message: addMeetingMessages.USER_NOT_FOUND }).code(404);
     }
 
+    console.log("✅ Meeting updated successfully");
     return h.response(result).code(200);
   } catch (error) {
-    console.error("Error updating meeting:", error);
+    console.error("❌ Error updating meeting:", error);
     return h.response({ message: "Internal Server Error", error }).code(500);
   }
 },
+
+
 
 //Update meeting minutes
 async updateMeetingMinutesRecordById(req: Request, h: ResponseToolkit) {
@@ -299,4 +319,3 @@ async updateMeetingMinutesRecordById(req: Request, h: ResponseToolkit) {
 
 
 
-  

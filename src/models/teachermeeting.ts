@@ -24,8 +24,8 @@ const TeacherMeetingSchema = new Schema<TeacherMeeting>(
     },
     
     meetingdate: { type: Date, required: true },
-    fromTime: { type: String, required: true },
-    toTime: { type: String, required: true },
+    startTime: { type: String, required: true },
+    endTime: { type: String, required: true },
     description: { type: String, required: true },
     meetingStatus: {
       type: String,
@@ -73,8 +73,8 @@ export const zodTeacherMeetingSchema = z.object({
   ).optional(),
 
   meetingdate: z.string(),
-  fromTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
-  toTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
+  startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
+  endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
   description: z.string(),
   meetingStatus: z.enum([teacherStatus.SCHEDULED, teacherStatus.RESCHEDULED]),
   status: z.enum([teacherStatus.ACTIVE, teacherStatus.IN_ACTIVE]),
@@ -89,8 +89,6 @@ export const zodTeacherMeetingSchema = z.object({
     })
     .transform((val) => new Date(val)),
 
-  startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
-  endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
   filterValues: z
   .object({
     course: z
