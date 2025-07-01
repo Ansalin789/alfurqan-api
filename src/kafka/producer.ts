@@ -24,7 +24,6 @@ export const sendMessage = async (topic: string, message: any) => {
       messages: [{ value }],
     });
     console.log(`📤 Kafka Producer sent to topic: ${topic}`);
-    console.log("📤 Message:", message);
   } catch (err) {
     console.error("❌ Kafka Producer Error:", err);
   }
