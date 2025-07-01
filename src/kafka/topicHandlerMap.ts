@@ -199,7 +199,6 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
   },
 
   'sendLogsToKafka' : async ( data : any) =>{
-    console.log('sendLogsToKafka');
     try{
     const log = new AuditLog({
       userId: data.data.userId ?? 'anonymous', 

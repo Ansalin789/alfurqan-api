@@ -10,7 +10,7 @@ export async function restoreCacheFromDb(){
 
     const reconstructed : Record<string,any> = {};
     for(const slot of allSlots){
-        const { date, teacherId, from, to, isStatus } = slot;
+        const { date, name, teacherId, from, to, isStatus } = slot;
 
     reconstructed[date] ??= {};
     reconstructed[date][teacherId] ??= [];
@@ -20,7 +20,7 @@ export async function restoreCacheFromDb(){
     );
 
     if (!alreadyExists) {
-      reconstructed[date][teacherId].push({ from, to, isStatus });
+      reconstructed[date][teacherId].push({ name,  from, to, isStatus });
     }
     }
     await redis.set("teacher_time_slots", JSON.stringify(reconstructed));
