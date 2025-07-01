@@ -1942,7 +1942,7 @@ export interface TeacherMeetingCreate {
     teacherName?: string;
     teacherEmail?: string;
   };
-  meetingdate: Date;
+  selectedDate: Date;
   startTime: string;
   endTime: string;
   description: string;
@@ -1965,7 +1965,7 @@ export interface TeacherMeeting extends Document {
     teacherName?: string;
     teacherEmail?: string;
   };
-  meetingdate: Date;
+  selectedDate: Date;
   startTime: string;
   endTime: string;
   description: string;
