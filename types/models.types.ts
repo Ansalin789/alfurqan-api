@@ -712,33 +712,30 @@ export interface CreatePaymentDetails{
   lastUpdatedBy: string
 }
 
-export interface IAssignment  extends Document{
+export interface IAssignment extends Document {
   studentId: string;
-  studentName :string;
-  sessionClassType:string;
- questionName:string;
- questionType:string;
- title:string;
-  typeofQuestion:string;
+  studentName: string;
+  sessionClassType?: string;
+  questionName: string;
+  questionType: string;
+  typeofQuestion: string;
+  title: string;
   assignmentName: string;
   assignedTeacher: string;
   assignedTeacherId: string;
   assignmentType: {
-    quiz?: string;
-    writing?: string;
-    reading?: string;
-    imageIdentification?: string;
-    wordMatching?: string;
+    type: "quiz" | "writing" | "reading" | "imageIdentification" | "wordMatching";
+    name?: string;
   };
   chooseType: boolean;
   trueorfalseType: boolean;
   question: string;
   hasOptions: boolean;
   options: {
-    optionOne?: string;
-    optionTwo?: string;
-    optionThree?: string;
-    optionFour?: string;
+    optionOne: string;
+    optionTwo: string;
+    optionThree: string;
+    optionFour: string;
   };
   audioFile?: Buffer;
   uploadFile?: Buffer;
@@ -754,15 +751,13 @@ export interface IAssignment  extends Document{
   answer: string;
   answerValidation: string;
   assignmentStatus: string;
-
-
 }
 export interface IallAssignment {
   studentId: string;
   studentName :string;
   title:string;
 
-    sessionClassType:string;
+    sessionClassType?:string;
     questionName:string;
     questionType:string;
      typeofQuestion:string;
