@@ -204,27 +204,6 @@ export async function bookSlot(date: string, teacherId: string, from: string, to
   return fullyAvailableTeachers;
 }
 
-// export async function fixMissingNamesInRedis() {
-//   const redisData = await getAllSlots();
-
-//   const teacherId = "686024410f28c07d6fe0dc27";
-
-//   for (const date in redisData) {
-//     const slots = redisData[date][teacherId];
-//     if (!slots) continue;
-
-//     for (const slot of slots) {
-//       if (slot.name === "Unknown") {
-//         slot.name = "Rohit"; // 🔁 Replace it with real name
-//       }
-//     }
-//   }
-
-//   await redis.set(REDIS_KEY, JSON.stringify(redisData));
-//   console.log("✅ All 'Unknown' names replaced with 'Rohit' for teacher:", teacherId);
-// }
-
-
   export async function evaluationTeacherSlotBook ( startDate : string , WeeklySlots : WeeklySlotMap , teacherId : string ) {
          try{
               const start = dayjs(startDate).startOf("day");
