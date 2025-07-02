@@ -50,8 +50,11 @@ export const createAssignment = async (
 
     const assignmentRecords: Partial<IAssignment>[] = [];
     const allowedTypes = [
-      "quiz", "writing", "reading", 
-      "imageIdentification", "wordMatching"
+      "quiz",
+      "writing",
+      "reading",
+      "imageIdentification",
+      "wordMatching",
     ];
     console.log("✅ Allowed types:", allowedTypes);
 
@@ -74,18 +77,28 @@ export const createAssignment = async (
       const studentId = studentDetails._id.toString();
       const studentName = studentDetails.username || "";
       const sessionClassType = studentDetails.sessionClassType || "";
-      console.log("✅ Student found:", { studentId, studentName, sessionClassType });
+      console.log("✅ Student found:", {
+        studentId,
+        studentName,
+        sessionClassType,
+      });
 
       const assignedTeacherName = item.assignedTeacher || "";
       const assignedTeacherId = item.assignedTeacherId || "";
-      console.log("👩‍🏫 Assigned Teacher:", { assignedTeacherName, assignedTeacherId });
+      console.log("👩‍🏫 Assigned Teacher:", {
+        assignedTeacherName,
+        assignedTeacherId,
+      });
 
       const assignmentType = item.assignmentType;
       console.log("🧩 assignmentType object:", assignmentType);
       console.log("🔍 assignmentType.type:", assignmentType?.type);
 
       if (!assignmentType || !allowedTypes.includes(assignmentType.type)) {
-        console.warn(`⚠️ Invalid assignmentType at index ${index}:`, assignmentType);
+        console.warn(
+          `⚠️ Invalid assignmentType at index ${index}:`,
+          assignmentType
+        );
         continue;
       }
 
@@ -93,14 +106,14 @@ export const createAssignment = async (
         optionOne: item.options?.optionOne || "",
         optionTwo: item.options?.optionTwo || "",
         optionThree: item.options?.optionThree || "",
-        optionFour: item.options?.optionFour || ""
+        optionFour: item.options?.optionFour || "",
       };
       console.log("📝 Parsed options:", parsedOptions);
 
-  const studentPrefix = studentName.slice(0, 3).toUpperCase(); // e.g., "KAL"
-const currentYear = new Date().getFullYear();
-const incrementId = (index + 1).toString().padStart(2, "0"); // 01, 02, 03...
-const assignmentId = `${incrementId}-${studentPrefix}-${currentYear}`;
+      const studentPrefix = studentName.slice(0, 3).toUpperCase(); 
+      const currentYear = new Date().getFullYear();
+      const incrementId = (index + 1).toString().padStart(2, "0"); 
+      const assignmentId = `${incrementId}-${studentPrefix}-${currentYear}`;
 
       const newAssignment: Partial<IAssignment> = {
         assignmentId,
@@ -120,7 +133,7 @@ const assignmentId = `${incrementId}-${studentPrefix}-${currentYear}`;
         question: item.question || "",
         hasOptions: item.hasOptions || false,
         options: parsedOptions,
-        audioFile: item.audioFile ,
+        audioFile: item.audioFile,
         uploadFile: item.uploadFile,
         status: item.status || "Pending",
         createdDate: new Date(),
@@ -140,7 +153,10 @@ const assignmentId = `${incrementId}-${studentPrefix}-${currentYear}`;
       assignmentRecords.push(newAssignment);
     }
 
-    console.log("🧾 Total valid assignments prepared:", assignmentRecords.length);
+    console.log(
+      "🧾 Total valid assignments prepared:",
+      assignmentRecords.length
+    );
     if (assignmentRecords.length === 0) {
       console.error("❌ No valid assignments to insert");
       return { error: "No valid assignments to insert" };
@@ -159,10 +175,6 @@ const assignmentId = `${incrementId}-${studentPrefix}-${currentYear}`;
     return { error };
   }
 };
-
-
-
-
 
 //Update Assignments
 
