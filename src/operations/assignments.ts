@@ -110,21 +110,17 @@ export const createAssignment = async (
       };
       console.log("📝 Parsed options:", parsedOptions);
 
-      const studentPrefix = studentName.slice(0, 3).toUpperCase(); 
-      const currentYear = new Date().getFullYear();
-      const incrementId = (index + 1).toString().padStart(2, "0"); 
-      const assignmentId = `${incrementId}-${studentPrefix}-${currentYear}`;
-
+  
       const newAssignment: Partial<IAssignment> = {
-        assignmentId,
         studentId,
         studentName,
         sessionClassType,
+        assignmentId:item .assignmentId,
+        title:item.title || "",
         assignmentName: item.assignmentName || "",
         questionName: item.questionName || "",
         questionType: item.questionType || "",
         typeofQuestion: item.typeofQuestion || "",
-        title: item.title || "",
         assignedTeacher: assignedTeacherName,
         assignedTeacherId,
         assignmentType,
@@ -341,9 +337,5 @@ export const getAssignmentsByStudentId = async (
     throw new Error("Invalid studentId");
   }
 
-  return assignment
-    .find({ studentId }) 
-    .sort({ createdDate: -1 })
-    .lean();
+  return assignment.find({ studentId }).sort({ createdDate: -1 }).lean();
 };
-

@@ -10,6 +10,7 @@ import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
 import mongoose from "mongoose"; // make sure this is at the top
 import { IAssignment } from "../../../types/models.types";
+import assignments from "../../models/assignments";
 
 // Input Validations for student list
 const getAssignmnentListInputValidation = z.object({
@@ -117,6 +118,7 @@ export default {
           ...a,
         }));
       }
+   
 
       const rawPayloadArray = reconstructAssignments(payload);
       console.log("📦 Normalized payload array:", rawPayloadArray);
@@ -130,6 +132,7 @@ export default {
       const {
         studentId,
         studentName,
+        title,
         sessionClassType,
         assignedTeacherId,
         assignedTeacher,
@@ -138,10 +141,17 @@ export default {
       console.log("🔍 Extracted shared fields:", {
         studentId,
         studentName,
+        title,
         sessionClassType,
         assignedTeacherId,
         assignedTeacher,
       });
+      // ✅ Generate assignmentId here (for this one group of questions)
+      const studentPrefix = studentName?.slice(0, 3).toUpperCase() || "STU";
+      const currentYear = new Date().getFullYear();
+      const assignment = assignments;
+      const incrementId = "01"; // you can later replace with DB count or auto-ID logic
+      const assignmentId = `${incrementId}-${assignment}-${studentPrefix}-${currentYear}`;
 
       if (!studentId || !mongoose.Types.ObjectId.isValid(studentId)) {
         return h.response({ error: "Invalid studentId" }).code(400);
@@ -246,7 +256,6 @@ export default {
           questionName: rawPayload.questionName || "",
           questionType: rawPayload.questionType || "",
           typeofQuestion: rawPayload.typeofQuestion || "",
-          title: rawPayload.title || "",
           question: rawPayload.question || "",
           hasOptions: rawPayload.hasOptions,
           options,
@@ -286,10 +295,12 @@ export default {
       const finalAssignments = preparedAssignments.map((item) => ({
         ...item,
         studentId,
+        assignmentId, // ✅ same for all
         studentName: studentName || "",
         sessionClassType: sessionClassType || "",
         assignedTeacherId: assignedTeacherId || "",
         assignedTeacher: assignedTeacher || "",
+        title: title || "",
       }));
       console.log("✅ Final assignment payload ready:", finalAssignments);
 
@@ -409,22 +420,22 @@ export default {
   //   }
   // },
 
-async getAssignmentsByStudentId(req: Request, h: ResponseToolkit) {
-  const studentId = String(req.query.studentId); // ✅ Correct usage
+  async getAssignmentsByStudentId(req: Request, h: ResponseToolkit) {
+    const studentId = String(req.query.studentId); // ✅ Correct usage
 
-  try {
-    const result = await getAssignmentsByStudentId(studentId);
+    try {
+      const result = await getAssignmentsByStudentId(studentId);
 
-    if (!result || result.length === 0) {
-      return h.response({ message: "No assignments found for this student." }).code(404);
+      if (!result || result.length === 0) {
+        return h
+          .response({ message: "No assignments found for this student." })
+          .code(404);
+      }
+
+      return h.response(result).code(200);
+    } catch (error) {
+      console.error("❌ Error fetching assignments:", error);
+      return h.response({ error: "Failed to fetch assignments." }).code(500);
     }
-
-    return h.response(result).code(200);
-  } catch (error) {
-    console.error("❌ Error fetching assignments:", error);
-    return h.response({ error: "Failed to fetch assignments." }).code(500);
-  }
-}
-
-
+  },
 };
