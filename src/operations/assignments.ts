@@ -334,12 +334,16 @@ export const createAssignment = async (
 //   }
 // };
 
-// export const getAssignmentsById = async (
-//   id: string
-// ): Promise<IAssignment | null> => {
-//   return assignment
-//     .findOne({
-//       _id: new Types.ObjectId(id),
-//     })
-//     .lean();
-// };
+export const getAssignmentsByStudentId = async (
+  studentId: string
+): Promise<IAssignment[]> => {
+  if (!Types.ObjectId.isValid(studentId)) {
+    throw new Error("Invalid studentId");
+  }
+
+  return assignment
+    .find({ studentId }) 
+    .sort({ createdDate: -1 })
+    .lean();
+};
+

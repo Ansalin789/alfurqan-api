@@ -1,6 +1,9 @@
 import { Request, ResponseToolkit } from "@hapi/hapi";
 import { z } from "zod";
-import { createAssignment } from "../../operations/assignments"; // Replace with your service logic
+import {
+  createAssignment,
+  getAssignmentsByStudentId,
+} from "../../operations/assignments"; // Replace with your service logic
 import * as Stream from "stream";
 import { options } from "joi";
 import { isNil } from "lodash";
@@ -84,199 +87,222 @@ const processFileBuffer = async (file: any): Promise<Buffer | undefined> => {
 export default {
   // Handler for creating assignments
 
+  async createAssignment(req: Request, h: ResponseToolkit) {
+    try {
+      console.log("🚀 Handler triggered: createAssignment");
 
-async createAssignment(req: Request, h: ResponseToolkit) {
-  try {
-    console.log("🚀 Handler triggered: createAssignment");
+      const payload = req.payload as any;
+      console.log("📥 Raw payload received:", payload);
 
-    const payload = req.payload as any;
-    console.log("📥 Raw payload received:", payload);
+      // 🔧 Step 1: Reconstruct nested assignment array from flat form keys
+      function reconstructAssignments(flat: Record<string, any>): any[] {
+        const assignments: any[] = [];
+        const shared: Record<string, any> = {};
 
-    // 🔧 Step 1: Reconstruct nested assignment array from flat form keys
-  function reconstructAssignments(flat: Record<string, any>): any[] {
-  const assignments: any[] = [];
-  const shared: Record<string, any> = {};
+        for (const key in flat) {
+          const match = key.match(/^assignments\[(\d+)]\[(.+)]$/);
+          if (match) {
+            const index = parseInt(match[1], 10);
+            const field = match[2];
 
-  for (const key in flat) {
-    const match = key.match(/^assignments\[(\d+)]\[(.+)]$/);
-    if (match) {
-      const index = parseInt(match[1], 10);
-      const field = match[2];
-
-      assignments[index] = assignments[index] || {};
-      assignments[index][field] = flat[key];
-    } else {
-      shared[key] = flat[key];
-    }
-  }
-
-  return assignments.map((a) => ({
-    ...shared,
-    ...a,
-  }));
-}
-
-
-    const rawPayloadArray = reconstructAssignments(payload);
-    console.log("📦 Normalized payload array:", rawPayloadArray);
-
-    if (!rawPayloadArray.length) {
-      return h.response({ error: "Payload must be a non-empty array" }).code(400);
-    }
-
-    const {
-      studentId,
-      studentName,
-      sessionClassType,
-      assignedTeacherId,
-      assignedTeacher,
-    } = rawPayloadArray[0];
-
-    console.log("🔍 Extracted shared fields:", {
-      studentId,
-      studentName,
-      sessionClassType,
-      assignedTeacherId,
-      assignedTeacher,
-    });
-
-    if (!studentId || !mongoose.Types.ObjectId.isValid(studentId)) {
-      return h.response({ error: "Invalid studentId" }).code(400);
-    }
-
-    const preparedAssignments = [];
-
-    for (const [index, rawPayload] of rawPayloadArray.entries()) {
-      console.log(`\n🔄 Processing assignment at index ${index}`);
-      console.log("📦 Raw assignment payload:", rawPayload);
-      console.log("🧩 Raw assignmentType value at index", index, ":", rawPayload.assignmentType);
-
-      // 🔹 Assignment Type
-      let assignmentType: IAssignment["assignmentType"];
-      try {
-        const parsedType =
-          typeof rawPayload.assignmentType === "string"
-            ? JSON.parse(rawPayload.assignmentType)
-            : rawPayload.assignmentType;
-
-        console.log("🧩 Parsed assignmentType:", parsedType);
-
-        if (
-          !parsedType ||
-          typeof parsedType !== "object" ||
-          !["quiz", "writing", "reading", "imageIdentification", "wordMatching"].includes(parsedType.type)
-        ) {
-          console.error("❌ Invalid assignmentType at index", index, parsedType);
-          return h.response({ error: "Invalid assignmentType" }).code(400);
+            assignments[index] = assignments[index] || {};
+            assignments[index][field] = flat[key];
+          } else {
+            shared[key] = flat[key];
+          }
         }
 
-        assignmentType = {
-          type: parsedType.type,
-          name: parsedType.name || "",
-        };
-        console.log("✅ Final assignmentType:", assignmentType);
-      } catch (err) {
-        console.error("❌ Error parsing assignmentType:", err);
-        return h.response({ error: "Failed to parse assignmentType" }).code(400);
-      }
-   // Parse and process payload fields
-    const chooseType = rawPayload.chooseType === "true" || rawPayload.chooseType === true;
-    const trueorfalseType = rawPayload.trueorfalseType === "true" || rawPayload.trueorfalseType === true;
-
-  
-
-
-      // 🔹 Options
-      let options = {
-        optionOne: "",
-        optionTwo: "",
-        optionThree: "",
-        optionFour: "",
-      };
-      try {
-        const parsedOptions =
-          typeof rawPayload.options === "string"
-            ? JSON.parse(rawPayload.options)
-            : rawPayload.options || {};
-
-        options = {
-          optionOne: parsedOptions.optionOne || "",
-          optionTwo: parsedOptions.optionTwo || "",
-          optionThree: parsedOptions.optionThree || "",
-          optionFour: parsedOptions.optionFour || "",
-        };
-        console.log("📝 Parsed options:", options);
-      } catch (err) {
-        console.error("❌ Error parsing options:", err);
-        return h.response({ error: "Failed to parse options" }).code(400);
+        return assignments.map((a) => ({
+          ...shared,
+          ...a,
+        }));
       }
 
-      // 🔹 File Processing
-         const audioFileBuffer = rawPayload.audioFile
-      ? await streamToBuffer(rawPayload.audioFile)
-      : null;
-    const uploadFileBuffer = rawPayload.uploadFile
-      ? await streamToBuffer(rawPayload.uploadFile)
-      : null;
-      
-      // 🔹 Final Assignment Object
-      const newAssignment = {
-        assignmentName: rawPayload.assignmentName || "",
-        assignmentType,
-        questionName: rawPayload.questionName || "",
-        questionType: rawPayload.questionType || "",
-        typeofQuestion: rawPayload.typeofQuestion || "",
-        title: rawPayload.title || "",
-        question: rawPayload.question || "",
-        hasOptions: rawPayload.hasOptions,
-        options,
-        trueorfalseType,
-        chooseType,
-        status: rawPayload.status || "Pending",
-        createdDate: rawPayload.createdDate ? new Date(rawPayload.createdDate) : new Date(),
-        createdBy: rawPayload.createdBy || "System",
-        updatedDate: rawPayload.updatedDate ? new Date(rawPayload.updatedDate) : new Date(),
-        updatedBy: rawPayload.updatedBy || "",
-        level: rawPayload.level || "",
-        courses: rawPayload.courses || "",
-        assignedDate: rawPayload.assignedDate ? new Date(rawPayload.assignedDate) : new Date(),
-        dueDate: rawPayload.dueDate ? new Date(rawPayload.dueDate) : new Date(),
-        answer: rawPayload.answer || "",
-        answerValidation: rawPayload.answerValidation || "",
-        assignmentStatus: rawPayload.assignmentStatus || "Not Assigned",
+      const rawPayloadArray = reconstructAssignments(payload);
+      console.log("📦 Normalized payload array:", rawPayloadArray);
+
+      if (!rawPayloadArray.length) {
+        return h
+          .response({ error: "Payload must be a non-empty array" })
+          .code(400);
+      }
+
+      const {
+        studentId,
+        studentName,
+        sessionClassType,
+        assignedTeacherId,
+        assignedTeacher,
+      } = rawPayloadArray[0];
+
+      console.log("🔍 Extracted shared fields:", {
+        studentId,
+        studentName,
+        sessionClassType,
+        assignedTeacherId,
+        assignedTeacher,
+      });
+
+      if (!studentId || !mongoose.Types.ObjectId.isValid(studentId)) {
+        return h.response({ error: "Invalid studentId" }).code(400);
+      }
+
+      const preparedAssignments = [];
+
+      for (const [index, rawPayload] of rawPayloadArray.entries()) {
+        console.log(`\n🔄 Processing assignment at index ${index}`);
+        console.log("📦 Raw assignment payload:", rawPayload);
+        console.log(
+          "🧩 Raw assignmentType value at index",
+          index,
+          ":",
+          rawPayload.assignmentType
+        );
+
+        // 🔹 Assignment Type
+        let assignmentType: IAssignment["assignmentType"];
+        try {
+          const parsedType =
+            typeof rawPayload.assignmentType === "string"
+              ? JSON.parse(rawPayload.assignmentType)
+              : rawPayload.assignmentType;
+
+          console.log("🧩 Parsed assignmentType:", parsedType);
+
+          if (
+            !parsedType ||
+            typeof parsedType !== "object" ||
+            ![
+              "quiz",
+              "writing",
+              "reading",
+              "imageIdentification",
+              "wordMatching",
+            ].includes(parsedType.type)
+          ) {
+            console.error(
+              "❌ Invalid assignmentType at index",
+              index,
+              parsedType
+            );
+            return h.response({ error: "Invalid assignmentType" }).code(400);
+          }
+
+          assignmentType = {
+            type: parsedType.type,
+            name: parsedType.name || "",
+          };
+          console.log("✅ Final assignmentType:", assignmentType);
+        } catch (err) {
+          console.error("❌ Error parsing assignmentType:", err);
+          return h
+            .response({ error: "Failed to parse assignmentType" })
+            .code(400);
+        }
+        // Parse and process payload fields
+        const chooseType =
+          rawPayload.chooseType === "true" || rawPayload.chooseType === true;
+        const trueorfalseType =
+          rawPayload.trueorfalseType === "true" ||
+          rawPayload.trueorfalseType === true;
+
+        // 🔹 Options
+        let options = {
+          optionOne: "",
+          optionTwo: "",
+          optionThree: "",
+          optionFour: "",
+        };
+        try {
+          const parsedOptions =
+            typeof rawPayload.options === "string"
+              ? JSON.parse(rawPayload.options)
+              : rawPayload.options || {};
+
+          options = {
+            optionOne: parsedOptions.optionOne || "",
+            optionTwo: parsedOptions.optionTwo || "",
+            optionThree: parsedOptions.optionThree || "",
+            optionFour: parsedOptions.optionFour || "",
+          };
+          console.log("📝 Parsed options:", options);
+        } catch (err) {
+          console.error("❌ Error parsing options:", err);
+          return h.response({ error: "Failed to parse options" }).code(400);
+        }
+
+        // 🔹 File Processing
+        const audioFileBuffer = rawPayload.audioFile
+          ? await streamToBuffer(rawPayload.audioFile)
+          : null;
+        const uploadFileBuffer = rawPayload.uploadFile
+          ? await streamToBuffer(rawPayload.uploadFile)
+          : null;
+
+        // 🔹 Final Assignment Object
+        const newAssignment = {
+          assignmentName: rawPayload.assignmentName || "",
+          assignmentType,
+          questionName: rawPayload.questionName || "",
+          questionType: rawPayload.questionType || "",
+          typeofQuestion: rawPayload.typeofQuestion || "",
+          title: rawPayload.title || "",
+          question: rawPayload.question || "",
+          hasOptions: rawPayload.hasOptions,
+          options,
+          trueorfalseType,
+          chooseType,
+          status: rawPayload.status || "Pending",
+          createdDate: rawPayload.createdDate
+            ? new Date(rawPayload.createdDate)
+            : new Date(),
+          createdBy: rawPayload.createdBy || "System",
+          updatedDate: rawPayload.updatedDate
+            ? new Date(rawPayload.updatedDate)
+            : new Date(),
+          updatedBy: rawPayload.updatedBy || "",
+          level: rawPayload.level || "",
+          courses: rawPayload.courses || "",
+          assignedDate: rawPayload.assignedDate
+            ? new Date(rawPayload.assignedDate)
+            : new Date(),
+          dueDate: rawPayload.dueDate
+            ? new Date(rawPayload.dueDate)
+            : new Date(),
+          answer: rawPayload.answer || "",
+          answerValidation: rawPayload.answerValidation || "",
+          assignmentStatus: rawPayload.assignmentStatus || "Not Assigned",
           audioFile: audioFileBuffer ? Buffer.from(audioFileBuffer) : undefined,
-         uploadFile: uploadFileBuffer ? Buffer.from(uploadFileBuffer) : undefined,
-      };
-      console.log("📌 Prepared assignment object:", newAssignment);
+          uploadFile: uploadFileBuffer
+            ? Buffer.from(uploadFileBuffer)
+            : undefined,
+        };
+        console.log("📌 Prepared assignment object:", newAssignment);
 
-      preparedAssignments.push(newAssignment);
+        preparedAssignments.push(newAssignment);
+      }
+
+      // 🔗 Add Shared Fields
+      const finalAssignments = preparedAssignments.map((item) => ({
+        ...item,
+        studentId,
+        studentName: studentName || "",
+        sessionClassType: sessionClassType || "",
+        assignedTeacherId: assignedTeacherId || "",
+        assignedTeacher: assignedTeacher || "",
+      }));
+      console.log("✅ Final assignment payload ready:", finalAssignments);
+
+      // 💾 Insert into DB
+      const result = await createAssignment(finalAssignments);
+      console.log("✅ Final result from createAssignment:", result);
+
+      return h.response(result).code(200);
+    } catch (error) {
+      console.error("❌ Internal server error:", error);
+      return h.response({ error: "Internal server error" }).code(500);
     }
-
-    // 🔗 Add Shared Fields
-    const finalAssignments = preparedAssignments.map((item) => ({
-      ...item,
-      studentId,
-      studentName: studentName || "",
-      sessionClassType: sessionClassType || "",
-      assignedTeacherId: assignedTeacherId || "",
-      assignedTeacher: assignedTeacher || "",
-    }));
-    console.log("✅ Final assignment payload ready:", finalAssignments);
-
-    // 💾 Insert into DB
-    const result = await createAssignment(finalAssignments);
-    console.log("✅ Final result from createAssignment:", result);
-
-    return h.response(result).code(200);
-  } catch (error) {
-    console.error("❌ Internal server error:", error);
-    return h.response({ error: "Internal server error" }).code(500);
-  }
-}
-,
-
-
-
+  },
   // Update an Assignment
   // async updateAssignment(req: Request, h: ResponseToolkit) {
   //   try {
@@ -383,13 +409,22 @@ async createAssignment(req: Request, h: ResponseToolkit) {
   //   }
   // },
 
-  // async getAssignmentsById(req: Request, h: ResponseToolkit) {
-  //   const result = await getAssignmentsById(String(req.params.assignmentsId));
+async getAssignmentsByStudentId(req: Request, h: ResponseToolkit) {
+  const studentId = String(req.query.studentId); // ✅ Correct usage
 
-  //   if (isNil(result)) {
-  //     return notFound("Assignment not found");
-  //   }
+  try {
+    const result = await getAssignmentsByStudentId(studentId);
 
-  //   return result;
-  // },
+    if (!result || result.length === 0) {
+      return h.response({ message: "No assignments found for this student." }).code(404);
+    }
+
+    return h.response(result).code(200);
+  } catch (error) {
+    console.error("❌ Error fetching assignments:", error);
+    return h.response({ error: "Failed to fetch assignments." }).code(500);
+  }
+}
+
+
 };
