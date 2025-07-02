@@ -28,6 +28,9 @@ export const createTeacherMeeting = async (
       teacherName: payload.teacher?.teacherName ?? "",
       teacherEmail: payload.teacher?.teacherEmail ?? ""
     };
+    
+    console.log("📌 Teacher Info:", teacher);
+    
 
     // Ensure participants is an array of objects
     const participants = Array.isArray(payload.participants)
@@ -38,12 +41,12 @@ export const createTeacherMeeting = async (
         }))
       : [];
 
-    const meetingDate = new Date(payload.meetingdate);
+    const selectedDate = new Date(payload.selectedDate);
     const { startTime, endTime } = payload;
 
     // Check for meeting conflict
     const conflictingMeeting = await teacherMeeting.findOne({
-      meetingdate: meetingDate,
+      selectedDate: selectedDate,
       $or: [
         { startTime: { $lt: endTime }, endTime: { $gt: startTime } }
       ]
@@ -55,7 +58,7 @@ export const createTeacherMeeting = async (
       };
     }
 
-    if (meetingDate < new Date()) {
+    if (selectedDate < new Date()) {
       return { error: "Meeting date cannot be in the past. Please select a future date." };
     }
 
@@ -66,7 +69,7 @@ export const createTeacherMeeting = async (
       meetingName: payload.meetingName,
       teacher,
       participants,
-      meetingdate: meetingDate,
+      selectedDate: selectedDate,
       startTime,
       endTime,
       description: payload.description,

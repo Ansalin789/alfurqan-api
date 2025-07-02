@@ -15,9 +15,9 @@ const register = async (server:Server): Promise <void> => {
         },
         {
             method: 'GET',
-            path:'/teacherMeeting',
+            path:'/teacherMeeting/{meetingId}',
             options: {
-                handler: handler.getallTeachermeeting,
+                handler: handler.getTeachermeetingById,
                 description:addMeetingMessages.CREATE,
                 tags: ['api', 'teacherMeeting'],
                  auth: {
@@ -30,7 +30,7 @@ const register = async (server:Server): Promise <void> => {
         method: "GET",
         path: "/teacherMeetinglist",
         options: {
-          handler: handler.getTeachermeetingById,
+          handler: handler.getallTeachermeeting,
           description: evaluationMessages.LIST,
           tags: ["api", "teacherMeetinglist"],
           auth: {

@@ -25,7 +25,6 @@ export function mergeMeetingPayload(payload: any, existingMeeting: any) {
     participants: payload.participants ?? existingMeeting.participants,
     supervisor: payload.supervisor ?? existingMeeting.supervisor,
     teacher: payload.teacher ?? existingMeeting.teacher,
-    meetingdate: payload.meetingdate ?? existingMeeting.meetingdate,
     selectedDate: payload.selectedDate ?? existingMeeting.selectedDate,
     startTime: payload.startTime ?? existingMeeting.startTime,
     endTime: payload.endTime ?? existingMeeting.endTime,
@@ -55,7 +54,7 @@ export async function checkMeetingConflict(
   selectedDate?: string,
   startTime?: string,
   endTime?: string,
-  meetingId?: string
+  meetingId?: string,
 ): Promise<boolean> {
   const conflictingMeeting = await addmeeting.findOne({
     $and: [
