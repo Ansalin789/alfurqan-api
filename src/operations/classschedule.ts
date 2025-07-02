@@ -1105,7 +1105,9 @@ export const getStudentList = async (
     assignment?: {
       assignmentId: string;
       assignmentType: string;
+      assignmentName: string;
       status: string;
+      title: string;
     }[];
   }[]
 > => {
@@ -1135,6 +1137,7 @@ export const getStudentList = async (
         }
         let assignments: {
           assignmentId: string;
+          assignmentName: string;
           assignmentType:
             | "quiz"
             | "writing"
@@ -1142,6 +1145,7 @@ export const getStudentList = async (
             | "imageIdentification"
             | "wordMatching";
           status: string;
+          title: string;
         }[] = [];
         if (alstudent) {
           const studentId = alstudent._id.toString(); // ✅ Correct ID
@@ -1153,6 +1157,8 @@ export const getStudentList = async (
                 assignmentId: 1,
                 assignmentType: 1,
                 assignmentStatus: 1,
+                assignmentName: 1,
+                title: 1,
               }
             )
             .lean();
@@ -1161,6 +1167,8 @@ export const getStudentList = async (
             assignmentId: a.assignmentId,
             assignmentType: a.assignmentType?.type || "",
             status: a.assignmentStatus || "Not Assigned",
+            assignmentName: a.assignmentName,
+            title: a.title,
           }));
         }
         uniqueStudentsMap.set(student.studentId, {
