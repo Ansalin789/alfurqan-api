@@ -9,8 +9,8 @@ import userModel from "../models/users";
 import alstudents from "../models/alstudents";
 import { Types } from "mongoose";
 import Stream from "stream";
+import mongoose from "mongoose";
 
-import student from "../models/student";
 /**
  * Creates a new assignment record in the database.
  * @param {IAssignmentCreate} payload - The data required to create a new assignment record.
@@ -97,9 +97,13 @@ export const createAssignment = async (
       };
       console.log("📝 Parsed options:", parsedOptions);
 
-  
+  const studentPrefix = studentName.slice(0, 3).toUpperCase(); // e.g., "KAL"
+const currentYear = new Date().getFullYear();
+const incrementId = (index + 1).toString().padStart(2, "0"); // 01, 02, 03...
+const assignmentId = `${incrementId}-${studentPrefix}-${currentYear}`;
 
       const newAssignment: Partial<IAssignment> = {
+        assignmentId,
         studentId,
         studentName,
         sessionClassType,

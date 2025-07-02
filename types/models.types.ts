@@ -713,6 +713,7 @@ export interface CreatePaymentDetails{
 }
 
 export interface IAssignment extends Document {
+  assignmentId: string;
   studentId: string;
   studentName: string;
   sessionClassType?: string;
