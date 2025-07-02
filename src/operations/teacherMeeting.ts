@@ -28,6 +28,9 @@ export const createTeacherMeeting = async (
       teacherName: payload.teacher?.teacherName ?? "",
       teacherEmail: payload.teacher?.teacherEmail ?? ""
     };
+    
+    console.log("📌 Teacher Info:", teacher);
+    
 
     // Ensure participants is an array of objects
     const participants = Array.isArray(payload.participants)

@@ -67,11 +67,32 @@ export default {
   try {
     const { payload } = createInputValidation.parse({ payload: req.payload });
 
+    let teacher: { teacherId?: string; teacherName?: string; teacherEmail?: string } = {};
+
+    if (typeof payload.teacher === "string") {
+      try {
+        const parsed = JSON.parse(payload.teacher);
+        teacher = {
+          teacherId: parsed.teacherId,
+          teacherName: parsed.teacherName,
+          teacherEmail: parsed.teacherEmail
+        };
+      } catch (err) {
+        console.error("Failed to parse supervisor string:", err);
+      }
+    } else if (typeof payload.teacher === "object" && payload.teacher !== null) {
+      teacher = {
+        teacherId: payload.teacher.teacherId,
+        teacherName: payload.teacher.teacherName,
+        teacherEmail: payload.teacher.teacherEmail
+      };
+    }
+
     const meeting = await createTeacherMeeting({
       meetingId: "",
       meetingName: payload.meetingName,
       participants: Array.isArray(payload.participants) ? payload.participants : [],
-      teacher: payload.teacher, // ✅ Directly assign parsed teacher data
+      teacher,// ✅ Directly assign parsed teacher data
       description: payload.description,
       selectedDate: new Date(payload.selectedDate),
       startTime: payload.startTime,
@@ -83,6 +104,8 @@ export default {
       updatedDate: payload.updatedDate ? new Date(payload.updatedDate) : new Date(),
       updatedBy: payload.updatedBy ?? "system"
     });
+
+    console.log('teacherid...', meeting);
 
     return h.response({ meeting }).code(200);
   } catch (error) {
