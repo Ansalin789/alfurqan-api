@@ -10,7 +10,6 @@ import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
 import mongoose from "mongoose"; // make sure this is at the top
 import { IAssignment } from "../../../types/models.types";
-import assignments from "../../models/assignments";
 
 // Input Validations for student list
 const getAssignmnentListInputValidation = z.object({
@@ -149,9 +148,8 @@ export default {
       // ✅ Generate assignmentId here (for this one group of questions)
       const studentPrefix = studentName?.slice(0, 3).toUpperCase() || "STU";
       const currentYear = new Date().getFullYear();
-      const assignment = assignments;
       const incrementId = "01"; // you can later replace with DB count or auto-ID logic
-      const assignmentId = `${incrementId}-${assignment}-${studentPrefix}-${currentYear}`;
+      const assignmentId = `${incrementId}-${studentPrefix}-${currentYear}`;
 
       if (!studentId || !mongoose.Types.ObjectId.isValid(studentId)) {
         return h.response({ error: "Invalid studentId" }).code(400);
