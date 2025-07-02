@@ -38,17 +38,19 @@ const register = async (server: Server): Promise<void> => {
 //         },  },
 //     },
 
-//     {
-//             method: "GET",
-//             path: "/assignments/{assignmentsId}",
-//             options: {
-//              handler: handler.getAssignmentsById,
-//              description: "Get assignment details",
-//              tags: ["api", "assignment"],
-//              auth: {
-//               strategies: ["jwt"],
-//             },  },
-//           },
+   {
+  method: "GET",
+  path: "/assignments",
+  options: {
+    handler: handler.getAssignmentsByStudentId,
+    description: "Get all assignments for a student by studentId",
+    tags: ["api", "assignment"],
+    },
+    // auth: {
+    //   strategies: ["jwt"],
+    // },
+  },
+
 
 //  {
 //       method: "PUT",
