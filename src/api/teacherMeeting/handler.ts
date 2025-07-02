@@ -1,13 +1,12 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
-import teachermeeting, {zodTeacherMeetingSchema} from "../../models/teachermeeting";
-import { createTeacherMeeting, getallTeachermeeting, getTeachermeetingById, updateAllTeacherMeeting } from "../../operations/teacherMeeting"
+import {zodTeacherMeetingSchema} from "../../models/teachermeeting";
+import { createTeacherMeeting, getallTeachermeeting, getTeachermeetingById, ITeacherMeetingUpdate, updateAllTeacherMeeting } from "../../operations/teacherMeeting"
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { addMeetingMessages, evaluationMessages } from "../../config/messages";
-import { checkMeetingConflict, getTeacherMeetingById, mergeMeetingPayload } from "../../shared/utils/meetingUtils";
+import { checkTeacherMeetingConflict, getTeacherMeetingById} from "../../shared/utils/meetingUtils";
 import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
-import { Types } from "mongoose";
 
 const createInputValidation = z.object({
     payload : zodTeacherMeetingSchema.pick({
@@ -35,25 +34,27 @@ const getallTeachermeetingInputValidation = z.object({
     }),
   });
 
- const updateMeetingInputValidation = z.object({
-  payload: zodTeacherMeetingSchema.pick({
-    meetingName: true,
-    selectedDate: true,         // ✅ Replaces 'selectedDate'
-    startTime: true,            // ✅ Replaces 'startTime'
-    endTime: true,              // ✅ Replaces 'endTime'
-    description: true,
-    status: true,
-    meetingStatus: true,
-    updatedDate: true,
-    updatedBy: true
-  }).extend({
-    filterValues: z.any().optional(), // ✅ Properly handled here
-    offset: z.string().optional().nullable(),
-    limit: z.string().optional().nullable(),
-    searchText: z.string().optional(),
-    sortBy: z.string().optional()
-  }).partial()
-});
+const updateMeetingInputValidation = zodTeacherMeetingSchema.pick({
+  meetingName: true,
+  selectedDate: true,
+  startTime: true,
+  endTime: true,
+  description: true,
+  status: true,
+  meetingStatus: true,
+  updatedDate: true,
+  updatedBy: true,
+  filterValues: true,
+  participants: true, // ✅ add this line
+})
+.extend({
+  offset: z.string().optional().nullable(),
+  limit: z.string().optional().nullable(),
+  searchText: z.string().optional(),
+  sortBy: z.string().optional(),
+})
+.partial(); 
+
 
 export default {
    async createTeacherMeeting(req: Request, h: ResponseToolkit) {
@@ -152,110 +153,82 @@ export default {
       return result;
     },
     
-  async updateTeacherMeeting(req: Request, h: ResponseToolkit) {
-    try {
-      console.log("🔄 Incoming updateTeacherMeeting request");
-  
-      const meetingId = req.params.id;
-      console.log("📌 Meeting ID:", meetingId);
-  
-      if (!meetingId) {
-        console.log("❌ Meeting ID is missing in path");
-        return h.response({ message: "Meeting ID is missing in path" }).code(400);
-      }
-  
-      const payload = req.payload as any;
-      console.log("📦 Raw Payload:", payload);
-  const teaherdtails = await teachermeeting.findOne({_id : new Types.ObjectId(meetingId) });
-  console.log("teaherdtails>>>", teaherdtails?.teacher);
 
-      if (!payload) {
-        console.log("❌ Request payload is missing");
-        return h.response({ message: "Request payload is missing" }).code(400);
-      }
-  
-      // Validate using Zod
-      console.log("✅ Validating payload with Zod");
-      const validatedPayload = updateMeetingInputValidation.parse({ payload });
-      console.log("✅ Validated Payload:", validatedPayload);
-  
-      // Fetch existing meeting
-      console.log("📥 Fetching existing meeting from DB...");
-      const existingMeeting = await getTeacherMeetingById(meetingId);
-      console.log("📄 Existing Meeting:", existingMeeting);
-  
-      if (!existingMeeting) {
-        console.log("❌ Meeting not found");
-        return h.response({ message: addMeetingMessages.USER_NOT_FOUND }).code(404);
-      }
-  
-      // Merge payload with existing meeting
-      console.log("🧩 Merging existing meeting with payload...");
-      const updatedPayload = mergeMeetingPayload(validatedPayload.payload, existingMeeting);
-      console.log("🔀 Merged Payload:", updatedPayload);
-  
-      // Detect time change
-      const isTimeChanged =
-        updatedPayload.startTime !== existingMeeting.startTime ||
-        updatedPayload.endTime !== existingMeeting.endTime;
-  
-      console.log("⏱ Time Changed:", isTimeChanged);
-  
-      if (isTimeChanged) {
-        const teacherId = updatedPayload.teacher?.teacherId;
-        const studentId = updatedPayload.participants?.[0]?.studentId;
-  
-        console.log("👤 Teacher ID:", teacherId);
-        console.log("👨‍🎓 Student ID:", studentId);
-  
-        if (!teacherId || !studentId) {
-          console.log("❌ Invalid teacher or student details");
-          return h.response({ message: "Invalid teacher or student details" }).code(400);
-        }
-  
-        console.log("🧠 Checking for scheduling conflict...");
-        const hasConflict = await checkMeetingConflict(
+
+
+async updateTeacherMeeting(req: Request, h: ResponseToolkit) {
+  try {
+    const payload = req.payload as any;
+    if (!payload) {
+      return h.response({ message: "Request payload is missing" }).code(400);
+    }
+
+    const validatedPayload = updateMeetingInputValidation.parse(payload);
+    if (validatedPayload.selectedDate) {
+      validatedPayload.selectedDate = new Date(validatedPayload.selectedDate);
+    }
+
+    const meetingId = req.params.meetingId;
+    const existingMeeting = await getTeacherMeetingById(meetingId);
+
+    if (!existingMeeting) {
+      return h.response({ message: addMeetingMessages.USER_NOT_FOUND }).code(404);
+    }
+
+    const isTimeChanged =
+      validatedPayload.startTime !== existingMeeting.startTime ||
+      validatedPayload.endTime !== existingMeeting.endTime ||
+      (validatedPayload.selectedDate &&
+        validatedPayload.selectedDate.getTime() !== new Date(existingMeeting.selectedDate).getTime());
+
+    if (isTimeChanged) {
+      const teacherId = existingMeeting.teacher?.teacherId;
+      const meetingDate = validatedPayload.selectedDate ?? existingMeeting.selectedDate;
+      const studentIds = (validatedPayload.participants || existingMeeting.participants || []).map((p: any) => p.studentId);
+
+      for (const studentId of studentIds) {
+        const hasConflict = await checkTeacherMeetingConflict(
+          teacherId,
           studentId,
-          updatedPayload.selectedDate,
-          updatedPayload.startTime,
-          updatedPayload.endTime,
+          meetingDate.toISOString(),
+          validatedPayload.startTime ?? existingMeeting.startTime,
+          validatedPayload.endTime ?? existingMeeting.endTime,
           meetingId
         );
-        console.log("📛 Has Conflict:", hasConflict);
-  
         if (hasConflict) {
-          console.log("❌ Time slot conflict detected");
-          return h.response({ message: "Reschedule failed: Time slot already occupied" }).code(400);
+          return h
+            .response({ message: `Reschedule failed: Conflict for student ${studentId}` })
+            .code(400);
         }
-  
-        updatedPayload.meetingStatus = "Re-Scheduled";
-        console.log("📆 Meeting status updated to Re-Scheduled");
       }
-  
-      // Update in DB
-      console.log("💾 Updating meeting in database...");
-      const updateResult = await updateAllTeacherMeeting(meetingId, updatedPayload);
-      console.log("✅ DB Update Result:", updateResult);
-  
-      if (!updateResult) {
-        console.log("❌ Failed to update meeting: Not Found");
-        return h.response({ message: addMeetingMessages.USER_NOT_FOUND }).code(404);
-      }
-  
-      // Fetch the updated meeting to ensure all fields (including teacherId) are present
-      const updatedMeeting = await getTeacherMeetingById(meetingId);
-
-      console.log("✅ Successfully updated meeting");
-      if (!updatedMeeting) {
-        console.log("❌ Updated meeting not found after update");
-        return h.response({ message: addMeetingMessages.USER_NOT_FOUND }).code(404);
-      }
-      return h.response(updatedMeeting).code(200);
-    } catch (error) {
-      console.error("💥 Error updating meeting:", error);
-      return h.response({ message: "Internal Server Error", error }).code(500);
     }
+
+    const updatedPayload: Partial<ITeacherMeetingUpdate> = {
+      meetingName: validatedPayload.meetingName ?? existingMeeting.meetingName,
+      selectedDate: validatedPayload.selectedDate ?? existingMeeting.selectedDate,
+      startTime: validatedPayload.startTime ?? existingMeeting.startTime,
+      endTime: validatedPayload.endTime ?? existingMeeting.endTime,
+      description: validatedPayload.description ?? existingMeeting.description,
+      meetingStatus: isTimeChanged ? "Rescheduled" : validatedPayload.meetingStatus ?? existingMeeting.meetingStatus,
+      updatedBy: validatedPayload.updatedBy ?? existingMeeting.updatedBy,
+      updatedDate: new Date(),
+      status: validatedPayload.status ?? existingMeeting.status,
+    };
+
+    const result = await updateAllTeacherMeeting(meetingId, updatedPayload);
+
+    if (!result) {
+      return h.response({ message: addMeetingMessages.USER_NOT_FOUND }).code(404);
+    }
+
+    return h.response(result).code(200);
+  } catch (error) {
+    console.error("💥 Error updating meeting:", error);
+    return h.response({ message: "Internal Server Error", error }).code(500);
   }
+}
+
+
     
     
 }

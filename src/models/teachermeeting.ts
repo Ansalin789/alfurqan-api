@@ -80,7 +80,13 @@ export const zodTeacherMeetingSchema = z.object({
   status: z.enum([teacherStatus.ACTIVE, teacherStatus.IN_ACTIVE]),
   createdDate: z.string().optional(),
   createdBy: z.string().optional(),
-  updatedDate: z.string().optional(),
+  updatedDate: z
+    .string()
+    .optional()
+    .refine((val) => (val ? !isNaN(Date.parse(val)) : true), {
+      message: commonMessages.INVALID_DATE_FORMAT,
+    })
+    .transform((val) => (val ? new Date(val) : undefined)),
   updatedBy: z.string().optional(),
   selectedDate: z
     .string()

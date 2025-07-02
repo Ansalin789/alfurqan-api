@@ -20,9 +20,9 @@ const register = async (server:Server): Promise <void> => {
                 handler: handler.getTeachermeetingById,
                 description:addMeetingMessages.CREATE,
                 tags: ['api', 'teacherMeeting'],
-                 auth: {
-        strategies: ["jwt"],
-      },
+      //            auth: {
+      //   strategies: ["jwt"],
+      // },
         },
     },
 
@@ -33,15 +33,15 @@ const register = async (server:Server): Promise <void> => {
           handler: handler.getallTeachermeeting,
           description: evaluationMessages.LIST,
           tags: ["api", "teacherMeetinglist"],
-          auth: {
-            strategies: ["jwt"],
-          },  
+          // auth: {
+          //   strategies: ["jwt"],
+          // },  
         },
       },
   
     {   
         method: 'PUT',
-        path:'/updateTeacherMeeting/{id}',
+        path:'/updateTeacherMeeting/{meetingId}',
         options: {
             handler: handler.updateTeacherMeeting,
             description:addMeetingMessages.CREATE,

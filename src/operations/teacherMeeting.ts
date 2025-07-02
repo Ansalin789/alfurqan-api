@@ -1,12 +1,13 @@
 import {TeacherMeetingCreate, TeacherMeeting} from '../../types/models.types'
-import teacherMeeting from '../models/teachermeeting';
+import teacherMeeting, { zodTeacherMeetingSchema } from '../models/teachermeeting';
 import { alstudentsMessages,commonMessages } from '../config/messages';
 import AppLogger from '../helpers/logging';
 import {GetAllRecordsParams} from "../shared/enum";
 import { isNil } from 'lodash';
 import { Types } from 'mongoose';
 import teachermeeting from '../models/teachermeeting';
-const addmeeting = teachermeeting;
+
+
 export interface ITeacherMeetingUpdate{
   meetingName:string,
   selectedDate: Date,
@@ -18,6 +19,8 @@ export interface ITeacherMeetingUpdate{
   updatedBy?:string,
   description:string,
   }
+
+  
 export const createTeacherMeeting = async (
   payload: TeacherMeetingCreate
 ): Promise<TeacherMeeting | { error: any }> => {
@@ -164,9 +167,16 @@ export const updateAllTeacherMeeting = async (
   id: string,
   payload: Partial<ITeacherMeetingUpdate>
 ): Promise<TeacherMeeting | null> => {
-  return addmeeting.findOneAndUpdate(
+    console.log("🔄 DB Update attempt for ID:", id);
+  console.log("📦 Payload to update:", payload);
+  return teachermeeting.findOneAndUpdate(
     { _id: new Types.ObjectId(id) },
     { $set: payload },
     { new: true }
   ).lean();
 }
+
+
+
+
+
