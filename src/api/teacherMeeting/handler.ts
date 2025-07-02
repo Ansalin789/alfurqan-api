@@ -4,11 +4,10 @@ import teachermeeting, {zodTeacherMeetingSchema} from "../../models/teachermeeti
 import { createTeacherMeeting, getallTeachermeeting, getTeachermeetingById, updateAllTeacherMeeting } from "../../operations/teacherMeeting"
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { addMeetingMessages, evaluationMessages } from "../../config/messages";
-import { checkMeetingConflict, getMeetingById, getTeacherMeetingById, mergeMeetingPayload } from "../../shared/utils/meetingUtils";
+import { checkMeetingConflict, getTeacherMeetingById, mergeMeetingPayload } from "../../shared/utils/meetingUtils";
 import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
 import { Types } from "mongoose";
-
 
 const createInputValidation = z.object({
     payload : zodTeacherMeetingSchema.pick({
@@ -25,9 +24,7 @@ const createInputValidation = z.object({
         createdDate : true,
         createdBy : true,
         updatedDate: true,
-        updatedBy: true,
-        
-
+        updatedBy: true,       
     })
 });
 
@@ -58,11 +55,7 @@ const getallTeachermeetingInputValidation = z.object({
   }).partial()
 });
 
-
-
 export default {
-
-
    async createTeacherMeeting(req: Request, h: ResponseToolkit) {
   try {
     const { payload } = createInputValidation.parse({ payload: req.payload });
@@ -263,8 +256,6 @@ export default {
       return h.response({ message: "Internal Server Error", error }).code(500);
     }
   }
-  
-  
     
     
 }
