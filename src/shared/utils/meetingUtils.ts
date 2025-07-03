@@ -10,6 +10,9 @@ import teachermeeting from "../../models/teachermeeting";
 export async function getMeetingById(meetingId: string) {
   return await addmeeting.findById(meetingId);
 }
+
+
+
 export async function getTeacherMeetingById(meetingId: string) {
   return await teachermeeting.findById(meetingId);
 }
@@ -25,7 +28,6 @@ export function mergeMeetingPayload(payload: any, existingMeeting: any) {
     participants: payload.participants ?? existingMeeting.participants,
     supervisor: payload.supervisor ?? existingMeeting.supervisor,
     teacher: payload.teacher ?? existingMeeting.teacher,
-    meetingdate: payload.meetingdate ?? existingMeeting.meetingdate,
     selectedDate: payload.selectedDate ?? existingMeeting.selectedDate,
     startTime: payload.startTime ?? existingMeeting.startTime,
     endTime: payload.endTime ?? existingMeeting.endTime,
@@ -55,7 +57,7 @@ export async function checkMeetingConflict(
   selectedDate?: string,
   startTime?: string,
   endTime?: string,
-  meetingId?: string
+  meetingId?: string,
 ): Promise<boolean> {
   const conflictingMeeting = await addmeeting.findOne({
     $and: [
@@ -74,6 +76,35 @@ export async function checkMeetingConflict(
         ],
       },
       meetingId ? { _id: { $ne: meetingId } } : {}, // Exclude the current meeting
+    ],
+  });
+
+  return conflictingMeeting !== null;
+}
+
+
+export async function checkTeacherMeetingConflict(
+  teacherId?: string,
+  studentId?: string,
+  selectedDate?: string,
+  startTime?: string,
+  endTime?: string,
+  meetingId?: string
+): Promise<boolean> {
+  const conflictingMeeting = await teachermeeting.findOne({
+    $and: [
+      { selectedDate },
+      {
+        $or: [
+          { "teacher.teacherId": teacherId },
+          { "participants.studentId": studentId },
+        ],
+      },
+      {
+        startTime: { $lt: endTime },
+        endTime: { $gt: startTime },
+      },
+      meetingId ? { _id: { $ne: meetingId } } : {},
     ],
   });
 

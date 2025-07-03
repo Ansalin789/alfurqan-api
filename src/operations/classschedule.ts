@@ -1,12 +1,15 @@
 import { Types } from "mongoose";
 import { IClassSchedule, IClassScheduleCreate } from "../../types/models.types";
-import  ClassScheduleModel  from "../models/classShedule"
-import UserModel from "../models/users"
+
+import ClassScheduleModel from "../models/classShedule";
+import StudentModel from "../models/alstudents";
+import UserModel from "../models/users";
+
 import AppLogger from "../helpers/logging";
 import { GetAllRecordsParams } from "../shared/enum";
 import { alstudentsMessages, commonMessages } from "../config/messages";
 import { isNil } from "lodash";
-import { Client } from '@microsoft/microsoft-graph-client';
+import { Client } from "@microsoft/microsoft-graph-client";
 import { ClientSecretCredential } from "@azure/identity";
 import moment from "moment";
 import classShedule from "../models/classShedule";
@@ -15,6 +18,8 @@ import Evaluation from "../models/evaluation";
 import AlStudenModel from "../models/alstudents";
 import Course from "../models/course"
 import { endOfMonth, startOfMonth, subMonths, eachMonthOfInterval, format } from "date-fns";
+import assignment from "../models/assignments";
+
 
 /**
  * Creates a new candidate record in the database.
@@ -24,7 +29,11 @@ import { endOfMonth, startOfMonth, subMonths, eachMonthOfInterval, format } from
  */
 
 // Helper function to get dates for specific weekdays between two dates
-const getDatesForWeekdays = (startDate: Date, endDate: Date, targetDay: number): Date[] => {
+const getDatesForWeekdays = (
+  startDate: Date,
+  endDate: Date,
+  targetDay: number
+): Date[] => {
   const dates: Date[] = [];
   const currentDate = new Date(startDate);
 
@@ -37,99 +46,6 @@ const getDatesForWeekdays = (startDate: Date, endDate: Date, targetDay: number):
 
   return dates;
 };
-
-// export const updateStudentClassSchedule = async (
-//   id: string,
-//   payload: Partial<IClassScheduleCreate>
-// ): Promise<(IClassSchedule | { error: any })[]> => {
-//   const { classDay, startTime, endTime, startDate, endDate } = payload;
-
-//   const results: (IClassSchedule | { error: any })[] = [];
-//   const resultss: (IClassScheduleCreate | { error: any })[] = [];
-
-//   // Validate inputs
-//   if (!classDay || !startTime || !endTime || !startDate || !endDate || 
-//       classDay.length !== startTime.length || startTime.length !== endTime.length) {
-//     throw new Error("classDay, startTime, endTime, startDate, and endDate must be provided and arrays must match in length.");
-//   }
-
-//   for (let i = 0; i < classDay.length; i++) {
-//     const day = classDay[i];
-//     const start = startTime[i];
-//     const end = endTime[i];
-
-//     try {
-//       // Fetch student details
-//       const studentDetails = await StudentModel.findOne({
-//         _id: new Types.ObjectId(id)
-//       }).exec();
-
-
-//       // Fetch teacher details
-//       const teacherDetails = await UserModel.findOne({
-//         role: "TEACHER",
-//         userName: payload.teacher?.teacherName
-//       }).exec();
-
-
-//       // Map day name to numeric day (0=Sunday, 1=Monday, ..., 6=Saturday)
-//       const dayIndex = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].indexOf(day);
-//       if (dayIndex === -1) {
-//         throw new Error(`Invalid classDay: ${day}`);
-//       }
-
-//       // Generate class dates within the range
-//       const classDates = getDatesForWeekdays(new Date(startDate), new Date(endDate), dayIndex);
-//       const meetingId = `alfregularclass-${studentDetails?._id}`;
-
-//       for (const classDate of classDates) {
-//         const newClassSchedule = new ClassScheduleModel({
-//           student: {
-//             studentId: studentDetails?._id,
-//             studentFirstName: studentDetails?.username,
-//             studentLastName: studentDetails?.username,
-//             studentEmail: studentDetails?.student?.studentEmail,
-//             gender: studentDetails?.student?.gender, // Ensure gender is included
-
-//           },
-//           teacher: {
-//             teacherId: teacherDetails?._id,
-//             teacherName: teacherDetails?.userName,
-//             teacherEmail: teacherDetails?.email
-//           },
-//           classLink:meetingId, 
-//           classDay: day,
-//           startTime: start,
-//           endTime: end,
-//           sessionClassType: payload.sessionClassType || "",
-//           sessionStarttime: payload.sessionStarttime || "",
-//           sessionsEndtime: payload.sessionsEndtime || "",
-//           sessionStatus:"NotCompleted",
-//           course:studentDetails?.student?.course,
-//           package: studentDetails?.student?.package,
-//           startDate: classDate,
-//           endDate: classDate,
-//           createdBy: new Date(),
-//           status: "Active",
-//           scheduleStatus: "Active",
-//           totalHourse: payload.totalHourse,
-//           preferedTeacher: payload.preferedTeacher,
-//         });
-
-//          const eventDetails = await createEvent(newClassSchedule);
-
-//         const savedClassSchedule = await newClassSchedule.save();
-//         results.push(savedClassSchedule);
-//       }
-//     } catch (error) {
-//       console.error("Error in scheduling:", error);
-//       results.push({ error });
-//     }
-//   }
-
-//   return results;
-// };
-
 
  export const updateStudentClassSchedule = async (
     id: String,
@@ -208,6 +124,8 @@ for (let i = 0; i < classDay.length; i++) {
  return results.push(saved);
 
  };
+
+
 export const getAllClassShedule = async (
   params: GetAllRecordsParams
 ): Promise<{ totalCount: number; students: IClassSchedule[] }> => {
@@ -217,95 +135,102 @@ export const getAllClassShedule = async (
   const query: any = {};
 
   if (searchText?.trim()) {
-  const escapedSearch = searchText.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-  const searchRegex = new RegExp(escapedSearch, 'i');
-  const isDate = !isNaN(Date.parse(searchText));
-  const orConditions: any[] = [
-  { "student.studentFirstName": searchRegex },
+    const escapedSearch = searchText.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
+    const searchRegex = new RegExp(escapedSearch, "i");
+    const isDate = !isNaN(Date.parse(searchText));
+    const orConditions: any[] = [
+      { "student.studentFirstName": searchRegex },
       { "student.studentLastName": searchRegex },
       { "student.studentEmail": searchRegex },
       { "teacher.teacherName": searchRegex },
       { "teacher.teacherEmail": searchRegex },
       { "course.courseName": searchRegex },
-      { "classDay": searchRegex },
-      {"scheduleStatus": searchRegex },
+      { classDay: searchRegex },
+      { scheduleStatus: searchRegex },
+    ];
 
-  ];
+    // Only add phone number if searchText is a number
+    if (!isNaN(Number(searchText))) {
+      orConditions.push({ candidatePhoneNumber: Number(searchText) });
+    }
 
-  // Only add phone number if searchText is a number
-  if (!isNaN(Number(searchText))) {
-    orConditions.push({ candidatePhoneNumber: Number(searchText) });
+    if (isDate) {
+      const date = new Date(searchText);
+      const nextDay = new Date(date);
+      nextDay.setDate(date.getDate() + 1);
+      orConditions.push({ applicationDate: { $gte: date, $lt: nextDay } });
+    }
+
+    query.$or = orConditions;
   }
-
-  if (isDate) {
-    const date = new Date(searchText);
-    const nextDay = new Date(date);
-    nextDay.setDate(date.getDate() + 1);
-    orConditions.push({ applicationDate: { $gte: date, $lt: nextDay } });
-  }
-
-  query.$or = orConditions;
-}
 
   // Add filters to the query
-if (filterValues?.course?.courseName) {
-  const values = Array.isArray(filterValues.course.courseName)
-    ? filterValues.course.courseName
-    : [filterValues.course.courseName];
-  if (values.length > 0) {
-    query["course.courseName"] = { $in: values.map(v => new RegExp(`^${v}$`, "i")) };
+  if (filterValues?.course?.courseName) {
+    const values = Array.isArray(filterValues.course.courseName)
+      ? filterValues.course.courseName
+      : [filterValues.course.courseName];
+    if (values.length > 0) {
+      query["course.courseName"] = {
+        $in: values.map((v) => new RegExp(`^${v}$`, "i")),
+      };
+    }
   }
-}
-if (filterValues?.sessionClassType) {
-  const values = Array.isArray(filterValues.sessionClassType)
-    ? filterValues.sessionClassType
-    : [filterValues.sessionClassType];
-  if (values.length > 0) {
-    query["sessionClassType"] = { $in: values.map(v => new RegExp(`^${v}$`, "i")) };
+  if (filterValues?.sessionClassType) {
+    const values = Array.isArray(filterValues.sessionClassType)
+      ? filterValues.sessionClassType
+      : [filterValues.sessionClassType];
+    if (values.length > 0) {
+      query["sessionClassType"] = {
+        $in: values.map((v) => new RegExp(`^${v}$`, "i")),
+      };
+    }
   }
-}
 
-// --- scheduleStatus filter ---
-if (filterValues?.scheduleStatus) {
-  const values = Array.isArray(filterValues.scheduleStatus)
-    ? filterValues.scheduleStatus
-    : [filterValues.scheduleStatus];
-  if (values.length > 0 && values[0]) {
-    query["scheduleStatus"] = { $in: values.map(v => new RegExp(`^${v}$`, "i")) };
+  // --- scheduleStatus filter ---
+  if (filterValues?.scheduleStatus) {
+    const values = Array.isArray(filterValues.scheduleStatus)
+      ? filterValues.scheduleStatus
+      : [filterValues.scheduleStatus];
+    if (values.length > 0 && values[0]) {
+      query["scheduleStatus"] = {
+        $in: values.map((v) => new RegExp(`^${v}$`, "i")),
+      };
+    }
   }
-}
 
-// --- startTime filter ---
-if (filterValues?.startTime) {
-  const values = Array.isArray(filterValues.startTime)
-    ? filterValues.startTime
-    : [filterValues.startTime];
-  // Remove empty/undefined values
-  const cleaned = values.filter(v => typeof v === "string" && v.trim().length > 0);
-  if (cleaned.length > 0) {
-    // Use exact match (case-insensitive) for each time string
-    query["startTime"] = { $in: cleaned.map(v => new RegExp(`^${v}$`, "i")) };
+  // --- startTime filter ---
+  if (filterValues?.startTime) {
+    const values = Array.isArray(filterValues.startTime)
+      ? filterValues.startTime
+      : [filterValues.startTime];
+    // Remove empty/undefined values
+    const cleaned = values.filter(
+      (v) => typeof v === "string" && v.trim().length > 0
+    );
+    if (cleaned.length > 0) {
+      // Use exact match (case-insensitive) for each time string
+      query["startTime"] = {
+        $in: cleaned.map((v) => new RegExp(`^${v}$`, "i")),
+      };
+    }
   }
-}
 
-
-
-// --- Date Range filter (use startDate) ---
-if (
-  filterValues?.dateRange?.from &&
-  filterValues?.dateRange?.to &&
-  !isNaN(Date.parse(filterValues.dateRange.from)) &&
-  !isNaN(Date.parse(filterValues.dateRange.to))
-) {
-  const fromDate = new Date(filterValues.dateRange.from);
-  const toDate = new Date(filterValues.dateRange.to);
-  toDate.setHours(23, 59, 59, 999);
-  query.startDate = { // <-- Correct field name
-    $gte: fromDate,
-    $lte: toDate
-  };
-}
-
+  // --- Date Range filter (use startDate) ---
+  if (
+    filterValues?.dateRange?.from &&
+    filterValues?.dateRange?.to &&
+    !isNaN(Date.parse(filterValues.dateRange.from)) &&
+    !isNaN(Date.parse(filterValues.dateRange.to))
+  ) {
+    const fromDate = new Date(filterValues.dateRange.from);
+    const toDate = new Date(filterValues.dateRange.to);
+    toDate.setHours(23, 59, 59, 999);
+    query.startDate = {
+      // <-- Correct field name
+      $gte: fromDate,
+      $lte: toDate,
+    };
+  }
 
   console.log("Constructed Query:", JSON.stringify(query, null, 2)); // Log the constructed query
 
@@ -314,7 +239,6 @@ if (
 
   // Create the query with sorting
   const studentQuery = ClassScheduleModel.find(query).sort(sortOptions);
-
 
   // Execute the query and count concurrently
   const [students, totalCount] = await Promise.all([
@@ -331,18 +255,19 @@ if (
   return { totalCount, students };
 };
 
+export const getAllClassSheduleById = async (
+  _id: string
+): Promise<IClassSchedule | null> => {
+  return ClassScheduleModel.findOne({
+    _id: new Types.ObjectId(_id),
+  }).lean();
+};
 
-
- export const getAllClassSheduleById = async (
-    _id: string
-  ): Promise<IClassSchedule | null> => {
-    return ClassScheduleModel.findOne({
-      _id: new Types.ObjectId(_id),
-    }).lean();
-  };
-
- 
- const { MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET, MICROSOFT_TENANT_ID } : any = process.env;
+const {
+  MICROSOFT_CLIENT_ID,
+  MICROSOFT_CLIENT_SECRET,
+  MICROSOFT_TENANT_ID,
+}: any = process.env;
 
 // Initialize Azure Credential
 const credential = new ClientSecretCredential(
@@ -354,76 +279,76 @@ const credential = new ClientSecretCredential(
 // Initialize Microsoft Graph Client
 const client = Client.initWithMiddleware({
   authProvider: {
-      getAccessToken: async (): Promise<string> => {
-          const tokenResponse = await credential.getToken(
-              'https://graph.microsoft.com/.default'
-          );
-          return tokenResponse.token;
-      },
-  }
+    getAccessToken: async (): Promise<string> => {
+      const tokenResponse = await credential.getToken(
+        "https://graph.microsoft.com/.default"
+      );
+      return tokenResponse.token;
+    },
+  },
 });
-
 
 // Create Event Function
 async function createEvent(newClassSchedule: any): Promise<void> {
-  console.log("newClassSchedule>>>>", newClassSchedule)
+  console.log("newClassSchedule>>>>", newClassSchedule);
   const event = {
-      subject: 'Team Meeting',
-      body: {
-          contentType: 'HTML',
-          content: 'Discuss project updates and next steps.',
+    subject: "Team Meeting",
+    body: {
+      contentType: "HTML",
+      content: "Discuss project updates and next steps.",
+    },
+    start: {
+      dateTime: new Date(newClassSchedule.startDate).toISOString(),
+      timeZone: "Asia/Kolkata",
+    },
+    end: {
+      dateTime: new Date(newClassSchedule.endDate).toISOString(),
+      timeZone: "Asia/Kolkata",
+    },
+    location: {
+      displayName: "Conference Room 1",
+    },
+    attendees: [
+      {
+        emailAddress: {
+          address: newClassSchedule.student.studentEmail,
+          name: newClassSchedule.studentFirstName,
+        },
+        type: "required",
       },
-      start: {
-          dateTime: new Date(newClassSchedule.startDate).toISOString(),
-          timeZone: 'Asia/Kolkata',
+      {
+        emailAddress: {
+          address: newClassSchedule.teacher.teacherEmail,
+          name: newClassSchedule.teacher.teacherEmail,
+        },
+        type: "required",
       },
-      end: {
-          dateTime: new Date(newClassSchedule.endDate).toISOString(),
-          timeZone: 'Asia/Kolkata',
-      },
-      location: {
-          displayName: 'Conference Room 1',
-      },
-      attendees: [
-          {
-              emailAddress: {
-                  address: newClassSchedule.student.studentEmail,
-                  name: newClassSchedule.studentFirstName,
-              },
-              type: 'required',
-          },
-          {
-              emailAddress: {
-                  address: newClassSchedule.teacher.teacherEmail,
-                  name: newClassSchedule.teacher.teacherEmail,
-              },
-              type: 'required',
-          },
-      ],
-      allowNewTimeProposals: true,
-      isOnlineMeeting: true,
-      onlineMeetingProvider: 'teamsForBusiness',
+    ],
+    allowNewTimeProposals: true,
+    isOnlineMeeting: true,
+    onlineMeetingProvider: "teamsForBusiness",
   };
 
   try {
-      const userId = 'tech@alfurqan.academy';
-      const response = await client.api(`/users/${userId}/calendar/events`).post(event);
-      console.log('Event created successfully:', response.id);
+    const userId = "tech@alfurqan.academy";
+    const response = await client
+      .api(`/users/${userId}/calendar/events`)
+      .post(event);
+    console.log("Event created successfully:", response.id);
 
-      console.log('Event created successfully:', response.id);
+    console.log("Event created successfully:", response.id);
   } catch (error: any) {
-      console.error('Error creating event:', error);
-      if (error) {
-          console.error('Response body:', error);
-          console.error('Response headers:', error);
-      } else {
-          console.error('Error message:', error);
-      }
+    console.error("Error creating event:", error);
+    if (error) {
+      console.error("Response body:", error);
+      console.error("Response headers:", error);
+    } else {
+      console.error("Error message:", error);
+    }
   }
 }
 
-
-// 
+//
 export const updateClassscheduleById = async (
   id: string,
   payload: Partial<IClassScheduleCreate>
@@ -438,47 +363,45 @@ export const updateClassscheduleById = async (
     throw new Error("Class schedule not found");
   }
 
- // Determine class type and session times
-const classType = payload.sessionClassType || existingClass.sessionClassType;
-const startTime = payload.sessionStarttime || existingClass.sessionStarttime;
-const endTime = payload.sessionsEndtime || existingClass.sessionsEndtime;
+  // Determine class type and session times
+  const classType = payload.sessionClassType || existingClass.sessionClassType;
+  const startTime = payload.sessionStarttime || existingClass.sessionStarttime;
+  const endTime = payload.sessionsEndtime || existingClass.sessionsEndtime;
 
-let amount = 0;
-let sessionStatus = "NotCompleted";
+  let amount = 0;
+  let sessionStatus = "NotCompleted";
 
-if (startTime && endTime) {
-  const startMinutes = convertTimeToMinutes(startTime);
-  const endMinutes = convertTimeToMinutes(endTime);
-  const duration = endMinutes - startMinutes;
+  if (startTime && endTime) {
+    const startMinutes = convertTimeToMinutes(startTime);
+    const endMinutes = convertTimeToMinutes(endTime);
+    const duration = endMinutes - startMinutes;
 
-  if (duration > 0) {
-    if (classType === "REGULARCLASS") {
-      amount = (duration / 60) * 4;
-    } else if (classType === "GROUPCLASS") {
-      amount = (duration / 60) * 6;
-    } else if (classType === "TRAILCLASS") {
-      amount = 2;
+    if (duration > 0) {
+      if (classType === "REGULARCLASS") {
+        amount = (duration / 60) * 4;
+      } else if (classType === "GROUPCLASS") {
+        amount = (duration / 60) * 6;
+      } else if (classType === "TRAILCLASS") {
+        amount = 2;
+      }
+
+      sessionStatus = "COMPLETED";
     }
-
-    sessionStatus = "COMPLETED";
   }
-}
 
-const formattedAmount = `$${amount.toFixed(2)}`;
+  const formattedAmount = `$${amount.toFixed(2)}`;
 
-return ClassScheduleModel.findOneAndUpdate(
-  { _id: new Types.ObjectId(id) },
-  {
-    $set: {
-      ...payload,
-      amount: formattedAmount,
-      sessionStatus
-    }
-  },
-  { new: true }
-).lean();
-
-
+  return ClassScheduleModel.findOneAndUpdate(
+    { _id: new Types.ObjectId(id) },
+    {
+      $set: {
+        ...payload,
+        amount: formattedAmount,
+        sessionStatus,
+      },
+    },
+    { new: true }
+  ).lean();
 };
 
 // Helper function to convert "HH:MM AM/PM" to minutes
@@ -503,23 +426,28 @@ const convertTimeToMinutes = (timeStr: string): number => {
   return hours * 60 + minutes;
 };
 
-
-
-
-
 // Function implementation:
 export const getClassesForStudent = async (
   params: GetAllRecordsParams
-): Promise<{ totalCount: number; classSchedule: IClassSchedule[] } | { error : any } > => {
-  const { studentId, sortBy = "_id", sortOrder = "asc", offset = 1, limit = 10 } = params;
+): Promise<
+  { totalCount: number; classSchedule: IClassSchedule[] } | { error: any }
+> => {
+  const {
+    studentId,
+    sortBy = "_id",
+    sortOrder = "asc",
+    offset = 1,
+    limit = 10,
+  } = params;
 
   if (!studentId) {
- return {
-            error: badRequest('Student id is Required'),
-        };  }
+    return {
+      error: badRequest("Student id is Required"),
+    };
+  }
   // Query filtering for studentId
   const query: any = { "student.studentId": studentId };
-  console.log(">>",query)
+  console.log(">>", query);
 
   // Sorting options
   const sortOptions: any = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
@@ -530,7 +458,11 @@ export const getClassesForStudent = async (
 
     // Execute queries
     const [classSchedule, totalCount] = await Promise.all([
-      ClassScheduleModel.find(query).sort(sortOptions).skip(skip).limit(Number(limit)).exec(),
+      ClassScheduleModel.find(query)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(Number(limit))
+        .exec(),
       ClassScheduleModel.countDocuments(query).exec(),
     ]);
 
@@ -544,14 +476,20 @@ export const getClassesForStudent = async (
 export const getClassesForTeacher = async (
   params: GetAllRecordsParams
 ): Promise<{ totalCount: number; classSchedule: IClassSchedule[] }> => {
-  const { teacherId, sortBy = "_id", sortOrder = "asc", offset = 1, limit = 10 } = params;
+  const {
+    teacherId,
+    sortBy = "_id",
+    sortOrder = "asc",
+    offset = 1,
+    limit = 10,
+  } = params;
 
   if (!teacherId) {
     throw new Error("Teacher ID is required");
   }
   // Query filtering for studentId
   const query: any = { "teacher.teacherId": teacherId };
-  console.log(">>",query)
+  console.log(">>", query);
 
   // Sorting options
   const sortOptions: any = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
@@ -562,7 +500,11 @@ export const getClassesForTeacher = async (
 
     // Execute queries
     const [classSchedule, totalCount] = await Promise.all([
-      ClassScheduleModel.find(query).sort(sortOptions).skip(skip).limit(Number(limit)).exec(),
+      ClassScheduleModel.find(query)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(Number(limit))
+        .exec(),
       ClassScheduleModel.countDocuments(query).exec(),
     ]);
 
@@ -573,14 +515,13 @@ export const getClassesForTeacher = async (
   }
 };
 
-
-
-
-
-
 export const getStudentClassHours = async (
   studentId: string
-): Promise<{ pendingPercentage: number; completedPercentage: number; totalHours: number }> => {
+): Promise<{
+  pendingPercentage: number;
+  completedPercentage: number;
+  totalHours: number;
+}> => {
   if (!studentId) {
     console.error("Student ID is missing");
     throw new Error("Student ID is required");
@@ -598,27 +539,39 @@ export const getStudentClassHours = async (
       return { pendingPercentage: 0, completedPercentage: 0, totalHours: 0 };
     }
 
-    console.log("Fetched class schedules:", JSON.stringify(classSchedule, null, 2));
+    console.log(
+      "Fetched class schedules:",
+      JSON.stringify(classSchedule, null, 2)
+    );
 
     let completedHours = 0;
     let pendingHours = 0;
 
-    classSchedule.forEach(event => {
+    classSchedule.forEach((event) => {
       console.log("Raw event data:", JSON.stringify(event, null, 2));
 
       // Ensure `classStatus` exists and normalize case
-      const status = event.classStatus ? event.classStatus.trim().toLowerCase() : "unknown";
+      const status = event.classStatus
+        ? event.classStatus.trim().toLowerCase()
+        : "unknown";
       const hours = Number(event.totalHourse) || 0; // Ensure it's a number
 
       if (hours > 0) {
         if (status === "completed") {
           completedHours += hours;
-          console.log(`Adding ${hours} hours to Completed (${completedHours} total)`);
+          console.log(
+            `Adding ${hours} hours to Completed (${completedHours} total)`
+          );
         } else if (status === "pending") {
           pendingHours += hours;
-          console.log(`Adding ${hours} hours to Pending (${pendingHours} total)`);
+          console.log(
+            `Adding ${hours} hours to Pending (${pendingHours} total)`
+          );
         } else {
-          console.warn(`Skipping event with unknown status: "${status}"`, event);
+          console.warn(
+            `Skipping event with unknown status: "${status}"`,
+            event
+          );
         }
       } else {
         console.warn(`Skipping event with zero or invalid hours: ${hours}`);
@@ -626,11 +579,19 @@ export const getStudentClassHours = async (
     });
 
     const totalHours = completedHours + pendingHours;
-    const pendingPercentage = totalHours > 0 ? (pendingHours / totalHours) * 100 : 0;
-    const completedPercentage = totalHours > 0 ? (completedHours / totalHours) * 100 : 0;
+    const pendingPercentage =
+      totalHours > 0 ? (pendingHours / totalHours) * 100 : 0;
+    const completedPercentage =
+      totalHours > 0 ? (completedHours / totalHours) * 100 : 0;
 
-    console.log(`Final Totals -> Completed: ${completedHours}, Pending: ${pendingHours}, Total: ${totalHours}`);
-    console.log(`Final Percentages -> Pending: ${pendingPercentage.toFixed(2)}%, Completed: ${completedPercentage.toFixed(2)}%`);
+    console.log(
+      `Final Totals -> Completed: ${completedHours}, Pending: ${pendingHours}, Total: ${totalHours}`
+    );
+    console.log(
+      `Final Percentages -> Pending: ${pendingPercentage.toFixed(
+        2
+      )}%, Completed: ${completedPercentage.toFixed(2)}%`
+    );
 
     return { pendingPercentage, completedPercentage, totalHours };
   } catch (error) {
@@ -639,64 +600,71 @@ export const getStudentClassHours = async (
   }
 };
 
-export const teacherStudentCount = async() =>{
+export const teacherStudentCount = async () => {
   const teachers = await classShedule.aggregate([
-       {
-         $group: {
-           _id: "$teacher.teacherId", // Group by teacherEmail
-           teacherId: { $first: "$teacher.teacherId" },
-           teacherName: { $first: "$teacher.teacherName" },
-           teacherEmail: { $first: "$teacher.teacherEmail" },
-           uniqueStudents: { 
-             $addToSet: { 
-               studentId: "$student.studentId", 
-               gender: "$student.gender" 
-             } 
-           } // Collect unique student IDs and gender
-         }
-       },
-       {
-         $project: {
-           teacherId: 1,
-           teacherName: 1,
-           teacherEmail: 1,
-           studentCount: { $size: "$uniqueStudents" }, // Total unique students
-           maleCount: {
-             $size: {
-               $filter: {
-                 input: "$uniqueStudents",
-                 as: "student",
-                 cond: { $eq: ["$$student.gender", "MALE"] }
-               }
-             }
-           }, // Count only male students
-           femaleCount: {
-             $size: {
-               $filter: {
-                 input: "$uniqueStudents",
-                 as: "student",
-                 cond: { $eq: ["$$student.gender", "FEMALE"] }
-               }
-             }
-           }, // Count only female students
-         }
-       }
-     ]);
-     return teachers;
-
-
+    {
+      $group: {
+        _id: "$teacher.teacherId", // Group by teacherEmail
+        teacherId: { $first: "$teacher.teacherId" },
+        teacherName: { $first: "$teacher.teacherName" },
+        teacherEmail: { $first: "$teacher.teacherEmail" },
+        uniqueStudents: {
+          $addToSet: {
+            studentId: "$student.studentId",
+            gender: "$student.gender",
+          },
+        }, // Collect unique student IDs and gender
+      },
+    },
+    {
+      $project: {
+        teacherId: 1,
+        teacherName: 1,
+        teacherEmail: 1,
+        studentCount: { $size: "$uniqueStudents" }, // Total unique students
+        maleCount: {
+          $size: {
+            $filter: {
+              input: "$uniqueStudents",
+              as: "student",
+              cond: { $eq: ["$$student.gender", "MALE"] },
+            },
+          },
+        }, // Count only male students
+        femaleCount: {
+          $size: {
+            $filter: {
+              input: "$uniqueStudents",
+              as: "student",
+              cond: { $eq: ["$$student.gender", "FEMALE"] },
+            },
+          },
+        }, // Count only female students
+      },
+    },
+  ]);
+  return teachers;
 };
 
 export const teachingActivity = async (
   studentId: string
-): Promise<{ month: string; completedHours: number; pendingHours: number; totalHours: number }[]> => {
+): Promise<
+  {
+    month: string;
+    completedHours: number;
+    pendingHours: number;
+    totalHours: number;
+  }[]
+> => {
   if (!studentId) {
     throw new Error("Student ID is required");
   }
 
   try {
     // Fetch all class schedules for the student
-    const classSchedule = await ClassScheduleModel.find({ "student.studentId": studentId }).exec();
+    const classSchedule = await ClassScheduleModel.find({
+      "student.studentId": studentId,
+    }).exec();
 
     if (!classSchedule || classSchedule.length === 0) {
       console.warn(`No class schedule found for student: ${studentId}`);
@@ -719,7 +687,11 @@ export const teachingActivity = async (
 
       // Initialize month if not present
       if (!monthlyData[month]) {
-        monthlyData[month] = { completedHours: 0, pendingHours: 0, totalHours: 0 };
+        monthlyData[month] = {
+          completedHours: 0,
+          pendingHours: 0,
+          totalHours: 0,
+        };
       }
 
       // Categorize hours
@@ -728,7 +700,10 @@ export const teachingActivity = async (
       } else if (status === "pending") {
         monthlyData[month].pendingHours += hours;
       } else {
-        console.warn(`Unexpected classStatus "${event.classStatus}" for event:`, event);
+        console.warn(
+          `Unexpected classStatus "${event.classStatus}" for event:`,
+          event
+        );
       }
 
       // Update total hours
@@ -750,15 +725,12 @@ export const teachingActivity = async (
   }
 };
 
-
-
-
-
 export const updateteacherreschedule = async (
   id: string,
   payload: Partial<IClassSchedule>
 ): Promise<(IClassSchedule | { error: any })[]> => {
-  const { classDay, startTime, endTime, scheduleStatus, startDate, endDate } = payload;
+  const { classDay, startTime, endTime, scheduleStatus, startDate, endDate } =
+    payload;
   const results: (IClassSchedule | { error: any })[] = [];
 
   // Validate inputs
@@ -778,7 +750,9 @@ export const updateteacherreschedule = async (
 
   try {
     // Fetch student details
-    const studentDetails = await classShedule.findById(new Types.ObjectId(id)).exec();
+    const studentDetails = await classShedule
+      .findById(new Types.ObjectId(id))
+      .exec();
     if (!studentDetails) {
       throw new Error("Student not found.");
     }
@@ -787,7 +761,7 @@ export const updateteacherreschedule = async (
     // Fetch teacher details
     const teacherDetails = await UserModel.findOne({
       role: "TEACHER",
-      userId : payload.teacher?.teacherId,
+      userId: payload.teacher?.teacherId,
     }).exec();
     if (!teacherDetails) {
       throw new Error("Teacher not found.");
@@ -795,17 +769,22 @@ export const updateteacherreschedule = async (
     console.log("Teacher Details:", teacherDetails);
 
     // Fetch current schedule
-    const currentSchedule = await ClassScheduleModel.findById(new Types.ObjectId(id)).lean<IClassSchedule>();
+    const currentSchedule = await ClassScheduleModel.findById(
+      new Types.ObjectId(id)
+    ).lean<IClassSchedule>();
     if (!currentSchedule) {
       throw new Error("Class schedule not found.");
     }
 
-   if (Array.isArray(startTime) && startTime.length > 0) {
+    if (Array.isArray(startTime) && startTime.length > 0) {
       const newStartTime = startTime[0];
       const newEndTime = endTime[0];
 
       // Validate if reschedule status requires a new start time
-      if (scheduleStatus === "Reschedule" && currentSchedule.startTime === newStartTime) {
+      if (
+        scheduleStatus === "Reschedule" &&
+        currentSchedule.startTime === newStartTime
+      ) {
         throw new Error(
           `Rescheduling failed: The new start time (${newStartTime}) cannot be the same as the existing start time.`
         );
@@ -825,7 +804,7 @@ export const updateteacherreschedule = async (
             endTime: newEndTime,
             package: payload.package,
             course: payload.course,
-            startDate : payload.startDate,
+            startDate: payload.startDate,
             endDate: payload.endDate,
             sessionClassType: payload.sessionClassType,
             sessionStarttime: payload.sessionStarttime,
@@ -856,87 +835,85 @@ export const updateteacherreschedule = async (
   return results;
 };
 
-
-export const getStudentClassCount  = async(studentId: string) =>{
-try{
-  const studentClassCount= await ClassScheduleModel.aggregate([
-    {
-      $match: {
-        status: "Active",
-        "student.studentId": studentId
+export const getStudentClassCount = async (studentId: string) => {
+  try {
+    const studentClassCount = await ClassScheduleModel.aggregate([
+      {
+        $match: {
+          status: "Active",
+          "student.studentId": studentId,
+        },
       },
-    },
-    {
-      $group: {
-        _id: null,
-        totalClass: { $sum: 1 },
+      {
+        $group: {
+          _id: null,
+          totalClass: { $sum: 1 },
+        },
       },
-    },
-  ]);
+    ]);
 
-
-  const studentLevel= await ClassScheduleModel.aggregate([
-    {
-      $match: {
-        status: "Active",
-        "student.studentId": studentId
+    const studentLevel = await ClassScheduleModel.aggregate([
+      {
+        $match: {
+          status: "Active",
+          "student.studentId": studentId,
+        },
       },
-    },
-    {
-      $group: {
-        _id: "$course.level",
-        level: { $sum: 1 },
+      {
+        $group: {
+          _id: "$course.level",
+          level: { $sum: 1 },
+        },
       },
-    },
-  ]);
+    ]);
 
-  const studentAttendanceCount= await ClassScheduleModel.aggregate([
-    {
-      $match: {
-        status: "Active",
-        "student.studentId": studentId
-
+    const studentAttendanceCount = await ClassScheduleModel.aggregate([
+      {
+        $match: {
+          status: "Active",
+          "student.studentId": studentId,
+        },
       },
-    },
-    {
-      $group: {
-        _id: null,
-        totalClass: { $sum: 1 },
-        Attendance: { $sum: { $cond: [{ $eq: ["$scheduleStatus", "Completed"] }, 1, 0] } },
+      {
+        $group: {
+          _id: null,
+          totalClass: { $sum: 1 },
+          Attendance: {
+            $sum: { $cond: [{ $eq: ["$scheduleStatus", "Completed"] }, 1, 0] },
+          },
+        },
       },
-    },
-  ]);
+    ]);
 
-  const studentDurationCount= await ClassScheduleModel.aggregate([
-    {
-      $match: {
-        status: "Active",
-        "student.studentId": studentId
-
+    const studentDurationCount = await ClassScheduleModel.aggregate([
+      {
+        $match: {
+          status: "Active",
+          "student.studentId": studentId,
+        },
       },
-    },
-    {
-      $group: {
-        _id: "totalHourse",
-        totalDuration: { $sum: 1 },
+      {
+        $group: {
+          _id: "totalHourse",
+          totalDuration: { $sum: 1 },
+        },
       },
-    },
-  ]);
- 
+    ]);
 
-   const totalClasses = studentClassCount[0].totalClass;
-   const totalAttendance = ((studentAttendanceCount[0].Attendance/studentAttendanceCount[0].totalClass)*100).toFixed(2);
-   const level = (studentLevel[0].level).toFixed(2);
-   const totalduration = (studentDurationCount[0].totalDuration).toFixed(2);
+    const totalClasses = studentClassCount[0].totalClass;
+    const totalAttendance = (
+      (studentAttendanceCount[0].Attendance /
+        studentAttendanceCount[0].totalClass) *
+      100
+    ).toFixed(2);
+    const level = studentLevel[0].level.toFixed(2);
+    const totalduration = studentDurationCount[0].totalDuration.toFixed(2);
 
-  return {totalClasses, totalAttendance, level, totalduration};
-
-}catch(e){
-  console.log("error: ", e);
-}
+    return { totalClasses, totalAttendance, level, totalduration };
+  } catch (e) {
+    console.log("error: ", e);
+  }
 };
-
-
 
 export const getTotalClassesCount = async (
   dateRange: string
@@ -951,23 +928,25 @@ export const getTotalClassesCount = async (
   switch (dateRange.toLowerCase()) {
     case "last8months":
       startDate = startOfMonth(subMonths(new Date(), 7)); // 7 months ago, start of month
-      endDate = endOfMonth(new Date());                   // end of current month
+      endDate = endOfMonth(new Date()); // end of current month
       dateFormat = "%Y-%m"; // MongoDB date format
       intervalFn = eachMonthOfInterval;
       outputFormat = "MMM-yyyy"; // Display format
       break;
-      case "last6months":
-        startDate = startOfMonth(subMonths(new Date(), 5)); // 7 months ago, start of month
-        endDate = endOfMonth(new Date());                   // end of current month
-        dateFormat = "%Y-%m"; // MongoDB date format
-        intervalFn = eachMonthOfInterval;
-        outputFormat = "MMM-yyyy"; // Display format
-        break;
+    case "last6months":
+      startDate = startOfMonth(subMonths(new Date(), 5)); // 7 months ago, start of month
+      endDate = endOfMonth(new Date()); // end of current month
+      dateFormat = "%Y-%m"; // MongoDB date format
+      intervalFn = eachMonthOfInterval;
+      outputFormat = "MMM-yyyy"; // Display format
+      break;
     default:
       throw new Error("Invalid dateRange value. Use 'last8months'.");
   }
 
-  console.log(`Fetching results from ${startDate.toISOString()} to ${endDate.toISOString()}`);
+  console.log(
+    `Fetching results from ${startDate.toISOString()} to ${endDate.toISOString()}`
+  );
 
   // MongoDB aggregation
   const result = await classShedule.aggregate([
@@ -979,19 +958,22 @@ export const getTotalClassesCount = async (
     },
     {
       $group: {
-        _id: { date: { $dateToString: { format: dateFormat, date: "$startDate" } } },
+        _id: {
+          date: { $dateToString: { format: dateFormat, date: "$startDate" } },
+        },
         count: { $sum: 1 },
       },
     },
   ]);
 
   // Group results correctly
-  const groupedResults: Record<string, { date: string; totalClass: number }> = {};
+  const groupedResults: Record<string, { date: string; totalClass: number }> =
+    {};
   result.forEach(({ _id, count }) => {
     const dateFormatted = format(new Date(`${_id.date}-01`), outputFormat); // append `-01` for valid Date
     groupedResults[dateFormatted] = {
       date: dateFormatted,
-      totalClass: count,  // ❗ Assign the correct count here
+      totalClass: count, // ❗ Assign the correct count here
     };
   });
 
@@ -1000,14 +982,15 @@ export const getTotalClassesCount = async (
     format(d, outputFormat)
   );
 
-  const finalResult = allDates.map((date) => groupedResults[date] || { date, totalClass: 0 });
+  const finalResult = allDates.map(
+    (date) => groupedResults[date] || { date, totalClass: 0 }
+  );
 
   return finalResult;
 };
 
-
-export const getClassesStatusCount = async() => {
- const evaluationStats = await classShedule.aggregate([
+export const getClassesStatusCount = async () => {
+  const evaluationStats = await classShedule.aggregate([
     {
       $match: {
         status: "Active",
@@ -1017,39 +1000,52 @@ export const getClassesStatusCount = async() => {
       $group: {
         _id: null,
         totalClassCount: { $sum: 1 },
-        pending: { $sum: { $cond: [{ $eq: ["$scheduleStatus", "Reschedule"] }, 1, 0] } },
-        reschedule: { $sum: { $cond: [{ $eq: ["$scheduleStatus", "Reschedule"] }, 1, 0] } },
-        complete: { $sum: { $cond: [{ $eq: ["$scheduleStatus", "Complete"] }, 1, 0] } },
+        pending: {
+          $sum: { $cond: [{ $eq: ["$scheduleStatus", "Reschedule"] }, 1, 0] },
+        },
+        reschedule: {
+          $sum: { $cond: [{ $eq: ["$scheduleStatus", "Reschedule"] }, 1, 0] },
+        },
+        complete: {
+          $sum: { $cond: [{ $eq: ["$scheduleStatus", "Complete"] }, 1, 0] },
+        },
       },
     },
   ]);
-   const pendingPercentage = ((evaluationStats[0].pending/ evaluationStats[0].totalClassCount)*100).toFixed(2);
-   const reschedulePercentage = ((evaluationStats[0].reschedule/ evaluationStats[0].totalClassCount)*100).toFixed(2);
-   const completePercentage = ((evaluationStats[0].complete/ evaluationStats[0].totalClassCount)*100).toFixed(2);
+  const pendingPercentage = (
+    (evaluationStats[0].pending / evaluationStats[0].totalClassCount) *
+    100
+  ).toFixed(2);
+  const reschedulePercentage = (
+    (evaluationStats[0].reschedule / evaluationStats[0].totalClassCount) *
+    100
+  ).toFixed(2);
+  const completePercentage = (
+    (evaluationStats[0].complete / evaluationStats[0].totalClassCount) *
+    100
+  ).toFixed(2);
 
-   const total = evaluationStats[0].totalClassCount;
+  const total = evaluationStats[0].totalClassCount;
 
-  return {total, pendingPercentage, reschedulePercentage,completePercentage};
-  
+  return { total, pendingPercentage, reschedulePercentage, completePercentage };
 };
 
-
-export const getClassesWiseCount = async() => {
+export const getClassesWiseCount = async () => {
   const classschedule = await classShedule.aggregate([
-     {
-       $match: {
-         status: "Active",
-       },
-     },
-     {
-       $group: {
-         _id: null,
-         totalRegularClassCount: { $sum: 1 },
-       },
-     },
-   ]);
+    {
+      $match: {
+        status: "Active",
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalRegularClassCount: { $sum: 1 },
+      },
+    },
+  ]);
 
-   const evaluationStats = await Evaluation.aggregate([
+  const evaluationStats = await Evaluation.aggregate([
     {
       $match: {
         trialClassStatus: "COMPLETED",
@@ -1062,16 +1058,25 @@ export const getClassesWiseCount = async() => {
       },
     },
   ]);
- 
-   return {classschedule, evaluationStats};
-   
- };
 
+  return { classschedule, evaluationStats };
+};
 
-
- export const getStudentList = async (
+export const getStudentList = async (
   teacherId: string
-): Promise<{ studentId: string; name: string }[]> => {
+): Promise<
+  {
+    studentId: string;
+    name: string;
+    assignment?: {
+      assignmentId: string;
+      assignmentType: string;
+      assignmentName: string;
+      status: string;
+      title: string;
+    }[];
+  }[]
+> => {
   if (!teacherId) {
     throw new Error("Teacher ID is required");
   }
@@ -1088,19 +1093,55 @@ export const getClassesWiseCount = async() => {
       const student = cls.student;
       if (student?.studentId && !uniqueStudentsMap.has(student.studentId)) {
         const alstudent = await AlStudenModel.findOne({
-         _id: cls.student.studentId
+          _id: cls.student.studentId,
         }).exec();
-        let evaluation 
-        if(alstudent){
+        let evaluation;
+        if (alstudent) {
           evaluation = await Evaluation.findOne({
-            "student.studentId": alstudent.student.studentId
+            "student.studentId": alstudent.student.studentId,
           }).exec();
         }
+        let assignments: {
+          assignmentId: string;
+          assignmentName: string;
+          assignmentType:
+            | "quiz"
+            | "writing"
+            | "reading"
+            | "imageIdentification"
+            | "wordMatching";
+          status: string;
+          title: string;
+        }[] = [];
+        if (alstudent) {
+          const studentId = alstudent._id.toString(); // ✅ Correct ID
 
+          const assignmentList = await assignment
+            .find(
+              { studentId },
+              {
+                assignmentId: 1,
+                assignmentType: 1,
+                assignmentStatus: 1,
+                assignmentName: 1,
+                title: 1,
+              }
+            )
+            .lean();
+
+          assignments = assignmentList.map((a: { assignmentId: any; assignmentType: { type: any; }; assignmentStatus: any; assignmentName: any; title: any; }) => ({
+            assignmentId: a.assignmentId,
+            assignmentType: a.assignmentType?.type || "",
+            status: a.assignmentStatus || "Not Assigned",
+            assignmentName: a.assignmentName,
+            title: a.title,
+          }));
+        }
         uniqueStudentsMap.set(student.studentId, {
           studentId: student.studentId,
           name: student.studentFirstName, // or student.name depending on your schema
-          studentDetails: evaluation
+          studentDetails: evaluation,
+          assignment: assignments,
         });
       }
     }
@@ -1111,7 +1152,6 @@ export const getClassesWiseCount = async() => {
     throw new Error("Failed to fetch students for the teacher");
   }
 };
-
 
 export const getTeacherAttendanceSummary = async (
   teacherId: string
@@ -1140,7 +1180,7 @@ export const getTeacherAttendanceSummary = async (
         student: 1,
         sessionStarttime: 1,
         sessionsEndtime: 1,
-        scheduleStatus: 1
+        scheduleStatus: 1,
       }
     ).lean();
 
@@ -1160,7 +1200,7 @@ export const getTeacherAttendanceSummary = async (
         students.push({
           studentId: student.studentId,
           studentFirstname: student.studentFirstName,
-          studentLastName: student.studentLastName
+          studentLastName: student.studentLastName,
         });
       }
 
@@ -1170,17 +1210,26 @@ export const getTeacherAttendanceSummary = async (
         let sessionDuration = DEFAULT_SESSION_DURATION_MINUTES;
 
         if (cls.sessionStarttime && cls.sessionsEndtime) {
-          const [startH, startM] = cls.sessionStarttime.replace(/[^0-9:]/g, '').split(":").map(Number);
-          const [endH, endM] = cls.sessionsEndtime.replace(/[^0-9:]/g, '').split(":").map(Number);
+          const [startH, startM] = cls.sessionStarttime
+            .replace(/[^0-9:]/g, "")
+            .split(":")
+            .map(Number);
+          const [endH, endM] = cls.sessionsEndtime
+            .replace(/[^0-9:]/g, "")
+            .split(":")
+            .map(Number);
 
           if (
-            !isNaN(startH) && !isNaN(startM) &&
-            !isNaN(endH) && !isNaN(endM)
+            !isNaN(startH) &&
+            !isNaN(startM) &&
+            !isNaN(endH) &&
+            !isNaN(endM)
           ) {
             const startMinutes = startH * 60 + startM;
             const endMinutes = endH * 60 + endM;
             const calculated = Math.max(0, endMinutes - startMinutes);
-            sessionDuration = calculated > 0 ? calculated : DEFAULT_SESSION_DURATION_MINUTES;
+            sessionDuration =
+              calculated > 0 ? calculated : DEFAULT_SESSION_DURATION_MINUTES;
           }
         }
 
@@ -1192,7 +1241,7 @@ export const getTeacherAttendanceSummary = async (
 
     // ✅ Your custom performance formula
     const overallPerformance = parseFloat(
-      (((totalAttendance + totalWorkingHours) / 2)).toFixed(2)
+      ((totalAttendance + totalWorkingHours) / 2).toFixed(2)
     );
 
     return {
@@ -1201,14 +1250,13 @@ export const getTeacherAttendanceSummary = async (
       totalAttendance,
       totalWorkingHours,
       overallPerformance,
-      students
+      students,
     };
   } catch (error) {
     console.error("Error generating teacher summary:", error);
     throw new Error("Failed to generate teacher attendance summary");
   }
 };
-
 
 //Analytics cardcount with calculation
 export const getgetAnalyticscardCalculation = async (
@@ -1236,30 +1284,32 @@ export const getgetAnalyticscardCalculation = async (
       }
     ).lean();
 
-    const studentMap = new Map<string, { studentId: string; studentFirstname: string; studentLastName: string }>();
+    const studentMap = new Map<
+      string,
+      { studentId: string; studentFirstname: string; studentLastName: string }
+    >();
     let totalAmount = 0;
 
- for (const cls of classSchedules) {
-  const student = cls.student;
+    for (const cls of classSchedules) {
+      const student = cls.student;
 
-  if (student?.studentId) {
-    if (!studentMap.has(student.studentId)) {
-      studentMap.set(student.studentId, {
-        studentId: student.studentId,
-        studentFirstname: student.studentFirstName,
-        studentLastName: student.studentLastName,
-      });
+      if (student?.studentId) {
+        if (!studentMap.has(student.studentId)) {
+          studentMap.set(student.studentId, {
+            studentId: student.studentId,
+            studentFirstname: student.studentFirstName,
+            studentLastName: student.studentLastName,
+          });
+        }
+      }
+
+      const cleanedAmount = (cls.amount || "0").replace(/[^0-9.-]+/g, "");
+      const amountValue = parseFloat(cleanedAmount);
+
+      if (!isNaN(amountValue)) {
+        totalAmount += amountValue;
+      }
     }
-  }
-
-  const cleanedAmount = (cls.amount || "0").replace(/[^0-9.-]+/g, "");
-  const amountValue = parseFloat(cleanedAmount);
-
-  if (!isNaN(amountValue)) {
-    totalAmount += amountValue;
-  }
-}
-
 
     return {
       totalClasses: classSchedules.length,
@@ -1272,7 +1322,3 @@ export const getgetAnalyticscardCalculation = async (
     throw new Error("Failed to generate teacher analytics summary");
   }
 };
-
-
-
-
