@@ -538,6 +538,8 @@ export interface IClassSchedule extends Document{
   lastUpdatedBy: string
   teacherAttendee: string;
   studentAttendee: string;
+  earnings?: number;
+
 }
 
 export interface IClassScheduleCreate{
