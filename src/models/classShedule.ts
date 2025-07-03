@@ -176,6 +176,12 @@ const classScheduleSchema = new Schema<IClassSchedule>(
       type: String,
       required: false
     },
+    earnings: {
+  type: Number,
+  required: false,
+  default: 0,
+},
+
     sessionClassType: {
       type: String,
       required: false
