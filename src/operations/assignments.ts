@@ -140,7 +140,7 @@ export const createAssignment = async (
         courses: item.courses || "",
         assignedDate: item.assignedDate || new Date(),
         dueDate: item.dueDate || new Date(),
-        answer: item.answer || "",
+        answer:"",
         answerValidation: item.answerValidation || "",
         assignmentStatus: item.assignmentStatus || "Not Assigned",
       };

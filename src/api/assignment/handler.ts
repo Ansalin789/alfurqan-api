@@ -276,7 +276,7 @@ export default {
           dueDate: rawPayload.dueDate
             ? new Date(rawPayload.dueDate)
             : new Date(),
-          answer: rawPayload.answer || "",
+          answer: "",
           answerValidation: rawPayload.answerValidation || "",
           assignmentStatus: rawPayload.assignmentStatus || "Not Assigned",
           audioFile: audioFileBuffer ? Buffer.from(audioFileBuffer) : undefined,
