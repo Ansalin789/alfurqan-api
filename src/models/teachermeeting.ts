@@ -23,7 +23,7 @@ const TeacherMeetingSchema = new Schema<TeacherMeeting>(
       required: false,
     },
     
-    meetingdate: { type: Date, required: true },
+    selectedDate: { type: Date, required: true },
     startTime: { type: String, required: true },
     endTime: { type: String, required: true },
     description: { type: String, required: true },
@@ -72,7 +72,7 @@ export const zodTeacherMeetingSchema = z.object({
     })
   ).optional(),
 
-  meetingdate: z.string(),
+  // selectedDate: z.string(),
   startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
   endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
   description: z.string(),
@@ -80,7 +80,13 @@ export const zodTeacherMeetingSchema = z.object({
   status: z.enum([teacherStatus.ACTIVE, teacherStatus.IN_ACTIVE]),
   createdDate: z.string().optional(),
   createdBy: z.string().optional(),
-  updatedDate: z.string().optional(),
+  updatedDate: z
+    .string()
+    .optional()
+    .refine((val) => (val ? !isNaN(Date.parse(val)) : true), {
+      message: commonMessages.INVALID_DATE_FORMAT,
+    })
+    .transform((val) => (val ? new Date(val) : undefined)),
   updatedBy: z.string().optional(),
   selectedDate: z
     .string()

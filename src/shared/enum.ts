@@ -9,6 +9,13 @@ export enum Status {
   NEW = "New"
 }
 
+export enum AssignmentStatus {
+  ASSIGNED = "ASSIGNED",
+  PENDING = "PENDING",
+  COMPLETED = "COMPLETED",
+  NOTASSIGNED = "NOTASSIGNED",
+  NOTCOMPLETED = "NOTCOMPLETED",
+}
 export enum LearningInterest {
   QURAN ="Quran",
   ISLAMIC= "Islamic Studies",

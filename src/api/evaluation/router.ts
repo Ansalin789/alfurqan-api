@@ -141,7 +141,8 @@ const register = async (server: Server): Promise<void> => {
             tags: ["api", "evaluationlist"],
             auth: {
               strategies: ["jwt"],
-            },  },
+            }, 
+           },
         },
         {
           method: "GET",

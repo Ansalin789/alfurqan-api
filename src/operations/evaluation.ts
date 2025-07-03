@@ -18,6 +18,7 @@ import { config } from "../config/env";
 import User from "../models/users";
 import teacherAvaliableSlots from "../models/teacheravaliableslots"
 import { academicAvailableTeachers } from "../kafka/producers/academicProducer";
+import { sendNotification } from "./notification";
 
 
 
@@ -152,6 +153,9 @@ newEvaluation.assignedTeacherEmail = teacherDetails?.email || " ";
 newEvaluation.teacherStatus = newEvaluation.teacher.teacherName ? "Assigned": "Not Assigned";
 const createEvaluation = await newEvaluation.save();
 console.log("createEvaluation>>>",createEvaluation)
+
+
+
 
     if(newEvaluation.studentStatus == "JOINED" && newEvaluation.classStatus == "COMPLETED" ){
 
@@ -328,7 +332,26 @@ console.log("getTrailclass>>", getTrailclass[0]);
         lastUpdatedDate: new Date(),
         lastUpdatedBy: "Admin",
   });
-  await CreatemeetingDetails.save();
+ await CreatemeetingDetails.save();
+
+ 
+await sendNotification({
+  messages: `${createEvaluation.student.studentFirstName} ${createEvaluation.student.studentLastName} has been assigned to you for a trial class.`,
+  senderId: createEvaluation.academicCoachId?.toString() ?? "system",
+  senderName: "Academic Coach",
+  senderEmail: createEvaluation.createdBy,
+  isRead: false,
+  receiverId: [teacherDetails.userId],
+  receiverName: [teacherDetails.userName],
+  receiverEmail: [teacherDetails.email],
+  notificationType: "TEACHER_NOTIFICATION",
+  notificationStatus: "Unseen",
+  status: "active",
+  createdBy: "system",
+  updatedBy: "system",
+});
+
+
   if(CreatemeetingDetails){
     const teacherId = CreatemeetingDetails.teacher.teacherId;
     const from = CreatemeetingDetails.scheduledFrom;
@@ -336,6 +359,9 @@ console.log("getTrailclass>>", getTrailclass[0]);
     await academicAvailableTeachers({event : "update" , data : {nextDay, teacherId, from , to}});
   }
 }
+
+
+
 async function zoomMeetingInvite(newEvaluation: any, getTrailclass: any) {
 const token = await getZoomAccessToken();
 const response = await axios.post(
@@ -365,6 +391,8 @@ return {
   start_url: response.data.start_url,
 };
 }
+
+
 
 async function getZoomAccessToken() {
 let accessToken: any = null;
