@@ -2,6 +2,7 @@ import { z } from "zod";
 import { model, Schema } from "mongoose";
 import { IAssignment } from "../../types/models.types";
 import { assigmentType, assignemntMessages } from "../config/messages";
+import { AssignmentStatus, Status } from "../shared/enum";
 // Define subdocument schema for assignmentType
 const assignmentTypeSchema = new Schema(
   {
@@ -33,7 +34,7 @@ const assignmentSchema = new Schema<IAssignment>(
     title: { type: String, required: true },
     assignedTeacher: { type: String, required: false },
     assignedTeacherId: { type: String, required: false },
-        assignmentId: { type: String, required: false },
+    assignmentId: { type: String, required: false },
 
     assignmentType: {
       type: assignmentTypeSchema,
@@ -63,8 +64,7 @@ const assignmentSchema = new Schema<IAssignment>(
     answer: { type: String, required: false },
     answerValidation: { type: String, required: true },
     assignmentStatus: { type: String, required: true },
-   commends: { type: String, required: false },
-
+    commends: { type: String, required: false },
   },
   { timestamps: false }
 );
@@ -125,8 +125,7 @@ export const assignmentValidationSchema = z.object({
       }
     ),
 
-  status: z.string(),
-
+  status: z.enum([Status.ACTIVE, Status.IN_ACTIVE, Status.DELETED]),
   createdDate: z
     .string()
     .refine((val) => !isNaN(Date.parse(val)), {
@@ -164,8 +163,13 @@ export const assignmentValidationSchema = z.object({
 
   answer: z.string().optional(),
   answerValidation: z.string(),
-  assignmentStatus: z.string(),
+  assignmentStatus: z.enum([
+    AssignmentStatus.ASSIGNED,
+    AssignmentStatus.PENDING,
+    AssignmentStatus.COMPLETED,
+    AssignmentStatus.NOTASSIGNED,
+    AssignmentStatus.NOTCOMPLETED,
+  ]),
   commends: z.string().optional(),
-
 });
 export default model<IAssignment>("Assignment", assignmentSchema);

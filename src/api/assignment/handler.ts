@@ -259,7 +259,7 @@ export default {
           options,
           trueorfalseType,
           chooseType,
-          status: rawPayload.status || "Pending",
+          status: rawPayload.status,
           createdDate: rawPayload.createdDate
             ? new Date(rawPayload.createdDate)
             : new Date(),
@@ -278,7 +278,7 @@ export default {
             : new Date(),
           answer: "",
           answerValidation: rawPayload.answerValidation || "",
-          assignmentStatus: rawPayload.assignmentStatus || "Not Assigned",
+          assignmentStatus: rawPayload.assignmentStatus || "",
           audioFile: audioFileBuffer ? Buffer.from(audioFileBuffer) : undefined,
           uploadFile: uploadFileBuffer
             ? Buffer.from(uploadFileBuffer)

@@ -1,4 +1,4 @@
-import CustomEnumerator from "../src/shared/enum";
+import CustomEnumerator, { AssignmentStatus } from "../src/shared/enum";
 
 enum Status {
   ACTIVE = 'Active',
@@ -740,7 +740,7 @@ export interface IAssignment extends Document {
   };
   audioFile?: Buffer;
   uploadFile?: Buffer;
-  status: string;
+  status: Status;
   createdDate: Date;
   createdBy: string;
   updatedDate: Date;
@@ -751,7 +751,7 @@ export interface IAssignment extends Document {
   dueDate: Date;
   answer: string;
   answerValidation: string;
-  assignmentStatus: string;
+  assignmentStatus: AssignmentStatus;
   commends?: string;
 }
 export interface IallAssignment {

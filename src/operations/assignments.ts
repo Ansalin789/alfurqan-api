@@ -139,7 +139,7 @@ console.log("👩‍🏫 Assigned Teacher:", {
         options: parsedOptions,
         audioFile: item.audioFile,
         uploadFile: item.uploadFile,
-        status: item.status || "Pending",
+        status: item.status,
         createdDate: new Date(),
         createdBy: item.createdBy || "System",
         updatedDate: new Date(),
@@ -150,7 +150,7 @@ console.log("👩‍🏫 Assigned Teacher:", {
         dueDate: item.dueDate || new Date(),
         answer:"",
         answerValidation: item.answerValidation || "",
-        assignmentStatus: item.assignmentStatus || "Not Assigned",
+        assignmentStatus: item.assignmentStatus,
       };
 
       console.log("📌 New assignment record prepared:", newAssignment);
