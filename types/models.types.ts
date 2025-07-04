@@ -341,7 +341,6 @@ student: {
   referralSource: ReferalResource;
   preferredDate: Date;
   evaluationStatus: EvaluationStatus;
-  joiningDate: string;
   amount?: string;
   currency?: string;
   status: Status;
