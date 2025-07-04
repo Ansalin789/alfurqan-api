@@ -182,8 +182,11 @@ console.log("createEvaluation>>>",createEvaluation)
   payload: Partial<IEvaluationCreate>
 ): Promise<IEvaluation |  null> => {
 
+  if(payload.trialClassStatus == "COMPLETED"){
+    payload.amount = "2.00"
+  }
 
-  let updateEvaluations = EvaluationModel.findOneAndUpdate(
+  let updateEvaluations = await EvaluationModel.findOneAndUpdate(
       { _id: new Types.ObjectId(id) },
      { $set: payload },
       { new: true }
