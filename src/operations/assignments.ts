@@ -83,12 +83,20 @@ export const createAssignment = async (
         sessionClassType,
       });
 
-      const assignedTeacherName = item.assignedTeacher || "";
-      const assignedTeacherId = item.assignedTeacherId || "";
-      console.log("👩‍🏫 Assigned Teacher:", {
-        assignedTeacherName,
-        assignedTeacherId,
-      });
+
+       console.log("🔍 Finding student by ID:", item.studentId);
+
+
+       
+
+
+const assignedTeacher = item.assignedTeacher;
+const assignedTeacherId = item.assignedTeacherId ;
+
+console.log("👩‍🏫 Assigned Teacher:", {
+  assignedTeacher,
+  assignedTeacherId,
+});;
 
       const assignmentType = item.assignmentType;
       console.log("🧩 assignmentType object:", assignmentType);
@@ -121,9 +129,9 @@ export const createAssignment = async (
         questionName: item.questionName || "",
         questionType: item.questionType || "",
         typeofQuestion: item.typeofQuestion || "",
-        assignedTeacher: assignedTeacherName,
-        assignedTeacherId,
-        assignmentType,
+        assignedTeacher,
+        assignedTeacherId, // ✅ Now this is just a string
+         assignmentType,
         chooseType: item.chooseType === true,
         trueorfalseType: item.trueorfalseType === true,
         question: item.question || "",
@@ -131,7 +139,7 @@ export const createAssignment = async (
         options: parsedOptions,
         audioFile: item.audioFile,
         uploadFile: item.uploadFile,
-        status: item.status || "Pending",
+        status: item.status,
         createdDate: new Date(),
         createdBy: item.createdBy || "System",
         updatedDate: new Date(),
@@ -140,9 +148,9 @@ export const createAssignment = async (
         courses: item.courses || "",
         assignedDate: item.assignedDate || new Date(),
         dueDate: item.dueDate || new Date(),
-        answer: item.answer || "",
+        answer:"",
         answerValidation: item.answerValidation || "",
-        assignmentStatus: item.assignmentStatus || "Not Assigned",
+        assignmentStatus: item.assignmentStatus,
       };
 
       console.log("📌 New assignment record prepared:", newAssignment);

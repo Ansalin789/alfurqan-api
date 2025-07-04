@@ -1,8 +1,10 @@
 import { Types } from "mongoose";
 import { IClassSchedule, IClassScheduleCreate } from "../../types/models.types";
+
 import ClassScheduleModel from "../models/classShedule";
 import StudentModel from "../models/alstudents";
 import UserModel from "../models/users";
+
 import AppLogger from "../helpers/logging";
 import { GetAllRecordsParams } from "../shared/enum";
 import { alstudentsMessages, commonMessages } from "../config/messages";
@@ -14,15 +16,10 @@ import classShedule from "../models/classShedule";
 import { badRequest } from "@hapi/boom";
 import Evaluation from "../models/evaluation";
 import AlStudenModel from "../models/alstudents";
+import Course from "../models/course"
+import { endOfMonth, startOfMonth, subMonths, eachMonthOfInterval, format } from "date-fns";
 import assignment from "../models/assignments";
 
-import {
-  endOfMonth,
-  startOfMonth,
-  subMonths,
-  eachMonthOfInterval,
-  format,
-} from "date-fns";
 
 /**
  * Creates a new candidate record in the database.
@@ -50,115 +47,84 @@ const getDatesForWeekdays = (
   return dates;
 };
 
-export const updateStudentClassSchedule = async (
-  id: string,
-  payload: Partial<IClassScheduleCreate>
-): Promise<(IClassSchedule | { error: any })[]> => {
-  const { classDay, startTime, endTime, startDate, endDate } = payload;
+ export const updateStudentClassSchedule = async (
+    id: String,
+   payload: Partial<IClassScheduleCreate>
+ ) => {
 
-  const results: (IClassSchedule | { error: any })[] = [];
-  const resultss: (IClassScheduleCreate | { error: any })[] = [];
+  const { classDay, startTime, endTime, startDate, endDate, student, teacher, classLink } = payload;
 
-  // Validate inputs
-  if (
-    !classDay ||
-    !startTime ||
-    !endTime ||
-    !startDate ||
-    !endDate ||
-    classDay.length !== startTime.length ||
-    startTime.length !== endTime.length
-  ) {
-    throw new Error(
-      "classDay, startTime, endTime, startDate, and endDate must be provided and arrays must match in length."
-    );
+const alfurqanStudent = await AlStudenModel.findOne({_id: new Types.ObjectId(student?.studentId)} ).exec()  // 🧠 Extract reference values from the first student
+ const courseDetails = await Course.findOne({})
+if (!student) {
+  throw new Error("Student details are required.");
+}
+
+// Optional: validate day/time array lengths
+if (!classDay || !startTime || !endTime || !startDate || !endDate || 
+    classDay.length !== startTime.length || startTime.length !== endTime.length) {
+  throw new Error("classDay, startTime, endTime, startDate, and endDate must be provided and arrays must match in length.");
+}
+ const results = [];
+  let saved;
+for (let i = 0; i < classDay.length; i++) {
+  const day = classDay[i];
+  const start = startTime[i];
+  const end = endTime[i];
+
+  const dayIndex = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].indexOf(day);
+  if (dayIndex === -1) throw new Error(`Invalid classDay: ${day}`);
+
+  const classDates = getDatesForWeekdays(new Date(startDate), new Date(endDate), dayIndex);
+
+  for (const classDate of classDates) {
+ 
+
+    const newClassSchedule = new ClassScheduleModel({
+      student: {
+        studentId: alfurqanStudent?._id.toString(),
+        studentFirstName: alfurqanStudent?.username,
+        studentLastName: alfurqanStudent?.username,
+        studentEmail: alfurqanStudent?.student.studentEmail,
+        gender: alfurqanStudent?.student.gender
+      },
+      teacher: {
+        teacherId: teacher?.teacherId,
+        teacherName: teacher?.teacherName,
+        teacherEmail: teacher?.teacherEmail
+      },
+      classLink: classLink,
+      classDay: day,
+      startTime: start,
+      endTime: end,
+      sessionClassType: payload.sessionClassType || "",
+      sessionStarttime: payload.sessionStarttime || "",
+      sessionsEndtime: payload.sessionsEndtime || "",
+      sessionStatus: "NotCompleted",
+      course: {
+        courseId:courseDetails?._id.toString(),
+        courseName: courseDetails?.courseName,
+      },
+      package: payload.package,
+      startDate: classDate,
+      endDate: classDate,
+      createdBy: new Date(),
+      status: "Active",
+      scheduleStatus: payload.scheduleStatus,
+      totalHourse: payload.totalHourse,
+      preferedTeacher: payload.preferedTeacher,
+    });
+
+    await createEvent(newClassSchedule);
+     saved = await newClassSchedule.save();
+ 
   }
 
-  for (let i = 0; i < classDay.length; i++) {
-    const day = classDay[i];
-    const start = startTime[i];
-    const end = endTime[i];
+}
+ return results.push(saved);
 
-    try {
-      // Fetch student details
-      const studentDetails = await StudentModel.findOne({
-        _id: new Types.ObjectId(id),
-      }).exec();
+ };
 
-      // Fetch teacher details
-      const teacherDetails = await UserModel.findOne({
-        role: "TEACHER",
-        userName: payload.teacher?.teacherName,
-      }).exec();
-
-      // Map day name to numeric day (0=Sunday, 1=Monday, ..., 6=Saturday)
-      const dayIndex = [
-        "Sunday",
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-      ].indexOf(day);
-      if (dayIndex === -1) {
-        throw new Error(`Invalid classDay: ${day}`);
-      }
-
-      // Generate class dates within the range
-      const classDates = getDatesForWeekdays(
-        new Date(startDate),
-        new Date(endDate),
-        dayIndex
-      );
-      const meetingId = `alfregularclass-${studentDetails?._id}`;
-
-      for (const classDate of classDates) {
-        const newClassSchedule = new ClassScheduleModel({
-          student: {
-            studentId: studentDetails?._id,
-            studentFirstName: studentDetails?.username,
-            studentLastName: studentDetails?.username,
-            studentEmail: studentDetails?.student?.studentEmail,
-            gender: studentDetails?.student?.gender, // Ensure gender is included
-          },
-          teacher: {
-            teacherId: teacherDetails?._id,
-            teacherName: teacherDetails?.userName,
-            teacherEmail: teacherDetails?.email,
-          },
-          classLink: meetingId,
-          classDay: day,
-          startTime: start,
-          endTime: end,
-          sessionClassType: payload.sessionClassType || "",
-          sessionStarttime: payload.sessionStarttime || "",
-          sessionsEndtime: payload.sessionsEndtime || "",
-          sessionStatus: "NotCompleted",
-          course: studentDetails?.student?.course,
-          package: studentDetails?.student?.package,
-          startDate: classDate,
-          endDate: classDate,
-          createdBy: new Date(),
-          status: "Active",
-          scheduleStatus: "Active",
-          totalHourse: payload.totalHourse,
-          preferedTeacher: payload.preferedTeacher,
-        });
-
-        const eventDetails = await createEvent(newClassSchedule);
-
-        const savedClassSchedule = await newClassSchedule.save();
-        results.push(savedClassSchedule);
-      }
-    } catch (error) {
-      console.error("Error in scheduling:", error);
-      results.push({ error });
-    }
-  }
-
-  return results;
-};
 
 export const getAllClassShedule = async (
   params: GetAllRecordsParams
@@ -1163,7 +1129,7 @@ export const getStudentList = async (
             )
             .lean();
 
-          assignments = assignmentList.map((a) => ({
+          assignments = assignmentList.map((a: { assignmentId: any; assignmentType: { type: any; }; assignmentStatus: any; assignmentName: any; title: any; }) => ({
             assignmentId: a.assignmentId,
             assignmentType: a.assignmentType?.type || "",
             status: a.assignmentStatus || "Not Assigned",

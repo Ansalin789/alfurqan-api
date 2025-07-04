@@ -19,6 +19,7 @@ const createInputValidation = z.object({
     classType: true,
     teacher: true,
     classDay: true,
+    joiningDate: true,
     startTime:true,
     endTime:true,
     subscription:true,
@@ -101,6 +102,7 @@ export default {
 
         const result = await createEvaluationRecord({
           academicCoachId: payload.academicCoachId ?? "",
+
             student: { // Ensure studentId is included
                 studentId: payload.student?.studentId ?? "", 
                 studentFirstName: payload.student?.studentFirstName ?? "",
@@ -126,8 +128,9 @@ export default {
             },
             classType: payload.classType,
             teacher:{
-              teacherId: payload.teacher?.teacherId  ?? ""
+              teacherId: payload.teacher?.teacherId  ?? "Not Assigned"
             },
+            joiningDate: payload.joiningDate ?? new Date() ,
             classDay : payload.classType == "REGULARCLASS"? classDayValues : undefined,
             startTime:payload.classType == "REGULARCLASS"? startTimeValues : undefined ,
             endTime: payload.classType == "REGULARCLASS"? endTimeValues: undefined,
@@ -163,8 +166,10 @@ export default {
            invoiceStatus: payload.invoiceStatus ?? "Pending",
            paymentLink: payload.paymentLink ?? "",
            paymentStatus: payload.paymentStatus ?? "Pending",
-           teacherStatus: payload.teacher?.teacherName ? "Assigned" : "Not Assigned",
-            status: payload.status,
+           teacherStatus: payload.teacher?.teacherId ? "Assigned" : "Not Assigned",
+           amount: "0.00",
+           currency: "$",
+           status: payload.status,
             createdDate: new Date(),
             createdBy: payload.createdBy,
             updatedDate: new Date(),

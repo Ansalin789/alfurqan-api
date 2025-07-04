@@ -176,6 +176,12 @@ const classScheduleSchema = new Schema<IClassSchedule>(
       type: String,
       required: false
     },
+    earnings: {
+  type: Number,
+  required: false,
+  default: 0,
+},
+
     sessionClassType: {
       type: String,
       required: false
@@ -201,7 +207,7 @@ const classScheduleSchema = new Schema<IClassSchedule>(
 
 export const zodClassScheduleSchema = z.object({
     student: z.object({
-        studentId: z.string().optional(),
+        studentId: z.string(),
         studentFirstName: z.string(),
         studentLastName: z.string(),
         studentEmail: z.string(),

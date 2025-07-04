@@ -146,17 +146,22 @@ const roleAccess = new Schema<IAccessModel>(
           write: { type: Boolean, required: false },
           delete: { type: Boolean, required: false },
         },
-        liveclasses: {
+        meeting: {
           read: { type: Boolean, required: false },
           write: { type: Boolean, required: false },
           delete: { type: Boolean, required: false },
         },
-        scheduledclasses: {
+        schedule: {
           read: { type: Boolean, required: false },
           write: { type: Boolean, required: false },
           delete: { type: Boolean, required: false },
         },
-        assignments: {
+        liveclass: {
+          read: { type: Boolean, required: false },
+          write: { type: Boolean, required: false },
+          delete: { type: Boolean, required: false },
+        },
+        assignment: {
           read: { type: Boolean, required: false },
           write: { type: Boolean, required: false },
           delete: { type: Boolean, required: false },
@@ -375,17 +380,22 @@ export const zodroleAccessSchema = z.object({
         write: z.boolean().optional(),
         delete: z.boolean().optional(),
       }).optional(),
-      liveclasses: z.object({
+      meeting: z.object({
         read: z.boolean().optional(),
         write: z.boolean().optional(),
         delete: z.boolean().optional(),
       }).optional(),
-      scheduledclasses: z.object({
+      schedule: z.object({
         read: z.boolean().optional(),
         write: z.boolean().optional(),
         delete: z.boolean().optional(),
       }).optional(),
-      assignments: z.object({
+      liveclass: z.object({
+        read: z.boolean().optional(),
+        write: z.boolean().optional(),
+        delete: z.boolean().optional(),
+      }).optional(),
+      assignment: z.object({
         read: z.boolean().optional(),
         write: z.boolean().optional(),
         delete: z.boolean().optional(),

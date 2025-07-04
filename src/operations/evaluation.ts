@@ -7,7 +7,7 @@ import MeetingSchedule from "../models/calendar";
 import SubscriptionModel from "../models/subscription"
 import EmailTemplate from "../models/emailTemplate";
 import { GetAllRecordsParams } from "../shared/enum";
-import { commonMessages, evaluationMessages } from "../config/messages";
+import { commonMessages, evaluationMessages, learningInterest, teacherPosition } from "../config/messages";
 import { isNil } from "lodash";
 import AppLogger from "../helpers/logging";
 import { Types } from "mongoose";
@@ -18,7 +18,10 @@ import { config } from "../config/env";
 import User from "../models/users";
 import teacherAvaliableSlots from "../models/teacheravaliableslots"
 import { academicAvailableTeachers } from "../kafka/producers/academicProducer";
+import { teacherAvailableTimeList } from "./auth";
+import { types } from "joi";
 import { sendNotification } from "./notification";
+
 
 
 
@@ -179,8 +182,11 @@ console.log("createEvaluation>>>",createEvaluation)
   payload: Partial<IEvaluationCreate>
 ): Promise<IEvaluation |  null> => {
 
+  if(payload.trialClassStatus == "COMPLETED"){
+    payload.amount = "2.00"
+  }
 
-  let updateEvaluations = EvaluationModel.findOneAndUpdate(
+  let updateEvaluations = await EvaluationModel.findOneAndUpdate(
       { _id: new Types.ObjectId(id) },
      { $set: payload },
       { new: true }
@@ -262,9 +268,34 @@ const today = new Date();
 const nextDay = new Date(today);
 nextDay.setDate(today.getDate() + 1);
 const formattedDate = nextDay.toISOString().split('T')[0];
+let alfTeacherPosition;
+
+if(createEvaluation.student.learningInterest == learningInterest.QURAN ){
+  alfTeacherPosition = teacherPosition.QURANTEACHER
+}else if(createEvaluation.student.learningInterest == learningInterest.ISLAMIC){
+  alfTeacherPosition = teacherPosition.ISLAMICTEACHER
+}else{
+  alfTeacherPosition = teacherPosition.ARABICTEACHER
+}
+ let availableTeacher;
+ console.log(">>>>",createEvaluation.teacher.teacherId );
+  console.log("formattedDate",formattedDate );
+  console.log("alfTeacherPosition",alfTeacherPosition );
+let availableTeacherId; 
+let teacherEmail;
+if(createEvaluation.teacher.teacherId == " "){
+ availableTeacher = await teacherAvailableTimeList(formattedDate,alfTeacherPosition );
+ availableTeacherId = availableTeacher[0].teacherId;
+ teacherEmail = await User.findOne({userId: availableTeacherId})
+}else{
+  availableTeacherId = createEvaluation.teacher.teacherId;
+  teacherEmail = teacherDetails;
+}
+
+console.log("availableTeacher>>>", availableTeacher? availableTeacher[0] : " " );
 
 const getTrailclass = await teacherAvaliableSlots.find({
-teacherId: createEvaluation.teacher.teacherId,
+teacherId: availableTeacherId,
 isStatus: true,
 date: formattedDate.toString()
 }).exec();
@@ -278,7 +309,7 @@ console.log("getTrailclass>>", getTrailclass[0]);
   const subject = 'Trail class';
       const htmlPart = zoomMailTemplate?.templateContent.replace('<date>', getTrailclass[0].date).replace('<meetingTime>', getTrailclass[0].from).replace('<zoomlink>', meetingDetails.join_url);
       const emailTo = [
-        { email: teacherDetails.email}, { email: createEvaluation.student.studentEmail }
+        { email: teacherEmail.email}, { email: createEvaluation.student.studentEmail }
     ];
       if(htmlPart){
           sendEmailClient(emailTo, subject,htmlPart);
@@ -295,9 +326,9 @@ console.log("getTrailclass>>", getTrailclass[0]);
           email: null
           },
         teacher: {
-          teacherId: teacherDetails.userId,
-          name: teacherDetails.userName,
-          email: teacherDetails.email,
+          teacherId: teacherEmail.userId,
+          name: teacherEmail.userName,
+          email: teacherEmail.email,
         },
         student: {
           studentId: createEvaluation.student.studentId,
@@ -747,8 +778,8 @@ export const getTrialClassCount = async (
   ) => {
 
     const currentDate = new Date();
-const formattedDate = currentDate.toISOString().split('T')[0];  
-console.log("formattedDate", formattedDate);
+    const formattedDate = currentDate.toISOString().split('T')[0];  
+    console.log("formattedDate", formattedDate);
       const startOfDayIST = `${formattedDate}T00:00:00.000+00:00`;
       const endOfDayIST = `${formattedDate}T23:59:59.999+00:00`;
    const trialClass = await MeetingSchedule.find({
@@ -758,8 +789,22 @@ console.log("formattedDate", formattedDate);
           $lte: endOfDayIST
         }
     }).sort({ scheduledFrom: 1 });
-
-    return trialClass  ;
+    let getTrialsClassstatus;
+    for (const trialClassUpdateDetails of trialClass){
+     getTrialsClassstatus  = await EvaluationModel.findOne({_id: new Types.ObjectId(trialClassUpdateDetails.trialId)});
+    }
+if(getTrialsClassstatus && getTrialsClassstatus.trialClassStatus == ""){
+     const trialClass = await MeetingSchedule.find({
+     trialId: getTrialsClassstatus._id.toString() ,
+      scheduledStartDate:  {
+          $gte: startOfDayIST,
+          $lte: endOfDayIST
+        }
+    }).sort({ scheduledFrom: 1 });
+    return trialClass || "";
+}else{
+return {result: "No data found"};
+}
   };
 
 // async function getTeacherAvaialbleTime() {

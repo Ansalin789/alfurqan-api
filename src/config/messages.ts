@@ -172,6 +172,12 @@ export const appRegexPatterns = Object.freeze({
   NUMBER: /^\d+$/
 });
 
+export const teacherPosition: Record<string, any> = Object.freeze({
+  QURANTEACHER :"Quran Teacher",
+  ISLAMICTEACHER: "Islamic Teacher",
+  ARABICTEACHER : "Arabic Teacher",
+});
+
 export const commonMessages: Record<string, any> = Object.freeze({
   SERVER_HEALTH: "Service Health Check",
   SERVER_HEALTH_NOTES: "Return the current status of the API",

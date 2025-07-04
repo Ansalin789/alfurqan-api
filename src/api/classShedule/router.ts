@@ -6,15 +6,15 @@ const register = async (server: Server): Promise<void> => {
     // Register all routes for this unit
     const routes: ServerRoute[] = [
      
-      {
-        method: "PUT",
-        path: "/createclassschedule/{studentId}",
-        options: {
-         handler: handler.createandUpdateSchedule,
-         description: evaluationMessages.UPDATE,
-         tags: ["api", "evaluation"],
-      },
-      },
+      // {
+      //   method: "PUT",
+      //   path: "/createclassschedule/{studentId}",
+      //   options: {
+      //    handler: handler.createandUpdateSchedule,
+      //    description: evaluationMessages.UPDATE,
+      //    tags: ["api", "evaluation"],
+      // },
+      // },
       
       {
         method: "GET",
@@ -69,9 +69,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getTeacherStudentCount,
         description: ClassSchedulesMessages.LIST,
         tags: ["api", "classShedule"],
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
+        auth: {
+          strategies: ["jwt"],
+        },
        }
       },
       {
@@ -195,12 +195,21 @@ const register = async (server: Server): Promise<void> => {
           handler: handler.getAnalyticscardcount,
           description: ClassSchedulesMessages.LIST,
           tags: ["api", "classShedule"],
-          // auth: {
-          //   strategies: ["jwt"],
-          // },
+          auth: {
+            strategies: ["jwt"],
+          },
          },
       },
       
+        {
+        method: "POST",
+        path: "/groupclassschedule/bulkcreate",
+        options: {
+         handler: handler.bulkcreateandSchedule,
+         description: evaluationMessages.UPDATE,
+         tags: ["api", "evaluation"],
+      },
+      },
     ];
     server.route(routes);
   };

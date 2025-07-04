@@ -1,4 +1,4 @@
-import CustomEnumerator from "../src/shared/enum";
+import CustomEnumerator, { AssignmentStatus } from "../src/shared/enum";
 
 enum Status {
   ACTIVE = 'Active',
@@ -538,6 +538,8 @@ export interface IClassSchedule extends Document{
   lastUpdatedBy: string
   teacherAttendee: string;
   studentAttendee: string;
+  earnings?: number;
+
 }
 
 export interface IClassScheduleCreate{
@@ -561,6 +563,7 @@ export interface IClassScheduleCreate{
   sessionsEndtime:string;
   sessionStatus:string;
   classDay: string[];
+  classLink: string;
   classStatus:string;
   package: string;
   preferedTeacher: string;
@@ -740,7 +743,7 @@ export interface IAssignment extends Document {
   };
   audioFile?: Buffer;
   uploadFile?: Buffer;
-  status: string;
+  status: Status;
   createdDate: Date;
   createdBy: string;
   updatedDate: Date;
@@ -751,7 +754,8 @@ export interface IAssignment extends Document {
   dueDate: Date;
   answer: string;
   answerValidation: string;
-  assignmentStatus: string;
+  assignmentStatus: AssignmentStatus;
+  commends?: string;
 }
 export interface IallAssignment {
   studentId: string;
@@ -794,6 +798,8 @@ export interface IallAssignment {
   assignedDate: Date;
   dueDate: Date;
   assignmentStatus: string;
+    commends?: string;
+
 
 }
 export interface IAssignmentCreate {
@@ -837,6 +843,8 @@ export interface IAssignmentCreate {
   answer: string;
   answerValidation: string;
   assignmentStatus: string;
+    commends?: string;
+
 }
 export interface IStudentInvoice extends Document {
   student: {
@@ -1684,9 +1692,10 @@ export interface IAccessModel {
     teacher?: boolean;
     teachermodules?: {
       dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
-      liveclasses?: { read?: boolean, write?: boolean, delete?: boolean },
-      scheduledclasses?: { read?: boolean, write?: boolean, delete?: boolean },
-      assignments?: { read?: boolean, write?: boolean, delete?: boolean },
+      meeting?: { read?: boolean, write?: boolean, delete?: boolean },
+      schedule?: { read?: boolean, write?: boolean, delete?: boolean },
+      liveclass?: { read?: boolean, write?: boolean, delete?: boolean },
+      assignment?: { read?: boolean, write?: boolean, delete?: boolean },
       messages?: { read?: boolean, write?: boolean, delete?: boolean },
       analytics?: { read?: boolean, write?: boolean, delete?: boolean },
       support?: { read?: boolean, write?: boolean, delete?: boolean },
@@ -1751,9 +1760,10 @@ export interface IAccessModel extends Document{
     teacher?: boolean;
     teachermodules?: {
       dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
-      liveclasses?: { read?: boolean, write?: boolean, delete?: boolean },
-      scheduledclasses?: { read?: boolean, write?: boolean, delete?: boolean },
-      assignments?: { read?: boolean, write?: boolean, delete?: boolean },
+      meeting?: { read?: boolean, write?: boolean, delete?: boolean },
+      schedule?: { read?: boolean, write?: boolean, delete?: boolean },
+      liveclass?: { read?: boolean, write?: boolean, delete?: boolean },
+      assignment?: { read?: boolean, write?: boolean, delete?: boolean },
       messages?: { read?: boolean, write?: boolean, delete?: boolean },
       analytics?: { read?: boolean, write?: boolean, delete?: boolean },
       support?: { read?: boolean, write?: boolean, delete?: boolean },

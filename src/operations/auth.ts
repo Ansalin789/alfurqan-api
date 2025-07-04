@@ -115,7 +115,7 @@ export const teacherAvailableTimeList = async (
       teacherAvailableTime.push({
         fromTime: availableTime.from,
         toTime: availableTime.to,
-        teacherName: user.userName,
+        name: availableTime.name,
         teacherId: user.userId,
         isStatus: true
       });
