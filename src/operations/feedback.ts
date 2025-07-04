@@ -12,8 +12,8 @@ export const createFeedback = async (
     const newFeedback = new feedback({
         sessionId:payload.sessionId!,
         student: payload.student!,
-        teacher: payload.teacher || {},
-        classDay: payload.classDay || "",
+        teacher: payload.teacher ?? {},
+        classDay: payload.classDay ?? "",
         preferedTeacher: payload.preferedTeacher!,
         course: payload.course!,
         
@@ -25,13 +25,13 @@ export const createFeedback = async (
         },
         startDate: new Date(payload.startDate!),
         endDate: new Date(payload.endDate!),
-        startTime: payload.startTime || "",
-        endTime: payload.endTime || "",
-        feedbackmessage: payload.feedbackmessage || "",
+        startTime: payload.startTime ?? "",
+        endTime: payload.endTime ?? "",
+        feedbackmessage: payload.feedbackmessage ?? "",
         createdDate: new Date(),
-        createdBy: payload.createdBy || "System",
+        createdBy: payload.createdBy ?? "System",
         lastUpdatedDate: new Date(),
-        lastUpdatedBy: payload.lastUpdatedBy || "System",
+        lastUpdatedBy: payload.lastUpdatedBy ?? "System",
 
     });
 
@@ -52,8 +52,8 @@ export const createTeacherFeedback = async (
     const newFeedback = new feedback({
         sessionId:payload.sessionId!,      
         student: payload.student!,
-        teacher: payload.teacher || {},
-        classDay: payload.classDay || [],
+        teacher: payload.teacher ?? {},
+        classDay: payload.classDay ?? [],
         preferedTeacher: payload.preferedTeacher!,
         course: payload.course!,
 
@@ -72,17 +72,17 @@ export const createTeacherFeedback = async (
         endDate: payload.endDate ? new Date(payload.endDate) : new Date(),
         
         // Handle times, setting empty arrays if they are missing
-        startTime: payload.startTime || [],
-        endTime: payload.endTime || [],
+        startTime: payload.startTime ?? [],
+        endTime: payload.endTime ?? [],
         
         // Feedback message with fallback if missing
-        feedbackmessage: payload.feedbackmessage || "",
+        feedbackmessage: payload.feedbackmessage ?? "",
         
         // Dates for creation and update with current timestamp
         createdDate: new Date(),
-        createdBy: payload.createdBy || "System",
+        createdBy: payload.createdBy ?? "System",
         lastUpdatedDate: new Date(),
-        lastUpdatedBy: payload.lastUpdatedBy || "System",
+        lastUpdatedBy: payload.lastUpdatedBy ?? "System",
 
     });
 
@@ -100,7 +100,7 @@ export const createTeacherFeedback = async (
 export const getcreateAllTeacherFeedback = async (
   params: GetAllRecordsParams
 ): Promise<{ totalCount: number; students: IFeedbackCreate[] }> => {
-  const { searchText, sortBy, sortOrder, offset, limit, filterValues } = params;
+  const { searchText, sortBy, sortOrder, offset, limit } = params;
 
   // Construct query object based on filters
   const query: any = {};
@@ -138,7 +138,6 @@ export const getcreateAllTeacherFeedback = async (
     studentQuery.exec(), // Fetch students with pagination
    feedback.countDocuments(query).exec(), // Count total records
   ]);
-  //console.log("students>>>>>>>>", students);
 
 
 // Add classSchedule count to each student
@@ -178,8 +177,8 @@ export const createSupervisorFeedback = async (
     const newFeedback = new feedback({
       sessionId:payload.sessionId!,
       supervisor: payload.supervisor!,
-      teacher: payload.teacher || {},
-      classDay: payload.classDay || "",
+      teacher: payload.teacher ?? {},
+      classDay: payload.classDay ?? "",
       preferedTeacher: payload.preferedTeacher!,
       course: payload.course!,
       
@@ -193,13 +192,13 @@ export const createSupervisorFeedback = async (
       
       startDate: new Date(payload.startDate!),
       endDate: new Date(payload.endDate!),
-      startTime: payload.startTime || "",
-      endTime: payload.endTime || "",
-      feedbackmessage: payload.feedbackmessage || "",
+      startTime: payload.startTime ?? "",
+      endTime: payload.endTime ?? "",
+      feedbackmessage: payload.feedbackmessage ?? "",
       createdDate: new Date(),
-      createdBy: payload.createdBy || "System",
+      createdBy: payload.createdBy ?? "System",
       lastUpdatedDate: new Date(),
-      lastUpdatedBy: payload.lastUpdatedBy || "System",
+      lastUpdatedBy: payload.lastUpdatedBy ?? "System",
     });
 
     const feedbackRecord = await newFeedback.save();
@@ -275,52 +274,60 @@ export const getAllFeedbackRecords = async (
     searchText,
     sortBy,
     sortOrder,
-    offset,
-    limit,
+    filterValues = {} // ✅ fix #1
   } = params;
 
-  // ✅ Construct a query object that EXCLUDES supervisors
   const query: any = {
-    supervisor: { $exists: false } // ✅ Ensures records with supervisors are excluded
+    supervisor: { $exists: false },
   };
 
-  // ✅ Allow searching by student or teacher name/email
-  if (searchText) {
-    query.$or = [
-      { 'student.studentFirstName': { $regex: searchText, $options: "i" } },
-      { 'student.studentLastName': { $regex: searchText, $options: "i" } },
-      { 'student.studentEmail': { $regex: searchText, $options: "i" } },
-      { 'teacher.teacherName': { $regex: searchText, $options: "i" } },
-      { 'teacher.teacherEmail': { $regex: searchText, $options: "i" } },
+  if (searchText?.trim()) {
+    const escapedSearch = searchText.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const searchRegex = new RegExp(escapedSearch, 'i');
+    const isDate = !isNaN(Date.parse(searchText));
+    const orConditions: any[] = [
+      { "student.studentFirstName": searchRegex },
+      { "student.studentLastName": searchRegex },
+      { "student.studentEmail": searchRegex },
+      { "teacher.teacherName": searchRegex },
+      { "teacher.teacherEmail": searchRegex },
+      { "course.courseName": searchRegex }
+
     ];
+
+    if (isDate) {
+      const date = new Date(searchText);
+      const nextDay = new Date(date);
+      nextDay.setDate(date.getDate() + 1);
+      orConditions.push({ createdDate: { $gte: date, $lt: nextDay } });
+    }
+
+    query.$or = orConditions;
   }
 
-  console.log("Constructed Query:", JSON.stringify(query, null, 2)); // ✅ Log the constructed query
+if (filterValues?.course?.courseName) {
+  const values = Array.isArray(filterValues.course.courseName)
+    ? filterValues.course.courseName
+    : [filterValues.course.courseName];
+  if (values.length > 0) {
+    query["course.courseName"] = { $in: values.map(v => new RegExp(`^${v}$`, "i")) };
+  }
+}
 
-  // ✅ Sorting options (default: createdDate descending)
-  const sortOptions: any = { [sortBy || "createdDate"]: sortOrder === "asc" ? 1 : -1 };
+  const sortOptions: any = {
+    [sortBy || "createdDate"]: sortOrder === "asc" ? 1 : -1,
+  };
 
-  // ✅ Create query to fetch feedback (excluding supervisors)
   const feedbackQuery = feedback.find(query).sort(sortOptions);
 
-  // ✅ Apply pagination if provided
-  if (offset !== undefined && limit !== undefined) {
-    const skip = Math.max(
-      0,
-      ((Number(offset) ?? Number(commonMessages.OFFSET)) - 1) *
-        (Number(limit) ?? Number(commonMessages.LIMIT))
-    );
-    feedbackQuery.skip(skip).limit(Number(limit) ?? Number(commonMessages.LIMIT));
-  }
 
-  // ✅ Execute both query and count concurrently
   const [feedbackRecords, totalCount] = await Promise.all([
     feedbackQuery.exec(),
     feedback.countDocuments(query).exec(),
   ]);
 
-  // ✅ Log success
-  AppLogger.info(commonMessages.GET_ALL_LIST_SUCCESS, { totalCount });
+  AppLogger.info("Feedback list retrieved successfully", { totalCount });
 
   return { totalCount, feedbackRecords };
 };
+

@@ -11,10 +11,9 @@ const register = async (server: Server): Promise<void> => {
       options: {
         handler:handler.createMessage ,  
         tags: ["api", "message"],  
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
-      },
+        auth: {
+          strategies: ["jwt"],
+        }, },
     },
 
 
@@ -27,8 +26,7 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "message"],  
         auth: {
           strategies: ["jwt"],
-        },
-      },
+        },},
     },
 
 
@@ -40,8 +38,7 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "message"],  
         auth: {
           strategies: ["jwt"],
-        },
-      },
+        },  },
     },
 
 
@@ -55,10 +52,9 @@ const register = async (server: Server): Promise<void> => {
   options: {
     handler:handler.createSupervisorMessage ,  
     tags: ["api", "message"],  
-    // auth: {
-    //   strategies: ["jwt"],
-    // },
-  },
+    auth: {
+      strategies: ["jwt"],
+    },  },
 },
 
 
@@ -69,9 +65,6 @@ const register = async (server: Server): Promise<void> => {
   options: {
     handler:handler.createSupervisorMessageList ,  
     tags: ["api", "message"],  
-    // auth: {
-    //   strategies: ["jwt"],
-    // },
   },
 },
 
@@ -82,9 +75,6 @@ const register = async (server: Server): Promise<void> => {
   options: {
     handler:handler.createGetTeacherMessageList ,  
     tags: ["api", "message"],  
-    // auth: {
-    //   strategies: ["jwt"],
-    // },
   },
 },
 

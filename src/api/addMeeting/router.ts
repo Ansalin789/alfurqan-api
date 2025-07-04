@@ -11,12 +11,15 @@ const register = async (server: Server): Promise<void> => {
       options: {
         handler: handler.createMeeting,
         description: addMeetingMessages.CREATE,
-        tags: ["api", "recruitment"],
+        tags: ["api", "addmeeting"],
         payload: {
           parse: true,
           allow: "application/json", 
           maxBytes: 50 * 1024 * 1024, // ✅ Optional: Limit request size
         },
+        // auth: {
+        //   strategies: ["jwt"],
+        // },
       },
     },
     
@@ -27,9 +30,9 @@ const register = async (server: Server): Promise<void> => {
             handler: handler.getAllMeetings,
             description: addMeetingMessages.LIST,
             tags: ["api", "recruitment"],
-            // auth: {
-            //   strategies: ["jwt"],
-            // },
+            auth: {
+              strategies: ["jwt"],
+            },
           },
         },
 
@@ -55,13 +58,32 @@ const register = async (server: Server): Promise<void> => {
               description: addMeetingMessages.LIST,
               tags: ["api", "recruitment"],
               payload: {
-                  output: "data",  // Ensure payload is treated as parsed data
+                  output: "data",  
                   parse: true,
-                  allow: "application/json", // Ensure JSON is allowed
-                  maxBytes: 50 * 1024 * 1024,
+                  allow: "application/json", 
               },
+              // auth: {
+              //   strategies: ["jwt"],
+              // },
           },
-      }
+        },
+
+{
+  method: "PUT",
+  path: "/meetingminutes/{meetingbyId}",
+  options: {
+    handler: handler.updateMeetingMinutesRecordById,
+    description: addMeetingMessages.LIST,
+    tags: ["api", "recruitment"],
+    payload: {
+      parse: true,
+      allow: "application/json"
+    }
+  }
+}
+
+
+
        
 
   ];

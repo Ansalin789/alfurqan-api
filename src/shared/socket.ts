@@ -1,6 +1,10 @@
 import { Server as SocketIOServer, Socket } from "socket.io";
 import { Server as HttpServer } from "http";
 import AppLogger from "../helpers/logging";
+import { academicAvailableTeachersList } from "../kafka/producers/academicProducer";
+
+// Map to track sockets connected per userId
+const userSocketsMap = new Map<string, Set<string>>();
 
 let ioConnection: SocketIOServer | null = null;
 
@@ -8,31 +12,81 @@ export const initializeSocket = (httpServer: HttpServer): void => {
   ioConnection = new SocketIOServer(httpServer, {
     cors: {
       origin: "*",
-      credentials: true
-    }
+      credentials: true,
+    },
   });
 
   ioConnection.on("connection", (socket: Socket) => {
-    AppLogger.info(`A user connected with Socket ID: ${socket.id}`);
+    AppLogger.info(`🔌 User connected - Socket ID: ${socket.id}`);
 
-    // Check if the client is connected
-    socket.on('connect', () => {
-      AppLogger.info(`Socket successfully connected: ${socket.id}`);
+    socket.on("subscribe", (userId: string) => {
+      // Add socket to room and map
+      socket.join(userId);
+
+      if (!userSocketsMap.has(userId)) {
+        userSocketsMap.set(userId, new Set());
+      }
+      userSocketsMap.get(userId)!.add(socket.id);
+
+      AppLogger.info(`👤 Socket ${socket.id} subscribed to userId: ${userId}`);
+    });
+    socket.on("availableTeachersListRequest", async(data)=>{
+       try{
+            if(!data.startDate || !data.WeeklySlots || !data.requestId) {
+            AppLogger.error("Invalid request for available teachers list", data);
+           return;
+        }
+            await academicAvailableTeachersList(data);
+       }catch(error){ 
+        AppLogger.error(`Error fetching available teachers list`, error);
+       }
     });
 
-    // Handle disconnection
     socket.on("disconnect", () => {
-      AppLogger.info(`User with Socket ID: ${socket.id} disconnected`);
+      // Remove socket from all user mappings
+      for (const [userId, socketSet] of userSocketsMap.entries()) {
+        if (socketSet.has(socket.id)) {
+          socketSet.delete(socket.id);
+          AppLogger.info(`❌ Socket ${socket.id} disconnected and removed from userId: ${userId}`);
+
+          if (socketSet.size === 0) {
+            userSocketsMap.delete(userId);
+            AppLogger.info(`🗑️ No more sockets for userId: ${userId}, cleaned up`);
+          }
+          break; // Exit after found to optimize
+        }
+      }
     });
   });
 };
 
+export const getIO = (): SocketIOServer => {
+  if (!ioConnection) {
+    throw new Error("Socket.IO not initialized");
+  }
+  return ioConnection;
+};
 
-export const emitEventToClient = (event: string, data: any): void => {
-  if (ioConnection) {
-    ioConnection.emit(event, data);
-    AppLogger.info(`${event}: IO Data Emitted- ${JSON.stringify(data)}`);
-  } else {
-    AppLogger.info(`Socket.IO is not initialized`);
+// Emit event to all sockets for a given userId
+export const emitEventToClient = (event: string, data: any, userId?: string): void => {
+  try {
+    const io = getIO();
+
+    if (userId) {
+      const socketSet = userSocketsMap.get(userId);
+      if (socketSet && socketSet.size > 0) {
+        socketSet.forEach((socketId) => {
+          io.to(socketId).emit(event, data);
+        });
+        AppLogger.info(`📡 Event '${event}' sent to userId: ${userId} - Sockets: ${[...socketSet]}`);
+      } else {
+        AppLogger.warn(`⚠️ No active sockets found for userId: ${userId}. Event '${event}' not sent.`);
+      }
+    } else {
+      io.emit(event, data);
+      AppLogger.info(`📡 Global emit for event '${event}'`);
+    }
+  } catch (err) {
+    AppLogger.error(`🚨 Failed to emit event: ${(err as Error).message}`);
   }
 };

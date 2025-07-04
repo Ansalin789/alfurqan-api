@@ -3,14 +3,18 @@
 
 import { IRecruitment, IRecruitmentCreate } from "../../types/models.types";
 import RecruitModel from "../models/recruitment"
-import { GetAllApplicationsRecordsParams } from "../shared/enum";
-import { isNil } from "lodash";
+import { GetAllApplicationsRecordsParams, GetAllTeachersRecordsParams } from "../shared/enum";
+import { forEach, isNil } from "lodash";
 import { applicationStatus, commonMessages, recruitmentMessages } from "../config/messages";
 import AppLogger from "../helpers/logging";
 import { Types } from "mongoose";
 import User from "../models/users";
 import EmailTemplate from "../models/emailTemplate";
 import { sendEmailClient } from "../shared/email";
+import { eachDayOfInterval, eachMonthOfInterval, format } from "date-fns";
+import ShiftSchedule from "../models/usershiftschedule"
+import { generateSlotsFromUserSchedule } from "../redis/handler/teacherSlotHander";
+import { academicAvailableTeachers } from "../kafka/producers/academicProducer";
 
 export interface IRecruitmentUpdate{
   supervisor:{
@@ -66,63 +70,90 @@ export const createRecruitment = async (  payload: IRecruitmentCreate
 export const getAllApplicantsRecords = async (
   params: GetAllApplicationsRecordsParams
 ): Promise<{ totalCount: number; applicants: IRecruitment[] }> => {
-  const { searchText,  sortBy,
-    sortOrder,offset, limit, filterValues } = params;
-
-  // Construct query object based on filters
+  const { searchText, offset, limit, filterValues } = params;
   const query: any = {};
 
+ if (searchText?.trim()) {
+  const escapedSearch = searchText.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+  const searchRegex = new RegExp(escapedSearch, 'i');
+  const isDate = !isNaN(Date.parse(searchText));
+  const orConditions: any[] = [
+    { candidateFirstName: searchRegex },
+    { candidateLastName: searchRegex },
+    { candidateEmail: searchRegex },
+    { candidateCity: searchRegex },
+    { positionApplied: searchRegex }
+  ];
 
-  // Add searchText to the query if provided
-  if (searchText) {
-    query.$or = [
-      { name: { $regex: searchText, $options: "i" } }, // Search by name
-      { email: { $regex: searchText, $options: "i" } }, // Search by email (if applicable)
-    ];
+  // Only add phone number if searchText is a number
+  if (!isNaN(Number(searchText))) {
+    orConditions.push({ candidatePhoneNumber: Number(searchText) });
   }
 
-  // Add filters to the query
-  if (filterValues) {
-    console.log("Filter Values:", filterValues); // Log filter values
-    if (filterValues.applicationStatus) {
-      query.applicationStatus = { $in: filterValues.applicationStatus }; // Filter by course
-    }
-  }
-  
-  console.log("Constructed Query:", JSON.stringify(query, null, 2)); // Log the constructed query
-
-  const sortOptions: any = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
-
-  const studentQuery = RecruitModel.find(query).sort(sortOptions);
-
-  
-  if (!isNil(offset) && !isNil(limit)) {
-    const skip = Math.max(
-      0,
-      ((Number(offset) ?? Number(commonMessages.OFFSET)) - 1) *
-      (Number(limit) ?? Number(commonMessages.LIMIT))
-    );
-    studentQuery
-      .skip(skip)
-      .limit(Number(limit) ?? Number(commonMessages.LIMIT));
+  if (isDate) {
+    const date = new Date(searchText);
+    const nextDay = new Date(date);
+    nextDay.setDate(date.getDate() + 1);
+    orConditions.push({ applicationDate: { $gte: date, $lt: nextDay } });
   }
 
-  // Use Promise.all to perform both query and count operations concurrently
-  const [applicants, totalCount] = await Promise.all([
-    // Fetch students with pagination
-    studentQuery.exec(),
-    // Count total records for the query
-    RecruitModel.countDocuments(query).exec(),
-  ]);
+  query.$or = orConditions;
+}
 
-  // Log successful retrieval
-  AppLogger.info(recruitmentMessages.GET_ALL_LIST_SUCCESS, {
-    totalCount: totalCount,
-  });
+// --- Application Status ---
+if (filterValues?.applicationStatus) {
+  const values = Array.isArray(filterValues.applicationStatus)
+    ? filterValues.applicationStatus
+    : [filterValues.applicationStatus];
+  if (values.length > 0) {
+    query.applicationStatus = { $in: values.map(v => new RegExp(`^${v}$`, "i")) };
+  }
+}
 
-  // Return total count and fetched students
-  return { totalCount, applicants };
+// --- Position Applied ---
+if (filterValues?.positionApplied) {
+  const values = Array.isArray(filterValues.positionApplied)
+    ? filterValues.positionApplied
+    : [filterValues.positionApplied];
+  if (values.length > 0) {
+    query.positionApplied = { $in: values.map(v => new RegExp(`^${v}$`, "i")) };
+  }
+}
+
+ // Date Range
+  if (
+    filterValues?.dateRange?.from &&
+    filterValues?.dateRange?.to &&
+    !isNaN(Date.parse(filterValues.dateRange.from)) &&
+    !isNaN(Date.parse(filterValues.dateRange.to))
+  ) {
+    const fromDate = new Date(filterValues.dateRange.from);
+    const toDate = new Date(filterValues.dateRange.to);
+    toDate.setHours(23, 59, 59, 999); // End of day
+    query.applicationDate = {
+      $gte: fromDate,
+      $lte: toDate
+    };
+  }
+
+  const applicants = await RecruitModel.find(query)
+  .sort({ applicationDate: -1 })
+  .lean()
+  .exec();
+
+const totalCount = applicants.length;
+
+  return {
+    totalCount,
+    applicants: applicants as IRecruitment[]
+  };
 };
+
+
+
+
+
+
 
 export const getApplicantRecordById = async (
   id: string
@@ -218,12 +249,14 @@ else if(approvalData &&  approvalData.applicationStatus == applicationStatus.SHO
   
     const password = `${firstThreeChars}${randomSpecial}${randomNum}${reversedUsername}`;
 
-  let createStudentPortal = await User.create({
+  let createTeacherPortal = await User.create({
     userName: updateData.candidateFirstName,
     email:updateData.candidateEmail,
     password: password,
     profileImage: null,
+    userId:updateData._id,
     role: "TEACHER",
+    position: updateData.positionApplied,
     gender: updateData.gender,
     status: "Active",
     createdBy: "Admin",
@@ -238,15 +271,301 @@ else if(approvalData &&  approvalData.applicationStatus == applicationStatus.SHO
        }).exec();
        if(emailTemplate){
            const emailTo = [
-               { email: createStudentPortal.email, name: createStudentPortal.userName  }
+               { email: createTeacherPortal.email }
            ];
            const subject = "Welcome To Alfurqan Team";
-           const htmlPart = emailTemplate.templateContent.replace('<username>', createStudentPortal.userName).replace('<password>',createStudentPortal.password );
-         //  console.log("emailTemplate>>>>",emailTemplate);
+           const htmlPart = emailTemplate.templateContent.replace('<username>', createTeacherPortal.userName).replace('<password>',createTeacherPortal.password );
            sendEmailClient(emailTo, subject,htmlPart);
        }
 
-const saveStudent = createStudentPortal.save()
-console.log("Student portal",saveStudent )
-  return saveStudent;
+const saveTeacher = await createTeacherPortal.save()
+const result = await createShiftSchedule(saveTeacher, updateData);
+await generateSlotsFromUserSchedule(result);
+await academicAvailableTeachers({event : 'create'});
+console.log("teacher portal",saveTeacher )
+return saveTeacher;
+};
+
+async function createShiftSchedule(saveTeacher: any ,updateData : any) {
+  const startDate = new Date();
+  const endDate = new Date(startDate);
+  const workhrs = updateData.preferedWorkingHours; 
+const [startTime, endTime] = workhrs.split(" - ");
+ // endDate.setFullYear(startDate.getFullYear() + 1);
+ endDate.setDate(startDate.getDate() + 40); 
+  let createShift = await ShiftSchedule.create({
+        academicCoachId : null,
+        teacherId : saveTeacher.userId,
+        supervisorId: null,
+        employeeId: null,
+        name: saveTeacher.userName,
+        email: saveTeacher.email,
+        role: "TEACHER",
+        position: saveTeacher.position,
+        workhrs: updateData.preferedWorkingHours,
+        startdate: startDate,
+        enddate : endDate, 
+        fromtime: startTime,
+        totime: endTime,
+        createdDate: new Date(),
+        createdBy: "Admin",
+        lastUpdatedBy: "Admin"
+    }
+     );
+     console.log("createShift", createShift);
+
+     return createShift;
+};
+
+export const getTeacherCountriesCountDetails = async() =>{
+
+  const teacherCountByCountry = await RecruitModel.aggregate([
+    {
+      $match: {
+        status: "Active", // Optional filter
+        applicationStatus: "APPROVED"
+      },
+    },
+    {
+      $group: {
+        _id: "$candidateCountry",
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $sort: { count: -1 }, // Optional: sort descending
+    },
+  ]);
+  
+  const teacherCount = await RecruitModel.countDocuments({
+     status: "Active", // Optional filter
+    applicationStatus: "APPROVED"
+  }).exec();
+  
+  const results: any[] = [];
+  
+  for (const teacherCountry of teacherCountByCountry) {
+    let studentCountryPercentage = ((teacherCountry.count / teacherCount) * 100).toFixed(2);
+    results.push({
+      country: teacherCountry._id,
+      count: teacherCountry.count,
+      percentage: parseFloat(studentCountryPercentage),
+    });
+  }
+  
+  
+  return { teacherCount, studentCountByCountry: results };
+
+};
+
+
+// export const getApplicationStatusData = async(fromDate:  string, toDate: string): Promise<
+//   { date: string; totalApplied: number; shortlisted: number}[]
+// > => {
+//   let startDate: Date = new Date(fromDate);
+//   let endDate: Date = new Date(toDate); // Default to today
+//   let dateFormat: string;
+//   let intervalFn: (interval: { start: Date; end: Date }) => Date[];
+//   let outputFormat: string;
+
+//   // Determine start and end dates based on dateRange
+
+//       dateFormat = "%d-%m"; // MongoDB format for months
+//       intervalFn = eachMonthOfInterval;
+//       outputFormat = "dd-yyyy"; // Output format for months
+  
+//   console.log(`Fetching results from ${startDate.toISOString()} to ${endDate.toISOString()}`);
+
+//   // Aggregation query to count class statuses per date/month
+//   const result = await RecruitModel.aggregate([
+//     {
+//       $match: {
+//         status: "Active",
+//         startDate: { $gte: startDate, $lte: endDate },
+//       },
+//     },
+//     {
+//       $group: {
+//         _id: { date: { $dateToString: { format: dateFormat, date: "$startDate" } }, status: "$applicationStatus" },
+//         count: { $sum: 1 },
+//       },
+//     },
+//   ]);
+
+//   let finalResult: any;
+//     // Convert aggregation results into a structured object
+//     const groupedResults: Record<string, any> = {};
+//     result.forEach(({ _id, count }) => {
+//       const date = format(new Date(_id.date), outputFormat); // Convert to correct format safely
+//       if (!groupedResults[date]) {
+//         groupedResults[date] = {
+//           date,
+//           totalApplied: 0,
+//           shortlisted: 0,
+//         };
+//       }
+//       if (_id.status === "SHORTLISTED") groupedResults[date].shortlisted += count;
+//     });
+
+//     // Ensure all intervals are included (fill missing values with 0)
+//     const allDates = intervalFn({ start: startDate, end: endDate }).map((d) => format(d, outputFormat));
+//     finalResult = allDates.map((date) => groupedResults[date] || { date, shortlisted: 0});
+
+
+//     return finalResult;
+ 
+ 
+// };
+
+export const getApplicationStatusData = async (
+  fromDate: string,
+  toDate: string
+): Promise<{ date: string; totalApplied: number; shortlisted: number }[]> => {
+  const startDate: Date = new Date(fromDate);
+  const endDate: Date = new Date(toDate);
+  const mongoDateFormat = "%Y-%m-%d"; // Proper format for MongoDB $dateToString
+  const outputFormat = "yyyy-MM-dd"; // Output date string format for chart/display
+
+  console.log(`Fetching results from ${startDate.toISOString()} to ${endDate.toISOString()}`);
+
+  const result = await RecruitModel.aggregate([
+    {
+      $match: {
+        status: "Active",
+        applicationDate: { $gte: startDate, $lte: endDate },
+      },
+    },
+    {
+      $group: {
+        _id: {
+          date: { $dateToString: { format: mongoDateFormat, date: "$applicationDate" } },
+          status: "$applicationStatus",
+        },
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  // Organize results by date
+  const groupedResults: Record<string, { date: string; totalApplied: number; shortlisted: number }> = {};
+
+  for (const { _id, count } of result) {
+    const date = _id.date; // already formatted by MongoDB
+    if (!groupedResults[date]) {
+      groupedResults[date] = {
+        date,
+        totalApplied: 0,
+        shortlisted: 0,
+      };
+    }
+    groupedResults[date].totalApplied += count;
+    if (_id.status === "SHORTLISTED") {
+      groupedResults[date].shortlisted += count;
+    }
+  }
+
+  // Ensure all dates in range are returned
+  const allDates = eachDayOfInterval({ start: startDate, end: endDate }).map((d) => format(d, outputFormat));
+
+  const finalResult = allDates.map((date: any) =>
+    groupedResults[date] || { date, totalApplied: 0, shortlisted: 0 }
+  );
+
+  return finalResult;
+};
+
+
+export const getAllTeacherRecords  = async( params: GetAllTeachersRecordsParams
+) =>{
+ const { teacherGroup, supervisorId } = params;
+
+  // Construct query object based on filters
+  const query: any = {};
+if(teacherGroup){
+  query.positionApplied = teacherGroup
 }
+
+const teacherQuery = await RecruitModel.find({
+  'supervisor.supervisorId': supervisorId,
+   applicationStatus: "APPROVED",
+  ...query
+}).exec();
+
+const teachers = teacherQuery.map((teacherDetails) => ({
+  teacherId: teacherDetails._id,
+  teacherName: `${teacherDetails.candidateFirstName} ${teacherDetails.candidateLastName}`,
+  teacherEmail: teacherDetails.candidateEmail
+}));
+
+  return  { teachers };
+};
+
+
+
+export const getTeacherListFemaleMale = async (params: GetAllTeachersRecordsParams) => {
+  const preferredTeachers = await RecruitModel.aggregate([
+    {
+      $match: {
+        status: "Active",
+      },
+    },
+    {
+      $group: {
+        _id: {
+          position: "$positionApplied",
+          gender: "$gender",         },
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const summary = {
+    total: 0,
+    subjects: {} as Record<
+      string,
+      {
+        total: number;
+        male: number;
+        female: number;
+      }
+    >,
+  };
+
+  preferredTeachers.forEach(({ _id, count }) => {
+    const position = _id.position || "Unknown";
+    const gender = _id.gender?.toLowerCase();
+
+    if (!summary.subjects[position]) {
+      summary.subjects[position] = { total: 0, male: 0, female: 0 };
+    }
+
+    summary.subjects[position].total += count;
+    summary.total += count;
+
+    if (gender === "male") summary.subjects[position].male += count;
+    else if (gender === "female") summary.subjects[position].female += count;
+  });
+
+  const subjectPercentages = Object.entries(summary.subjects).map(([subject, data]) => ({
+    subject,
+    total: data.total,
+    percentage: ((data.total / summary.total) * 100).toFixed(2),
+  }));
+
+  const genderBreakdownBySubject = Object.entries(summary.subjects).map(([subject, data]) => {
+    const total = data.total || 1;
+    return {
+      subject,
+      male: data.male,
+      female: data.female,
+      malePercentage: ((data.male / total) * 100).toFixed(2),
+      femalePercentage: ((data.female / total) * 100).toFixed(2),
+    };
+  });
+
+  return {
+    totalApplicants: summary.total,
+    subjectPercentages,
+    genderBreakdownBySubject,
+  };
+};

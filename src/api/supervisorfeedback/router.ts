@@ -12,10 +12,9 @@ const register = async (server: Server): Promise<void> => {
     options: {
       handler:handler.createSupervisorFeedback ,  
       tags: ["api", "supervisorfeedback"],  
-      // auth: {
-      //   strategies: ["jwt"],
-      // },
-    },
+      auth: {
+        strategies: ["jwt"],
+      }, },
   },
 
   // {

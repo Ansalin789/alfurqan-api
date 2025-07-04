@@ -40,6 +40,10 @@ const userSchema = new Schema<IUser>(
       type: [String],
       required: true
     },
+    position:{
+     type: String,
+      required: false,
+    },
     profileImage: {
       type: String,
       default: null
@@ -47,6 +51,10 @@ const userSchema = new Schema<IUser>(
     lastLoginDate: {
       type: Date,
       default: Date.now
+    },
+    country: {
+      type: String,
+      required: false,
     },
     status: {
       type: String,
@@ -86,8 +94,10 @@ export const zodUserSchema = z.object({
     .string()
     .min(8),
   role: z.array(z.string()).min(1),
+  position: z.string().optional(),
   profileImage: z.string().nullable(),
   lastLoginDate: z.string().nullable(),
+  country: z.string().optional(),
   status: z.enum([appStatus.ACTIVE, appStatus.IN_ACTIVE, appStatus.DELETED]),
   createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: commonMessages.INVALID_DATE_FORMAT,

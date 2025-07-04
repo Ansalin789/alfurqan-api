@@ -38,8 +38,7 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "shiftschedule"],
         auth: {
           strategies: ["jwt"],
-        },
-      },
+        }, },
     },
     // {
     //   method: "PUT",

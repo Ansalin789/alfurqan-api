@@ -2,7 +2,7 @@ import mongoose, { Schema } from "mongoose";
 import { v4 as uuidv4 } from "uuid";
 import { IStudents } from "../../types/models.types";
 
-import CustomEnumerator from "../shared/enum";
+import CustomEnumerator, { NumberOfStudents } from "../shared/enum";
 import { z } from "zod";
 import { appStatus,appRegexPatterns, commonMessages, evaluationStatus, learningInterest, numberOfStudents,preferredTeacher, referenceSource } from "../config/messages";
 
@@ -45,6 +45,10 @@ const studentSchema = new Schema<IStudents>(
       match: /\S+@\S+\.\S+/,
       unique: true,
     },
+    gender: {
+      type: String,
+      required: false
+    },
     phoneNumber: {
       type: Number,
       required: true,
@@ -70,7 +74,6 @@ const studentSchema = new Schema<IStudents>(
     numberOfStudents: {
       type: Number,
       required: true,
-      minlength: 1
     },
     preferredTeacher:{
       type: String,
@@ -140,17 +143,21 @@ const studentSchema = new Schema<IStudents>(
 export const zodStudentSchema = z.object({
   firstName: z.string().min(3),
   lastName: z.string().min(1),
+  academicCoach: z.object({
+    academicCoachId : z.string()
+  }),
   email: z.string().email(),
+  gender: z.string(),
   phoneNumber: z.number().min(10),
   city: z.string().optional(),
   country: z.string().min(3),
   countryCode: z.string().min(1),
   learningInterest: z.enum([learningInterest.QURAN, learningInterest.ISLAMIC, learningInterest.ARABIC]),
-  numberOfStudents: z.number().min(1),
+  numberOfStudents: z.nativeEnum(NumberOfStudents).default(NumberOfStudents.ONE),
   preferredTeacher: z.enum([preferredTeacher.TEACHER_1, preferredTeacher.TEACHER_2, preferredTeacher.TEACHER_3]),
-  preferredFromTime: z.string().regex(/^(0[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$/, "Time must be in format HH:MM AM/PM"),
-  preferredToTime: z.string().regex(/^(0[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$/, "Time must be in format HH:MM AM/PM"),
-  timeZone: z.string().min(1),
+ preferredFromTime: z.string().regex(/^([01][0-9]|2[0-3]):[0-5][0-9]$/, "Time must be in 24-hour format HH:MM"),
+preferredToTime: z.string().regex(/^([01][0-9]|2[0-3]):[0-5][0-9]$/, "Time must be in 24-hour format HH:MM"),
+ timeZone: z.string().min(1),
   referralSource: z.enum([referenceSource.FRIEND, referenceSource.SOCIALMEDIA, referenceSource.EMAIL, referenceSource.GOOGLE, referenceSource.OTHER]),
   startDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: commonMessages.INVALID_DATE_FORMAT,

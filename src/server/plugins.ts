@@ -20,6 +20,23 @@ import feedbackAPI  from "../api/feedback/router";
 import recruitmentAPI from "../api/recruitment/router";
 import addMeetingAPI from "../api/addMeeting/router";
 import supervisorfeedbackAPI from "../api/supervisorfeedback/router";
+import notificationAPI from "../api/notification/router";
+import roleAccessAPI from "../api/roleAccess/router";
+import otheremployeeAPI from "../api/otherEmployee/router"
+import adminMeeting from "../api/adminMeeting/router"
+import realtimemessageAPI from "../api/realtimemessage/router";
+import courseAPI from "../api/course/router";
+import employeeWagesAPI from "../api/empwege/router";
+import expenseAPI from "../api/expenses/router";
+import KnowledgeBaseAPI from "../api/knowledgebase/router";
+import salaryandwagesAPI from "../api/salarywages/router";
+
+import packageAPI from "../api/package/router"
+import leaveRequestAPI from "../api/leaveRequest/router";
+import TeachermeetingAPI from "../api/teacherMeeting/router"
+
+
+
 export const appPlugins = [
   {
     plugin: systemLifeCycle,
@@ -84,5 +101,45 @@ export const appPlugins = [
   },
   {
     plugin: supervisorfeedbackAPI,
+  },
+  {
+    plugin: notificationAPI,
+  },
+  {
+    plugin: roleAccessAPI,
+  },
+  {
+    plugin: otheremployeeAPI,
+  },
+  {
+    plugin: adminMeeting,
+  },
+  {
+    plugin:realtimemessageAPI,
+  },
+  {
+    plugin:courseAPI ,
+  },
+  {
+    plugin:employeeWagesAPI,
+  },
+  {
+    plugin:expenseAPI,
+  },
+  
+  {
+    plugin:KnowledgeBaseAPI,
+  },
+  {
+    plugin:salaryandwagesAPI,
+  },
+  {
+    plugin:packageAPI,
+  },
+  {
+   plugin:leaveRequestAPI,
+  },
+  {
+    plugin:TeachermeetingAPI,
   }
 ];

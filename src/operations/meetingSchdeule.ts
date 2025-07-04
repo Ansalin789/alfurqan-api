@@ -10,24 +10,12 @@ import { Types } from "mongoose";
 export const getAllAcademicCoach = async (
   params: GetAllRecordsParams
 ): Promise<{ totalCount: number; academicCoach: IMeetingSchedule[] }> => {
-  const { academicCoachId, searchText, sortBy, sortOrder, offset, limit } = params;
+  const { sortBy, sortOrder, offset, limit } = params;
 
   // Construct query object
   const query: any = {
     "academicCoach.academicCoachId": { $ne: null }, // Exclude null academicCoachId
   };
-
-  // if (!isNil(params)) {
-  //   query["academicCoach.academicCoachId"] = { $ne: null };
-  // }
-
-  // Add searchText filter
-  // if (searchText) {
-  //   query.$or = [
-  //     { "academicCoach.name": { $regex: searchText, $options: "i" } }, // Search by academic coach name
-  //     { "academicCoach.email": { $regex: searchText, $options: "i" } }, // Search by academic coach email
-  //   ];
-  // }
 
   // Log query for debugging
   console.log("Constructed Query:", JSON.stringify(query, null, 2));

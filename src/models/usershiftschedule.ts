@@ -15,6 +15,10 @@ const usershiftscheduleSchema = new Schema<IUsershiftschedule>({
             type: String,
             required: false,
         },
+        employeeId: {
+            type: String,
+            required: false,
+        },
     name: {
         type: String,
         required: true,
@@ -26,6 +30,10 @@ const usershiftscheduleSchema = new Schema<IUsershiftschedule>({
     role: {
       type: String,
       required: true,
+  },
+  position:{
+      type: String,
+      required: false,
   },
     workhrs: {
         type: String,

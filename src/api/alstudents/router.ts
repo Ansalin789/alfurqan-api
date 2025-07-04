@@ -13,12 +13,10 @@ const register = async (server: Server): Promise<void> => {
             handler: handler.getAllalstudentsList,
             description: alstudentsMessages.LIST,
             tags: ["api", "alstudents"],
-            // auth: {
-            //   strategies: ["jwt"],
-            // },
-          },
+            auth: {
+              strategies: ["jwt"],
+            }, },
         },
-
 
      {
            method: "GET",
@@ -27,11 +25,46 @@ const register = async (server: Server): Promise<void> => {
              handler: handler.getalstudentsById,
              description: alstudentsMessages.BYID,
              tags: ["api", "alstudents"],
-             // auth: {
-             //   strategies: ["jwt"],
-             // },
-           },
-         },   
+             auth: {
+              strategies: ["jwt"],
+            }, },
+         },  
+         
+         {
+          method: "GET",
+          path: "/alstudents/studentsrecordcount",
+          options: {
+            handler: handler.getAllStudentCount,
+            description: alstudentsMessages.BYID,
+            tags: ["api", "alstudents"],
+            auth: {
+              strategies: ["jwt"],
+            },},
+        },  
+        
+        {
+          method: "GET",
+          path: "/alstudents/studentsGender",
+          options: {
+            handler: handler.getStudentGenderCount,
+            description: alstudentsMessages.BYID,
+            tags: ["api", "alstudents"],
+            auth: {
+              strategies: ["jwt"],
+            }, },
+        }, 
+
+        {
+          method: "GET",
+          path: "/alstudents/studentscountrycount",
+          options: {
+            handler: handler.getStudentCountryCount,
+            description: alstudentsMessages.BYID,
+            tags: ["api", "alstudents"],
+            auth: {
+              strategies: ["jwt"],
+            },},
+        }, 
 
   ];
   server.route(routes);

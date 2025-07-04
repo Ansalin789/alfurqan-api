@@ -1,9 +1,10 @@
 import { model, Schema } from "mongoose";
 import { IEvaluation } from "../../types/models.types";
 import { z } from "zod";
-import { appStatus, commonMessages, evaluationStatus, learningInterest, preferredTeacher, referenceSource } from "../config/messages";
+import { appStatus, classType, commonMessages, evaluationStatus, learningInterest, preferredTeacher, referenceSource } from "../config/messages";
 
 const evaluationSchema = new Schema<IEvaluation>({
+
 academicCoachId: {
     type: String,
     required: true,
@@ -24,6 +25,10 @@ academicCoachId: {
     studentEmail: {
         type: String,
         required: true,
+    },
+    studentGender:{
+        type: String,
+        required: false, 
     },
     studentPhone: {
         type: Number,
@@ -77,6 +82,11 @@ academicCoachId: {
         type: String,
         required: true,
     }, 
+    joiningDate:{
+        type: Date,
+        required: false,  
+    } ,
+
     status: { 
         type: String,
         required: true,
@@ -89,6 +99,10 @@ academicCoachId: {
         type: String,
         required: false,
     }
+  },
+  classType: {
+    type: String,
+    required: false, 
   },
   teacher: {
     teacherId: {
@@ -110,6 +124,7 @@ academicCoachId: {
     type: Array,
     required: false,
   },
+  
   startTime:{
     type: Array,
     required: false,
@@ -232,15 +247,15 @@ academicCoachId: {
     },
     assignedTeacher:{
         type: String,
-        required: true
+        required: false
     },
     assignedTeacherId:{
         type: String,
-        required: true
+        required: false
     },
     assignedTeacherEmail:{
         type: String,
-        required: true
+        required: false
     },
     studentStatus: {
         type: String,
@@ -269,6 +284,18 @@ academicCoachId: {
     paymentStatus:{
     type: String,
     required: false
+    },
+    teacherStatus:{
+    type: String,
+    required: false
+    },
+    amount: {
+    type: String,
+    required: false  
+    },
+    currency: {
+    type: String,
+    required: false  
     },
     status: {
         type: String,
@@ -303,6 +330,7 @@ export const zodEvaluationSchema = z.object({
         studentId: z.string().optional(),
         studentFirstName: z.string(),
         studentLastName: z.string(),
+        studentGender: z.string().optional(),
         studentEmail: z.string(),
         studentPhone: z.number(),
         studentCity: z.string().optional(),
@@ -311,8 +339,8 @@ export const zodEvaluationSchema = z.object({
         learningInterest: z.enum([learningInterest.QURAN, learningInterest.ISLAMIC, learningInterest.ARABIC]),
         numberOfStudents: z.number(),
         preferredTeacher: z.enum([preferredTeacher.TEACHER_1, preferredTeacher.TEACHER_2, preferredTeacher.TEACHER_3]),
-        preferredFromTime: z.string().regex(/^(0[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$/, "Time must be in format HH:MM AM/PM"),
-        preferredToTime: z.string().regex(/^(0[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$/, "Time must be in format HH:MM AM/PM"),
+        preferredFromTime: z.string().regex(/^([01][0-9]|2[0-3]):[0-5][0-9]$/, "Time must be in 24-hour format HH:MM"),
+        preferredToTime: z.string().regex(/^([01][0-9]|2[0-3]):[0-5][0-9]$/, "Time must be in 24-hour format HH:MM"),
         timeZone: z.string(),
         referralSource: z.enum([referenceSource.FRIEND, referenceSource.SOCIALMEDIA, referenceSource.EMAIL, referenceSource.GOOGLE, referenceSource.OTHER]),
         preferredDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
@@ -326,31 +354,34 @@ export const zodEvaluationSchema = z.object({
         createdBy: z.string().optional(),
       
     }),
-
+    joiningDate:  z.string().refine((val) => !isNaN(Date.parse(val)), {
+        message: commonMessages.INVALID_DATE_FORMAT,
+      }).transform((val) => new Date(val)).optional(),
+    classType:z.enum([classType.REGULARCLASS, classType.GROUPCLASS]).optional(),
     teacher:z.object ({
         teacherId: z.string().optional(),
         teacherName: z.string().optional(),
         teacherEmail:z.string().optional()
-      }),
+      }).optional(),
       classDay:z.array(
         z.object({
             label: z.string(),
             value: z.string(),
         })
-    ),
+    ).optional(),
       totalHourse:z.number().optional(),
       startTime:z.array(
         z.object({
             label: z.string(),
             value: z.string(),
         })
-    ),
+    ).optional(),
       endTime:z.array(
         z.object({
             label: z.string(),
             value: z.string(),
         })
-    ),
+    ).optional(),
     isLanguageLevel: z.boolean(),
     languageLevel: z.string(),
     isReadingLevel: z.boolean(),
@@ -387,6 +418,9 @@ export const zodEvaluationSchema = z.object({
     invoiceStatus: z.string().optional(),
     paymentLink: z.string().optional(),
     paymentStatus: z.string().optional(),
+    teacherStatus: z.string().optional(),
+    amount: z.string().optional(),
+    currency: z.string().optional(),
     status: z.string().optional(),
     createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
         message: commonMessages.INVALID_DATE_FORMAT,

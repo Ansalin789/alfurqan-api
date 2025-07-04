@@ -3,6 +3,7 @@ import { ResponseToolkit, Request } from "@hapi/hapi";
 import { zodFeedbackSchema } from "../../models/feedback";
 import { createFeedback, createSupervisorFeedback, createTeacherFeedback, getAllFeedbackRecords, getAllSupervisorRecords, getcreateAllTeacherFeedback } from "../../operations/feedback";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
+import { supervisorFeedBackList } from "../../kafka/producers/supervisorProducer";
 
 const createFeedbackValidation = z.object({
   payload: zodFeedbackSchema.pick({
@@ -76,9 +77,10 @@ export default {
           readingAbility: payload.teacherRatings?.readingAbility || 0,
           overallPerformance: payload.teacherRatings?.overallPerformance || 0,
         },
-      
       });
-
+      if(result){
+          await supervisorFeedBackList({data : result});
+        }
       return h.response({ message: "Feedback created successfully", data: result }).code(201);
     } catch (error) {
       console.error("Error creating feedback:", error);
@@ -266,27 +268,64 @@ export default {
 ,
 
 async getAllStudentTeacherFeedback(req: Request, h: ResponseToolkit) {
-  try {
-      // ✅ Ensure query parameters are parsed safely
-      const parsedQuery = {
-          ...req.query,
-          filterValues: req.query?.filterValues 
-              ? JSON.parse(req.query.filterValues as string)
-              : {},
-      };
+  let filterValues: any = {};
 
-      // ✅ Validate the query parameters using Zod
-      const { query } = createInputFeedbackValidation.parse({ query: parsedQuery });
+  // 1. Parse filterValues from query if present as a string
+  if (typeof req.query.filterValues === "string") {
+    try {
+      filterValues = JSON.parse(req.query.filterValues);
+    } catch {
+      filterValues = {};
+    }
+  } else {
+    // 2. Build filterValues from individual query params
+    filterValues = {};
 
-      // ✅ Fetch feedback records (excluding supervisors)
-      const feedbackData = await getAllFeedbackRecords(query);
-
-      return h.response({ message: "Feedback retrieved successfully", data: feedbackData }).code(200);
-  } catch (error) {
-      console.error("Error fetching student and teacher feedback:", error);
-      return h.response({ error: "Invalid request" }).code(400);
-  }
+    // --- Normalize course filter ---
+  if (req.query.course) {
+  filterValues.course = {
+    courseName: Array.isArray(req.query.course)
+      ? req.query.course
+      : [req.query.course]
+  };
 }
 
 
-};
+    // --- Normalize dateRange filter ---
+    if (req.query["dateRange.from"] && req.query["dateRange.to"]) {
+      filterValues.dateRange = {
+        from: req.query["dateRange.from"],
+        to: req.query["dateRange.to"]
+      };
+    }
+  }
+
+  // 3. Build the full query object for validation
+  const queryObj = {
+    ...req.query,
+    filterValues,
+  };
+
+  // 4. Validate the query parameters using Zod
+  const { query } = createInputFeedbackValidation.parse({ query: queryObj });
+
+  // 5. Ensure offset and limit are strings or null
+  const queryForService = {
+    ...query,
+    offset:
+      query.offset !== null && query.offset !== undefined
+        ? String(query.offset)
+        : null,
+    limit:
+      query.limit !== null && query.limit !== undefined
+        ? String(query.limit)
+        : null,
+  };
+
+  // 6. Call the service with the normalized and validated query
+  return getAllFeedbackRecords(queryForService);
+}
+
+}
+
+

@@ -1,126 +1,46 @@
 import { z } from "zod";
-import { appRegexPatterns, commonMessages, userMessages, appStatus, meetingSchedulesMessages, tenantsMessages, notificationsMessages } from "../config/messages";
 
 export const zodGetAllRecordsQuerySchema = z.object({
-  roomId:z.string().optional(),
-  teacherId:z.string().optional(),
-  studentId:z.string().optional(),
-  supervisorId:z.string().optional(),
+  meetingId: z.string().optional(),
+  courseId: z.string().optional(),
+  roomId: z.string().optional(),
+  teacherId: z.string().optional(),
+  studentId: z.string().optional(),
+  supervisorId: z.string().optional(),
   academicCoachId: z.string().optional(),
   searchText: z.string().default(""),
   sortBy: z.string().default("lastUpdatedDate"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
   offset: z.string().nullable().default(null),
   limit: z.string().nullable().default(null),
-  filterValues : z.object({
-    // Filter for courses: Array of course names or IDs, optional
-    course: z.string()
+  trialClassStatus: z.string().optional(),
+  filterValues: z
+    .object({
+      course: z
+        .object({
+          courseName: z.union([z.string(), z.array(z.string())]).optional(),
+        })
+        .optional(),
+      sessionClassType: z.union([z.string(), z.array(z.string())]).optional(),
+      scheduleStatus: z.union([z.string(), z.array(z.string())]).optional(),
+      timing: z.string().optional(), // If timing is a string, adjust as needed
+      teacher: z.string().optional(),
+meetingStatus: z.union([z.string(), z.array(z.string())]).optional(),
+       startTime: z.union([z.string(), z.array(z.string())]).optional(),
+      status: z.string().optional(),
+        dateRange: z
+      .object({
+        from: z.string(),
+        to: z.string(),
+      })
       .optional(),
-    // Filter for countries: Array of country codes or names, optional
-    country: z.string()
-      .optional(),
-    // Filter for teachers: Array of Object IDs, optional, validated with regex
-    teacher: z.string()
-    .optional(),
-    // Filter for status: Array of enums, optional, with default values
-    status: z.string()
+    })
     .optional()
-  })
-
-
-//   searchText: z.string().default(""),
-//   sortBy: z.string().default("lastUpdatedDate"),
-//   sortOrder: z.enum(["asc", "desc"]).default("desc"),
-//   offset: z.string().nullable().default(null),
-//   limit: z.string().nullable().default(null),
-
-//   filterValues: z.object({
-//     jobSector: z.array(z.string()).optional(),
-//     jobs: z
-//       .array(z.string())
-//       .refine(
-//         (arr) => arr.every((item) => appRegexPatterns.OBJECT_ID.test(item)),
-//         {
-//           message: meetingSchedulesMessages.INVALID_ID,
-//         }
-//       )
-//       .optional(),
-//     recruiter: z
-//       .array(z.string())
-//       .refine(
-//         (arr) => arr.every((item) => appRegexPatterns.OBJECT_ID.test(item)),
-//         {
-//           message: meetingSchedulesMessages.INVALID_ID,
-//         }
-//       )
-//       .optional(),
-//     status: z
-//       .array(
-//         z.enum([
-//           appStatus.ACTIVE,
-//           appStatus.IN_ACTIVE,
-//           appStatus.ARCHIVED,
-//           appStatus.NEW,
-//         ])
-//       )
-//       .default([
-//         appStatus.ACTIVE,
-//         appStatus.IN_ACTIVE,
-//         appStatus.ARCHIVED,
-//         appStatus.NEW,
-//       ]),
-//     users: z
-//       .array(z.string())
-//       .refine(
-//         (arr) => arr.every((item) => appRegexPatterns.OBJECT_ID.test(item)),
-//         {
-//           message: meetingSchedulesMessages.INVALID_ID,
-//         }
-//       )
-//       .optional(),
-//     meetingStatus: z
-//       .array(z.enum(meetingSchedulesMessages.MEETING_STATUS))
-//       .optional(),
-//     candidateResponse: z
-//       .array(z.enum(meetingSchedulesMessages.CANDIDATE_RESPONSE))
-//       .optional(),
-//     referenceTypes: z.array(z.enum(notificationsMessages.REFERENCE_TYPES)).optional(),
-//     isRead: z.boolean().optional(),
-//     notificationStatus: z.array(z.boolean()).optional()
-//   }),
-//   isPinned: z.boolean().default(false),
-//   scheduledStartDate: z
-//     .string()
-//     .refine((val) => meetingSchedulesMessages.DATE_FORMAT.test(val), {
-//       message: meetingSchedulesMessages.DATE_FORMAT_INVALID,
-//     })
-//     .optional(),
-//   scheduledEndDate: z
-//     .string()
-//     .refine((val) => meetingSchedulesMessages.DATE_FORMAT.test(val), {
-//       message: meetingSchedulesMessages.DATE_FORMAT_INVALID,
-//     }
-//     ).optional(),
-//   modules: z.array(z.enum(tenantsMessages.MODULE_TYPES)).optional(),
-//   keyNames: z.array(z.enum(tenantsMessages.KEYNAMES)).optional(),
-//   userId: z.string()
-//     .regex(appRegexPatterns.OBJECT_ID, commonMessages.INVALID_OBJECT_ID),
-//   startDate: z.string()
-//     .refine((val) => meetingSchedulesMessages.DATE_FORMAT.test(val), {
-//       message: meetingSchedulesMessages.DATE_FORMAT_INVALID,
-//     }).optional(),
-//   endDate: z.string()
-//     .refine((val) => meetingSchedulesMessages.DATE_FORMAT.test(val), {
-//       message: meetingSchedulesMessages.DATE_FORMAT_INVALID,
-//     }).optional(),
-//   jobTitles: z.array(z.string()).default([]),
-//   jobSectors: z.array(z.string()).default([]),
-//   clients: z.array(z.string()).default([]),
-//   interviewDetailId: z.string().regex(appRegexPatterns.OBJECT_ID, commonMessages.INVALID_OBJECT_ID).optional(),
- });
+    .default({}), 
+});
 
 export const zodGetAllUserRecordsQuerySchema = z.object({
-  role: z.string().min(3),
+  role: z.string().min(3).optional(),
   date:z.string().optional(),
 });
 
@@ -129,23 +49,55 @@ export const zodAuthenticationSchema = z.object({
   password: z.string().min(8),
 });
 
-export  const zodAlStudentInvoiceSchemaValidation = z.object({
+
+
+export const zodAlStudentInvoiceSchemaValidation = z.object({
   sortBy: z.string().default("lastUpdatedDate"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
   offset: z.string().nullable().default(null),
   limit: z.string().nullable().default(null),
+  type: z.enum(["weekly", "monthly", "yearly"]).default("yearly"),
+  year: z.string().default(() => new Date().toISOString().split("T")[0]), 
 });
 
-export const zodGetAllApplicantsRecordsQuerySchema = z.object({
 
+export const zodGetAllApplicantsRecordsQuerySchema = z.object({
   searchText: z.string().default(""),
   sortBy: z.string().default("positionApplied"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
-  offset: z.string().nullable().default(null),
-  limit: z.string().nullable().default(null),
-  filterValues : z.object({
-    // Filter for status: Array of enums, optional, with default values
-    applicationStatus: z.string()
-    .optional()
-  })
- });
+  offset: z.coerce.number().nullable().default(null),
+  limit: z.coerce.number().nullable().default(null),
+  filterValues: z
+    .object({
+      applicationStatus: z
+        .union([z.string(), z.array(z.string())])
+        .optional()
+        .transform((val) =>
+          val === undefined ? undefined : Array.isArray(val) ? val : [val]
+        ),
+      positionApplied: z
+        .union([z.string(), z.array(z.string())])
+        .optional()
+        .transform((val) =>
+          val === undefined ? undefined : Array.isArray(val) ? val : [val]
+        ),
+      dateRange: z
+        .object({
+          from: z.string().refine((date) => !isNaN(Date.parse(date)), {
+            message: "Invalid from date",
+          }),
+          to: z.string().refine((date) => !isNaN(Date.parse(date)), {
+            message: "Invalid to date",
+          }),
+        })
+        .optional(),
+    })
+    .optional(),
+});
+
+
+export const zodGetAllTeachersRecordsQuerySchema = z.object({
+  teacherGroup : z.string().optional(),
+  supervisorId: z.string().optional()
+})
+

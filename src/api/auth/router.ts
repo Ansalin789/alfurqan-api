@@ -31,9 +31,6 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.signOut,
         description: authMessages.SIGN_OUT,
         tags: ["api", "auth"],
-        auth: {
-          strategies: ["jwt"],
-        },
       },
     },
     {
@@ -43,9 +40,6 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.changePassword,
         description: authMessages.CHANGE_PASSWORD,
         tags: ["api", "auth"],
-        auth: {
-          strategies: ["jwt"],
-        },
       },
     },
     {
@@ -66,6 +60,27 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "auth"],
       },
     },
+
+    {
+          method: "GET",
+          path: "/ac/availabletime",
+          options: {
+            handler: handler.getAcademicAvaialableTime,
+            description: "Get available  time for academic coach",
+            tags: ["api", "alstudents"],
+           },
+        },
+        {
+          method: "GET",
+          path: "/teacher/availabletime",
+          options: {
+            handler: handler.getTeacherAvaialableTime,
+            description: "Get available  time for academic coach",
+            tags: ["api", "alstudents"],
+           },
+        },
+
+
   ];
   server.route(routes);
 };

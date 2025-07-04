@@ -1,15 +1,15 @@
-import { ResponseToolkit,Request, ResponseObject } from "@hapi/hapi";
+import { ResponseToolkit,Request } from "@hapi/hapi";
 import classShedule, { zodClassScheduleSchema } from "../../models/classShedule";
-// import { createclassShedule } from "../../operations/classschedule"
 import { z } from "zod";
 import { ClassSchedulesMessages } from "../../config/messages";
-import { isNil, result } from "lodash";
+import { isNil } from "lodash";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
-import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity} from "../../operations/classschedule";
-import { GetAllRecordsParams } from "../../shared/enum";
-import userModel from "../../models/users";
-
+import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount, getTotalClassesCount, getClassesStatusCount, getClassesWiseCount, getStudentList, getTeacherAttendanceSummary, teacherStudentCount, getgetAnalyticscardCalculation} from "../../operations/classschedule";
+import { academicAvailableTeachers, academicStudentReSchedule, academicTeacherReSchedule } from "../../kafka/producers/academicProducer";
+import AlStudentModule from "../../models/alstudents"
+import Evaluation from "../../models/evaluation";
+import { Types } from "mongoose";
 
 const createInputValidation = z.object({
     payload: zodClassScheduleSchema.pick({
@@ -26,6 +26,10 @@ const createInputValidation = z.object({
         scheduleStatus: true,
         studentAttendee:true,
         teacherAttendee: true,
+        sessionClassType:true,
+        sessionsEndtime:true,
+        sessionStarttime:true,
+        teacherreschedule:true,
     }).partial()
   });
 
@@ -56,41 +60,54 @@ const updateClassScheduleInputValidation = z.object({
     startTime: true,
     endTime: true,
     scheduleStatus: true,
+    sessionClassType:true,
+    sessionStarttime:true,
+    sessionsEndtime:true,
+
 }).partial()
 })
 
 export default {
+// async createandUpdateSchedule(req: Request, h: ResponseToolkit){
+//     console.log("Raw Request Payload:", req.payload);
+//     const { payload } = createInputValidation.parse({
+//       payload: req.payload,
+//    });
+//    console.log("Parsed Payload:", payload);
 
-  
-  async createandUpdateSchedule(req: Request, h: ResponseToolkit){
-    const { payload } = createInputValidation.parse({
-      payload: req.payload,
-   });
-   const classDayValues = payload.classDay?.map((day: { value: string; label: string }) => day.value);
-   const startTimeValues = payload.startTime?.map((time: { value: string; label: string }) => time.value);
-   const endTimeValues = payload.endTime?.map((time: { value: string; label: string }) => time.value);
+//    const classDayValues = payload.classDay?.map((day: { value: string; label: string }) => day.value);
+//    const startTimeValues = payload.startTime?.map((time: { value: string; label: string }) => time.value);
+//    const endTimeValues = payload.endTime?.map((time: { value: string; label: string }) => time.value);
 
-   return await updateStudentClassSchedule(String(req.params.studentId),{ 
-    teacher :{
-      teacherName: payload.teacher?.teacherName || "",
-      teacherEmail: payload.teacher?.teacherEmail|| ""
-    } ,
-    classDay :classDayValues ,
-    package: payload.package,
-    preferedTeacher: payload.preferedTeacher,
-     course:payload.course,
-    totalHourse: payload.totalHourse,
-    startDate: payload.startDate,
-    endDate: payload.endDate,
-    startTime: startTimeValues,
-    endTime: endTimeValues,
-    scheduleStatus: payload.scheduleStatus,
-    studentAttendee: payload.studentAttendee,
-    teacherAttendee:payload.teacherAttendee,
+//    return await updateStudentClassSchedule(String(req.params.studentId),{ 
+//     teacher :{
+//       teacherId: payload.teacher?.teacherId ?? "",
+//       teacherName: payload.teacher?.teacherName ?? "",
+//       teacherEmail: payload.teacher?.teacherEmail ?? ""
+//     } ,
+//     classDay :classDayValues,
+//     package: payload.package,
+//     preferedTeacher: payload.preferedTeacher,
+//     // course:payload.course,
+//      sessionClassType: payload.sessionClassType || "",
+//      sessionStarttime: payload.sessionStarttime || "",
+//      sessionsEndtime: payload?.sessionsEndtime || "",
+//      sessionStatus:"NotCompleted",
+//      totalHourse: payload.totalHourse,
+//     startDate: payload.startDate,
+//     endDate: payload.endDate,
+//     startTime: startTimeValues,
+//     endTime: endTimeValues,
+//     scheduleStatus: payload.scheduleStatus,
+//     studentAttendee: payload.studentAttendee,
+//     teacherAttendee:payload.teacherAttendee,
    
-     });
-  }
-,
+//      }
+//     );
+
+
+//   }
+// ,
 
 
 async getClassesForStudent(req: Request, h: ResponseToolkit) {
@@ -138,47 +155,92 @@ async getClassesForTeacher(req: Request, h: ResponseToolkit) {
 }
 ,
 
-
-
-
-
 async getAllClassShedule(req: Request, h: ResponseToolkit) {
-  try {
-    // Cast `req` to `Request` with query properties
-    const parsedQuery = getAllClassSheduleInput.parse({
-      query: {
-        ...((req as any).query), // Cast req.query to 'any' or a more specific type if needed
-        filterValues: (() => {
-          try {
-            return req.query?.filterValues
-              ? JSON.parse(req.query.filterValues as string)
-              : {};
-          } catch {
-            throw new Error("Invalid filterValues JSON format.");
-          }
-        })(),
-      },
-    });
+  let filterValues: any = {};
 
-    const query = parsedQuery.query;
+  // 1. Parse filterValues from query if present as a string
+  if (typeof req.query.filterValues === "string") {
+    try {
+      filterValues = JSON.parse(req.query.filterValues);
+    } catch {
+      filterValues = {};
+    }
+  } else {
+    filterValues = {};
 
-    // Call your service or database function to fetch data
-    const result = await getAllClassShedule(query);
+    // --- Normalize course filter ---
+    if (req.query.course) {
+      filterValues.course = {
+        courseName: Array.isArray(req.query.course)
+          ? req.query.course
+          : [req.query.course]
+      };
+    }
 
-    // Return the response
-    return h.response(result).code(200);
-  } catch (error) {
-    // Handle errors (validation or other errors)
-    return h.response({ error }).code(400);
+    // --- Normalize sessionClassType filter ---
+    if (req.query.sessionClassType) {
+      filterValues.sessionClassType = Array.isArray(req.query.sessionClassType)
+        ? req.query.sessionClassType
+        : [req.query.sessionClassType];
+    }
+
+    // --- Normalize scheduleStatus filter ---
+    if (req.query.scheduleStatus) {
+      filterValues.scheduleStatus = Array.isArray(req.query.scheduleStatus)
+        ? req.query.scheduleStatus
+        : [req.query.scheduleStatus];
+    }
+
+    // --- Normalize startTime filter ---
+    if (req.query.startTime) {
+      filterValues.startTime = Array.isArray(req.query.startTime)
+        ? req.query.startTime
+        : [req.query.startTime];
+    }
+
+    // --- Normalize dateRange filter ---
+    if (req.query["dateRange.from"] && req.query["dateRange.to"]) {
+      filterValues.dateRange = {
+        from: req.query["dateRange.from"],
+        to: req.query["dateRange.to"]
+      };
+    }
   }
+
+  // 3. Build the full query object for validation
+  const queryObj = {
+    ...req.query,
+    filterValues,
+  };
+
+  // 4. Validate the query parameters using Zod
+  const { query } = getAllClassSheduleInput.parse({ query: queryObj });
+
+  // 5. Ensure offset and limit are strings or null
+  const queryForService = {
+    ...query,
+    offset:
+      query.offset !== null && query.offset !== undefined
+        ? String(query.offset)
+        : null,
+    limit:
+      query.limit !== null && query.limit !== undefined
+        ? String(query.limit)
+        : null,
+  };
+
+  // 6. Call the service with the normalized and validated query
+  return getAllClassShedule(queryForService);
 }
+
+
 ,
 
   // Handler for getting student by ID
   async getAllClassSheduleById(req: Request, h: ResponseToolkit) {
     try {
       // Fetch the student by ID
-      const result = await getAllClassSheduleById(String(req.params.alstudentsId));
+      const result = await getAllClassSheduleById(String(req.params.classSheduleId));
 
       // Handle not found case
       if (isNil(result)) {
@@ -206,124 +268,52 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
     const classDayValues = payload.classDay?.map((day: { value: string; label: string }) => day.value);
     const startTimeValues = payload.startTime?.map((time: { value: string; label: string }) => time.value);
     const endTimeValues = payload.endTime?.map((time: { value: string; label: string }) => time.value);
-    const result = await updateClassscheduleById(String(req.params.classSheduleId),
-    {   
+    const result = await updateClassscheduleById(String(req.params.classSheduleId), {
       student: {
-        studentId: payload.student?.studentId || "",
-        studentFirstName: payload.student?.studentFirstName || "",
-        studentLastName: payload.student?.studentLastName || "",
-        studentEmail:payload.student?.studentEmail|| "",
-        gender: payload.student?.gender || "",
+        studentId: payload.student?.studentId ?? "",
+        studentFirstName: payload.student?.studentFirstName ?? "",
+        studentLastName: payload.student?.studentLastName ?? "",
+        studentEmail: payload.student?.studentEmail ?? "",
+        gender: payload.student?.gender ?? "",
       },
-      teacher :{
-        teacherName: payload.teacher?.teacherName || "",
-        teacherEmail: payload.teacher?.teacherEmail|| ""
-      } ,
-      classDay :classDayValues ,
+      teacher: {
+        teacherId: payload.teacher?.teacherId ?? "",
+        teacherName: payload.teacher?.teacherName ?? "",
+        teacherEmail: payload.teacher?.teacherEmail ?? ""
+      },
+      classDay: classDayValues,
       package: payload.package,
       preferedTeacher: payload.preferedTeacher,
-      // course:payload.course,
       totalHourse: payload.totalHourse,
       startDate: payload.startDate,
       endDate: payload.endDate,
       startTime: startTimeValues,
       endTime: endTimeValues,
-      scheduleStatus: payload.scheduleStatus
-       } );
+      scheduleStatus: payload.scheduleStatus,
+    
+      // ✅ Add these:
+      sessionStarttime: payload.sessionStarttime,
+      sessionsEndtime: payload.sessionsEndtime,
+      sessionClassType: payload.sessionClassType,
+      sessionStatus:"NotCompleted"
+
+    });
+    
     if (isNil(result)) {
       return notFound(ClassSchedulesMessages.CANDIDATE_NOT_FOUND);
     }
-  
+    if(result){
+      await academicStudentReSchedule({data : result});
+       await academicAvailableTeachers({ event : "update" , data :{ date :payload.startDate , teacherId :payload.teacher?.teacherId , from  : startTimeValues , to : endTimeValues}}); 
+    }
+
     return result;
    },
-
-
-   
-//teacher-student count
-
-// async getTeacherStudentCount(req: Request, h: ResponseToolkit) {
-//   try {
-//     console.log("Query parameters received:", req.query);
-
-
-
-//     const teachers = await classShedule.aggregate([
-//       {
-//         $group: {
-//           _id: "$teacher.teacherEmail", // Group by teacherEmail
-//           teacherId: { $first: "$teacher.teacherId" },
-//           teacherName: { $first: "$teacher.teacherName" },
-//           teacherEmail: { $first: "$teacher.teacherEmail" },
-//           uniqueStudents: { $addToSet: "$student.studentId" } // Collect unique student IDs
-//         }
-//       },
-//       {
-//         $project: {
-//           teacherId: 1,
-//           teacherName: 1,
-//           teacherEmail: 1,
-//           studentCount: { $size: "$uniqueStudents" } // Count unique student IDs
-//         }
-//       }
-//     ]);
-
-//     return h.response({
-//       success: true,
-//       data: teachers,
-//     }).code(200);
-//   } catch (error) {
-//     console.error("Error fetching teacher-student count:", error);
-//     return h.response({ success: false, message: "Internal Server Error" }).code(500);
-//   }
-// }
 
 async getTeacherStudentCount(req: Request, h: ResponseToolkit) {
   try {
     console.log("Query parameters received:", req.query);
-
-    const teachers = await classShedule.aggregate([
-      {
-        $group: {
-          _id: "$teacher.teacherEmail", // Group by teacherEmail
-          teacherId: { $first: req.query },
-          teacherName: { $first: "$teacher.teacherName" },
-          teacherEmail: { $first: "$teacher.teacherEmail" },
-          uniqueStudents: { 
-            $addToSet: { 
-              studentId: "$student.studentId", 
-              gender: "$student.gender" 
-            } 
-          } // Collect unique student IDs and gender
-        }
-      },
-      {
-        $project: {
-          teacherId: 1,
-          teacherName: 1,
-          teacherEmail: 1,
-          studentCount: { $size: "$uniqueStudents" }, // Total unique students
-          maleCount: {
-            $size: {
-              $filter: {
-                input: "$uniqueStudents",
-                as: "student",
-                cond: { $eq: ["$$student.gender", "MALE"] }
-              }
-            }
-          }, // Count only male students
-          femaleCount: {
-            $size: {
-              $filter: {
-                input: "$uniqueStudents",
-                as: "student",
-                cond: { $eq: ["$$student.gender", "FEMALE"] }
-              }
-            }
-          }, // Count only female students
-        }
-      }
-    ]);
-
+    const teachers = await teacherStudentCount();
     return h.response({
       success: true,
       data: teachers,
@@ -332,9 +322,7 @@ async getTeacherStudentCount(req: Request, h: ResponseToolkit) {
     console.error("Error fetching teacher-student count:", error);
     return h.response({ success: false, message: "Internal Server Error" }).code(500);
   }
-}
-
-,
+},
 
 
 async totalhours(req: Request, h: ResponseToolkit) {
@@ -409,6 +397,211 @@ async teachingActivity(req: Request, h: ResponseToolkit) {
 
     // Handle errors properly
     return h.response({ error }).code(400);
+  }
+}
+,
+
+async updateteacherreschedule(req: Request, h: ResponseToolkit){
+  console.log("Raw Request Payload:", req.payload);
+  const { payload } = createInputValidation.parse({
+    payload: req.payload,
+ });
+ console.log("Parsed Payload:", payload);
+
+ const classDayValues = payload.classDay?.map((day: { value: string; label: string }) => day.value);
+ const startTimeValues = payload.startTime?.map((time: { value: string; label: string }) => time.value);
+ const endTimeValues = payload.endTime?.map((time: { value: string; label: string }) => time.value);
+
+
+ const classReschudle = await updateteacherreschedule(String(req.params.classSheduleId),{ 
+  teacher :{
+    teacherId: payload.teacher?.teacherId ?? "",
+    teacherName: payload.teacher?.teacherName ?? "",
+    teacherEmail: payload.teacher?.teacherEmail ?? ""
+  } ,
+  classDay :classDayValues,
+  package: payload.package,
+  preferedTeacher: payload.preferedTeacher,
+  // course:payload.course,
+   sessionClassType: payload.sessionClassType || "",
+   sessionStarttime: payload.sessionStarttime || "",
+   sessionsEndtime: payload?.sessionsEndtime || "",
+   totalHourse: payload.totalHourse,
+  startDate: payload.startDate,
+  endDate: payload.endDate,
+  startTime: startTimeValues,
+  endTime: endTimeValues,
+  scheduleStatus: "Reschedule",
+  studentAttendee: payload.studentAttendee,
+  teacherAttendee:payload.teacherAttendee,
+ 
+   }
+  );
+  if(classReschudle){
+    await academicAvailableTeachers({ event : "update" , data :{ date :payload.startDate , teacherId :payload.teacher?.teacherId , from  : startTimeValues , to : endTimeValues}});
+    await academicTeacherReSchedule({ data: classReschudle });
+  }
+  return classReschudle;
+  
+},
+
+async getStudentClassesCount (req: Request, h: ResponseToolkit){
+  return await getStudentClassCount(req.query.studentId);
+},
+
+async getTotalClassess(req: Request, h: ResponseToolkit){
+    return await getTotalClassesCount(req.query.dateRange as string);
+  },
+
+   async getClassesStatusCount(req: Request, h: ResponseToolkit){
+      return await getClassesStatusCount();
+    },
+
+    async getClassesWiseCount(req: Request, h: ResponseToolkit){
+      return await getClassesWiseCount();
+    },
+
+
+    async getTeacherStudentList(req: Request, h: ResponseToolkit) {
+      try {
+        // Parse and validate the query object
+      
+        // ✅ Correctly call the database function (not the handler itself)
+        return await getStudentList(req.query.teacherId); // Call the actual function fetching data
+      } catch (error) {
+        console.error("Error in getClassesForTeacher handler:", error);
+        throw error; // Handle the error appropriately
+      }
+    },
+    
+async getStudentsAttendanceCounts(req: Request, h: ResponseToolkit) {
+  try {
+    const teacherId = req.query.teacherId as string;
+
+    if (!teacherId) {
+      return h.response({ message: "Missing teacherId in query" }).code(400);
+    }
+
+    const data = await getTeacherAttendanceSummary(teacherId);
+    return h.response(data).code(200);
+  } catch (error) {
+    console.error("Error in getStudentsAttendanceCounts handler:", error);
+    return h.response({ message: "Internal Server Error" }).code(500);
+  }
+},
+//analytics card count
+
+async getAnalyticscardcount(req: Request, h: ResponseToolkit) {
+  try {
+    const teacherId = req.query.teacherId as string;
+
+    if (!teacherId) {
+      return h.response({ message: "Missing teacherId in query" }).code(400);
+    }
+
+    const data = await getgetAnalyticscardCalculation(teacherId);
+    return h.response(data).code(200);
+  } catch (error) {
+    console.error("Error in getStudentsAttendanceCounts handler:", error);
+    return h.response({ message: "Internal Server Error" }).code(500);
+  }
+},
+
+
+async bulkcreateandSchedule(req: Request, h: ResponseToolkit) {
+  try {
+    console.log("Raw Request Payload:", req.payload);
+
+    const { payload } = createInputValidation.parse({
+      payload: req.payload,
+    });
+
+       const rawPayload = req.payload as any;
+
+    console.log("Parsed Payload:", payload);
+     const randomFourDigitStr = Math.floor(Math.random() * 10000).toString().padStart(4, "0");
+      const meetingId = `ALF-GRPCLASS-${randomFourDigitStr}`;
+
+ const students:any = rawPayload.students || []; 
+ const alfurqanStudents = await AlStudentModule.findOne({_id:new Types.ObjectId(students[0].studentId)} ).exec();   // 🧠 Extract reference values from the first student
+ const evaluation = await Evaluation.findOne({ ["student.studentId"]: alfurqanStudents?.student.studentId }).exec();
+ const refCourse = alfurqanStudents?.student?.course ;
+  const refPackage = alfurqanStudents?.student?.package;
+  const refTotalHourse = evaluation?.hours;
+ 
+  // ✅ Validate that all students match the same course, package, and hours
+  for (const student of students) {
+    const alfurqanStudent = await AlStudentModule.findOne({_id: new Types.ObjectId(student.studentId)} ).exec()  // 🧠 Extract reference values from the first student
+ const evaluation = await Evaluation.findOne({ ["student.studentId"]: alfurqanStudents?.student.studentId }).exec();
+    if (
+     alfurqanStudent?.student.course !== refCourse,
+      alfurqanStudent?.student.package !== refPackage ,
+      evaluation?.hours !== refTotalHourse
+    ) {
+     return h.response({
+      status: "error",
+      message: "All students must have the same course, package, and total hours. Mismatch found in student ${student.studentId || student.studentEmail}"
+    }).code(404);
+    }
+  }
+
+    // Extract mapped values from dropdowns
+    const classDayValues = payload.classDay?.map((day: { value: string; label: string }) => day.value);
+    const startTimeValues = payload.startTime?.map((time: { value: string; label: string }) => time.value);
+    const endTimeValues = payload.endTime?.map((time: { value: string; label: string }) => time.value);
+
+    // Prepare common scheduling details
+    const commonScheduleData = {
+      teacher: {
+        teacherId: payload.teacher?.teacherId ?? "",
+        teacherName: payload.teacher?.teacherName ?? "",
+        teacherEmail: payload.teacher?.teacherEmail ?? ""
+      },
+      classLink: meetingId,
+      classDay: classDayValues,
+      package: payload.package,
+      preferedTeacher: payload.preferedTeacher,
+      sessionClassType: payload.sessionClassType || "",
+      sessionStarttime: payload.sessionStarttime || "",
+      sessionsEndtime: payload.sessionsEndtime || "",
+      sessionStatus: "NotCompleted",
+      totalHourse: payload.totalHourse,
+      startDate: payload.startDate,
+      endDate: payload.endDate,
+      startTime: startTimeValues,
+      endTime: endTimeValues,
+      scheduleStatus: payload.scheduleStatus,
+      studentAttendee: payload.studentAttendee,
+      teacherAttendee: payload.teacherAttendee
+    };
+
+    const allResults = [];
+    if(rawPayload.students){
+  for (const student of rawPayload.students) {
+    console.log("student>>>", student)
+      const result = await updateStudentClassSchedule(student.studentId || "", {
+        ...commonScheduleData,
+        student 
+      });
+
+      allResults.push({
+        studentId: student.studentId,
+        result
+      });
+    }
+    }
+    return h.response({
+      status: "success",
+      message: "Class schedule created for all students.",
+      data: allResults
+    }).code(200);
+
+  } catch (error: any) {
+    console.error("Bulk scheduling error:", error);
+    return h.response({
+      status: "error",
+      message: error?.message || "Something went wrong while scheduling classes."
+    }).code(500);
   }
 }
 

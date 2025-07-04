@@ -89,6 +89,23 @@ export const appStatus: Record<string, any> = Object.freeze({
   NEW: "New"
 });
 
+export const teacherStatus: Record<string, any> = Object.freeze({
+  ACTIVE: "Active",
+  IN_ACTIVE: "Inactive",
+  DELETED: "Deleted",
+  ARCHIVED: "Archived",
+  NEW: "New",
+  SCHEDULED: "Scheduled",
+  RESCHEDULED: "Re-Scheduled",
+});
+
+export const classType: Record<string, any> = Object.freeze({
+  REGULARCLASS: "REGULARCLASS",
+  GROUPCLASS: "GROUPCLASS",
+  TRIALCLASS: "TRIALCLASS",
+  EVALUATIONCLASS: "EVALUATIONCLASS",
+});
+
 export const classStatus: Record<string, any> = Object.freeze({
   COMPLETED: "completed",
   PENDING: "pending",
@@ -99,7 +116,7 @@ export const learningInterest: Record<string, any> = Object.freeze({
   ISLAMIC: "Islamic Studies",
   ARABIC : "Arabic",
 });
-export const numberOfStudents: Record<string, any> = Object.freeze({
+export const numberOfStudents: Record<string, number> = Object.freeze({
   ONE: 1,
   TWO: 2,
   THREE: 3,
@@ -120,7 +137,7 @@ export const referenceSource: Record<string, any> = Object.freeze({
   OTHER: "Other"  
 });
 
-export const appPlatforms: Record<string, string> = Object.freeze({
+export const appPlatforms: Record<string, any> = Object.freeze({
   WEB: "Web",
   ONLINE: "Online"
 })
@@ -131,7 +148,7 @@ export const evaluationStatus: Record<string, any> = Object.freeze({
   COMPLETED:"COMPLETED"
   });
 
-  export const role: Record<string, any> = Object.freeze({
+  export const role: Record<string, string> = Object.freeze({
     ACADEMICCOACH: "ACADEMICCOACH",
     TEACHER: "Teacher",
   });
@@ -139,13 +156,13 @@ export const evaluationStatus: Record<string, any> = Object.freeze({
   export const applicationStatus: Record<string, any> = Object.freeze({
     NEWAPPLICATION:"NEWAPPLICATION",
     SHORTLISTED:"SHORTLISTED",
-    RIJECTED:"REJECTED",
+    REJECTED:"REJECTED",
     WAITING:"WAITING",
     SENDAPPROVAL: "SENDAPPROVAL",
     APPROVED: "APPROVED"
     });
 
-export const eventType: Record<string, any> = Object.freeze({
+export const eventType: Record<string, string> = Object.freeze({
   MEETING_SCHEDULED: "MEETING_SCHEDULED",
   MEETING_CANCELLED: "MEETING_CANCELLED",
   MEETING_UPDATED: "MEETING_UPDATED",
@@ -153,6 +170,12 @@ export const eventType: Record<string, any> = Object.freeze({
 export const appRegexPatterns = Object.freeze({
   OBJECT_ID: /^[a-fA-F0-9]{24}$/,
   NUMBER: /^\d+$/
+});
+
+export const teacherPosition: Record<string, any> = Object.freeze({
+  QURANTEACHER :"Quran Teacher",
+  ISLAMICTEACHER: "Islamic Teacher",
+  ARABICTEACHER : "Arabic Teacher",
 });
 
 export const commonMessages: Record<string, any> = Object.freeze({
@@ -307,24 +330,6 @@ export const tenantsMessages: Record<string, any> = Object.freeze({
   BYID: "Get Tenant details by Tenant Code",
 });
 
-
-
-export const notificationsMessages: Record<string, any> = Object.freeze({
-  LIST: "Retrieve all the notifications list",
-  BULK_UPDATE: "Update all the notifications list by userId",
-  NOTIFICATION_NOT_FOUND: "Notification not found",
-  GET_ALL_LIST_START: 'getAllNotificationsRecords - Start',
-  GET_ALL_LIST_SUCCESS: 'getAllNotificationsRecords - Success',
-  REFERENCE_TYPES: ['Jobprofiling', 'MEETING_SCHEDULED', "JOB_NOTES", "CANDIDATE_FEEDBACKS", "IMPORT_JOBS", "CANDIDATE_JOB_APPLY", "CANDIDATE_INTERVIEW_STATUS"],
-  DATE_FORMAT: /^\d{4}-\d{2}-\d{2}$/,
-  DATE_FORMAT_INVALID: 'Date must be in the format YYYY-MM-DD',
-  UPDATE: "Update notification details by notificationId",
-  UPDATE_FAILED: "Failed to update the notification",
-  INVALID_ID: "Invalid ID",
-  INVALID_DATE_RANGE: "The date range is invalid because the start date is greater than the end date.",
-  MISSING_DATE_PAIR: "Both the start date and end date are required.",
-
-})
 export const dashboardMessages: Record<string, any> = Object.freeze({
   WIDGET_COUNT: "Get dashboard widget counts",
   // ... any other dashboard-related messages
@@ -360,4 +365,142 @@ export const assigmentType: Record<string, any> = Object.freeze({
   READING: "reading",
   IMAGE_IDENTIFICATION: "image_identification",
   WORD_MATCHING: "word_matching",
-  });
+ });
+
+
+export const notificationsMessages: Record<string, any> = Object.freeze({
+  LIST: "Retrieve all the notifications list",
+  BULK_UPDATE: "Update all the notifications list by userId",
+  NEXT_EVALUATION : "Next EvaluationClass scheduled",
+  UPCOMING_CLASSES : "Upcoming classes scheduled",
+  ADD_STUDENT : "New Student Added",
+  ADD_STUDENT_TRAIL : "Student Added on Trailclass",
+  SCHEDULE_CLASS : "Schedule Class",
+  RESCHEDULE_REQUEST : "Reschedule Requested",
+  ADD_TEACHER : "New Teacher Added",
+  TEACHER_RESCHEDULE : "Teacher reschedule requestedx`",
+  RESCHEDULE_REASON : "Reason for Reschedule",
+  LIVE_CLASS : "Live class Updated",
+  SUBMIT_FEEDBACK : "FeedBack Submitted",
+  ASSIGN_ASSIGNMENT : "Assignment Assigned",
+  ASSIGNMENT_COMPLETED : "Assignment Completed",
+  PAYMENT_ALERT : "Payment Status Updated",
+  UPCOMING_TASK : "Upcoming Task Alert",
+  TRAILCLASS_STATUS : "Trailclass status Updated",
+  LIVE_CLASS_FEEDBACK : "Live class Feedback Updated",
+  ADD_APPLICANT : "New Applicant Added",
+  APPLICATION_STATUS : "Application Status updated",
+  ADD_MEETING : "New Meeting Added",
+  WEEKLY_MEETING : "Weekely Meeting",
+  ADD_TEACHER_FOR_MEETING : "New Teacher added on Meeting",
+  ADD_TRAILCLASS_REQUEST : "Trailclass Request Added",
+  PAUSE_CLASS : "Class paused",
+  RESUME_CLASS : "Class Resumed",
+  ADD_STAFF : "New staffaddded",
+  ADD_COURSE : "New course added",
+  ADD_KNOWLEDGEBASE : "New knowledgebase Added",
+  ADD_ASSIGNMENT : "New Assignment Added",
+  ADD_PACKAGE : "New Package Added",
+  ADD_MEETING_TRAINING : "New Meeting and Training Added",
+  NEW_INVOICE : "New Invoice Added",
+  ROLE_ACCESS : "Roll access",
+
+});
+
+
+export const notificationStatus: Record<string, any> = Object.freeze({
+  SEEN : "Seen",
+  UN_SEEN: "Unseen",
+});
+
+
+export const roleAccess: Record<string, string> = Object.freeze({
+  LIST: "Retrieve all the users list",
+  BYID: "Retrieve user details by userId",
+  CREATE: "Create a new user",
+  UPDATE: "Update a existing user",
+  DELETE: "Delete user by userId",
+  BULK_DELETE: "Bulk Delete users by userIds",
+  USER_NOT_FOUND: "Your account is not found or active, contact admin",
+  ENCRYPT_PASSWORD_ERROR: "Password must be an encrypted value",
+  USER_PROFILE_INVALID_FILE_TYPE: "Invalid file type. Only .png , .jpg or jpeg files are allowed.",
+});
+
+export const otherEmployeesMessages: Record<string, string> = Object.freeze({
+  LIST: "Retrieve all the employee list",
+  BYID: "Retrieve employee details by employeeId",
+  CREATE: "Create a new employee",
+  UPDATE: "Update a existing employee",
+  DELETE: "Delete employee by employeeId",
+  BULK_DELETE: "Bulk Delete employee by employeeIds",
+  USER_NOT_FOUND: "Your account is not found or active, contact admin",
+  ENCRYPT_PASSWORD_ERROR: "Password must be an encrypted value",
+  USER_PROFILE_INVALID_FILE_TYPE: "Invalid file type. Only .png , .jpg or jpeg files are allowed.",
+});
+export const addAminMeetingMessages: Record<string, string> = Object.freeze({
+  LIST: "Retrieve all meetings",
+  BYID: "Retrieve meeting details by meetingId",
+  CREATE: "Create a new meeting",
+  UPDATE: "Update an existing meeting",
+  DELETE: "Delete a meeting by meetingId",
+  BULK_DELETE: "Bulk delete meetings by meetingIds",
+  USER_NOT_FOUND: "User not found or inactive, contact admin",
+  INVALID_DATE_FORMAT: "Invalid date format. Please provide a valid date.",
+  INVALID_TIME_FORMAT: "Invalid time format. Please use HH:MM format.",
+  MEETING_TITLE_REQUIRED: "Meeting title is required",
+  MEETING_DATE_REQUIRED: "Meeting date is required",
+  MEETING_TIME_REQUIRED: "Meeting start and end time are required",
+  TEACHER_REQUIRED: "At least one teacher must be assigned",
+  INVALID_STATUS: "Invalid meeting status",
+});
+
+
+export const addKnowledgeBaseMessages: Record<string, string> = Object.freeze({
+  LIST: "Retrieve all meetings",
+  BYID: "Retrieve meeting details by meetingId",
+  CREATE: "Create a new meeting",
+  UPDATE: "Update an existing meeting",
+  DELETE: "Delete a meeting by meetingId",
+  BULK_DELETE: "Bulk delete meetings by meetingIds",
+  USER_NOT_FOUND: "User not found or inactive, contact admin",
+  INVALID_DATE_FORMAT: "Invalid date format. Please provide a valid date.",
+  INVALID_TIME_FORMAT: "Invalid time format. Please use HH:MM format.",
+  COURSE_TITLE_REQUIRED: "Course title is required",
+});
+
+export const uploadedFormat: Record<string, any> = Object.freeze({
+  PDF :"Pdf",
+  VIDEO: "Video",
+});
+
+export const leaveStatus: Record<string, any> = Object.freeze({
+  PAID: "PAID",
+  CASUAL: "CASUAL",
+  SICK: "SICK",
+});
+
+export const leave: Record<string, any> = Object.freeze({
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED",
+  WAITINGLIST: "WAITINGLIST"
+});
+
+export const leaveRequestMessages: Record<string, string> = Object.freeze({
+  LIST: "Retrieve all leave requests",
+  BYID: "Retrieve leave request details by request ID",
+  CREATE: "Create a new leave request",
+  UPDATE: "Update an existing leave request",
+  DELETE: "Delete a leave request by ID",
+  BULK_DELETE: "Bulk delete leave requests by IDs",
+  APPROVE: "Approve a leave request",
+  REJECT: "Reject a leave request",
+  USER_NOT_FOUND: "Employee not found or inactive. Please contact admin",
+  ADMIN_NOT_FOUND: "Admin not found or unauthorized to approve",
+  INVALID_DATE_FORMAT: "Invalid date format. Please use YYYY-MM-DD",
+  INVALID_LEAVE_TYPE: "Invalid leave type. Accepted values are PAID, CASUAL, or SICK",
+  INSUFFICIENT_LEAVE_BALANCE: "Insufficient leave balance for the requested period",
+  LEAVE_QUOTA_EXCEEDED: "Monthly leave quota exceeded",
+  FROM_DATE_REQUIRED: "From date is required",
+  TO_DATE_REQUIRED: "To date is required",
+  REASON_REQUIRED: "Reason for leave is required",
+});

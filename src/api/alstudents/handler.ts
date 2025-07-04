@@ -2,12 +2,11 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
-import { createAlStudent, getAllalstudentsList, getalstudentsById } from "../../operations/alstudents";
+import { createAlStudent, getAllalstudentsList, getalstudentsById, getStudentCountriesCount, getStudentPercentage, getStudentRecordCount} from "../../operations/alstudents";
 import { alstudentsMessages } from "../../config/messages";
 import { isNil } from "lodash";
 import { zodAlStudentSchema } from "../../models/alstudents";
 import EvaluationModel from "../../models/evaluation"
-import student from "../../models/student";
 
 
 // Input validation schema
@@ -18,6 +17,7 @@ const getAllalstudentsListInputValidation = z.object({
     sortOrder: true,
     offset: true,
     limit: true,
+    studentId: true,
     filterValues: true,
   }),
 });
@@ -72,29 +72,35 @@ const handler = {
   // Handler for getting student by ID
   async getalstudentsById(req: Request, h: ResponseToolkit) {
     try {
-      // Fetch the student by ID
-      const studentDetails = await getalstudentsById(String(req.params.alstudentsId));
-
-      console.log(">>>",studentDetails?.student.studentId);
-      
-      const studentEvaluationDetails = await EvaluationModel.findOne({
-        'student.studentId': studentDetails?.student?.studentId
-    }).exec();
-
+      // Extract student ID from request params
+      const studentId = String(req.params.alstudentsId);
+      console.log("Fetching Student ID:", studentId);
+  
+      // Fetch student details asynchronously
+      const studentDetailsPromise = getalstudentsById(studentId);
+      const studentDetails = await studentDetailsPromise;
+  
       // Handle not found case
       if (isNil(studentDetails)) {
-        return h
-          .response({ message: alstudentsMessages.ALFURQANSTUDENTS_NOT_FOUND })
-          .code(404);
+        return h.response({ message: alstudentsMessages.ALFURQANSTUDENTS_NOT_FOUND }).code(404);
       }
-
-      // Return the found student
-      return {studentDetails,studentEvaluationDetails};
+  
+      console.log("Found Student Details:", studentDetails);
+  
+      // Fetch student evaluation details asynchronously
+      const studentEvaluationDetailsPromise = EvaluationModel.findOne({
+        "student.studentId": studentDetails?.student?.studentId,
+      }).lean();
+      const studentEvaluationDetails = await studentEvaluationDetailsPromise;
+  
+      console.log("Student Evaluation Details:", studentEvaluationDetails);
+  
+      // Return the found student details
+      return h.response({ studentDetails, studentEvaluationDetails }).code(200);
     } catch (error) {
-      // Handle errors (unexpected or other)
-      return h
-        .response({ error })
-        .code(500);
+      console.error("Error fetching student:", error);
+  
+      return h.response({ message: "Internal Server Error", error }).code(500);
     }
   },
 
@@ -118,6 +124,22 @@ const handler = {
         role: payload.role|| " "
       });
     },
+
+     async getAllStudentCount(req: Request, h: ResponseToolkit){
+    
+          return getStudentRecordCount();
+    
+     },
+
+     async getStudentGenderCount(req: Request, h: ResponseToolkit){
+    
+      return getStudentPercentage();
+
+ },
+ async getStudentCountryCount(req: Request, h: ResponseToolkit){
+  return getStudentCountriesCount();
+
+ }
 };
 
 

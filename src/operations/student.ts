@@ -1,9 +1,8 @@
 import { IStudentCreate, IStudents } from "../../types/models.types";
 import StudentModel from "../models/student";
 import { commonMessages, studentMessages } from "../config/messages";
-import { badRequest, Boom } from "@hapi/boom";
-import UserShiftSchedule from "../models/usershiftschedule"; // Add this import
-import { forEach, isNil } from "lodash";
+import { badRequest } from "@hapi/boom";
+import { isNil } from "lodash";
 import EmailTemplate from "../models/emailTemplate";
 import { sendEmailClient } from "../shared/email";
 import axios from "axios";
@@ -13,16 +12,23 @@ import Course from "../models/course";
 import { GetAllRecordsParams } from "../shared/enum";
 import AppLogger from "../helpers/logging";
 import { Types } from "mongoose";
+import { sendNotification } from "./notification";
+import UserModel from "../models/users";
+
 
 
 
 export interface StudentFilter {
-  id(id: any): string;
-  status: string;
+  id?: string;
+  status?: string;
   country?: string;
   course?: string;
   teacher?: string;
+  offset?: string | null;  // added offset
+  limit?: string | null;   // added limit
 }
+
+
 
 /**
  * Creates a new user.
@@ -33,67 +39,85 @@ export interface StudentFilter {
 export const createStudent = async (
     payload: IStudentCreate
 ): Promise<IStudents | { error: any }> => {
-    const newUser = await new StudentModel(payload);
+    const newUser = new StudentModel(payload);
     if (newUser.startDate?.toDateString() === new Date().toDateString()) {
         return {
             error: badRequest('Evaluation class is not allowed to current date. Select another date'),
         };
     }
-    console.log("newUser>>>>", newUser.preferredToTime)
-    const shiftScheduleRecord = await UserShiftSchedule.find({
-      role: "ACADEMICCOACH",
-    });
-    console.log(shiftScheduleRecord);
-    let academicCoachDetails: any = null;
+    // const shiftScheduleRecord = await UserShiftSchedule.find({
+    //   role: "ACADEMICCOACH",
+    // });
+    // console.log(shiftScheduleRecord);
+    // let academicCoachDetails: any = null;
 
-    if (shiftScheduleRecord.length > 0) {
+    // if (shiftScheduleRecord.length > 0) {
         
-        for (const shiftSchedule of shiftScheduleRecord) { // Use for...of instead of forEach
-            if (payload.startDate >= shiftSchedule.startdate && payload.startDate <= shiftSchedule.enddate) {
-                await validateHours(shiftSchedule.startdate, shiftSchedule.enddate, shiftSchedule.fromtime, shiftSchedule.totime, payload);
-             const meetingAvailability = await MeetingSchedule.findOne({
-                academicCoachId: shiftSchedule.academicCoachId,
-                startDate: shiftSchedule.startdate,
-                endDate: shiftSchedule.enddate, 
-                fromtime: shiftSchedule.fromtime,
-                totime: shiftSchedule.totime,
-             }) 
-             if(!meetingAvailability){
-              academicCoachDetails = {
-                academicCoachId: shiftSchedule.academicCoachId,
-                name: shiftSchedule.name,
-                role: shiftSchedule.role,
-                email: shiftSchedule.email
-            };
-            console.log("academicCoachDetails>>>>", academicCoachDetails);
-             }
+    //     for (const shiftSchedule of shiftScheduleRecord) { // Use for...of instead of forEach
+    //         if (payload.startDate >= shiftSchedule.startdate && payload.startDate <= shiftSchedule.enddate) {
+    //             await validateHours(shiftSchedule.startdate, shiftSchedule.enddate, shiftSchedule.fromtime, shiftSchedule.totime, payload);
+    //          const meetingAvailability = await MeetingSchedule.findOne({
+    //             academicCoachId: shiftSchedule.academicCoachId,
+    //             startDate: shiftSchedule.startdate,
+    //             endDate: shiftSchedule.enddate, 
+    //             fromtime: shiftSchedule.fromtime,
+    //             totime: shiftSchedule.totime,
+    //          }) 
+    //          if(!meetingAvailability){
+    //           academicCoachDetails = {
+    //             academicCoachId: shiftSchedule.academicCoachId,
+    //             name: shiftSchedule.name,
+    //             role: shiftSchedule.role,
+    //             email: shiftSchedule.email
+    //         };
+    //          }
                 
-                break; // Exit the loop once a valid academic coach is found
-            }
-        }
-    } else{
-        return {error: badRequest('Academic coach not available')};
-    }
+    //             break; // Exit the loop once a valid academic coach is found
+    //         }
+    //     }
+    // } else{
+    //     return {error: badRequest('Academic coach not available')};
+    // }
 
+    const academicCoach = await UserModel.findOne({
+      userId : payload.academicCoach.academicCoachId 
+    });
+
+      console.log("academicCoach>>>>", academicCoach);
     newUser.academicCoach = {
-        academicCoachId: academicCoachDetails?.academicCoachId, // Provide a default value if undefined
-        name: academicCoachDetails?.name,                       // Provide a default value if undefined
-        role: academicCoachDetails?.role, // Provide a default value if undefined
-        email: academicCoachDetails?.email // Provide a default value if undefined
+        academicCoachId: academicCoach?._id.toString() || " ", // Provide a default value if undefined
+        name: academicCoach?.userName || " ",                       // Provide a default value if undefined
+        role: academicCoach?.role[0] || " ", // Provide a default value if undefined
+        email: academicCoach?.email || " " // Provide a default value if undefined
     };
-console.log("newUser academicCoach>>>>",newUser);
-    const savedUser = await newUser.save();
+    const savedUser = await newUser.save(); 
+    await sendNotification({
+      messages: `${savedUser.firstName}! has been joined in our academic team !.`,
+      senderId: savedUser._id.toString(),
+      senderName: savedUser.firstName,
+      senderEmail: savedUser.email,
+      isRead : false,
+      receiverId: [savedUser.academicCoach.academicCoachId.toString(),"6805da8c06542aa33858b889"],
+      receiverName: [savedUser.academicCoach.name,"Admin"],
+      receiverEmail: [savedUser.academicCoach.email,"rahul.blackstoneinfomatics@gmail.com"],
+    
+      notificationType: "STUDENT_NOTIFICATION",
+      notificationStatus: "Unseen",
+      status: "active",
+      createdBy: "system",
+      updatedBy: "system",
+    });
   
     const emailTemplate = await EmailTemplate.findOne({
         templateKey: 'welcome_email',
     }).exec();
     if(emailTemplate){
         const emailTo = [
-            { email: payload.email, name: payload.firstName + ' ' + payload.lastName }
+            { email: payload.email }
         ];
         const subject = "Welcome To Alfurqan";
         const htmlPart = emailTemplate.templateContent.replace('<username>', payload.firstName + ' ' + payload.lastName);
-      //  console.log("emailTemplate>>>>",emailTemplate);
+        //const htmlPart = "<html><body><p>Hello World</p></body></html>";
         sendEmailClient(emailTo, subject,htmlPart);
     }
 
@@ -101,27 +125,17 @@ console.log("newUser academicCoach>>>>",newUser);
     const zoomMailTemplate = await EmailTemplate.findOne({
       templateKey: 'evaluation',
   }).exec();
-  //console.log("emailTemplate>>>>",zoomMailTemplate);
-    const subject = 'Evaluation Zoom Meeting';
-        const htmlPart = zoomMailTemplate?.templateContent.replace('<date>', payload.startDate.toDateString()).replace('<meetingtime>', payload.preferredFromTime).replace('<zoomlink>', meetingDetails.join_url);
-        const emailTo = [
-          { email: payload.email, name: payload.firstName + ' ' + payload.lastName }, { email: savedUser.academicCoach.email, name: savedUser.academicCoach.name }
-      ];
-
-      
-        if(htmlPart){
-            sendEmailClient(emailTo, subject,htmlPart);
-        }
+   
         const course = await Course.findOne({
           courseName: payload.learningInterest,
         });
         const CreatemeetingDetails = await MeetingSchedule.create(
           {
             academicCoach: {
-            academicCoachId: academicCoachDetails?.academicCoachId,
-            name: academicCoachDetails?.name,
-            role: academicCoachDetails?.role,
-            email: academicCoachDetails?.email
+            academicCoachId: savedUser?.academicCoach.academicCoachId,
+            name: savedUser?.academicCoach.name,
+            role: savedUser?.academicCoach.role,
+            email:savedUser?.academicCoach.email
             },
           teacher: {
             teacherId: null,
@@ -158,6 +172,17 @@ console.log("newUser academicCoach>>>>",newUser);
           lastUpdatedDate: new Date(),
           lastUpdatedBy: savedUser.firstName + ' ' + savedUser.lastName,
     });
+
+    const subject = 'Evaluation Zoom Meeting';
+    const htmlPart = zoomMailTemplate?.templateContent.replace('<date>', payload.startDate.toDateString()).replace('<meetingtime>', payload.preferredFromTime).replace('<zoomlink>', CreatemeetingDetails.meetingLink);
+    const emailTo = [
+      { email: payload.email }, { email: savedUser.academicCoach.email }
+  ];
+
+  
+    if(htmlPart){
+       sendEmailClient(emailTo, subject,htmlPart);
+    }
     const userObject = savedUser.toObject();
     await CreatemeetingDetails.save();
     return userObject;
@@ -165,7 +190,7 @@ console.log("newUser academicCoach>>>>",newUser);
 
 
 async function validateHours(shiftstartdate: Date, shiftenddate: Date, fromtime: string, totime: string, payload: IStudentCreate): Promise<any> {
-        const result = await calculateHours(payload);
+        const result = calculateHours(payload);
         if(result>1){
             throw new Error('Evaluation class duration is more than 1 hour');
         }
@@ -187,21 +212,14 @@ function calculateHours(payload: IStudentCreate) {
   const hours = (toTime.getTime() - fromTime.getTime()) / 3600000; // Convert milliseconds to hours
   return hours;
 }
-
 function parseTimeToDate(timeString: string): Date {
-  const [time, modifier] = timeString.split(' ');
-  let [hours, minutes] = time.split(':').map(Number);
-
-  if (modifier === 'PM' && hours < 12) {
-      hours += 12; // Convert PM hours to 24-hour format
-  } else if (modifier === 'AM' && hours === 12) {
-      hours = 0; // Convert 12 AM to 0 hours
-  }
+  const [hours, minutes] = timeString.split(':').map(Number);
 
   const date = new Date();
-  date.setHours(hours, minutes, 0, 0); // Set hours, minutes, seconds, and milliseconds
+  date.setHours(hours, minutes, 0, 0); // Set hours, minutes, seconds, milliseconds
   return date;
 }
+
 
 
 async function zoomMeetingInvite(savedUser: import("mongoose").Document<unknown, {}, IStudents> & IStudents & { _id: import("mongoose").Types.ObjectId; }) {
@@ -239,7 +257,6 @@ async function getZoomAccessToken() {
     if (accessToken) return accessToken; // Use cached token if available
     const clientId = config.zoomConfig.zoom_client_id;
     const clientSecret = config.zoomConfig.zoom_client_secret;
-    const accountId = config.zoomConfig.zoom_account_id;
     const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
     const response = await axios.post(
       `https://zoom.us/oauth/token?grant_type=account_credentials&account_id=${process.env.ZOOM_ACCOUNT_ID}`,
@@ -369,4 +386,93 @@ if (!isNil(filters.id)) {
   return StudentModel.findOne(query).lean();
 };
 
+
+export const getAllStudentVisitor = async (
+  filters: StudentFilter
+): Promise<
+  {
+    name: string;
+    Friend: number;
+    SocialMedia: number;
+    Email: number;
+    Google: number;
+    Other: number;
+  }[]
+> => {
+  const match: any = {};
+
+  if (!isNil(filters.teacher)) match.teacher = filters.teacher;
+  if (!isNil(filters.course)) match.course = filters.course;
+  if (!isNil(filters.country)) match.country = filters.country;
+  if (!isNil(filters.id)) match._id = new Types.ObjectId(String(filters.id));
+
+  const result = await StudentModel.aggregate([
+    { $match: match },
+    {
+      $group: {
+        _id: {
+          date: {
+            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }, // group by date
+          },
+          referralSource: "$referralSource",
+        },
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $sort: { "_id.date": 1 } // sort chronologically
+    }
+  ]);
+
+  const groupedMap: Record<
+    string,
+    {
+      name: string;
+      Friend: number;
+      SocialMedia: number;
+      Email: number;
+      Google: number;
+      Other: number;
+    }
+  > = {};
+
+  result.forEach((item) => {
+    const date = item._id.date;
+    const rawKey = item._id.referralSource?.replace(/\s+/g, '') ?? 'Other';
+    const key = rawKey.toLowerCase();
+
+    if (!groupedMap[date]) {
+      groupedMap[date] = {
+        name: date,
+        Friend: 0,
+        SocialMedia: 0,
+        Email: 0,
+        Google: 0,
+        Other: 0,
+      };
+    }
+
+    switch (key) {
+      case 'friend':
+        groupedMap[date].Friend += item.count;
+        break;
+      case 'socialmedia':
+        groupedMap[date].SocialMedia += item.count;
+        break;
+      case 'email':
+      case 'e-mail':
+        groupedMap[date].Email += item.count;
+        break;
+      case 'google':
+        groupedMap[date].Google += item.count;
+        break;
+      default:
+        groupedMap[date].Other += item.count;
+        break;
+    }
+  });
+
+  // Convert map to sorted array
+  return Object.values(groupedMap).sort((a, b) => a.name.localeCompare(b.name));
+};
 

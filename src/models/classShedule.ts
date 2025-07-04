@@ -3,7 +3,7 @@ import mongoose, { Schema } from "mongoose";
 import { IClassSchedule } from "../../types/models.types";
 
 import CustomEnumerator from "../shared/enum";
-import { z } from "zod";
+import { number, z } from "zod";
 import { appStatus, attendeeStatus, commonMessages } from "../config/messages";
 
 const classScheduleSchema = new Schema<IClassSchedule>(
@@ -29,7 +29,6 @@ const classScheduleSchema = new Schema<IClassSchedule>(
           type: String,
           required: true,
       }
-       
       },
       teacher: {
         teacherId: {
@@ -164,7 +163,41 @@ const classScheduleSchema = new Schema<IClassSchedule>(
     studentAttendee: {
       type: String,
       required: false
-    }
+    },
+    classhour: {
+      type: String,
+      required: false
+    }, 
+    currency: {
+      type: String,
+      required: false
+    }, 
+    amount: {
+      type: String,
+      required: false
+    },
+    earnings: {
+  type: Number,
+  required: false,
+  default: 0,
+},
+
+    sessionClassType: {
+      type: String,
+      required: false
+    }, 
+    sessionStarttime: {
+      type: String,
+      required: false
+    }, 
+    sessionsEndtime: {
+      type: String,
+      required: false
+    },
+    sessionStatus: {
+      type: String,
+      required: false
+    },
   },
   {
     collection: "classschedule",
@@ -174,13 +207,14 @@ const classScheduleSchema = new Schema<IClassSchedule>(
 
 export const zodClassScheduleSchema = z.object({
     student: z.object({
-        studentId: z.string().optional(),
+        studentId: z.string(),
         studentFirstName: z.string(),
         studentLastName: z.string(),
         studentEmail: z.string(),
         gender: z.string(),
     }),
     teacher: z.object({
+        teacherId: z.string(),
         teacherName: z.string(),
         teacherEmail: z.string(),
     }),
@@ -190,10 +224,21 @@ export const zodClassScheduleSchema = z.object({
             value: z.string(),
         })
     ),
+    sessionClassType:z.string().optional(),
+    sessionStarttime:z.string().optional(),
+    sessionsEndtime:z.string().optional(),
+    sessionStatus:z.string().optional(),
     package:z.string(),
     preferedTeacher:z.string().optional(),
-    course:z.string(),
+    course:z.object({
+        courseId:z.string().optional(),
+        courseName:z.string().optional()
+    }     
+    ),
     totalHourse: z.number().optional(),
+    classhour: z.string().optional(),
+    currency: z.string().optional(),
+    amount: z.string().optional(),
     startDate:z.string().refine((val) => !isNaN(Date.parse(val)), {
         message: commonMessages.INVALID_DATE_FORMAT,
       }).transform((val) => new Date(val)),
@@ -214,7 +259,7 @@ export const zodClassScheduleSchema = z.object({
   ),
     scheduleStatus: z.string(),
     classStatus: z.string(),
-  status: z.enum([appStatus.ACTIVE, appStatus.IN_ACTIVE, appStatus.DELETED]),
+    status: z.enum([appStatus.ACTIVE, appStatus.IN_ACTIVE, appStatus.DELETED]),
   createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: commonMessages.INVALID_DATE_FORMAT,
   }).transform((val) => new Date(val)).optional(),
@@ -225,7 +270,7 @@ export const zodClassScheduleSchema = z.object({
   lastUpdatedBy: z.string().optional(),
   studentAttendee: z.enum([attendeeStatus.PRESENT, attendeeStatus.ABSENT]),
   teacherAttendee: z.enum([attendeeStatus.PRESENT, attendeeStatus.ABSENT]),
-
+  teacherreschedule: z.string()
 
 })
 

@@ -14,8 +14,7 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "meetingSchedulelist"],
         auth: {
           strategies: ["jwt"],
-        },
-      },
+        },   },
     },
     
     {
@@ -27,8 +26,7 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "meetingSchedulelist"],
         auth: {
           strategies: ["jwt"],
-        },
-      },
+        }, },
     },
     
   ];

@@ -12,7 +12,7 @@ import  ClassScheduleModel  from "../models/classShedule"
 export const getAllalstudentsList = async (
   params: GetAllRecordsParams
 ): Promise<{ totalCount: number; students: IAlStudents[] }> => {
-  const { searchText, sortBy, sortOrder, offset, limit, filterValues } = params;
+  const { studentId, searchText, sortBy, sortOrder, offset, limit, filterValues } = params;
 
   // Construct query object based on filters
   const query: any = {};
@@ -24,6 +24,10 @@ export const getAllalstudentsList = async (
       { email: { $regex: searchText, $options: "i" } }, // Search by email (if applicable)
     ];
   }
+   
+    if (studentId) {
+      query["student.studentId"] = Array.isArray(studentId) ? { $in: studentId } : studentId;
+    }
 
   // Add filters to the query
   if (filterValues) {
@@ -64,23 +68,30 @@ export const getAllalstudentsList = async (
     studentQuery.exec(), // Fetch students with pagination
     AlStudentsModel.countDocuments(query).exec(), // Count total records
   ]);
-  //console.log("students>>>>>>>>", students);
 
 
 // Add classSchedule count to each student
 const studentsWithClassScheduleCount = await Promise.all(
   students.map(async (student) => {
     const classScheduleCount = await ClassScheduleModel.countDocuments({
-      'student.studentId': student._id.toString()
+      'student.studentId': student._id.toString() // ✅ Correct based on how you store it
     }).exec();
-      return {
+
+    // Fetch teacher and sessionClassType using same logic
+    const classSchedule = await ClassScheduleModel.findOne(
+      { 'student.studentId': student._id.toString() },  // ✅ must match same way as countDocuments
+      { 'teacher.teacherName': 1, 'sessionClassType': 1 }
+    ).sort({ _id: -1 }).lean();
+
+    return {
       ...student.toObject(),
-      classScheduleCount,
-      
+      classScheduleCount, // ✅ original logic
+      teacherName: classSchedule?.teacher?.teacherName || "",  // Ensure string
+      sessionClassType: classSchedule?.sessionClassType || ""  // Ensure string
     };
   })
 );
-console.log("studentsWithClassScheduleCount>>>>",studentsWithClassScheduleCount);
+
 
   // Log successful retrieval
   AppLogger.info(alstudentsMessages.GET_ALL_LIST_SUCCESS, {
@@ -91,13 +102,29 @@ console.log("studentsWithClassScheduleCount>>>>",studentsWithClassScheduleCount)
   return { totalCount, students: studentsWithClassScheduleCount };
 };
 
- export const getalstudentsById = async (
-    id: string
-  ): Promise<IAlStudents | null> => {
-    return AlStudentsModel.findOne({
-      _id: new Types.ObjectId(id),
+
+export const getalstudentsById = async (studentId: string): Promise<IAlStudents | null> => {
+  if (!studentId) {
+    console.log("Invalid student ID: ID is missing or undefined");
+    return null;
+  }
+
+  console.log(`Searching for student with studentId: ${studentId}`);
+
+  try {
+    // Query using student.studentId
+    const student = await AlStudentsModel.findOne({
+      _id: studentId,
     }).lean();
-  };
+const studentDetails = student as IAlStudents;
+    console.log("Fetched student details:", student);
+    return studentDetails;
+  } catch (error) {
+    console.error("Error fetching student by studentId:", error);
+    return null;
+  }
+};
+
   
   /**
  * Retrieves all user records for a given tenant, with support for search, pagination, sorting, role filtering, and excluding passwords.
@@ -151,3 +178,88 @@ console.log("studentsWithClassScheduleCount>>>>",studentsWithClassScheduleCount)
 
    return savedUser
  };
+
+
+ 
+
+ export const getStudentRecordCount = async()=>{
+ 
+   const alfStudentCount= await AlStudentsModel.aggregate([
+     {
+       $group: {
+         _id: null,
+         studentTotalCount: { $sum: 1 },
+         activeStudent: { $sum: { $cond: [{ $eq: ["$status", "Active"] }, 1, 0] } },
+         inActiveStudent: { $sum: { $cond: [{ $eq: ["$status", "InActive"] }, 1, 0] } },
+         onHoldStudent: { $sum: { $cond: [{ $eq: ["$studentStatus", "HOLD"] }, 1, 0] } },
+         studentOnBreak: { $sum: { $cond: [{ $eq: ["$studentStatus", "BREAKING"] }, 1, 0] } } 
+       },
+     },
+     {
+       $sort: { count: -1 }, // Optional: sort descending
+     },
+   ]);
+   
+   return  alfStudentCount ;
+   
+ };
+
+
+ export const getStudentPercentage = async() =>{
+     const studentTotalCount= await AlStudentsModel.aggregate([
+      
+       {
+        $group: {
+          _id: null,
+          studentCount: { $sum: 1 },
+          studentMaleCount: { $sum: { $cond: [{ $eq: ["$student.gender", "Male"] }, 1, 0] } },
+          studentFemaleCount: { $sum: { $cond: [{ $eq: ["$student.gender", "Female"] }, 1, 0] } },
+        },
+      },
+      ]);
+      const studentPercentage = studentTotalCount[0].studentCount;
+      const studentMalePercentage = ((studentTotalCount[0].studentMaleCount/ studentTotalCount[0].studentCount)*100).toFixed(2);
+      const studentFemalePercentage = ((studentTotalCount[0].studentFemaleCount/ studentTotalCount[0].studentCount)*100).toFixed(2);
+      
+      return {studentPercentage, studentMalePercentage, studentFemalePercentage};
+ };
+
+
+export const getStudentCountriesCount = async() =>{
+
+  const studentCountByCountry = await AlStudentsModel.aggregate([
+    {
+      $match: {
+        status: "Active", // Optional filter
+      },
+    },
+    {
+      $group: {
+        _id: "$student.country",
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $sort: { count: -1 }, // Optional: sort descending
+    },
+  ]);
+  
+  const studentCount = await AlStudentsModel.countDocuments({
+    status: "Active",
+  }).exec();
+  
+  const results: any[] = [];
+  
+  for (const studentCountry of studentCountByCountry) {
+    let studentCountryPercentage = ((studentCountry.count / studentCount) * 100).toFixed(2);
+    results.push({
+      country: studentCountry._id,
+      count: studentCountry.count,
+      percentage: parseFloat(studentCountryPercentage),
+    });
+  }
+  
+  
+  return { studentCount, studentCountByCountry: results };
+
+};

@@ -12,10 +12,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getAllUsers,
         description: userMessages.LIST,
         tags: ["api", "users"],
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
-      },
+        auth: {
+          strategies: ["jwt"],
+        }, },
     },
     {
       method: "GET",
@@ -26,8 +25,7 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "users"],
         auth: {
           strategies: ["jwt"],
-        },
-      },
+        }, },
     },
     {
       method: "POST",
@@ -38,8 +36,7 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "users"],
         auth: {
           strategies: ["jwt"],
-        },
-      },
+        },},
     },
     {
       method: "PUT",
@@ -50,9 +47,67 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "users"],
         auth: {
           strategies: ["jwt"],
-        },
-      },
+        },  },
     },
+
+    {
+      method: "GET",
+      path: "/teacher/statuscount",
+      options: {
+        handler: handler.getTeacherCount,
+        description: userMessages.LIST,
+        tags: ["api", "users"],
+        auth: {
+          strategies: ["jwt"],
+        },},
+    },
+    {
+      method: "GET",
+      path: "/teacher/gendercount",
+      options: {
+        handler: handler.getTeacherGenderCount,
+        description: userMessages.LIST,
+        tags: ["api", "users"],
+        auth: {
+          strategies: ["jwt"],
+        }, },
+    },
+    {
+      method: "GET",
+      path: "/otheremployees",
+      options: {
+        handler: handler.getOtherEmployees,
+        description: userMessages.LIST,
+        tags: ["api", "users"],
+        auth: {
+          strategies: ["jwt"],
+        }, },
+    },
+
+    {
+      method: "GET",
+      path: "/otherempcount",
+      options: {
+        handler: handler.getOtherEmpCount,
+        description: userMessages.LIST,
+        tags: ["api", "users"],
+        auth: {
+          strategies: ["jwt"],
+        },},
+    },
+
+    {
+      method: "GET",
+      path: "/otheremp/gendercount",
+      options: {
+        handler: handler.getOhterEmpGenderCount,
+        description: userMessages.LIST,
+        tags: ["api", "users"],
+        auth: {
+          strategies: ["jwt"],
+        }, },
+    },
+
   ];
   server.route(routes);
 };

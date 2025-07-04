@@ -1,6 +1,6 @@
 import { Server, ServerRoute } from "@hapi/hapi";
 import handler from "./handler";
-import { fileMessages, studentMessages } from "../../config/messages";
+import { studentMessages } from "../../config/messages";
 
 
 
@@ -14,10 +14,7 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.createStudent,
         description: studentMessages.CREATE,
         tags: ["api", "student"],
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
-      },
+       },
     },
 
     {
@@ -29,8 +26,7 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "studentlist"],
         auth: {
           strategies: ["jwt"],
-        },
-      },
+        }, },
     },
 
  
@@ -43,10 +39,19 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "studentlist"],
         auth: {
           strategies: ["jwt"],
-        },
-      },
+        }, },
     },
-
+    {
+      method: "GET",
+      path: "/studentvisitor",
+      options: {
+        handler: handler.getStudentVisitor,
+        description: studentMessages.LIST,
+        tags: ["api", "studentlist"],
+        auth: {
+          strategies: ["jwt"],
+        },  },
+    },
     // {
     //   method: "GET",
     //   path: "/student",

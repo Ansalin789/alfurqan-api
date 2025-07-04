@@ -16,6 +16,11 @@ import {
   createUser,
   deleteUserById,
   getAllUserRecords,
+  getOtherEmpCardCount,
+  getOtherEmpGender,
+  getOtherEmployeesDetails,
+  getTeacherCardCount,
+  getTeacherGenderCountDetails,
   getUserRecordById,
   updateUser,
 } from "../../operations/users";
@@ -99,6 +104,7 @@ const updateInputValidation = z.object({
 
       const { role, date } = query;
 
+      console.log(">>>>>>>>>>>>", role);
       // Build the filter object
       const filter: GetAlluserRecordsParams = {
         role,
@@ -106,6 +112,10 @@ const updateInputValidation = z.object({
       };
       if (date) {
         filter.date = date;
+      }
+      if(role){
+        filter.role = role;
+
       }
 
       // Fetch user records using the filter
@@ -221,4 +231,26 @@ const updateInputValidation = z.object({
 
     return result;
   },
+
+   async getTeacherCount(req: Request, h: ResponseToolkit){
+      return await getTeacherCardCount();
+    },
+
+    async getTeacherGenderCount(req: Request, h: ResponseToolkit){
+      return await getTeacherGenderCountDetails();
+    },
+
+    async getOtherEmployees(req: Request, h: ResponseToolkit){
+      return await getOtherEmployeesDetails();
+    },
+
+    async getOtherEmpCount(req: Request, h: ResponseToolkit){
+      return await getOtherEmpCardCount();
+    },
+
+    async getOhterEmpGenderCount(req: Request, h: ResponseToolkit){
+      return await getOtherEmpGender();
+    }
+    
+
 };

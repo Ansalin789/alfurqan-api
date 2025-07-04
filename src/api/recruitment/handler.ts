@@ -1,14 +1,16 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodRecruitmentSchema } from "../../models/recruitment";
-import { createRecruitment, getAllApplicantsRecords, getApplicantRecordById, updateApplicantByAdminId, updateApplicantById } from "../../operations/recruitment";
+import { createRecruitment, getAllApplicantsRecords, getAllTeacherRecords, getApplicantRecordById, getApplicationStatusData, getTeacherCountriesCountDetails, getTeacherListFemaleMale, updateApplicantByAdminId, updateApplicantById } from "../../operations/recruitment";
 import { Readable } from "stream";
 import * as Stream from "stream";
-import { zodGetAllApplicantsRecordsQuerySchema, zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
+import { zodGetAllApplicantsRecordsQuerySchema, zodGetAllRecordsQuerySchema, zodGetAllTeachersRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
 import { recruitmentMessages } from "../../config/messages";
 import pdfParse from "pdf-parse";
-import { isNil } from "lodash";
+import { isNil, result } from "lodash";
+import { supervisorCardCount, supervisorRecruitmentList, supervisorTeacherList } from "../../kafka/producers/supervisorProducer";
+import { sendNotification } from "../../operations/notification";
 
 const createInputValidation = z.object({
   payload: zodRecruitmentSchema.pick({
@@ -35,7 +37,6 @@ const createInputValidation = z.object({
     englishSpeaking: true,
     preferedWorkingDays: true,
     overallRating: true,
-    professionalExperience: true,
     skills: true,
     status: true,
     createdDate: true,
@@ -82,72 +83,144 @@ const getApplicantsInputValidation = z.object({
   }),
 });
 
+
+const getTeacherInputValidation = z.object({
+  query: zodGetAllTeachersRecordsQuerySchema.pick({
+    teacherGroup: true,
+    supervisorId: true
+  }),
+});
+
+
 export default{
-   async createRecruitement (req: Request, h: ResponseToolkit){
-       const { payload } = createInputValidation.parse({
-             payload: req.payload,
-           });
+  async createRecruitement(req: Request, h: ResponseToolkit) {
+  try {
+    const { payload } = createInputValidation.parse({
+      payload: req.payload,
+    });
 
+    const rawPayload = req.payload as any;
 
+    const uploadFileBuffer = rawPayload.uploadResume
+      ? await streamToBuffer(rawPayload.uploadResume)
+      : null;
 
-           const rawPayload = req.payload as any;
-    
-           const uploadFileBuffer = rawPayload.uploadResume
-           ? await streamToBuffer(rawPayload.uploadResume)
-           : null;
-                
-           const  experience = rawPayload.uploadResume? await extractResumeDetails(uploadFileBuffer) :  null
-          //console.log("Resume",uploadFileBuffer)
+    const experience = rawPayload.uploadResume
+      ? await extractResumeDetails(uploadFileBuffer)
+      : null;
 
-           return await createRecruitment({  
-            supervisor:{
-              supervisorId: payload.supervisor?.supervisorId || " ",
-              supervisorName: payload.supervisor?.supervisorName || " ",
-              supervisorEmail: payload.supervisor?.supervisorEmail || " ",
-              supervisorRole: payload.supervisor?.supervisorRole || " "
-            }  , 
-        candidateFirstName: payload.candidateFirstName,
-        candidateLastName: payload.candidateLastName,
-        gender: payload.gender || undefined,
-        applicationDate: payload.applicationDate || new Date(),
-        candidateEmail: payload.candidateEmail,
-        candidatePhoneNumber: payload.candidatePhoneNumber,
-        candidateCountry: payload.candidateCountry,
-        candidateCity: payload.candidateCity,
-        positionApplied: payload.positionApplied ,
-        currency: payload.currency, 
-        expectedSalary: payload.expectedSalary, 
-        preferedWorkingHours: payload.preferedWorkingHours,
-        uploadResume: uploadFileBuffer ? Buffer.from(uploadFileBuffer) : undefined ,
-        comments: payload.comments || "",
-        applicationStatus: payload.applicationStatus,
-        level: payload.level, 
-        quranReading: payload.quranReading, // Provide a default value for startDate
-        tajweed: payload.tajweed, // Use a valid EvaluationStatus value
-        arabicWriting: payload.arabicWriting, // Provide a default value for status
-        arabicSpeaking: payload.arabicSpeaking,
-        englishSpeaking: payload.englishSpeaking,
-        preferedWorkingDays: payload.preferedWorkingDays,
-        overallRating: payload.overallRating,
-        professionalExperience:experience?.workExperience || " ",
-        skills:experience?.skills || " ",
-        status:payload.status,
-        createdDate: payload.createdDate || new Date(),
-        createdBy: payload.createdBy || payload.candidateFirstName,
-        updatedDate: payload.updatedDate
-         }) 
-    },
-
-    async getAllApplicants (req: Request, h: ResponseToolkit){
-      const { query } = getApplicantsInputValidation.parse({
-      query: {
-      ...req.query,
-      filterValues: req.query?.filterValues ? JSON.parse(req.query.filterValues) : {},
+    const result = await createRecruitment({
+      supervisor: {
+        supervisorId: payload.supervisor?.supervisorId || " ",
+        supervisorName: payload.supervisor?.supervisorName || " ",
+        supervisorEmail: payload.supervisor?.supervisorEmail || " ",
+        supervisorRole: payload.supervisor?.supervisorRole || " ",
       },
-  });
-  return getAllApplicantsRecords(query);
+      candidateFirstName: payload.candidateFirstName,
+      candidateLastName: payload.candidateLastName,
+      gender: payload.gender || undefined,
+      applicationDate: payload.applicationDate || new Date(),
+      candidateEmail: payload.candidateEmail,
+      candidatePhoneNumber: payload.candidatePhoneNumber,
+      candidateCountry: payload.candidateCountry,
+      candidateCity: payload.candidateCity,
+      positionApplied: payload.positionApplied,
+      currency: payload.currency,
+      expectedSalary: payload.expectedSalary,
+      preferedWorkingHours: payload.preferedWorkingHours,
+      uploadResume: uploadFileBuffer
+        ? Buffer.from(uploadFileBuffer)
+        : undefined,
+      comments: payload.comments || "",
+      applicationStatus: payload.applicationStatus,
+      level: payload.level,
+      quranReading: payload.quranReading,
+      tajweed: payload.tajweed,
+      arabicWriting: payload.arabicWriting,
+      arabicSpeaking: payload.arabicSpeaking,
+      englishSpeaking: payload.englishSpeaking,
+      preferedWorkingDays: payload.preferedWorkingDays,
+      overallRating: payload.overallRating,
+      professionalExperience: JSON.parse(rawPayload.professionalExperience),
+      skills: payload.skills || " ",
+      status: payload.status,
+      createdDate: payload.createdDate || new Date(),
+      createdBy: payload.createdBy || payload.candidateFirstName,
+      updatedDate: payload.updatedDate,
+    });
+
+    // ✅ Check if result has an error before proceeding
+    if ("error" in result) {
+      return h.response({ message: "Recruitment creation failed", error: result.error }).code(400);
+    }
+    if(result){
+    await supervisorRecruitmentList({event :"create", data : result});
+    }
+    return h.response(result).code(201);
+
+  } catch (error) {
+    console.error("Recruitment creation error:", error);
+    return h.response({ message: "Internal Server Error", error }).code(500);
+  }
+},
+
+
+ async getAllApplicants(req: Request, h: ResponseToolkit) {
+  // Parse filterValues from either a JSON string or flat query params
+  let filterValues: any = {};
+
+  if (typeof req.query.filterValues === "string") {
+    try {
+      filterValues = JSON.parse(req.query.filterValues);
+    } catch {
+      filterValues = {};
+    }
+  } else {
+    filterValues = {
+      applicationStatus: req.query.applicationStatus,
+      positionApplied: req.query.positionApplied,
+      dateRange:
+        req.query["dateRange.from"] && req.query["dateRange.to"]
+          ? {
+              from: req.query["dateRange.from"],
+              to: req.query["dateRange.to"],
+            }
+          : undefined,
+    };
+  }
+
+  // Build the full query object for validation
+  const input = {
+    query: {
+      ...req.query,
+      filterValues,
     },
-    
+  };
+
+  // Validate and normalize query
+  const { query } = getApplicantsInputValidation.parse(input);
+
+  // ---- Fix: Convert offset and limit to string or null ----
+  const queryForService = {
+    ...query,
+    offset:
+      query.offset !== null && query.offset !== undefined
+        ? String(query.offset)
+        : null,
+    limit:
+      query.limit !== null && query.limit !== undefined
+        ? String(query.limit)
+        : null,
+  };
+
+  // Call your service function
+  return getAllApplicantsRecords(queryForService);
+}
+
+,
+
+
+
     async getApplicantRecordById(req: Request, h: ResponseToolkit){
       const result = await getApplicantRecordById(String(req.params.applicantId));
 
@@ -157,6 +230,9 @@ export default{
 
   return result;
     },
+
+
+    
 
     async updateApplicantRecordById(req: Request, h: ResponseToolkit) {
 
@@ -168,7 +244,11 @@ export default{
       if (isNil(result)) {
         return notFound(recruitmentMessages.USER_NOT_FOUND);
       }
-  
+      if(result){
+       const supervisorId = result.supervisor.supervisorId;
+      await supervisorCardCount({supervisorId});
+      await supervisorRecruitmentList({event : "update", data : result});
+      }
       return result;
     },
 
@@ -182,11 +262,74 @@ export default{
       if (isNil(result)) {
         return notFound(recruitmentMessages.USER_NOT_FOUND);
       }
-  
+       if(result.applicationStatus === "APPROVED"){
+           const supervisorId = result.supervisor.supervisorId;
+          await supervisorTeacherList({data: result});
+          await supervisorCardCount({supervisorId});
+          await sendNotification({
+            messages: `Admin gaves Approval to ${result.candidateFirstName} teacher !.`,
+            senderId: req.params.id.toString(),
+            senderName: result.candidateFirstName,
+            senderEmail: result.candidateEmail,
+            isRead : false,
+            receiverId: [result.supervisor.supervisorId],
+            receiverName: [result.supervisor.supervisorName],
+            receiverEmail: [result.supervisor.supervisorEmail],
+          
+            notificationType: "TEACHER_ADDED",
+            notificationStatus: "Unseen",
+            status: "active",
+            createdBy: "system",
+            updatedBy: "system",
+          });
+          await supervisorRecruitmentList({event : "update", data : result});
+        }else {
+         const supervisorId = result.supervisor.supervisorId;
+         await supervisorCardCount({supervisorId});
+         await sendNotification({
+            messages: `Admin added ${result.candidateFirstName} teacher in your team !.`,
+            senderId: req.params.id.toString(),
+            senderName: result.candidateFirstName,
+            senderEmail: result.candidateEmail,
+            isRead : false,
+            receiverId: [result.supervisor.supervisorId],
+            receiverName: [result.supervisor.supervisorName],
+            receiverEmail: [result.supervisor.supervisorEmail],
+            notificationType: "TEACHER_ADDED",
+            notificationStatus: "Unseen",
+            status: "active",
+            createdBy: "system",
+            updatedBy: "system",
+          });
+           await supervisorRecruitmentList({event : "update", data : result});
+            }
+
       return result;
-    }
+    },
 
+  async getTeacherList (req: Request, h: ResponseToolkit){
+      const { query } = getTeacherInputValidation.parse({
+      query: {
+      ...req.query,
+      },
+  });
+  return getAllTeacherRecords(query);
+    },
+    
 
+  async getTeacherListFemaleMale(req: Request, h: ResponseToolkit) {
+  const { query } = getTeacherInputValidation.parse({ query: req.query });
+  return await getTeacherListFemaleMale(query);
+}
+,
+
+  async getTeacherCountriesCount(req: Request, h: ResponseToolkit){
+      return await getTeacherCountriesCountDetails();
+    },
+
+   async getApplicationData(req: Request, h: ResponseToolkit){
+     return await getApplicationStatusData(req.query.fromDate, req.query.toDate);
+   }
 
 };
 
@@ -213,9 +356,9 @@ const extractResumeDetails = async (fileStream: any) => {
     const text = data.text;
 
     
-    // Extract Skills
-    const skillsMatch = text.match(/Skills([\s\S]*?)(?=(Education|Experience|Projects|$))/i);
-    const skills = skillsMatch ? skillsMatch[1].trim() : 'Not found';
+    // // Extract Skills
+    // const skillsMatch = text.match(/Skills([\s\S]*?)(?=(Education|Experience|Projects|$))/i);
+    // const skills = skillsMatch ? skillsMatch[1].trim() : 'Not found';
 
     // Extract Work Experience
     const workExpMatch = text.match(/EXPERIENCE([\s\S]*?)(?=(Education|Skills|Projects|$))/i);
@@ -224,12 +367,11 @@ const extractResumeDetails = async (fileStream: any) => {
 
     return {
       workExperience,
-      skills,
     };
   } catch (error) {
     console.error('Error extracting resume details:', error);
     throw error;
   }
-
+  
    
 };

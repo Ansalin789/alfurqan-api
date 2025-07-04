@@ -23,6 +23,10 @@ student: {
         type: String,
         required: true,
     },
+    courseId: {
+        type: String,
+        required: false,
+    },
     package:
     {
         type: String,
@@ -49,6 +53,10 @@ username: {
 password:{
     type:String,
     required: true, 
+},
+sessionClassType:{
+    type:String,
+    required: false,
 },
 role: {
     type: String,
@@ -100,6 +108,7 @@ export const zodAlStudentSchema = z.object({
       country: z.string(),
       gender: z.string()
     }),
+    sessionClassType:z.string().optional(),
     username: z.string().min(3),
     password: z.string().min(8),
     role: z.string(),

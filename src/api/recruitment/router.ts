@@ -1,5 +1,5 @@
 import { Server, ServerRoute } from "@hapi/hapi";
-import { fileMessages, recruitmentMessages, studentMessages } from "../../config/messages";
+import {  recruitmentMessages } from "../../config/messages";
 import handler from "./handler";
 
 
@@ -21,9 +21,6 @@ const register = async (server: Server): Promise<void> => {
           multipart: true,
           allow: "multipart/form-data",
         },
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
       },
     },
      {
@@ -33,10 +30,10 @@ const register = async (server: Server): Promise<void> => {
             handler: handler.getAllApplicants,
             description: recruitmentMessages.LIST,
             tags: ["api", "recruitment"],
-            auth: {
-              strategies: ["jwt"],
+            // auth: {
+            //   strategies: ["jwt"],
+            // },
             },
-          },
         },
         {
           method: "GET",
@@ -45,11 +42,11 @@ const register = async (server: Server): Promise<void> => {
             handler: handler.getApplicantRecordById,
             description: recruitmentMessages.LIST,
             tags: ["api", "recruitment"],
+        
             // auth: {
             //   strategies: ["jwt"],
             // },
-        
-          },
+           },
         },
 
         {
@@ -59,18 +56,10 @@ const register = async (server: Server): Promise<void> => {
             handler: handler.updateApplicantRecordById,
             description: recruitmentMessages.LIST,
             tags: ["api", "recruitment"],
-            payload: {
-              output: "stream",
-              parse: true,
-              maxBytes: 50 * 1024 * 1024,
-              multipart: true,
-              allow: "multipart/form-data",
-            },
-            // auth: {
-            //   strategies: ["jwt"],
-            // },
-
-          },
+            auth: {
+              strategies: ["jwt"],
+            }, 
+           },
         },
         {
           method: "PUT",
@@ -86,12 +75,61 @@ const register = async (server: Server): Promise<void> => {
             //   multipart: true,
             //  // allow: "multipart/form-data",
             // },
+            auth: {
+              strategies: ["jwt"],
+            },
+          },
+        },
+        {
+          method: "GET",
+          path: "/applicants/countriescount",
+          options: {
+            handler: handler.getTeacherCountriesCount,
+            description: recruitmentMessages.LIST,
+            tags: ["api", "recruitment"],
+            auth: {
+              strategies: ["jwt"],
+            }, },
+        },
+
+         {
+          method: "GET",
+          path: "/teacher",
+          options: {
+            handler: handler.getTeacherList,
+            description: recruitmentMessages.LIST,
+            tags: ["api", "recruitment"],
+            auth: {
+              strategies: ["jwt"],
+            },
+            },
+        },
+
+          {
+          method: "GET",
+          path: "/application",
+          options: {
+            handler: handler.getApplicationData,
+            description: recruitmentMessages.LIST,
+            tags: ["api", "recruitment"],
             // auth: {
             //   strategies: ["jwt"],
             // },
-          },
+            },
         },
 
+   {
+          method: "GET",
+          path: "/teacherfemalemale",
+          options: {
+            handler: handler.getTeacherListFemaleMale,
+            description: recruitmentMessages.LIST,
+            tags: ["api", "recruitment"],
+            auth: {
+              strategies: ["jwt"],
+            },
+            },
+        },
 ];
 server.route(routes);
 };

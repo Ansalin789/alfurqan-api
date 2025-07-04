@@ -11,6 +11,12 @@ import UserModel from "../../models/users";
 import  ClassScheduleModel  from "../../models/classShedule";
 import { Client } from '@microsoft/microsoft-graph-client';
 import { ClientSecretCredential } from "@azure/identity";
+import Course from "../../models/course";
+import { sendInvoiceEvent } from "../../kafka/producers/adminProducer";
+import { academicAvailableTeachers, academicDashboardCard, academicStudentList, academicStudentProfile } from "../../kafka/producers/academicProducer";
+import { sendEmailClient } from "../../shared/email";
+import EmailTemplate from "../../models/emailTemplate"; 
+
 
 export const createPaymentIntent = async (request: Request, h: ResponseToolkit) => {
   console.log("Received request payload:", request.payload);
@@ -24,18 +30,13 @@ export const createPaymentIntent = async (request: Request, h: ResponseToolkit) 
     let evaluationDetails = await EvaluationModel.findOne({
       _id: evaluationId
     })
-    // console.log("paymentIntentResponse>>>",paymentIntentResponse?paymentIntentResponse:" ");
     
-
     console.log("Evaluation Details:", evaluationDetails);
-    console.log("Payment Intent Response:", paymentIntentResponse ? paymentIntentResponse : "No response");
-
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency,
-    });
-
+    }); 
 if(paymentIntentResponse){
   const savePaymentDetails = PaymentDetailsModel.create({
     userId: evaluationDetails?._id,
@@ -48,56 +49,48 @@ if(paymentIntentResponse){
     status: "Active",
     createdBy: "System"
    });
-   const paymentDetails =  (await savePaymentDetails).save();
-}
+   (await savePaymentDetails).save();
+
+   const invoicePayload = InvoiceModel .create({
+    student: {
+      studentId: evaluationDetails?.student?.studentId || "",
+      studentName: `${evaluationDetails?.student?.studentFirstName ?? ""} ${evaluationDetails?.student?.studentLastName ?? ""}`,
+      studentEmail: evaluationDetails?.student?.studentEmail,
+      studentPhone: evaluationDetails?.student?.studentPhone,
+      country: evaluationDetails?.student?.studentCountry,
+      city: evaluationDetails?.student?.studentCity,
+    },
+    courseName: evaluationDetails?.student?.learningInterest, 
+    amount: evaluationDetails?.planTotalPrice || 0,
+    invoiceStatus: evaluationDetails?.invoiceStatus || "",
+    status: "Active",
+    createdBy: "System",
+    lastUpdatedBy: evaluationDetails?.updatedBy || "System",
+  });
   
+ 
+  const result = (await invoicePayload) .save();
+  await sendInvoiceEvent(result);
+  console.log(result);
+};
 
-    if(paymentIntentResponse.status == "succeeded" && evaluationDetails && evaluationDetails.studentStatus == "JOINED" && evaluationDetails.classStatus == "Completed" ){
-      createStudentPortal(evaluationDetails);
 
+const updateEvaluationDetails = await EvaluationModel.findByIdAndUpdate(
+  evaluationDetails?._id,
+  {
+    paymentStatus: paymentIntentResponse.status == "succeeded" ? "PAID" : "FAILED",
+  },
+  { new: true }
+);
+console.log("updateEvaluationDetails>>", updateEvaluationDetails);
+    if(paymentIntentResponse.status == "succeeded" && evaluationDetails && evaluationDetails.studentStatus == "JOINED" && evaluationDetails.classStatus == "COMPLETED" ){
+      const result = await createStudentPortal(updateEvaluationDetails);
+      const academicCoachId = updateEvaluationDetails?.academicCoachId;
+      await academicDashboardCard({academicCoachId});
+      await academicStudentList({event : "update", data : updateEvaluationDetails ,sender : academicCoachId});
+      await academicStudentProfile({data : result , sender : academicCoachId});  
     }
     console.log("Created Stripe PaymentIntent:", paymentIntent);
-
-    if (paymentIntentResponse) {
-      console.log("Saving payment details...");
-
-      const savePaymentDetails = await PaymentDetailsModel.create({
-        userId: evaluationDetails?._id,
-        userName: evaluationDetails?.student.studentFirstName,
-        paymentStatus: paymentIntentResponse ? paymentIntentResponse.status : "Pending",
-        paymentAmount: paymentIntent.amount,
-        paymentResponse: paymentIntentResponse,
-        paymentResponseId: paymentIntent.client_secret,
-        paymentDate: new Date(),
-        status: "Active",
-        createdBy: "System",
-      });
-
-      console.log("Saved Payment Details:", savePaymentDetails);
-
-    }
-
-    // if (
-    //   paymentIntentResponse.status === "succeeded" &&
-    //   evaluationDetails &&
-    //   evaluationDetails.studentStatus === "JOINED" &&
-    //   evaluationDetails.classStatus === "Completed"
-    // ) {
-    //   console.log("Payment succeeded, creating student portal...");
-    //   await createStudentPortal(evaluationDetails);
-    // }
-
-    // console.log("Updating evaluation payment status...");
-
-    await EvaluationModel.findByIdAndUpdate(
-      evaluationDetails?._id,
-      {
-        paymentStatus: paymentIntentResponse.status === "succeeded" ? "PAID" : "FAILED",
-      },
-      { new: true }
-    );
-
-    console.log("Returning clientSecret to frontend...");
     
     return h.response({
       clientSecret: paymentIntent.client_secret,
@@ -108,139 +101,10 @@ if(paymentIntentResponse){
   }
 };
 
-// async function createStudentPortal(updatedEvaluation: any) {
-//   console.log("Creating Student Portal for:", updatedEvaluation);
-
-// <<<<<<< HEAD
-// //  async function createStudentPortal(updatedEvaluation:any) {
-// //  console.log("updatedEvaluation>>", updatedEvaluation);
-// //     const specialChars = '@#$%&*!';
-// //     const randomNum = Math.floor(Math.random() * 1000); // Random number between 0-999
-// //     const randomSpecial = specialChars[Math.floor(Math.random() * specialChars.length)]; // Random special character
-  
-// //     // Generate password
-// //     const firstThreeChars = updatedEvaluation.student.studentFirstName.substring(0, 3); // First 3 characters of the username
-// //     const reversedUsername = updatedEvaluation.student.studentFirstName.split('').reverse().join(''); // Reverse the username
-  
-// //     const password = `${firstThreeChars}${randomSpecial}${randomNum}${reversedUsername}`;
-
-// //   const createStudentPortal = await StudentPortModel.create({
-// //     student : {
-// //       studentId : updatedEvaluation.student.studentId,
-// //       studentEmail: updatedEvaluation.student.studentEmail,
-// //       studentPhone: updatedEvaluation.student.studentPhone,
-// //       course: updatedEvaluation.student.learningInterest,
-// //       package: updatedEvaluation.subscription.subscriptionName,
-// //       city: updatedEvaluation.student.studentCity,
-// //       country: updatedEvaluation.student.studentCountry
-// //     },
-// //     username: updatedEvaluation.student.studentFirstName,
-// //     password: password,
-// //     role: "Student",
-// //     status: "Active",
-// //     createdDate: new Date,
-// //     createdBy: updatedEvaluation.createdBy,
-// //     updatedDate: new Date
-// //   }
-// //    )
-
-// // const saveStudent = createStudentPortal.save()
-// // console.log("Student portal",saveStudent )
-
-
-// // const payload: (IClassScheduleCreate);
-
-
-// //   const { classDay, startTime, endTime, startDate, endDate } = payload;
-
-// //   const results: (IClassSchedule | { error: any })[] = [];
-
-// //   // Validate inputs
-// //   if (!classDay || !startTime || !endTime || !startDate || !endDate || 
-// //       classDay.length !== startTime.length || startTime.length !== endTime.length) {
-// //     throw new Error("classDay, startTime, endTime, startDate, and endDate must be provided and arrays must match in length.");
-// //   }
-
-// //   for (let i = 0; i < classDay.length; i++) {
-// //     const day = classDay[i];
-// //     const start = startTime[i];
-// //     const end = endTime[i];
-
-// //     try {
-// //       // Fetch student details
-// //       const studentDetails = await StudentPortModel.findOne({
-// //         _id: (await saveStudent)._id
-// //       }).exec();
-
-// //       console.log("studentDetails>>>", studentDetails);
-
-// //       // Fetch teacher details
-// //       const teacherDetails = await UserModel.findOne({
-// //         role: "TEACHER",
-// //         userName: payload.teacher?.teacherName
-// //       }).exec();
-
-// //       console.log("teacherDetails>>>", teacherDetails);
-
-// //       // Map day name to numeric day (0=Sunday, 1=Monday, ..., 6=Saturday)
-// //       const dayIndex = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].indexOf(day);
-// //       if (dayIndex === -1) {
-// //         throw new Error(`Invalid classDay: ${day}`);
-// //       }
-
-// //       // Generate class dates within the range
-// //       const classDates = getDatesForWeekdays(new Date(startDate), new Date(endDate), dayIndex);
-// //       const meetingId = `alfregularclass-${studentDetails?._id}`;
-
-// //       for (const classDate of classDates) {
-// //         const newClassSchedule = new ClassScheduleModel({
-// //           student: {
-// //             studentId: studentDetails?._id,
-// //             studentFirstName: studentDetails?.username,
-// //             studentLastName: studentDetails?.username,
-// //             studentEmail: studentDetails?.student?.studentEmail
-// //           },
-// //           teacher: {
-// //             teacherId: teacherDetails?._id,
-// //             teacherName: teacherDetails?.userName,
-// //             teacherEmail: teacherDetails?.email
-// //           },
-// //           classLink:meetingId, 
-// //           classDay: day,
-// //           startTime: start,
-// //           endTime: end,
-// //           course:studentDetails?.student?.course,
-// //           package: studentDetails?.student?.package,
-// //           startDate: classDate,
-// //           endDate: classDate,
-// //           createdBy: new Date(),
-// //           status: "Active",
-// //           scheduleStatus: "Active",
-// //           totalHourse: payload.totalHourse,
-// //           preferedTeacher: payload.preferedTeacher,
-// //         });
-
-// //         //await createRecurringEvents("tech@alfurqan.academy",newClassSchedule.startDate, newClassSchedule.endDate, newClassSchedule.classDay,newClassSchedule);
-// //          const eventDetails = await createEvent(newClassSchedule);
-// //          console.log("eventDetails>>>", eventDetails);
-
-// //         const savedClassSchedule = await newClassSchedule.save();
-// //         console.log("savedClassSchedule>>>>", savedClassSchedule);
-// //         results.push(savedClassSchedule);
-// //       }
-// //     } catch (error) {
-// //       console.error("Error in scheduling:", error);
-// //       results.push({ error });
-// //     }
-// //   }
-
-
-
-// //   return saveStudent;
-// // }
 async function createStudentPortal(updatedEvaluation: any) {
   try {
 
+    
     const specialChars = "@#$%&*!";
     const randomNum = Math.floor(Math.random() * 1000); // Random number between 0-999
     const randomSpecial = specialChars[Math.floor(Math.random() * specialChars.length)]; // Random special character
@@ -251,6 +115,9 @@ async function createStudentPortal(updatedEvaluation: any) {
 
     const password = `${firstThreeChars}${randomSpecial}${randomNum}${reversedUsername}`;
 
+    const courseDetails = await Course.findOne({
+      courseName: updatedEvaluation.student.learningInterest
+    }).exec();
     // Create student portal entry
     const studentPortal = await StudentPortModel.create({
       student: {
@@ -261,9 +128,11 @@ async function createStudentPortal(updatedEvaluation: any) {
         package: updatedEvaluation.subscription.subscriptionName,
         city: updatedEvaluation.student.studentCity,
         country: updatedEvaluation.student.studentCountry,
-        gender: "Male"
+        gender: updatedEvaluation.student.studentGender
       },
       username: updatedEvaluation.student.studentFirstName,
+      sessionClassType: updatedEvaluation.classType,
+     
       password: password,
       role: "Student",
       status: "Active",
@@ -276,11 +145,10 @@ async function createStudentPortal(updatedEvaluation: any) {
    
     // Validate payload
     //const classDay, startTime, endTime, startDate, endDate }  = classSchedule;
+    if(updatedEvaluation.classType == "REGULARCLASS"){
     const classDayValues = updatedEvaluation.classDay;
    const startTimeValues = updatedEvaluation.startTime;
    const endTimeValues = updatedEvaluation.endTime;
-    
-console.log(">>>>>>>>>>>>>",classDayValues);
     const results: (IClassSchedule | { error: any })[] = [];
 
     for (let i = 0; i < classDayValues.length; i++) {
@@ -292,17 +160,18 @@ console.log(">>>>>>>>>>>>>",classDayValues);
         console.log("updatedEvaluationNew>>", updatedEvaluation);
         // Fetch student details
         const studentDetails = await StudentPortModel.findById(studentPortal._id).exec();
+        console.log("studentDetails>>", studentDetails);
+
         if (!studentDetails) throw new Error("Student details not found");
 
 
         // Fetch teacher details
         const teacherDetails = await UserModel.findOne({
           role: "TEACHER",
-          _id: updatedEvaluation.assignedTeacherId
+          userId: updatedEvaluation.assignedTeacherId
         }).exec();
      
 
-        console.log("teacherDetails>>>", updatedEvaluation.assignedTeacherId);
 
         // Map day name to numeric day (0=Sunday, ..., 6=Saturday)
         const dayIndex = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].indexOf(day);
@@ -314,43 +183,53 @@ console.log(">>>>>>>>>>>>>",classDayValues);
         const classDates = getDatesForWeekdays(new Date(updatedEvaluation.classStartDate), new Date(updatedEvaluation.classEndDate), dayIndex);
         const meetingId = `alfregularclass-${studentDetails._id}`;
 
+     
+
         for (const classDate of classDates) {
-          console.log("teacherDetails>>>", updatedEvaluation.assignedTeacherId);
           const newClassSchedule = new ClassScheduleModel({
             student: {
               studentId: studentDetails._id,
               studentFirstName: studentDetails.username,
               studentLastName: studentDetails.username,
               studentEmail: studentDetails.student.studentEmail,
-              gender: "Male",
+              gender: studentDetails.student.gender,
               package: updatedEvaluation.subscription?.subscriptionName
             },
             teacher: {
-              teacherId: teacherDetails?._id,
+              teacherId: teacherDetails?.userId,
               teacherName: teacherDetails?.userName,
               teacherEmail: teacherDetails?.email
             },
+            sessionClassType: updatedEvaluation.classType,
+            sessionStarttime: "",
+            sessionsEndtime: "",
+            teacherAttendee:"",
+            studentAttendee: "",
             classLink: meetingId,
             classDay: day,
             startTime: start,
             endTime: end,
-            course: studentDetails.student.course,
+            course: {
+              courseId: courseDetails?._id,
+              courseName: courseDetails?.courseName
+            },
             package: studentDetails.student.package,
+            totalHourse: updatedEvaluation.hours,
             startDate: classDate,
             endDate: classDate,
             createdBy: updatedEvaluation.createdBy,
             status: "Active",
-            scheduleStatus: "Active",
+            scheduleStatus: "Scheduled",
             totalHours: updatedEvaluation.accomplishmentTime,
             preferredTeacher: updatedEvaluation.student?.preferredTeacher
           });
 
           // Create event
-          const eventDetails = await createEvent(newClassSchedule);
+           await createEvent(newClassSchedule);
 
           // Save schedule
           const savedClassSchedule = await newClassSchedule.save();
-          console.log("savedClassSchedule>>>>", savedClassSchedule);
+          await academicAvailableTeachers({event : 'update' , data : {date : classDate , teacherId : teacherDetails?.userId ,from : start , to : end }});
           results.push(savedClassSchedule);
         }
       } catch (error) {
@@ -358,8 +237,13 @@ console.log(">>>>>>>>>>>>>",classDayValues);
         results.push({ error });
       }
     }
+  }
+  await StudentPortalMail(studentPortal);
+    return {studentdetails: studentPortal,
+      teacherId: updatedEvaluation.teacher.teacherId,
+      teacherName: updatedEvaluation.teacher.teacherName
+    };
 
-    return studentPortal;
   } catch (error) {
     console.error("Error in createStudentPortal:", error);
     throw error;
@@ -367,6 +251,32 @@ console.log(">>>>>>>>>>>>>",classDayValues);
 
 
 }
+
+
+async function StudentPortalMail(studentPortal:any){
+
+      try{
+              const emailTemplate = await EmailTemplate.findOne({
+                     templateKey: 'Student Portal',
+                 }).exec();
+                 if(emailTemplate){
+                     const emailTo = [
+                         { email: studentPortal.student.studentEmail }
+                     ];
+                     const subject = "Welcome To Alfurqan Team";
+                     const htmlPart = emailTemplate.templateContent.replace('<password>',studentPortal.password ).replace('<username>',studentPortal.username);
+                     console.log("emailTemplate>>>>",emailTemplate);
+                     sendEmailClient(emailTo, subject,htmlPart);
+                 }
+      }
+      catch(error){
+        console.error("Mail not sented to the Student");
+        throw error;
+      }
+    }
+
+
+
 
 export const createStudentPaymentIntent = async (request: Request, h: ResponseToolkit) => {
   console.log("Received request payload:", request.payload);
@@ -382,7 +292,6 @@ export const createStudentPaymentIntent = async (request: Request, h: ResponseTo
     });
 
     console.log("Invoice Details:", InvoiceDetails);
-    console.log("Payment Intent Response:", paymentIntentResponse ? paymentIntentResponse : "No response");
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
@@ -402,6 +311,7 @@ export const createStudentPaymentIntent = async (request: Request, h: ResponseTo
         paymentResponse: paymentIntentResponse,
         paymentResponseId: paymentIntent.client_secret,
         paymentDate: new Date(),
+        createdDate:new Date(),
         status: "Active",
         createdBy: "System",
       });
@@ -435,6 +345,9 @@ export const createStudentPaymentIntent = async (request: Request, h: ResponseTo
 
 // Helper function to get dates for specific weekdays between two dates
 const getDatesForWeekdays = (startDate: Date, endDate: Date, targetDay: number): Date[] => {
+  console.log("startDate", startDate);
+  console.log("endDate", endDate);
+  console.log("targetDay", targetDay);
   const dates: Date[] = [];
   const currentDate = new Date(startDate);
 
@@ -524,5 +437,3 @@ async function createEvent(newClassSchedule: any): Promise<void> {
       }
   }
 }
-
-

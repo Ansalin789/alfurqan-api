@@ -1,30 +1,40 @@
-import { appStatus, learningInterest, numberOfStudents, preferredTeacher, eventType, referenceSource, classStatus } from "../config/messages";
+import { classStatus } from "../config/messages";
 
 // Use an enum for better type safety
 export enum Status {
-  ACTIVE = appStatus.ACTIVE,
-  IN_ACTIVE = appStatus.IN_ACTIVE,
-  DELETED = appStatus.DELETED,
+  ACTIVE = "Active",
+  IN_ACTIVE = "Inactive",
+  DELETED ="Deleted",
+  ARCHIVED = "Archived",
+  NEW = "New"
 }
 
+export enum AssignmentStatus {
+  ASSIGNED = "ASSIGNED",
+  PENDING = "PENDING",
+  COMPLETED = "COMPLETED",
+  NOTASSIGNED = "NOTASSIGNED",
+  NOTCOMPLETED = "NOTCOMPLETED",
+}
 export enum LearningInterest {
-  QURAN = learningInterest.QURAN,
-  ISLAMIC = learningInterest.ISLAMIC,
-  ARANIC = learningInterest.ARANIC, // Fixed type (was ARABIC)
+  QURAN ="Quran",
+  ISLAMIC= "Islamic Studies",
+  ARABIC = "Arabic",
 }
 
 export enum NumberOfStudents {
-  ONE = numberOfStudents.ONE,
-  TWO = numberOfStudents.TWO,
-  THREE = numberOfStudents.THREE,
-  FOUR = numberOfStudents.FOUR,
-  FIVE = numberOfStudents.FIVE,
+
+  ONE = 1,
+  TWo = 2,
+  THREE = 3,
+  FOUR= 4,
+  FIVE= 5,
 }
 
 export enum PreferredTeacher {
-  TEACHER_1 = preferredTeacher.TEACHER_1,
-  TEACHER_2 = preferredTeacher.TEACHER_2,
-  TEACHER_3 = preferredTeacher.TEACHER_3,
+  TEACHER_1 = "Male",
+  TEACHER_2 = "Female",
+  TEACHER_3 = "Other",
 }
 
 export enum EvaluationStatus {
@@ -34,17 +44,17 @@ export enum EvaluationStatus {
 }
 
 export enum EventType {
-  MEETING_SCHEDULED = eventType.MEETING_SCHEDULED,
-  MEETING_WITHOUT_SCHEDULED = eventType.MEETING_WITHOUT_SCHEDULED,
-  MEETING_CANCELLED = eventType.MEETING_CANCELLED,
+  MEETING_SCHEDULED = "MEETING_SCHEDULED",
+  MEETING_CANCELLED = "MEETING_CANCELLED",
+  MEETING_UPDATED = "MEETING_UPDATED",
 }
 
 export enum ReferralSource {
-  FRIENDS = referenceSource.FRIENDS,
-  SOCIALMEDIA = referenceSource.SOCIALMEDIA, // Keep as string
-  EMAIL = referenceSource.EMAIL,
-  GOOGLE = referenceSource.GOOGLE,
-  OTHER = referenceSource.OTHER, // Keep as string
+  FRIEND ="Friend",
+  SOCIALMEDIA = "Social Media", // Keep as string
+  EMAIL = "E-Mail", 
+  GOOGLE = "Google",
+  OTHER = "Other"  // Keep as string
 }
 
 export class CustomEnumerator {
@@ -59,10 +69,10 @@ export class CustomEnumerator {
 }
 
 export interface GetAllRecordsParams {
-  groupId?:string;
-  roomId?:string;
-  supervisorId?:string;
-  teacherId?:string;
+  groupId?: string;
+  roomId?: string;
+  supervisorId?: string;
+  teacherId?: string;
   studentId?: string;
   academicCoachId?: string;
   searchText?: string;
@@ -72,14 +82,29 @@ export interface GetAllRecordsParams {
   limit?: string | null;
   role?: string;
   classDay?: any;
+  trialClassStatus?: any;
+  userid?: any;
   filterValues?: {
-    studentId?: string; // This is important if you're passing the studentId here
-    course?: string;
-    country?: string;
+  meetingStatus?: string | string[],
+      studentId?: string;
+    course?: {
+      courseName?: string | string[]; // ✅ Fix: course is now an object
+    };
+    
+   country?: string;
     teacher?: string;
     status?: string;
+    sessionClassType?: string | string[];
+    scheduleStatus?: string | string[];
+    startTime?: string | string[];
+    timing?: string;
+    dateRange?: {
+      from: string;
+      to: string;
+    };
   };
 }
+
 
 
 export interface GetAllApplicationsRecordsParams {
@@ -89,17 +114,28 @@ export interface GetAllApplicationsRecordsParams {
   offset?: string | null;
   limit?: string | null;
   filterValues?: {
-    applicationStatus?: string;
+    applicationStatus?: string[];       // Array of statuses (e.g., ["Pending", "Approved"])
+    positionApplied?: string[];         // Array of positions (e.g., ["Teacher", "Admin"])
+    dateRange?: {
+      from: string;                     // Start date (e.g., "2024-01-01")
+      to: string;                       // End date (e.g., "2024-12-31")
+    };
   };
 }
 
 
+
 export interface GetAlluserRecordsParams {
   date?: string;
-  role: string;
+  role?: string;
   studentId?:string;
   // startdate?: string;
   // enddate?: string;
+}
+
+export interface GetAllTeachersRecordsParams {
+  teacherGroup?: string;
+  supervisorId?: string;
 }
 
 export default CustomEnumerator;

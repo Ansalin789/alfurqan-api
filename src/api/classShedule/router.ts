@@ -5,32 +5,16 @@ import handler from "./handler";
 const register = async (server: Server): Promise<void> => {
     // Register all routes for this unit
     const routes: ServerRoute[] = [
-    
+     
       // {
-      //   method: "POST",
-      //   path: "/classschedule",
+      //   method: "PUT",
+      //   path: "/createclassschedule/{studentId}",
       //   options: {
-      //     handler: handler.classShedule,
-      //     description: evaluationMessages.CREATE,
-      //     tags: ["api", "class"],
-      //     // auth: {
-      //     //   strategies: ["jwt"],
-      //     // },
-      //   },
-      // }, 
-      
-      {
-        method: "PUT",
-        path: "/createclassschedule/{studentId}",
-        options: {
-         handler: handler.createandUpdateSchedule,
-         description: evaluationMessages.UPDATE,
-         tags: ["api", "evaluation"],
-          auth: {
-            strategies: ["jwt"],
-          },
-      },
-      },
+      //    handler: handler.createandUpdateSchedule,
+      //    description: evaluationMessages.UPDATE,
+      //    tags: ["api", "evaluation"],
+      // },
+      // },
       
       {
         method: "GET",
@@ -39,9 +23,6 @@ const register = async (server: Server): Promise<void> => {
          handler: handler.getAllClassShedule,
          description: ClassSchedulesMessages.LIST,
          tags: ["api", "classShedule"],
-        //  auth: {
-        //   strategies: ["jwt"],
-        // },
       },
       },
 
@@ -54,21 +35,19 @@ const register = async (server: Server): Promise<void> => {
          tags: ["api", "classShedule"],
          auth: {
           strategies: ["jwt"],
-        },
-      },
+        }, },
       },
 
- {
+      {
         method: "GET",
         path: "/classShedule/students",
         options: {
           handler: handler.getClassesForStudent,
           description: ClassSchedulesMessages.LIST,
           tags: ["api", "classShedule"],
-          // auth: {
-          //   strategies: ["jwt"],
-          // },
-        },
+          auth: {
+            strategies: ["jwt"],
+          },  },
       },
 
       {
@@ -78,20 +57,23 @@ const register = async (server: Server): Promise<void> => {
           handler: handler.getClassesForTeacher,
           description: ClassSchedulesMessages.LIST,
           tags: ["api", "classShedule"],
-          // auth: {
-          //   strategies: ["jwt"],
-          // },
-        },
+          auth: {
+            strategies: ["jwt"],
+          }, },
       },
 
       {
         method: "GET",
         path: "/teacher-student-count",
+        options: {
         handler: handler.getTeacherStudentCount,
+        description: ClassSchedulesMessages.LIST,
+        tags: ["api", "classShedule"],
+        auth: {
+          strategies: ["jwt"],
+        },
+       }
       },
-
-
-      
       {
         method: "PUT",
         path: "/classShedule/{classSheduleId}",
@@ -101,8 +83,7 @@ const register = async (server: Server): Promise<void> => {
          tags: ["api", "classShedule"],
          auth: {
           strategies: ["jwt"],
-        },
-      },  
+        }, },  
       },
 
       {
@@ -112,10 +93,9 @@ const register = async (server: Server): Promise<void> => {
          handler: handler.totalhours,
          description: evaluationMessages.GET,
          tags: ["api", "classShedule"],
-        //  auth: {
-        //   strategies: ["jwt"],
-        // },
-      },  
+         auth: {
+          strategies: ["jwt"],
+        }, },  
       },
       {
         method: "GET",
@@ -124,12 +104,112 @@ const register = async (server: Server): Promise<void> => {
          handler: handler.teachingActivity,
          description: evaluationMessages.GET,
          tags: ["api", "classShedule"],
-        //  auth: {
-        //   strategies: ["jwt"],
-        // },
-      },  
+         auth: {
+          strategies: ["jwt"],
+        },  },  
+      },
+      {
+        method: "PUT",
+        path: "/classShedule/teacherreschedule/{classSheduleId}",
+        options: {
+         handler: handler.updateteacherreschedule,
+         description: evaluationMessages.UPDATE,
+         tags: ["api", "classShedule"],
+         auth: {
+          strategies: ["jwt"],
+        }, },  
+      },
+      {
+        method: "GET",
+        path: "/classShedule/studentsclasscount",
+        options: {
+          handler: handler.getStudentClassesCount,
+          description: ClassSchedulesMessages.LIST,
+          tags: ["api", "classShedule"],
+          auth: {
+            strategies: ["jwt"],
+          },  },
       },
 
+      {
+        method: "GET",
+        path: "/classShedule/totalclasses",
+        options: {
+          handler: handler.getTotalClassess,
+          description: ClassSchedulesMessages.LIST,
+          tags: ["api", "classShedule"],
+          auth: {
+            strategies: ["jwt"],
+          }, },
+      },
+
+      {
+        method: "GET",
+        path: "/classShedule/classstatuscount",
+        options: {
+          handler: handler.getClassesStatusCount,
+          description: ClassSchedulesMessages.LIST,
+          tags: ["api", "classShedule"],
+          auth: {
+            strategies: ["jwt"],
+          }, },
+      },
+      {
+        method: "GET",
+        path: "/classShedule/classwisecount",
+        options: {
+          handler: handler.getClassesWiseCount,
+          description: ClassSchedulesMessages.LIST,
+          tags: ["api", "classShedule"],
+          auth: {
+            strategies: ["jwt"],
+          }, },
+      },
+      {
+        method: "GET",
+        path: "/classShedule/teacher/list",
+        options: {
+          handler: handler.getTeacherStudentList,
+          description: ClassSchedulesMessages.LIST,
+          tags: ["api", "classShedule"],
+          auth: {
+            strategies: ["jwt"],
+          }, },
+      },
+  {
+        method: "GET",
+        path: "/classstudentsattendancecounts",
+        options: {
+          handler: handler.getStudentsAttendanceCounts,
+          description: ClassSchedulesMessages.LIST,
+          tags: ["api", "classShedule"],
+          auth: {
+            strategies: ["jwt"],
+          }, },
+      },
+
+        {
+        method: "GET",
+        path: "/analyticscardcount",
+        options: {
+          handler: handler.getAnalyticscardcount,
+          description: ClassSchedulesMessages.LIST,
+          tags: ["api", "classShedule"],
+          auth: {
+            strategies: ["jwt"],
+          },
+         },
+      },
+      
+        {
+        method: "POST",
+        path: "/groupclassschedule/bulkcreate",
+        options: {
+         handler: handler.bulkcreateandSchedule,
+         description: evaluationMessages.UPDATE,
+         tags: ["api", "evaluation"],
+      },
+      },
     ];
     server.route(routes);
   };
