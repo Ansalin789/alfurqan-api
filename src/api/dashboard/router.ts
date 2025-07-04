@@ -26,9 +26,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getWidgetStudentCount,
         description: dashboardMessages.WIDGET_COUNT,
         tags: ["api", "dashboard"],
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
+        auth: {
+          strategies: ["jwt"],
+        },
       },
     },
 
@@ -52,12 +52,67 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.getWidgetSupervisorCount,
         description: dashboardMessages.WIDGET_COUNT,
         tags: ["api", "dashboard"],
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
+        auth: {
+          strategies: ["jwt"],
+        },
+        cors: {
+      origin: ['*'], 
+      additionalHeaders: ['supervisor'], 
+    },
       },
     },
 
+    {
+      method: "GET",
+      path: "/dashboard/admin/count",
+      options: {
+        handler: handler.getAdminCount,
+        description: dashboardMessages.CARD_COUNT,
+        tags: ["api", "dashboard"],
+        auth: {
+          strategies: ["jwt"],
+        },
+      },
+    },
+
+    {
+      method: "GET",
+      path: "/dashboard/admin/totaltrialrequest",
+      options: {
+        handler: handler.getTotalTrialRequest,
+        description: dashboardMessages.CARD_COUNT,
+        tags: ["api", "dashboard"],
+        auth: {
+          strategies: ["jwt"],
+        },
+      },
+    },
+   
+    {
+      method: "GET",
+      path: "/dashboard/admin/totalclass",
+      options: {
+        handler: handler.getTotalClass,
+        description: dashboardMessages.CARD_COUNT,
+        tags: ["api", "dashboard"],
+        auth: {
+           strategies: ["jwt"],
+         }, 
+      },
+    },
+
+     {
+      method: "GET",
+      path: "/dashboard/ac/upcomingclass",
+      options: {
+        handler: handler.getAcUpcomingClass,
+        description: dashboardMessages.CARD_COUNT,
+        tags: ["api", "dashboard"],
+        auth: {
+           strategies: ["jwt"],
+         },
+      },
+    },
 
 
   ];
