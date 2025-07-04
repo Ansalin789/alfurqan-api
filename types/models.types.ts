@@ -374,6 +374,12 @@ subscription: {
 };
 planTotalPrice: number
 classStartDate: Date;
+ weeklySlots?: {
+    [day: string]: {
+      from: string;
+      to: string;
+    }[];
+  };
 classEndDate: Date;
 classStartTime: string;
 classEndTime: string;
@@ -456,6 +462,12 @@ planTotalPrice: number
 classStartDate: Date;
 classEndDate: Date;
 classStartTime: string;
+weeklySlots?: {
+    [day: string]: {
+      from: string;
+      to: string;
+    }[];
+  };
 classEndTime: string;
 gardianName: string;
 gardianEmail: string;

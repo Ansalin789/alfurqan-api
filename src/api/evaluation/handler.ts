@@ -20,6 +20,7 @@ const createInputValidation = z.object({
     teacher: true,
     classDay: true,
     joiningDate: true,
+    weeklySlots:true,
     startTime:true,
     endTime:true,
     subscription:true,
@@ -131,6 +132,7 @@ export default {
               teacherId: payload.teacher?.teacherId  ?? "Not Assigned"
             },
             joiningDate: payload.joiningDate ?? new Date() ,
+            weeklySlots:payload.classType == "REGULARCLASS"? payload.weeklySlots : undefined,
             classDay : payload.classType == "REGULARCLASS"? classDayValues : undefined,
             startTime:payload.classType == "REGULARCLASS"? startTimeValues : undefined ,
             endTime: payload.classType == "REGULARCLASS"? endTimeValues: undefined,

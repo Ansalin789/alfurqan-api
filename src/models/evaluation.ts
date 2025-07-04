@@ -3,6 +3,14 @@ import { IEvaluation } from "../../types/models.types";
 import { z } from "zod";
 import { appStatus, classType, commonMessages, evaluationStatus, learningInterest, preferredTeacher, referenceSource } from "../config/messages";
 
+const TimeSlotSchema = new Schema(
+  {
+    from: { type: String, required: true },
+    to: { type: String, required: true },
+  },
+  { _id: false }
+);
+
 const evaluationSchema = new Schema<IEvaluation>({
 
 academicCoachId: {
@@ -86,7 +94,6 @@ academicCoachId: {
         type: Date,
         required: false,  
     } ,
-
     status: { 
         type: String,
         required: true,
@@ -119,6 +126,11 @@ academicCoachId: {
         required: false,
     }
    
+  },
+  weeklySlots: {
+    type: Map,
+    of: [TimeSlotSchema],
+    required: false,
   },
   classDay:{
     type: Array,
@@ -324,6 +336,13 @@ academicCoachId: {
     timestamps: false,
 }
 );
+
+const ZodTimeSlotSchema = z.object({
+  from: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Invalid from time (HH:mm)"),
+  to: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Invalid to time (HH:mm)"),
+});
+const WeeklySlotMapSchema = z.record(z.string(), z.array(ZodTimeSlotSchema));
+
 export const zodEvaluationSchema = z.object({
     academicCoachId: z.string(),
     student: z.object({
@@ -357,6 +376,7 @@ export const zodEvaluationSchema = z.object({
     joiningDate:  z.string().refine((val) => !isNaN(Date.parse(val)), {
         message: commonMessages.INVALID_DATE_FORMAT,
       }).transform((val) => new Date(val)).optional(),
+    weeklySlots: WeeklySlotMapSchema.optional(),
     classType:z.enum([classType.REGULARCLASS, classType.GROUPCLASS]).optional(),
     teacher:z.object ({
         teacherId: z.string().optional(),

@@ -21,6 +21,7 @@ import { academicAvailableTeachers } from "../kafka/producers/academicProducer";
 import { teacherAvailableTimeList } from "./auth";
 import { types } from "joi";
 import { sendNotification } from "./notification";
+import { evaluationTeacherSlotBook } from "../redis/handler/teacherSlotHander";
 
 
 
@@ -163,8 +164,22 @@ console.log("createEvaluation>>>",createEvaluation)
     if(newEvaluation.studentStatus == "JOINED" && newEvaluation.classStatus == "COMPLETED" ){
 
       await trialClassAssigned(createEvaluation, teacherDetails)
-
     }
+    if (
+  payload.classType === 'REGULARCLASS' &&
+  newEvaluation.studentStatus === "JOINED" &&
+  newEvaluation.classStatus === "COMPLETED" &&
+  payload.joiningDate !== undefined &&
+  payload.weeklySlots !== undefined && 
+  teacherDetails?.userId !== undefined 
+) {
+  await evaluationTeacherSlotBook(
+    payload.joiningDate.toISOString(),  
+    payload.weeklySlots,               
+    teacherDetails?.userId
+  );
+}
+
   
     return createEvaluation;
   };
