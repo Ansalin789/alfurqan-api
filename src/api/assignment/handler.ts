@@ -2,7 +2,7 @@ import { Request, ResponseToolkit } from "@hapi/hapi";
 import { z } from "zod";
 import {
   createAssignment,
-  getAssignmentsByStudentId,
+  getAssignments,
 } from "../../operations/assignments"; // Replace with your service logic
 import * as Stream from "stream";
 import { options } from "joi";
@@ -418,22 +418,47 @@ export default {
   //   }
   // },
 
-  async getAssignmentsByStudentId(req: Request, h: ResponseToolkit) {
-    const studentId = String(req.query.studentId); // ✅ Correct usage
+async getAssignmentsByStudentId(req: Request, h: ResponseToolkit) {
+  // Clean and validate input
+  const assignmentId = req.query.assignmentId?.toString().trim() || undefined;
+  const _id = req.query._id?.toString().trim() || undefined;
 
-    try {
-      const result = await getAssignmentsByStudentId(studentId);
+  console.log('⚙️ Assignment Query:', { assignmentId, _id });
 
-      if (!result || result.length === 0) {
-        return h
-          .response({ message: "No assignments found for this student." })
-          .code(404);
-      }
+  try {
+    // Get assignments from database
+    const assignments = await getAssignments({ assignmentId, _id });
 
-      return h.response(result).code(200);
-    } catch (error) {
-      console.error("❌ Error fetching assignments:", error);
-      return h.response({ error: "Failed to fetch assignments." }).code(500);
+    // Handle empty results
+    if (assignments.length === 0) {
+      return h.response({
+        status: 'not_found',
+        message: 'No assignments match the provided criteria',
+        query: { assignmentId, _id }
+      }).code(404);
     }
-  },
+
+    // Return successful response
+    return h.response({
+      status: 'success',
+      count: assignments.length,
+      data: assignments
+    }).code(200);
+
+  } catch (error: any) {
+    console.error('❌ Assignment Error:', error.message);
+    
+    return h.response({
+      status: 'error',
+      message: error.message,
+      details: {
+        type: error.name,
+        invalidQuery: { assignmentId, _id }
+      }
+    }).code(400);
+  }
+}
+
+
+
 };

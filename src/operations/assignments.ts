@@ -7,10 +7,15 @@ import {
 import assignment from "../models/assignments";
 import userModel from "../models/users";
 import alstudents from "../models/alstudents";
-import { Types } from "mongoose";
+import { FlattenMaps, Types } from "mongoose";
 import Stream from "stream";
 import mongoose from "mongoose";
+import assignments from "../models/assignments";
 
+interface AssignmentQuery {
+  assignmentId?: string;
+  _id?: string;
+}
 /**
  * Creates a new assignment record in the database.
  * @param {IAssignmentCreate} payload - The data required to create a new assignment record.
@@ -338,12 +343,49 @@ console.log("👩‍🏫 Assigned Teacher:", {
 //   }
 // };
 
-export const getAssignmentsByStudentId = async (
-  studentId: string
-): Promise<IAssignment[]> => {
-  if (!Types.ObjectId.isValid(studentId)) {
-    throw new Error("Invalid studentId");
+
+
+
+export const getAssignments = async ({
+  assignmentId,
+  _id
+}: AssignmentQuery): Promise<IAssignment[]> => {
+  // Validate at least one parameter exists
+  if (!assignmentId && !_id) {
+    throw new Error('Must provide either assignmentId or _id');
   }
 
-  return assignment.find({ studentId }).sort({ createdDate: -1 }).lean();
+  const queryConditions: any[] = [];
+
+  // Handle _id query
+  if (_id) {
+    if (!Types.ObjectId.isValid(_id)) {
+      throw new Error('Invalid _id format');
+    }
+    queryConditions.push({ _id: new Types.ObjectId(_id) });
+  }
+
+  // Handle assignmentId query
+  if (assignmentId) {
+    queryConditions.push({ assignmentId });
+  }
+
+  // Build final query
+  const finalQuery = queryConditions.length > 1 
+    ? { $or: queryConditions } 
+    : queryConditions[0];
+
+  // Execute query
+  return await assignments
+    .find(finalQuery)
+    .sort({ createdDate: -1 })
+    .lean<IAssignment[]>()
+    .exec();
 };
+
+
+
+
+
+
+
