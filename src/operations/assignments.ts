@@ -350,34 +350,29 @@ export const getAssignments = async ({
   assignmentId,
   _id
 }: AssignmentQuery): Promise<IAssignment[]> => {
-  // Validate at least one parameter exists
   if (!assignmentId && !_id) {
     throw new Error('Must provide either assignmentId or _id');
   }
 
-  const queryConditions: any[] = [];
+  const query: any = {};
 
-  // Handle _id query
   if (_id) {
     if (!Types.ObjectId.isValid(_id)) {
       throw new Error('Invalid _id format');
     }
-    queryConditions.push({ _id: new Types.ObjectId(_id) });
+    query._id = new Types.ObjectId(_id);
   }
 
-  // Handle assignmentId query
   if (assignmentId) {
-    queryConditions.push({ assignmentId });
+    // Exact match with string trimming
+    query.assignmentId = assignmentId.trim();
   }
 
-  // Build final query
-  const finalQuery = queryConditions.length > 1 
-    ? { $or: queryConditions } 
-    : queryConditions[0];
+  console.log('Final query:', JSON.stringify(query)); // Debug log
 
-  // Execute query
   return await assignments
-    .find(finalQuery)
+    .find(query)
+    .collation({ locale: 'en', strength: 2 }) // Case-insensitive
     .sort({ createdDate: -1 })
     .lean<IAssignment[]>()
     .exec();

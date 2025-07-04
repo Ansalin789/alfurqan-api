@@ -419,46 +419,54 @@ export default {
   // },
 
 async getAssignmentsByStudentId(req: Request, h: ResponseToolkit) {
-  // Clean and validate input
-  const assignmentId = req.query.assignmentId?.toString().trim() || undefined;
-  const _id = req.query._id?.toString().trim() || undefined;
-
-  console.log('⚙️ Assignment Query:', { assignmentId, _id });
+  const { assignmentId, _id } = req.query;
+  
+  // Clean and validate parameters
+  const cleanAssignmentId = assignmentId?.toString().trim();
+  const cleanId = _id?.toString().trim();
 
   try {
-    // Get assignments from database
-    const assignments = await getAssignments({ assignmentId, _id });
+    const results = await getAssignments({
+      assignmentId: cleanAssignmentId,
+      _id: cleanId
+    });
 
-    // Handle empty results
-    if (assignments.length === 0) {
+    if (results.length === 0) {
       return h.response({
         status: 'not_found',
-        message: 'No assignments match the provided criteria',
-        query: { assignmentId, _id }
+        message: 'No assignments found',
+        query: { 
+          assignmentId: cleanAssignmentId,
+          _id: cleanId,
+          note: 'Query was executed but returned empty results'
+        }
       }).code(404);
     }
 
-    // Return successful response
     return h.response({
       status: 'success',
-      count: assignments.length,
-      data: assignments
+      count: results.length,
+      data: results
     }).code(200);
 
   } catch (error: any) {
-    console.error('❌ Assignment Error:', error.message);
-    
+    console.error('Database error:', error);
     return h.response({
       status: 'error',
       message: error.message,
       details: {
-        type: error.name,
-        invalidQuery: { assignmentId, _id }
+        receivedQuery: {
+          assignmentId: assignmentId?.toString(),
+          _id: _id?.toString()
+        },
+        cleanedQuery: {
+          assignmentId: cleanAssignmentId,
+          _id: cleanId
+        }
       }
     }).code(400);
   }
 }
-
 
 
 };
