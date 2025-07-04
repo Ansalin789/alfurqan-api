@@ -201,7 +201,7 @@ const classScheduleSchema = new Schema<IClassSchedule>(
 
 export const zodClassScheduleSchema = z.object({
     student: z.object({
-        studentId: z.string().optional(),
+        studentId: z.string(),
         studentFirstName: z.string(),
         studentLastName: z.string(),
         studentEmail: z.string(),

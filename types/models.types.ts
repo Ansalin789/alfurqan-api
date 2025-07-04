@@ -561,6 +561,7 @@ export interface IClassScheduleCreate{
   sessionsEndtime:string;
   sessionStatus:string;
   classDay: string[];
+  classLink: string;
   classStatus:string;
   package: string;
   preferedTeacher: string;

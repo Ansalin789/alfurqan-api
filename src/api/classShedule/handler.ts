@@ -7,7 +7,9 @@ import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation"
 import { notFound } from "@hapi/boom";
 import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount, getTotalClassesCount, getClassesStatusCount, getClassesWiseCount, getStudentList, getTeacherAttendanceSummary, teacherStudentCount, getgetAnalyticscardCalculation} from "../../operations/classschedule";
 import { academicAvailableTeachers, academicStudentReSchedule, academicTeacherReSchedule } from "../../kafka/producers/academicProducer";
-
+import AlStudentModule from "../../models/alstudents"
+import Evaluation from "../../models/evaluation";
+import { Types } from "mongoose";
 
 const createInputValidation = z.object({
     payload: zodClassScheduleSchema.pick({
@@ -66,46 +68,46 @@ const updateClassScheduleInputValidation = z.object({
 })
 
 export default {
-async createandUpdateSchedule(req: Request, h: ResponseToolkit){
-    console.log("Raw Request Payload:", req.payload);
-    const { payload } = createInputValidation.parse({
-      payload: req.payload,
-   });
-   console.log("Parsed Payload:", payload);
+// async createandUpdateSchedule(req: Request, h: ResponseToolkit){
+//     console.log("Raw Request Payload:", req.payload);
+//     const { payload } = createInputValidation.parse({
+//       payload: req.payload,
+//    });
+//    console.log("Parsed Payload:", payload);
 
-   const classDayValues = payload.classDay?.map((day: { value: string; label: string }) => day.value);
-   const startTimeValues = payload.startTime?.map((time: { value: string; label: string }) => time.value);
-   const endTimeValues = payload.endTime?.map((time: { value: string; label: string }) => time.value);
+//    const classDayValues = payload.classDay?.map((day: { value: string; label: string }) => day.value);
+//    const startTimeValues = payload.startTime?.map((time: { value: string; label: string }) => time.value);
+//    const endTimeValues = payload.endTime?.map((time: { value: string; label: string }) => time.value);
 
-   return await updateStudentClassSchedule(String(req.params.studentId),{ 
-    teacher :{
-      teacherId: payload.teacher?.teacherId ?? "",
-      teacherName: payload.teacher?.teacherName ?? "",
-      teacherEmail: payload.teacher?.teacherEmail ?? ""
-    } ,
-    classDay :classDayValues,
-    package: payload.package,
-    preferedTeacher: payload.preferedTeacher,
-    // course:payload.course,
-     sessionClassType: payload.sessionClassType || "",
-     sessionStarttime: payload.sessionStarttime || "",
-     sessionsEndtime: payload?.sessionsEndtime || "",
-     sessionStatus:"NotCompleted",
-     totalHourse: payload.totalHourse,
-    startDate: payload.startDate,
-    endDate: payload.endDate,
-    startTime: startTimeValues,
-    endTime: endTimeValues,
-    scheduleStatus: payload.scheduleStatus,
-    studentAttendee: payload.studentAttendee,
-    teacherAttendee:payload.teacherAttendee,
+//    return await updateStudentClassSchedule(String(req.params.studentId),{ 
+//     teacher :{
+//       teacherId: payload.teacher?.teacherId ?? "",
+//       teacherName: payload.teacher?.teacherName ?? "",
+//       teacherEmail: payload.teacher?.teacherEmail ?? ""
+//     } ,
+//     classDay :classDayValues,
+//     package: payload.package,
+//     preferedTeacher: payload.preferedTeacher,
+//     // course:payload.course,
+//      sessionClassType: payload.sessionClassType || "",
+//      sessionStarttime: payload.sessionStarttime || "",
+//      sessionsEndtime: payload?.sessionsEndtime || "",
+//      sessionStatus:"NotCompleted",
+//      totalHourse: payload.totalHourse,
+//     startDate: payload.startDate,
+//     endDate: payload.endDate,
+//     startTime: startTimeValues,
+//     endTime: endTimeValues,
+//     scheduleStatus: payload.scheduleStatus,
+//     studentAttendee: payload.studentAttendee,
+//     teacherAttendee:payload.teacherAttendee,
    
-     }
-    );
+//      }
+//     );
 
 
-  }
-,
+//   }
+// ,
 
 
 async getClassesForStudent(req: Request, h: ResponseToolkit) {
@@ -502,6 +504,104 @@ async getAnalyticscardcount(req: Request, h: ResponseToolkit) {
   } catch (error) {
     console.error("Error in getStudentsAttendanceCounts handler:", error);
     return h.response({ message: "Internal Server Error" }).code(500);
+  }
+},
+
+
+async bulkcreateandSchedule(req: Request, h: ResponseToolkit) {
+  try {
+    console.log("Raw Request Payload:", req.payload);
+
+    const { payload } = createInputValidation.parse({
+      payload: req.payload,
+    });
+
+       const rawPayload = req.payload as any;
+
+    console.log("Parsed Payload:", payload);
+     const randomFourDigitStr = Math.floor(Math.random() * 10000).toString().padStart(4, "0");
+      const meetingId = `ALF-GRPCLASS-${randomFourDigitStr}`;
+
+ const students:any = rawPayload.students || []; 
+ const alfurqanStudents = await AlStudentModule.findOne({_id:new Types.ObjectId(students[0].studentId)} ).exec();   // 🧠 Extract reference values from the first student
+ const evaluation = await Evaluation.findOne({ ["student.studentId"]: alfurqanStudents?.student.studentId }).exec();
+ const refCourse = alfurqanStudents?.student?.course ;
+  const refPackage = alfurqanStudents?.student?.package;
+  const refTotalHourse = evaluation?.hours;
+ 
+  // ✅ Validate that all students match the same course, package, and hours
+  for (const student of students) {
+    const alfurqanStudent = await AlStudentModule.findOne({_id: new Types.ObjectId(student.studentId)} ).exec()  // 🧠 Extract reference values from the first student
+ const evaluation = await Evaluation.findOne({ ["student.studentId"]: alfurqanStudents?.student.studentId }).exec();
+    if (
+     alfurqanStudent?.student.course !== refCourse,
+      alfurqanStudent?.student.package !== refPackage ,
+      evaluation?.hours !== refTotalHourse
+    ) {
+     return h.response({
+      status: "error",
+      message: "All students must have the same course, package, and total hours. Mismatch found in student ${student.studentId || student.studentEmail}"
+    }).code(404);
+    }
+  }
+
+    // Extract mapped values from dropdowns
+    const classDayValues = payload.classDay?.map((day: { value: string; label: string }) => day.value);
+    const startTimeValues = payload.startTime?.map((time: { value: string; label: string }) => time.value);
+    const endTimeValues = payload.endTime?.map((time: { value: string; label: string }) => time.value);
+
+    // Prepare common scheduling details
+    const commonScheduleData = {
+      teacher: {
+        teacherId: payload.teacher?.teacherId ?? "",
+        teacherName: payload.teacher?.teacherName ?? "",
+        teacherEmail: payload.teacher?.teacherEmail ?? ""
+      },
+      classLink: meetingId,
+      classDay: classDayValues,
+      package: payload.package,
+      preferedTeacher: payload.preferedTeacher,
+      sessionClassType: payload.sessionClassType || "",
+      sessionStarttime: payload.sessionStarttime || "",
+      sessionsEndtime: payload.sessionsEndtime || "",
+      sessionStatus: "NotCompleted",
+      totalHourse: payload.totalHourse,
+      startDate: payload.startDate,
+      endDate: payload.endDate,
+      startTime: startTimeValues,
+      endTime: endTimeValues,
+      scheduleStatus: payload.scheduleStatus,
+      studentAttendee: payload.studentAttendee,
+      teacherAttendee: payload.teacherAttendee
+    };
+
+    const allResults = [];
+    if(rawPayload.students){
+  for (const student of rawPayload.students) {
+    console.log("student>>>", student)
+      const result = await updateStudentClassSchedule(student.studentId || "", {
+        ...commonScheduleData,
+        student 
+      });
+
+      allResults.push({
+        studentId: student.studentId,
+        result
+      });
+    }
+    }
+    return h.response({
+      status: "success",
+      message: "Class schedule created for all students.",
+      data: allResults
+    }).code(200);
+
+  } catch (error: any) {
+    console.error("Bulk scheduling error:", error);
+    return h.response({
+      status: "error",
+      message: error?.message || "Something went wrong while scheduling classes."
+    }).code(500);
   }
 }
 
