@@ -1,63 +1,79 @@
-import { Request, ResponseToolkit } from "@hapi/hapi";
-import {
-  dashboardWidgetCounts,
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { ResponseToolkit, Request } from "@hapi/hapi";
+import {acUpcomingClassList, dashboardCardCount, dashboardWidgetCounts, dashboardWidgetStudentCounts, dashboardWidgetSupervisorCounts, dashboardWidgetTeacherCounts, totalClassCount, totalTrialRequestCount } from "../../operations/dashboard";
 
-  dashboardWidgetStudentCounts,
-  dashboardWidgetSupervisorCounts,
-  dashboardCardCount,
-  totalTrialRequestCount,
-  totalClassCount,
-  acUpcomingClassList,
-
-} from "../../operations/dashboard";
-import { dashboardWidgetTeacherCounts } from "../../operations/dashboard";
-
-const dashboardHandler = {
+export default {
+  // Get widget counts for academic coach
   async getWidgetsCount(req: Request, h: ResponseToolkit) {
-    const academicCoachId = req.params.academicCoachId;
-    const result = await dashboardWidgetCounts(academicCoachId);
-    return h.response(result);
+    try {
+      const widgetCounts = await dashboardWidgetCounts(req.query.academicCoachId as string);
+      return h.response(widgetCounts).code(200);
+    } catch (error) {
+      console.error("Error in getWidgetsCount:", error);
+      return h.response({ error: "Failed to fetch widget counts." }).code(500);
+    }
   },
+
+  // Get widget counts for students
+  async getWidgetStudentCount(req: Request, h: ResponseToolkit) {
+    try {
+      const studentCounts = await dashboardWidgetStudentCounts(req.headers.Student as string);
+      return h.response(studentCounts).code(200);
+    } catch (error) {
+      console.error("Error in getWidgetStudentCount:", error);
+      return h.response({ error: "Failed to fetch student widget counts." }).code(500);
+    }
+  },
+
 
   async getWidgetTeacherCount(req: Request, h: ResponseToolkit) {
-    const teacherId = req.params.teacherId;
-    const result = await dashboardWidgetTeacherCounts(teacherId);
-    return h.response(result);
-  },
-
-  async getWidgetStudentCount(req: Request, h: ResponseToolkit) {
-    const studentId = req.params.studentId;
-    const result = await dashboardWidgetStudentCounts(studentId);
-    return h.response(result);
+    try {
+      const teacherCounts = await dashboardWidgetTeacherCounts(req.headers.teacher as string);
+      return h.response(teacherCounts).code(200);
+    } catch (error) {
+      console.error("Error in getWidgetStudentCount:", error);
+      return h.response({ error: "Failed to fetch student widget counts." }).code(500);
+    }
   },
 
   async getWidgetSupervisorCount(req: Request, h: ResponseToolkit) {
-    const supervisorId = req.params.supervisorId;
-    const result = await dashboardWidgetSupervisorCounts(supervisorId);
-    return h.response(result);
+    try {
+      const supervisorCounts = await dashboardWidgetSupervisorCounts(req.headers.supervisor as string);
+      return h.response(supervisorCounts).code(200);
+    } catch (error) {
+      console.error("Error in getWidgetStudentCount:", error);
+      return h.response({ error: "Failed to fetch student widget counts." }).code(500);
+    }
   },
 
-  async getDashboardCardCount(req: Request, h: ResponseToolkit) {
-    const result = await dashboardCardCount();
-    return h.response(result);
-  },
+  async getAdminCount(req: Request, h: ResponseToolkit){
+    return await dashboardCardCount();
+},
 
-  async getTrialRequestCount(req: Request, h: ResponseToolkit) {
-    const result = await totalTrialRequestCount();
-    return h.response(result);
-  },
+async getTotalTrialRequest(req: Request, h: ResponseToolkit){
+  return await totalTrialRequestCount();
+},
 
-  async getClassCount(req: Request, h: ResponseToolkit) {
-    const dateRange = req.params.dateRange;
-    const result = await totalClassCount(dateRange);
-    return h.response(result);
-  },
+async getTotalClass(req: Request, h: ResponseToolkit){
+  return await totalClassCount(req.query.dateRange as string);
+},
 
-  async getAcUpcomingClass(req: Request, h: ResponseToolkit) {
-    const academicCoachId = req.params.academicCoachId;
-    const result = await acUpcomingClassList(academicCoachId);
-    return h.response(result);
-  },
+async getAcUpcomingClass(req: Request, h: ResponseToolkit){
+  return await acUpcomingClassList(req.query.academicCoachId as string);
+
+}
+  // async getSupervisorApplicationCount (req: Request, h: ResponseToolkit) {
+  //   return await dashboardSupervisorApplicationCount(req.headers.supervisor as string);
+  // }
+
+  //  getAllEvaluationList(req: Request, h: ResponseToolkit) {
+  //     const { query } = getEvaluationListInputValidation.parse({
+  //       query: {
+  //         ...req.query,
+  //         filterValues: req.query?.filterValues ? JSON.parse(req.query.filterValues) : {},
+  //       },
+  //     });
+  //     return getAllEvaluationRecords(query);
+  //   },
+
 };
-
-export default dashboardHandler;
