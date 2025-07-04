@@ -1692,9 +1692,10 @@ export interface IAccessModel {
     teacher?: boolean;
     teachermodules?: {
       dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
-      liveclasses?: { read?: boolean, write?: boolean, delete?: boolean },
-      scheduledclasses?: { read?: boolean, write?: boolean, delete?: boolean },
-      assignments?: { read?: boolean, write?: boolean, delete?: boolean },
+      meeting?: { read?: boolean, write?: boolean, delete?: boolean },
+      schedule?: { read?: boolean, write?: boolean, delete?: boolean },
+      liveclass?: { read?: boolean, write?: boolean, delete?: boolean },
+      assignment?: { read?: boolean, write?: boolean, delete?: boolean },
       messages?: { read?: boolean, write?: boolean, delete?: boolean },
       analytics?: { read?: boolean, write?: boolean, delete?: boolean },
       support?: { read?: boolean, write?: boolean, delete?: boolean },
@@ -1759,9 +1760,10 @@ export interface IAccessModel extends Document{
     teacher?: boolean;
     teachermodules?: {
       dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
-      liveclasses?: { read?: boolean, write?: boolean, delete?: boolean },
-      scheduledclasses?: { read?: boolean, write?: boolean, delete?: boolean },
-      assignments?: { read?: boolean, write?: boolean, delete?: boolean },
+      meeting?: { read?: boolean, write?: boolean, delete?: boolean },
+      schedule?: { read?: boolean, write?: boolean, delete?: boolean },
+      liveclass?: { read?: boolean, write?: boolean, delete?: boolean },
+      assignment?: { read?: boolean, write?: boolean, delete?: boolean },
       messages?: { read?: boolean, write?: boolean, delete?: boolean },
       analytics?: { read?: boolean, write?: boolean, delete?: boolean },
       support?: { read?: boolean, write?: boolean, delete?: boolean },
