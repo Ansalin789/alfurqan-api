@@ -1068,6 +1068,8 @@ export const getStudentList = async (
   {
     studentId: string;
     name: string;
+    classType?: string;
+    groupClassId?: string
     assignment?: {
       assignmentId: string;
       assignmentType: string;
@@ -1085,12 +1087,14 @@ export const getStudentList = async (
     // Fetch class schedules taught by the given teacher, returning only the 'student' field
     const classSchedules = await ClassScheduleModel.find(
       { "teacher.teacherId": teacherId },
-      { student: 1 }
+      { student: 1,  sessionClassType: 1, classLink: 1 }
     ).lean();
     const uniqueStudentsMap = new Map();
 
     for (const cls of classSchedules) {
       const student = cls.student;
+      const classType = cls.sessionClassType;
+      const groupClassId = cls.classLink;
       if (student?.studentId && !uniqueStudentsMap.has(student.studentId)) {
         const alstudent = await AlStudenModel.findOne({
           _id: cls.student.studentId,
@@ -1139,8 +1143,29 @@ export const getStudentList = async (
         }
         uniqueStudentsMap.set(student.studentId, {
           studentId: student.studentId,
-          name: student.studentFirstName, // or student.name depending on your schema
-          studentDetails: evaluation,
+          name: student.studentFirstName,
+          studentDetails:{
+          student:evaluation?.student,
+          teacher: evaluation?.teacher,
+          subscription: evaluation?.subscription,
+          id: evaluation?._id,
+          academicCoachId: evaluation?.academicCoachId,
+          classType: evaluation?.classType,
+          hours: evaluation?.hours,
+          planTotalPrice: evaluation?.planTotalPrice,
+          accomplishmentTime: evaluation?.accomplishmentTime,
+          studentRate: evaluation?.studentRate,
+          studentStatus: evaluation?.studentStatus,
+          classStatus: evaluation?.classStatus,
+          trialClassStatus:evaluation?.trialClassStatus,
+          paymentLink: evaluation?.paymentLink,
+          paymentStatus: evaluation?.paymentStatus,
+          teacherStatus:evaluation?.teacherStatus,
+          expectedFinishingDate: evaluation?.expectedFinishingDate,
+          assignedTeacherEmail:  evaluation?.assignedTeacherEmail
+          } ,
+          classType,
+          groupClassId,
           assignment: assignments,
         });
       }
