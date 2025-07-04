@@ -738,15 +738,15 @@ export interface IAssignment extends Document {
     type: "quiz" | "writing" | "reading" | "imageIdentification" | "wordMatching";
     name?: string;
   };
-  chooseType: boolean;
-  trueorfalseType: boolean;
+  chooseType?: boolean;
+  trueorfalseType?: boolean;
   question: string;
-  hasOptions: boolean;
-  options: {
-    optionOne: string;
-    optionTwo: string;
-    optionThree: string;
-    optionFour: string;
+  hasOptions?: boolean;
+  options?: {
+    optionOne?: string;
+    optionTwo?: string;
+    optionThree?: string;
+    optionFour?: string;
   };
   audioFile?: Buffer;
   uploadFile?: Buffer;
@@ -755,8 +755,8 @@ export interface IAssignment extends Document {
   createdBy: string;
   updatedDate: Date;
   updatedBy: string;
-  level: string;
-  courses: string;
+  level?: string;
+  courses?: string;
   assignedDate: Date;
   dueDate: Date;
   answer: string;
