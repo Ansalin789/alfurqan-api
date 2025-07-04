@@ -354,8 +354,8 @@ teacher:{
   teacherName: string;
   teacherEmail: string;
 },
+joiningDate: Date;
 classDay: any;
-
 startTime: any;
 endTime: any;
 isLanguageLevel: boolean;
@@ -399,7 +399,6 @@ invoiceStatus?: string;
 paymentLink: string;
 paymentStatus?: string;
 teacherStatus?: string;
-joiningDate: string;
 amount?: string;
 currency?: string;
 status?: string;
@@ -440,6 +439,7 @@ classType: string;
 teacher:{
   teacherId: string;
 },
+joiningDate?: Date;
 classDay?: string[];
 startTime?: string[];
 endTime?: string[];
