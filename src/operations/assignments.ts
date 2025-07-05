@@ -406,24 +406,60 @@ export const getAssignmentForStudentId = async ({
     {
       $replaceWith: "$doc"
     },
+  
+  ]).exec();
+};
+
+
+export const getStudentCardCount = async ({
+  studentId
+}: {
+  studentId: string;
+}): Promise<{
+  totalAssigned: number;
+  totalCompleted: number;
+  totalPending: number;
+}> => {
+  const trimmedId = studentId.trim();
+
+  const result = await assignments.aggregate([
+    {
+      $match: {
+        studentId: trimmedId
+      }
+    },
+    {
+      $group: {
+        _id: "$assignmentStatus", 
+        count: { $sum: 1 }
+      }
+    },
     {
       $project: {
-        _id: 1,
-        studentId: 1,
-        assignmentId: 1,
-        assignedBy: 1,         
-        course: 1,             
-        level: 1,              
-        assignmentName: 1,
-        classType: 1,          
-        assignedDate: 1,       
-        dueDate: 1,           
-        assignmentStatus: 1,   
-        title: 1,
-        createdDate: 1
+        _id: 0,
+        assignmentStatus: "$_id", 
+        count: 1
       }
     }
   ]).exec();
+
+  const response = {
+    totalAssigned: 0,
+    totalCompleted: 0,
+    totalPending: 0
+  };
+
+  for (const item of result) {
+    if (item.assignmentStatus === "Assigned") {
+      response.totalAssigned = item.count;
+    } else if (item.assignmentStatus === "Completed") {
+      response.totalCompleted = item.count;
+    } else if (item.assignmentStatus === "InProgress") {
+      response.totalPending = item.count;
+    }
+  }
+
+  return response;
 };
 
 
