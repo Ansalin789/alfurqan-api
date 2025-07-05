@@ -7,10 +7,15 @@ import {
 import assignment from "../models/assignments";
 import userModel from "../models/users";
 import alstudents from "../models/alstudents";
-import { Types } from "mongoose";
+import { FlattenMaps, Types } from "mongoose";
 import Stream from "stream";
 import mongoose from "mongoose";
+import assignments from "../models/assignments";
 
+interface AssignmentQuery {
+  assignmentId?: string;
+  _id?: string;
+}
 /**
  * Creates a new assignment record in the database.
  * @param {IAssignmentCreate} payload - The data required to create a new assignment record.
@@ -338,12 +343,91 @@ console.log("👩‍🏫 Assigned Teacher:", {
 //   }
 // };
 
-export const getAssignmentsByStudentId = async (
-  studentId: string
-): Promise<IAssignment[]> => {
-  if (!Types.ObjectId.isValid(studentId)) {
-    throw new Error("Invalid studentId");
+
+
+
+export const getAssignments = async ({
+  assignmentId,
+  _id
+}: AssignmentQuery): Promise<IAssignment[]> => {
+  if (!assignmentId && !_id) {
+    throw new Error('Must provide either assignmentId or _id');
   }
 
-  return assignment.find({ studentId }).sort({ createdDate: -1 }).lean();
+  const query: any = {};
+
+  if (_id) {
+    if (!Types.ObjectId.isValid(_id)) {
+      throw new Error('Invalid _id format');
+    }
+    query._id = new Types.ObjectId(_id);
+  }
+
+  if (assignmentId) {
+    // Exact match with string trimming
+    query.assignmentId = assignmentId.trim();
+  }
+
+  console.log('Final query:', JSON.stringify(query)); // Debug log
+
+  return await assignments
+    .find(query)
+    .collation({ locale: 'en', strength: 2 }) // Case-insensitive
+    .sort({ createdDate: -1 })
+    .lean<IAssignment[]>()
+    .exec();
 };
+
+
+export const getAssignmentForStudentId = async ({
+  studentId
+}: {
+  studentId: string;
+}): Promise<IAssignment[]> => {
+  const trimmedId = studentId.trim();
+
+  return await assignments.aggregate([
+    {
+      $match: {
+        studentId: trimmedId
+      }
+    },
+    {
+      $sort: {
+        createdDate: -1 // latest assignment first
+      }
+    },
+    {
+      $group: {
+        _id: "$assignmentId",
+        doc: { $first: "$$ROOT" }
+      }
+    },
+    {
+      $replaceWith: "$doc"
+    },
+    {
+      $project: {
+        _id: 1,
+        studentId: 1,
+        assignmentId: 1,
+        assignedBy: 1,         
+        course: 1,             
+        level: 1,              
+        assignmentName: 1,
+        classType: 1,          
+        assignedDate: 1,       
+        dueDate: 1,           
+        assignmentStatus: 1,   
+        title: 1,
+        createdDate: 1
+      }
+    }
+  ]).exec();
+};
+
+
+
+
+
+

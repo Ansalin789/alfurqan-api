@@ -2,7 +2,8 @@ import { Request, ResponseToolkit } from "@hapi/hapi";
 import { z } from "zod";
 import {
   createAssignment,
-  getAssignmentsByStudentId,
+  getAssignmentForStudentId,
+  getAssignments,
 } from "../../operations/assignments"; // Replace with your service logic
 import * as Stream from "stream";
 import { options } from "joi";
@@ -418,22 +419,95 @@ export default {
   //   }
   // },
 
-  async getAssignmentsByStudentId(req: Request, h: ResponseToolkit) {
-    const studentId = String(req.query.studentId); // ✅ Correct usage
+async getAssignmentsByStudentId(req: Request, h: ResponseToolkit) {
+  const { assignmentId, _id } = req.query;
+  
+  // Clean and validate parameters
+  const cleanAssignmentId = assignmentId?.toString().trim();
+  const cleanId = _id?.toString().trim();
 
-    try {
-      const result = await getAssignmentsByStudentId(studentId);
+  try {
+    const results = await getAssignments({
+      assignmentId: cleanAssignmentId,
+      _id: cleanId
+    });
 
-      if (!result || result.length === 0) {
-        return h
-          .response({ message: "No assignments found for this student." })
-          .code(404);
-      }
-
-      return h.response(result).code(200);
-    } catch (error) {
-      console.error("❌ Error fetching assignments:", error);
-      return h.response({ error: "Failed to fetch assignments." }).code(500);
+    if (results.length === 0) {
+      return h.response({
+        status: 'not_found',
+        message: 'No assignments found',
+        query: { 
+          assignmentId: cleanAssignmentId,
+          _id: cleanId,
+          note: 'Query was executed but returned empty results'
+        }
+      }).code(404);
     }
-  },
+
+    return h.response({
+      status: 'success',
+      count: results.length,
+      data: results
+    }).code(200);
+
+  } catch (error: any) {
+    console.error('Database error:', error);
+    return h.response({
+      status: 'error',
+      message: error.message,
+      details: {
+        receivedQuery: {
+          assignmentId: assignmentId?.toString(),
+          _id: _id?.toString()
+        },
+        cleanedQuery: {
+          assignmentId: cleanAssignmentId,
+          _id: cleanId
+        }
+      }
+    }).code(400);
+  }
+},
+
+async getByStudentId(req: Request, h: ResponseToolkit) {
+  const { studentId } = req.query;
+
+  const cleanStudentId = studentId?.toString().trim();
+
+  if (!cleanStudentId) {
+    return h.response({
+      status: 'error',
+      message: 'studentId is required'
+    }).code(400);
+  }
+
+  try {
+    const results = await getAssignmentForStudentId({ studentId: cleanStudentId });
+
+    if (results.length === 0) {
+      return h.response({
+        status: 'not_found',
+        message: 'No assignments found for the given studentId',
+        studentId: cleanStudentId
+      }).code(404);
+    }
+
+    return h.response({
+      status: 'success',
+      count: results.length,
+      data: results
+    }).code(200);
+
+  } catch (error: any) {
+    console.error('Database error:', error);
+    return h.response({
+      status: 'error',
+      message: error.message,
+      studentId: cleanStudentId
+    }).code(400);
+  }
+}
+
+
+
 };
