@@ -384,15 +384,49 @@ export const getAssignmentForStudentId = async ({
 }: {
   studentId: string;
 }): Promise<IAssignment[]> => {
-  const query = { studentId: studentId.trim() };
+  const trimmedId = studentId.trim();
 
-  return await assignments
-    .find(query)
-    .collation({ locale: 'en', strength: 2 })
-    .sort({ createdDate: -1 })
-    .lean<IAssignment[]>()
-    .exec();
+  return await assignments.aggregate([
+    {
+      $match: {
+        studentId: trimmedId
+      }
+    },
+    {
+      $sort: {
+        createdDate: -1 // latest assignment first
+      }
+    },
+    {
+      $group: {
+        _id: "$assignmentId",
+        doc: { $first: "$$ROOT" }
+      }
+    },
+    {
+      $replaceWith: "$doc"
+    },
+    {
+      $project: {
+        _id: 1,
+        studentId: 1,
+        assignmentId: 1,
+        assignedBy: 1,         
+        course: 1,             
+        level: 1,              
+        assignmentName: 1,
+        classType: 1,          
+        assignedDate: 1,       
+        dueDate: 1,           
+        assignmentStatus: 1,   
+        title: 1,
+        createdDate: 1
+      }
+    }
+  ]).exec();
 };
+
+
 
 
 
