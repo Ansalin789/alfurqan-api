@@ -2,6 +2,7 @@ import { Request, ResponseToolkit } from "@hapi/hapi";
 import { z } from "zod";
 import {
   createAssignment,
+  getAssignmentForStudentId,
   getAssignments,
 } from "../../operations/assignments"; // Replace with your service logic
 import * as Stream from "stream";
@@ -466,7 +467,47 @@ async getAssignmentsByStudentId(req: Request, h: ResponseToolkit) {
       }
     }).code(400);
   }
+},
+
+async getByStudentId(req: Request, h: ResponseToolkit) {
+  const { studentId } = req.query;
+
+  const cleanStudentId = studentId?.toString().trim();
+
+  if (!cleanStudentId) {
+    return h.response({
+      status: 'error',
+      message: 'studentId is required'
+    }).code(400);
+  }
+
+  try {
+    const results = await getAssignmentForStudentId({ studentId: cleanStudentId });
+
+    if (results.length === 0) {
+      return h.response({
+        status: 'not_found',
+        message: 'No assignments found for the given studentId',
+        studentId: cleanStudentId
+      }).code(404);
+    }
+
+    return h.response({
+      status: 'success',
+      count: results.length,
+      data: results
+    }).code(200);
+
+  } catch (error: any) {
+    console.error('Database error:', error);
+    return h.response({
+      status: 'error',
+      message: error.message,
+      studentId: cleanStudentId
+    }).code(400);
+  }
 }
+
 
 
 };

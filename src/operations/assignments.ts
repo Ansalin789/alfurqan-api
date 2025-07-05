@@ -379,7 +379,20 @@ export const getAssignments = async ({
 };
 
 
+export const getAssignmentForStudentId = async ({
+  studentId
+}: {
+  studentId: string;
+}): Promise<IAssignment[]> => {
+  const query = { studentId: studentId.trim() };
 
+  return await assignments
+    .find(query)
+    .collation({ locale: 'en', strength: 2 })
+    .sort({ createdDate: -1 })
+    .lean<IAssignment[]>()
+    .exec();
+};
 
 
 
