@@ -186,7 +186,7 @@ export default {
               "quiz",
               "writing",
               "reading",
-              "imageIdentification",
+              "image identification",
               "wordMatching",
             ].includes(parsedType.type)
           ) {
@@ -248,6 +248,28 @@ export default {
         const uploadFileBuffer = rawPayload.uploadFile
           ? await streamToBuffer(rawPayload.uploadFile)
           : null;
+// image Refactor 
+
+// 🔹 Image Upload Processing (refactored)
+let uploadFileBufferNew: Buffer | null = null;
+if (rawPayload.uploadFile) {
+  try {
+    if (typeof rawPayload.uploadFile._data === "object") {
+      // Case: Hapi stream upload (from multipart/form)
+      uploadFileBufferNew = rawPayload.uploadFile._data;
+    } else if (rawPayload.uploadFile instanceof Buffer) {
+      // Case: Already a Buffer
+      uploadFileBufferNew = rawPayload.uploadFile;
+    } else {
+      // Fallback to stream handling
+      uploadFileBufferNew = await streamToBuffer(rawPayload.uploadFile);
+    }
+    console.log("🖼️ Image file processed, size:", uploadFileBufferNew != null ? uploadFileBufferNew.length : 0);
+  } catch (err) {
+    console.error("❌ Failed to process uploaded image:", err);
+    return h.response({ error: "Image file upload failed" }).code(400);
+  }
+}
 
         // 🔹 Final Assignment Object
         const newAssignment = {
@@ -282,9 +304,8 @@ export default {
           answerValidation: rawPayload.answerValidation || "",
           assignmentStatus: rawPayload.assignmentStatus || "",
           audioFile: audioFileBuffer ? Buffer.from(audioFileBuffer) : undefined,
-          uploadFile: uploadFileBuffer
-            ? Buffer.from(uploadFileBuffer)
-            : undefined,
+          uploadFile: uploadFileBufferNew ? Buffer.from(uploadFileBufferNew) : undefined,
+
         };
         console.log("📌 Prepared assignment object:", newAssignment);
 
@@ -293,6 +314,7 @@ export default {
 
       // 🔗 Add Shared Fields
       const finalAssignments = preparedAssignments.map((item) => ({
+        
         ...item,
         studentId,
         assignmentId, // ✅ same for all

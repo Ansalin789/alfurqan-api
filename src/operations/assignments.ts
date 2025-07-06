@@ -58,8 +58,8 @@ export const createAssignment = async (
       "quiz",
       "writing",
       "reading",
-      "imageIdentification",
-      "wordMatching",
+      "image identification",
+      "word matching",
     ];
     console.log("✅ Allowed types:", allowedTypes);
 
