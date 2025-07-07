@@ -540,8 +540,8 @@ async bulkcreateandSchedule(req: Request, h: ResponseToolkit) {
     ) {
      return h.response({
       status: "error",
-      message: "All students must have the same course, package, and total hours. Mismatch found in student ${student.studentId || student.studentEmail}"
-    }).code(404);
+      message: `All students must have the same course, package, and total hours. Mismatch found in student ${student.studentId || student.studentEmail}`
+    }).code(400);
     }
   }
 
@@ -565,7 +565,7 @@ async bulkcreateandSchedule(req: Request, h: ResponseToolkit) {
       sessionStarttime: payload.sessionStarttime || "",
       sessionsEndtime: payload.sessionsEndtime || "",
       sessionStatus: "NotCompleted",
-      totalHourse: payload.totalHourse,
+      totalHourse: Number(evaluation?.accomplishmentTime) ,
       startDate: payload.startDate,
       endDate: payload.endDate,
       startTime: startTimeValues,

@@ -48,15 +48,14 @@ export const createEvaluationRecord = async (
   ): Promise<IEvaluation | { error: any }> => {
     let newStudent = new StudentModel(payload.student);
 
-    if (payload.student.preferredDate?.toDateString() === new Date().toDateString()) {
-        return {
-            error: badRequest('Evaluation class is not allowed to current date. Select another date'),
-        };
-    }
+    // if (payload.student.preferredDate?.toDateString() === new Date().toDateString()) {
+    //     return {
+    //         error: badRequest('Evaluation class is not allowed to current date. Select another date'),
+    //     };
+    // }
 
-    const loginUser = await User.findOne({userId: payload.academicCoachId,role : 'ACADEMICCOACH'}).exec();
+    const loginUser = await User.findOne({_id: new Types.ObjectId(payload.academicCoachId) ,role : 'ACADEMICCOACH'}).exec();
     const teacherDetails = await User.findOne({userId: payload.teacher.teacherId,role : 'TEACHER'}).exec();
-
 
       if(loginUser){
           newStudent.academicCoach = {
@@ -147,6 +146,7 @@ newEvaluation.teacher = {
   teacherEmail: teacherDetails?.email || " ",
 
 }
+newEvaluation.joiningDate = payload.joiningDate ?? new Date
 newEvaluation.expectedFinishingDate = 28
 newEvaluation.assignedTeacher =teacherDetails?.userName || " ";
 newEvaluation.studentStatus = payload.studentStatus;

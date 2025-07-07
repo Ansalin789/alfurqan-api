@@ -90,10 +90,7 @@ academicCoachId: {
         type: String,
         required: true,
     }, 
-    joiningDate:{
-        type: Date,
-        required: false,  
-    } ,
+    
     status: { 
         type: String,
         required: true,
@@ -132,6 +129,10 @@ academicCoachId: {
     of: [TimeSlotSchema],
     required: false,
   },
+  joiningDate:{
+        type: Date,
+        required: false,  
+    } ,
   classDay:{
     type: Array,
     required: false,
