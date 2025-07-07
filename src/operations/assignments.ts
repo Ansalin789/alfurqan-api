@@ -477,3 +477,143 @@ export const getAssignmentByObjectId = async (
 };
 
 
+export const getTeacherStudentsAssignmentCount = async ({
+  teacherId
+}: {
+  teacherId: string;
+}): Promise<{
+  teacherId: string;
+  teacherName: string;
+  totalStudents: number;
+  assignments: {
+    total: number;
+    assigned: number;
+    completed: number;
+    pending: number;
+    overdue: number;
+  };
+  students: Array<{
+    studentId: string;
+    studentName: string;
+    assignments: {
+      total: number;
+      assigned: number;
+      completed: number;
+      pending: number;
+      overdue: number;
+    };
+    performance: {
+      completionRate: number;
+      accuracy: number;
+    };
+  }>;
+}> => {
+  const trimmedId = teacherId.trim();
+
+  // Get all assignments for this teacher
+  const assignments = await assignment.aggregate([
+    {
+      $match: {
+        assignedTeacherId: trimmedId
+      }
+    },
+    {
+      $group: {
+        _id: "$studentId",
+        studentName: { $first: "$studentName" },
+        teacherName: { $first: "$assignedTeacher" },
+        assignments: {
+          $push: {
+            status: "$assignmentStatus",
+            dueDate: "$dueDate",
+            isCorrect: { $cond: [{ $eq: ["$answer", "$answerValidation"] }, 1, 0] }
+          }
+        }
+      }
+    },
+    {
+      $project: {
+        studentId: "$_id",
+        studentName: 1,
+        teacherName: 1,
+        assignments: 1,
+        _id: 0
+      }
+    }
+  ]).exec();
+
+  // Calculate statistics
+  let totalAssigned = 0;
+  let totalCompleted = 0;
+  let totalPending = 0;
+  let totalOverdue = 0;
+  const now = new Date();
+
+  const studentsWithStats = assignments.map((student: { assignments: { status: string; isCorrect: number; dueDate: string | number | Date; }[]; studentId: any; studentName: any; }) => {
+    let studentAssigned = 0;
+    let studentCompleted = 0;
+    let studentPending = 0;
+    let studentOverdue = 0;
+    let correctAnswers = 0;
+    let totalAnswered = 0;
+
+    student.assignments.forEach((assignment: { status: string; isCorrect: number; dueDate: string | number | Date; }) => {
+      if (assignment.status === "Assigned") {
+        studentAssigned++;
+        totalAssigned++;
+      }
+      if (assignment.status === "Completed") {
+        studentCompleted++;
+        totalCompleted++;
+        totalAnswered++;
+        correctAnswers += assignment.isCorrect;
+      }
+      if (assignment.status === "InProgress") {
+        studentPending++;
+        totalPending++;
+        if (new Date(assignment.dueDate) < now) {
+          studentOverdue++;
+          totalOverdue++;
+        }
+      }
+    });
+
+    const studentTotal = studentAssigned + studentCompleted + studentPending;
+    const completionRate = studentTotal > 0 ? (studentCompleted / studentTotal) * 100 : 0;
+    const accuracy = totalAnswered > 0 ? (correctAnswers / totalAnswered) * 100 : 0;
+
+    return {
+      studentId: student.studentId,
+      studentName: student.studentName,
+      assignments: {
+        total: studentTotal,
+        assigned: studentAssigned,
+        completed: studentCompleted,
+        pending: studentPending,
+        overdue: studentOverdue
+      },
+      performance: {
+        completionRate: parseFloat(completionRate.toFixed(2)),
+        accuracy: parseFloat(accuracy.toFixed(2))
+      }
+    };
+  });
+
+  const teacherName = assignments.length > 0 
+    ? assignments[0].teacherName 
+    : "Unknown";
+
+  return {
+    teacherId: trimmedId,
+    teacherName,
+    totalStudents: studentsWithStats.length,
+    assignments: {
+      total: totalAssigned + totalCompleted + totalPending,
+      assigned: totalAssigned,
+      completed: totalCompleted,
+      pending: totalPending,
+      overdue: totalOverdue
+    },
+    students: studentsWithStats
+  };
+};

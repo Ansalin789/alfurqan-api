@@ -113,6 +113,20 @@ const register = async (server: Server): Promise<void> => {
     },
 
     
+
+     {
+  method: "GET",
+  path: "/assignments/teacher/cardcount",
+  options: {
+    handler: handler.getTeacherStudentAssignmentCount,
+    description: "Get all assignments counts for a student by teacherId",
+    tags: ["api", "assignment"],
+    },
+    // auth: {
+    //   strategies: ["jwt"],
+    // },
+  },
+
   ];
   server.route(routes);
 };

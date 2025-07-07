@@ -7,6 +7,7 @@ import {
   getAssignments,
   getStudentCardCount,
   updateStudentAssignment,
+  getTeacherStudentsAssignmentCount,
 } from "../../operations/assignments"; // Replace with your service logic
 import * as Stream from "stream";
 import { options } from "joi";
@@ -546,6 +547,36 @@ async getByObjectId(req: Request, h: ResponseToolkit) {
 }
 
 
+,
+
+async getTeacherStudentAssignmentCount(req: Request, h: ResponseToolkit) {
+  const { teacherId } = req.query;
+  const cleanTeacherId = teacherId?.toString().trim();
+
+  if (!cleanTeacherId) {
+    return h.response({
+      status: 'error',
+      message: 'teacherId is required'
+    }).code(400);
+  }
+
+  try {
+    const results = await getTeacherStudentsAssignmentCount({ teacherId: cleanTeacherId });
+
+    return h.response({
+      status: 'success',
+      data: results
+    }).code(200);
+
+  } catch (error: any) {
+    console.error('Database error:', error);
+    return h.response({
+      status: 'error',
+      message: error.message,
+      teacherId: cleanTeacherId
+    }).code(400);
+  }
+}
 
 
 
