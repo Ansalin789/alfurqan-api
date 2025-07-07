@@ -88,10 +88,14 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
       );
     }
   },
-
+ //frontend binding pending 
   academicTeacherStudentList: async (data: any) => {
     console.log("academicTeacherStudentList");
-    const teacherId = data.data.assignedTeacherId;
+    const teacherId = data?.data?.assignedTeacherId;
+    if (!teacherId) {
+    console.error("No teacherId provided");
+    return;
+    }
     const getTeacherStudentList = getStudentList(teacherId);
     emitEventToClient("academicTeacherStudentList", getTeacherStudentList);
   },

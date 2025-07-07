@@ -6,6 +6,14 @@ import CustomEnumerator from "../shared/enum";
 import { number, z } from "zod";
 import { appStatus, attendeeStatus, commonMessages } from "../config/messages";
 
+const TimeSlotSchema = new Schema(
+  {
+    from: { type: String, required: true },
+    to: { type: String, required: true },
+  },
+  { _id: false }
+);
+
 const classScheduleSchema = new Schema<IClassSchedule>(
   {
     student: {
@@ -45,6 +53,11 @@ const classScheduleSchema = new Schema<IClassSchedule>(
             required: false,
         }
        
+      },
+       weeklySlots: {
+        type: Map,
+        of: [TimeSlotSchema],
+        required: true,
       },
       classDay:{
         type: Array,
@@ -204,6 +217,11 @@ const classScheduleSchema = new Schema<IClassSchedule>(
     timestamps: false,
   }
 );
+const ZodTimeSlotSchema = z.object({
+  from: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Invalid from time (HH:mm)"),
+  to: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Invalid to time (HH:mm)"),
+});
+const WeeklySlotMapSchema = z.record(z.string(), z.array(ZodTimeSlotSchema));
 
 export const zodClassScheduleSchema = z.object({
     student: z.object({
@@ -230,6 +248,7 @@ export const zodClassScheduleSchema = z.object({
     sessionStatus:z.string().optional(),
     package:z.string(),
     preferedTeacher:z.string().optional(),
+    weeklySlots: WeeklySlotMapSchema,
     course:z.object({
         courseId:z.string().optional(),
         courseName:z.string().optional()

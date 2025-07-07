@@ -526,6 +526,12 @@ export interface IClassSchedule extends Document{
   classDay: any;
   package: string;
   preferedTeacher: string;
+  weeklySlots: {
+    [day: string]: {
+      from: string;
+      to: string;
+    }[];
+  };
   course: string;
   totalHourse: number;
   classhour:string;
@@ -577,6 +583,12 @@ export interface IClassScheduleCreate{
   classhour:string;
   amount:string;
   currency:string;
+  weeklySlots: {
+    [day: string]: {
+      from: string;
+      to: string;
+    }[];
+  };
   sessionClassType:string;
   sessionStarttime:string;
   sessionsEndtime:string;
