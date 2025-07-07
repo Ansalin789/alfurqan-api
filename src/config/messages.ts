@@ -363,9 +363,9 @@ export const assigmentType: Record<string, any> = Object.freeze({
   QUIZ: "quiz",
   WRITING: "writing",
   READING: "reading",
-  IMAGE_IDENTIFICATION: "image_identification",
-  WORD_MATCHING: "word_matching",
- });
+  IMAGE_IDENTIFICATION: "image identification",
+  WORD_MATCHING: "word matching",
+ });    
 
 
 export const notificationsMessages: Record<string, any> = Object.freeze({

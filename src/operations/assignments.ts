@@ -58,8 +58,8 @@ export const createAssignment = async (
       "quiz",
       "writing",
       "reading",
-      "imageIdentification",
-      "wordMatching",
+      "image identification",
+      "word matching",
     ];
     console.log("✅ Allowed types:", allowedTypes);
 
@@ -185,115 +185,7 @@ console.log("👩‍🏫 Assigned Teacher:", {
   }
 };
 
-//Update Assignments
 
-// export const updateStudentAssignment = async (
-//   id: string,
-//   payload: IAssignmentCreate | null
-// ): Promise<
-//   { totalCount: number; assignments: IAssignment[] } | { error: any }
-// > => {
-//   try {
-//     console.log("Received payload:", payload);
-//     console.log("AssignmentID>>>>", id);
-
-//     // Validate Payload
-//     if (!payload || !payload.studentId) {
-//       console.error("Error: Received null or invalid payload");
-//       return {
-//         error:
-//           "Invalid request: Payload is missing or studentId is not provided",
-//       };
-//     }
-
-//     // Answer Validation Check
-//     const { answer, answerValidation } = payload;
-//     const isCorrect = answer === answerValidation;
-//     console.log("Answer validation result:", isCorrect);
-
-//     // Fetch student details
-//     const studentDetails = await alstudents
-//       .findOne({ _id: payload.studentId })
-//       .exec();
-//     console.log("studentDetails>>>>", studentDetails);
-
-//     // Fetch the existing assignment
-//     const existingAssignment = await assignment.findOne({ _id: id }).exec();
-//     if (!existingAssignment) {
-//       console.error("Error: Assignment not found with ID:", id);
-//       return { error: "Assignment not found" };
-//     }
-//     console.log("Existing Assignment:", existingAssignment);
-
-//     // Ensure `assignedTeacher` is properly extracted
-//     const assignedTeacher = payload.assignedTeacher || "Unknown Teacher";
-
-//     // Ensure `audioFile` and `uploadFile` are properly formatted as Buffers
-//     const audioFile =
-//       typeof payload.audioFile === "string"
-//         ? Buffer.from(payload.audioFile, "base64")
-//         : payload.audioFile;
-//     const uploadFile =
-//       typeof payload.uploadFile === "string"
-//         ? Buffer.from(payload.uploadFile, "base64")
-//         : payload.uploadFile;
-
-//     // Updating the Assignment
-//     const updatedAssignment = await assignment
-//       .findByIdAndUpdate(
-//         String(id),
-//         {
-//           studentId: studentDetails?._id || "",
-//           studentName: studentDetails?.username || "",
-//           sessionClassType: studentDetails?.sessionClassType || "",
-//           assignmentName: payload.assignmentName || "",
-//           assignedTeacher,
-//           assignmentType: payload.assignmentType,
-//           chooseType: payload.chooseType,
-//           trueorfalseType: payload.trueorfalseType,
-//           question: payload.question || "",
-//           hasOptions: payload.hasOptions,
-//           options: {
-//             optionOne: payload.options?.optionOne,
-//             optionTwo: payload.options?.optionTwo,
-//             optionThree: payload.options?.optionThree,
-//             optionFour: payload.options?.optionFour,
-//           },
-//           audioFile,
-//           uploadFile,
-//           status: payload.status || "Pending",
-//           createdDate: existingAssignment.createdDate,
-//           createdBy: existingAssignment.createdBy,
-//           updatedDate: new Date(),
-//           updatedBy: payload.updatedBy || "",
-//           level: payload.level || "",
-//           courses: payload.courses || "",
-//           assignedDate: payload.assignedDate || new Date(),
-//           dueDate: payload.dueDate || new Date(),
-//           answer: payload.answer || "",
-//           answerValidation: payload.answerValidation || "",
-//         },
-//         { new: true }
-//       )
-//       .exec();
-
-//     console.log("New Updated Record>>>>", answer);
-
-//     // Error Handling for Update Failure
-//     if (!updatedAssignment) {
-//       console.error("Error: Failed to update assignment for _id:", id);
-//       return { error: "Failed to update assignment" };
-//     }
-
-//     console.log("Updated assignment:", updatedAssignment);
-//     return { totalCount: 1, assignments: [updatedAssignment] };
-//   } catch (error) {
-//     console.log("the error>>>>>>", error);
-
-//     console.error("Error updating assignment:", error);
-//     return { error: "Internal Server Error" };
-//   }
-// };
 
 // //Get All Assignment
 
@@ -406,28 +298,182 @@ export const getAssignmentForStudentId = async ({
     {
       $replaceWith: "$doc"
     },
-    {
-      $project: {
-        _id: 1,
-        studentId: 1,
-        assignmentId: 1,
-        assignedBy: 1,         
-        course: 1,             
-        level: 1,              
-        assignmentName: 1,
-        classType: 1,          
-        assignedDate: 1,       
-        dueDate: 1,           
-        assignmentStatus: 1,   
-        title: 1,
-        createdDate: 1
-      }
-    }
+  
   ]).exec();
 };
 
 
+export const getStudentCardCount = async ({
+  studentId
+}: {
+  studentId: string;
+}): Promise<{
+  totalAssigned: number;
+  totalCompleted: number;
+  totalPending: number;
+}> => {
+  const trimmedId = studentId.trim();
+
+  const result = await assignments.aggregate([
+    {
+      $match: {
+        studentId: trimmedId
+      }
+    },
+    {
+      $group: {
+        _id: "$assignmentStatus", 
+        count: { $sum: 1 }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        assignmentStatus: "$_id", 
+        count: 1
+      }
+    }
+  ]).exec();
+
+  const response = {
+    totalAssigned: 0,
+    totalCompleted: 0,
+    totalPending: 0
+  };
+
+  for (const item of result) {
+    if (item.assignmentStatus === "Assigned") {
+      response.totalAssigned = item.count;
+    } else if (item.assignmentStatus === "Completed") {
+      response.totalCompleted = item.count;
+    } else if (item.assignmentStatus === "InProgress") {
+      response.totalPending = item.count;
+    }
+  }
+
+  return response;
+};
 
 
+// Update Assignments
+
+export const updateStudentAssignment = async (
+  id: string,
+  payload: IAssignmentCreate | null
+): Promise<
+  { totalCount: number; assignments: IAssignment[] } | { error: any }
+> => {
+  try {
+    console.log("Received payload:", payload);
+    console.log("AssignmentID>>>>", id);
+
+    // Validate Payload
+    if (!payload || !payload.studentId) {
+      console.error("Error: Received null or invalid payload");
+      return {
+        error:
+          "Invalid request: Payload is missing or studentId is not provided",
+      };
+    }
+
+    // Answer Validation Check
+    const { answer, answerValidation } = payload;
+    const isCorrect = answer === answerValidation;
+    console.log("Answer validation result:", isCorrect);
+
+    // Fetch student details
+    const studentDetails = await alstudents
+      .findOne({ _id: payload.studentId })
+      .exec();
+    console.log("studentDetails>>>>", studentDetails);
+
+    // Fetch the existing assignment
+    const existingAssignment = await assignment.findOne({ _id: id }).exec();
+    if (!existingAssignment) {
+      console.error("Error: Assignment not found with ID:", id);
+      return { error: "Assignment not found" };
+    }
+    console.log("Existing Assignment:", existingAssignment);
+
+    // Ensure `assignedTeacher` is properly extracted
+    const assignedTeacher = payload.assignedTeacher || "Unknown Teacher";
+
+    // Ensure `audioFile` and `uploadFile` are properly formatted as Buffers
+    const audioFile =
+      typeof payload.audioFile === "string"
+        ? Buffer.from(payload.audioFile, "base64")
+        : payload.audioFile;
+    const uploadFile =
+      typeof payload.uploadFile === "string"
+        ? Buffer.from(payload.uploadFile, "base64")
+        : payload.uploadFile;
+
+    // Updating the Assignment
+    const updatedAssignment = await assignment
+      .findByIdAndUpdate(
+        String(id),
+        {
+          studentId: studentDetails?._id || "",
+          studentName: studentDetails?.username || "",
+          sessionClassType: studentDetails?.sessionClassType || "",
+          assignmentName: payload.assignmentName || "",
+          assignedTeacher,
+          assignmentType: payload.assignmentType,
+          chooseType: payload.chooseType,
+          trueorfalseType: payload.trueorfalseType,
+          question: payload.question || "",
+          hasOptions: payload.hasOptions,
+          options: {
+            optionOne: payload.options?.optionOne,
+            optionTwo: payload.options?.optionTwo,
+            optionThree: payload.options?.optionThree,
+            optionFour: payload.options?.optionFour,
+          },
+          audioFile,
+          uploadFile,
+          status: payload.status || "Pending",
+          createdDate: existingAssignment.createdDate,
+          createdBy: existingAssignment.createdBy,
+          updatedDate: new Date(),
+          updatedBy: payload.updatedBy || "",
+          level: payload.level || "",
+          courses: payload.courses || "",
+          assignedDate: payload.assignedDate || new Date(),
+          dueDate: payload.dueDate || new Date(),
+          answer: payload.answer || "",
+          answerValidation: payload.answerValidation || "",
+        },
+        { new: true }
+      )
+      .exec();
+
+    console.log("New Updated Record>>>>", answer);
+
+    // Error Handling for Update Failure
+    if (!updatedAssignment) {
+      console.error("Error: Failed to update assignment for _id:", id);
+      return { error: "Failed to update assignment" };
+    }
+
+    console.log("Updated assignment:", updatedAssignment);
+    return { totalCount: 1, assignments: [updatedAssignment] };
+  } catch (error) {
+    console.log("the error>>>>>>", error);
+
+    console.error("Error updating assignment:", error);
+    return { error: "Internal Server Error" };
+  }
+};
+
+//getByObjectId
+
+
+export const getAssignmentByObjectId = async (
+  id: string
+): Promise<IAssignment | null> => {
+  return assignment.findOne({
+    _id: new Types.ObjectId(id),
+  }).lean();
+};
 
 

@@ -64,26 +64,53 @@ const register = async (server: Server): Promise<void> => {
     // },
   },
 
-  
 
-//  {
-//       method: "PUT",
-//       path: "/assignments/{assinmentId}",
-//       options: {
-//        handler: handler.updateAssignment,
-//        description: assignemntMessages.UPDATE,
-//        tags: ["api", "assignment"],
-//        payload: {
-//         output: "stream",
-//         parse: true,
-//         maxBytes: 10 * 1024 * 1024,
-//         multipart: true,
-//         allow: "multipart/form-data",
-//       },
-//       auth: {
-//         strategies: ["jwt"],
-//       }, },  
-//     },
+     {
+  method: "GET",
+  path: "/assignments/cardcount",
+  options: {
+    handler: handler.getStudentCount,
+    description: "Get all assignments for a student by studentId",
+    tags: ["api", "assignment"],
+    },
+    // auth: {
+    //   strategies: ["jwt"],
+    // },
+  },
+  
+//get assignment by ObjectId
+{
+  method: "GET",
+  path: "/assignments/{id}",
+  options: {
+    handler: handler.getByObjectId,
+    description: "Get assignment by ObjectId",
+    tags: ["api", "assignment"],
+    // auth: {
+    //   strategies: ["jwt"],
+    // },
+  },
+},
+
+
+ {
+      method: "PUT",
+      path: "/assignments/{assinmentId}",
+      options: {
+       handler: handler.updateAssignment,
+       description: assignemntMessages.UPDATE,
+       tags: ["api", "assignment"],
+       payload: {
+        output: "stream",
+        parse: true,
+        maxBytes: 10 * 1024 * 1024,
+        multipart: true,
+        allow: "multipart/form-data",
+      },
+      auth: {
+        strategies: ["jwt"],
+      }, },  
+    },
 
     
   ];

@@ -10,11 +10,11 @@ export enum Status {
 }
 
 export enum AssignmentStatus {
-  ASSIGNED = "ASSIGNED",
-  PENDING = "PENDING",
-  COMPLETED = "COMPLETED",
-  NOTASSIGNED = "NOTASSIGNED",
-  NOTCOMPLETED = "NOTCOMPLETED",
+  ASSIGNED = "Assigned",
+  PENDING = "Pending",
+  COMPLETED = "Completed",
+  NOTASSIGNED = "Not Assigned",
+  NOTCOMPLETED = "Not Completed",
 }
 export enum LearningInterest {
   QURAN ="Quran",

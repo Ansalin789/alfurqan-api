@@ -742,12 +742,12 @@ export interface IAssignment extends Document {
   questionName: string;
   questionType: string;
   typeofQuestion: string;
-  title: string;
+  title: string;                         
   assignmentName: string;
   assignedTeacher: string;
   assignedTeacherId: string;
   assignmentType: {
-    type: "quiz" | "writing" | "reading" | "imageIdentification" | "wordMatching";
+    type: "quiz" | "writing" | "reading" | "image identification" | "word matching";
     name?: string;
   };
   chooseType?: boolean;

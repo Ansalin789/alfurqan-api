@@ -1,12 +1,16 @@
-import { Types } from "mongoose";
-import { IClassSchedule, IClassScheduleCreate } from "../../types/models.types";
+import { FlattenMaps, Types } from "mongoose";
+import {
+  IAssignment,
+  IClassSchedule,
+  IClassScheduleCreate,
+} from "../../types/models.types";
 
 import ClassScheduleModel from "../models/classShedule";
 import StudentModel from "../models/alstudents";
 import UserModel from "../models/users";
 
 import AppLogger from "../helpers/logging";
-import { GetAllRecordsParams } from "../shared/enum";
+import { AssignmentStatus, GetAllRecordsParams } from "../shared/enum";
 import { alstudentsMessages, commonMessages } from "../config/messages";
 import { isNil } from "lodash";
 import { Client } from "@microsoft/microsoft-graph-client";
@@ -16,11 +20,38 @@ import classShedule from "../models/classShedule";
 import { badRequest } from "@hapi/boom";
 import Evaluation from "../models/evaluation";
 import AlStudenModel from "../models/alstudents";
-import Course from "../models/course"
-import { endOfMonth, startOfMonth, subMonths, eachMonthOfInterval, format } from "date-fns";
+import Course from "../models/course";
+import {
+  endOfMonth,
+  startOfMonth,
+  subMonths,
+  eachMonthOfInterval,
+  format,
+} from "date-fns";
 import assignment from "../models/assignments";
 
-
+type AssignmentItem = {
+  assignmentId: string;
+  assignmentName: string;
+  assignmentType:
+    | "quiz"
+    | "writing"
+    | "reading"
+    | "image identification"
+    | "word matching";
+  title: string;
+  assignedDate: Date;
+  dueDate: Date;
+  questionName: string;
+  questionType: string;
+  typeofQuestion: string;
+  assignmentStatus:
+    | "Assigned"
+    | "Not Assigned"
+    | "Completed"
+    | "Not Completed"
+    | "Pending";
+};
 /**
  * Creates a new candidate record in the database.
  *
@@ -47,84 +78,109 @@ const getDatesForWeekdays = (
   return dates;
 };
 
- export const updateStudentClassSchedule = async (
-    id: String,
-   payload: Partial<IClassScheduleCreate>
- ) => {
+export const updateStudentClassSchedule = async (
+  id: String,
+  payload: Partial<IClassScheduleCreate>
+) => {
+  const {
+    classDay,
+    startTime,
+    endTime,
+    startDate,
+    endDate,
+    student,
+    teacher,
+    classLink,
+  } = payload;
 
-  const { classDay, startTime, endTime, startDate, endDate, student, teacher, classLink } = payload;
-
-const alfurqanStudent = await AlStudenModel.findOne({_id: new Types.ObjectId(student?.studentId)} ).exec()  // 🧠 Extract reference values from the first student
- const courseDetails = await Course.findOne({})
-if (!student) {
-  throw new Error("Student details are required.");
-}
-
-// Optional: validate day/time array lengths
-if (!classDay || !startTime || !endTime || !startDate || !endDate || 
-    classDay.length !== startTime.length || startTime.length !== endTime.length) {
-  throw new Error("classDay, startTime, endTime, startDate, and endDate must be provided and arrays must match in length.");
-}
- const results = [];
-  let saved;
-for (let i = 0; i < classDay.length; i++) {
-  const day = classDay[i];
-  const start = startTime[i];
-  const end = endTime[i];
-
-  const dayIndex = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].indexOf(day);
-  if (dayIndex === -1) throw new Error(`Invalid classDay: ${day}`);
-
-  const classDates = getDatesForWeekdays(new Date(startDate), new Date(endDate), dayIndex);
-
-  for (const classDate of classDates) {
- 
-
-    const newClassSchedule = new ClassScheduleModel({
-      student: {
-        studentId: alfurqanStudent?._id.toString(),
-        studentFirstName: alfurqanStudent?.username,
-        studentLastName: alfurqanStudent?.username,
-        studentEmail: alfurqanStudent?.student.studentEmail,
-        gender: alfurqanStudent?.student.gender
-      },
-      teacher: {
-        teacherId: teacher?.teacherId,
-        teacherName: teacher?.teacherName,
-        teacherEmail: teacher?.teacherEmail
-      },
-      classLink: classLink,
-      classDay: day,
-      startTime: start,
-      endTime: end,
-      sessionClassType: payload.sessionClassType || "",
-      sessionStarttime: payload.sessionStarttime || "",
-      sessionsEndtime: payload.sessionsEndtime || "",
-      sessionStatus: "NotCompleted",
-      course: {
-        courseId:courseDetails?._id.toString(),
-        courseName: courseDetails?.courseName,
-      },
-      package: payload.package,
-      startDate: classDate,
-      endDate: classDate,
-      createdBy: new Date(),
-      status: "Active",
-      scheduleStatus: payload.scheduleStatus,
-      totalHourse: payload.totalHourse,
-      preferedTeacher: payload.preferedTeacher,
-    });
-
-    await createEvent(newClassSchedule);
-     saved = await newClassSchedule.save();
- 
+  const alfurqanStudent = await AlStudenModel.findOne({
+    _id: new Types.ObjectId(student?.studentId),
+  }).exec(); // 🧠 Extract reference values from the first student
+  const courseDetails = await Course.findOne({});
+  if (!student) {
+    throw new Error("Student details are required.");
   }
 
-}
- return results.push(saved);
+  // Optional: validate day/time array lengths
+  if (
+    !classDay ||
+    !startTime ||
+    !endTime ||
+    !startDate ||
+    !endDate ||
+    classDay.length !== startTime.length ||
+    startTime.length !== endTime.length
+  ) {
+    throw new Error(
+      "classDay, startTime, endTime, startDate, and endDate must be provided and arrays must match in length."
+    );
+  }
+  const results = [];
+  let saved;
+  for (let i = 0; i < classDay.length; i++) {
+    const day = classDay[i];
+    const start = startTime[i];
+    const end = endTime[i];
 
- };
+    const dayIndex = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ].indexOf(day);
+    if (dayIndex === -1) throw new Error(`Invalid classDay: ${day}`);
 
+    const classDates = getDatesForWeekdays(
+      new Date(startDate),
+      new Date(endDate),
+      dayIndex
+    );
+
+    for (const classDate of classDates) {
+      const newClassSchedule = new ClassScheduleModel({
+        student: {
+          studentId: alfurqanStudent?._id.toString(),
+          studentFirstName: alfurqanStudent?.username,
+          studentLastName: alfurqanStudent?.username,
+          studentEmail: alfurqanStudent?.student.studentEmail,
+          gender: alfurqanStudent?.student.gender,
+        },
+        teacher: {
+          teacherId: teacher?.teacherId,
+          teacherName: teacher?.teacherName,
+          teacherEmail: teacher?.teacherEmail,
+        },
+        classLink: classLink,
+        classDay: day,
+        startTime: start,
+        endTime: end,
+        sessionClassType: payload.sessionClassType || "",
+        sessionStarttime: payload.sessionStarttime || "",
+        sessionsEndtime: payload.sessionsEndtime || "",
+        sessionStatus: "NotCompleted",
+        course: {
+          courseId: courseDetails?._id.toString(),
+          courseName: courseDetails?.courseName,
+        },
+        package: payload.package,
+        startDate: classDate,
+        endDate: classDate,
+        createdBy: new Date(),
+        status: "Active",
+        scheduleStatus: payload.scheduleStatus,
+        totalHourse: payload.totalHourse,
+        preferedTeacher: payload.preferedTeacher,
+      });
+
+      await createEvent(newClassSchedule);
+      saved = await newClassSchedule.save();
+    }
+  }
+  return results.push(saved);
+};
 
 export const getAllClassShedule = async (
   params: GetAllRecordsParams
@@ -1069,13 +1125,19 @@ export const getStudentList = async (
     studentId: string;
     name: string;
     classType?: string;
-    groupClassId?: string
+    groupClassId?: string;
     assignment?: {
       assignmentId: string;
       assignmentType: string;
       assignmentName: string;
       status: string;
       title: string;
+      assignedDate: Date;
+      dueDate: Date;
+      questionName: string;
+      questionType: string;
+      typeofQuestion: string;
+      assignmentStatus: AssignmentStatus;
     }[];
   }[]
 > => {
@@ -1087,7 +1149,7 @@ export const getStudentList = async (
     // Fetch class schedules taught by the given teacher, returning only the 'student' field
     const classSchedules = await ClassScheduleModel.find(
       { "teacher.teacherId": teacherId },
-      { student: 1,  sessionClassType: 1, classLink: 1 }
+      { student: 1, sessionClassType: 1, classLink: 1 }
     ).lean();
     const uniqueStudentsMap = new Map();
 
@@ -1105,68 +1167,67 @@ export const getStudentList = async (
             "student.studentId": alstudent.student.studentId,
           }).exec();
         }
-        let assignments: {
-          assignmentId: string;
-          assignmentName: string;
-          assignmentType:
-            | "quiz"
-            | "writing"
-            | "reading"
-            | "imageIdentification"
-            | "wordMatching";
-          status: string;
-          title: string;
-        }[] = [];
-        if (alstudent) {
-          const studentId = alstudent._id.toString(); // ✅ Correct ID
+       let assignments: AssignmentItem[] = [];
 
-          const assignmentList = await assignment
-            .find(
-              { studentId },
-              {
-                assignmentId: 1,
-                assignmentType: 1,
-                assignmentStatus: 1,
-                assignmentName: 1,
-                title: 1,
-              }
-            )
-            .lean();
+       if (alstudent) {
+  const assignmentList = await assignment.find(
+    { studentId: alstudent._id.toString() },
+    {
+      assignmentId: 1,
+      assignmentType: 1,
+      assignmentStatus: 1,
+      assignmentName: 1,
+      title: 1,
+      assignedDate: 1,
+      dueDate: 1,
+      questionName: 1,
+      questionType: 1,
+      typeofQuestion: 1,
+    }
+  ).lean();
 
-          assignments = assignmentList.map((a: { assignmentId: any; assignmentType: { type: any; }; assignmentStatus: any; assignmentName: any; title: any; }) => ({
-            assignmentId: a.assignmentId,
-            assignmentType: a.assignmentType?.type || "",
-            status: a.assignmentStatus || "Not Assigned",
-            assignmentName: a.assignmentName,
-            title: a.title,
-          }));
+
+           assignments  = assignmentList.map(
+            (a): AssignmentItem => ({
+              assignmentId: a.assignmentId || "-",
+              assignmentName: a.assignmentName || "-",
+              assignmentType: a.assignmentType?.type ?? "quiz",
+              title: a.title || "-",
+              assignedDate: a.assignedDate ?? new Date(),
+              dueDate: a.dueDate ?? new Date(),
+              questionName: a.questionName ?? "",
+              questionType: a.questionType ?? "",
+              typeofQuestion: a.typeofQuestion ?? "",
+              assignmentStatus: a.assignmentStatus ?? "Not Assigned",
+            })
+          );
         }
         uniqueStudentsMap.set(student.studentId, {
           studentId: student.studentId,
           name: student.studentFirstName,
-          studentDetails:{
-          student:evaluation?.student,
-          teacher: evaluation?.teacher,
-          subscription: evaluation?.subscription,
-          id: evaluation?._id,
-          academicCoachId: evaluation?.academicCoachId,
-          classType: evaluation?.classType,
-          hours: evaluation?.hours,
-          planTotalPrice: evaluation?.planTotalPrice,
-          accomplishmentTime: evaluation?.accomplishmentTime,
-          studentRate: evaluation?.studentRate,
-          studentStatus: evaluation?.studentStatus,
-          classStatus: evaluation?.classStatus,
-          trialClassStatus:evaluation?.trialClassStatus,
-          paymentLink: evaluation?.paymentLink,
-          paymentStatus: evaluation?.paymentStatus,
-          teacherStatus:evaluation?.teacherStatus,
-          expectedFinishingDate: evaluation?.expectedFinishingDate,
-          assignedTeacherEmail:  evaluation?.assignedTeacherEmail
-          } ,
+          studentDetails: {
+            student: evaluation?.student,
+            teacher: evaluation?.teacher,
+            subscription: evaluation?.subscription,
+            id: evaluation?._id,
+            academicCoachId: evaluation?.academicCoachId,
+            classType: evaluation?.classType,
+            hours: evaluation?.hours,
+            planTotalPrice: evaluation?.planTotalPrice,
+            accomplishmentTime: evaluation?.accomplishmentTime,
+            studentRate: evaluation?.studentRate,
+            studentStatus: evaluation?.studentStatus,
+            classStatus: evaluation?.classStatus,
+            trialClassStatus: evaluation?.trialClassStatus,
+            paymentLink: evaluation?.paymentLink,
+            paymentStatus: evaluation?.paymentStatus,
+            teacherStatus: evaluation?.teacherStatus,
+            expectedFinishingDate: evaluation?.expectedFinishingDate,
+            assignedTeacherEmail: evaluation?.assignedTeacherEmail,
+          },
           classType,
           groupClassId,
-          assignment: assignments,
+  assignment: assignments, // ✅ This line must use `assignments`
         });
       }
     }
