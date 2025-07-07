@@ -2,9 +2,11 @@ import { Request, ResponseToolkit } from "@hapi/hapi";
 import { z } from "zod";
 import {
   createAssignment,
+  getAssignmentByObjectId,
   getAssignmentForStudentId,
   getAssignments,
   getStudentCardCount,
+  updateStudentAssignment,
 } from "../../operations/assignments"; // Replace with your service logic
 import * as Stream from "stream";
 import { options } from "joi";
@@ -12,6 +14,7 @@ import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
 import mongoose from "mongoose"; // make sure this is at the top
 import { IAssignment } from "../../../types/models.types";
+import { assignemntMessages } from "../../config/messages";
 
 // Input Validations for student list
 const getAssignmnentListInputValidation = z.object({
@@ -336,112 +339,7 @@ if (rawPayload.uploadFile) {
       return h.response({ error: "Internal server error" }).code(500);
     }
   },
-  // Update an Assignment
-  // async updateAssignment(req: Request, h: ResponseToolkit) {
-  //   try {
-  //     // Ensure the payload is valid
-  //     const rawPayload = req.payload as any;
-  //     if (!rawPayload || Object.keys(rawPayload).length === 0) {
-  //       return h.response({ error: "Missing or empty payload" }).code(400);
-  //     }
-  //     console.log("Received payload:", rawPayload);
-
-  //     // Parse and handle boolean fields
-  //     const chooseType =
-  //       rawPayload.chooseType === "true" || rawPayload.chooseType === true;
-  //     const trueorfalseType =
-  //       rawPayload.trueorfalseType === "true" ||
-  //       rawPayload.trueorfalseType === true;
-
-  //     // Handle file buffers (if present)
-  //     const audioFileBuffer = rawPayload.audioFile
-  //       ? await streamToBuffer(rawPayload.audioFile)
-  //       : null;
-  //     const uploadFileBuffer = rawPayload.uploadFile
-  //       ? await streamToBuffer(rawPayload.uploadFile)
-  //       : null;
-
-  //     // Ensure options are parsed correctly
-  //     const options = parseJSONSafe(rawPayload.options);
-  //     if (!options) {
-  //       return h.response({ error: "Invalid options format" }).code(400);
-  //     }
-
-  //     return updateStudentAssignment(String(req.params.assinmentId), {
-  //       studentId: rawPayload?.studentId || "",
-  //       studentName: rawPayload?.studentName || "",
-  //       sessionClassType: rawPayload.sessionClassType || "",
-  //       assignmentName: rawPayload.assignmentName || "",
-  //       assignedTeacher: rawPayload.assignedTeacher || "",
-  //       assignmentType: rawPayload.assignmentType || {},
-  //       questionName: rawPayload.questionName || {},
-  //       questionType: rawPayload.questionType || {},
-  //       typeofQuestion: rawPayload.typeofQuestion || {},
-  //       title: rawPayload.title || {},
-
-  //       chooseType, // Parsed boolean
-  //       trueorfalseType, // Parsed boolean
-  //       question: rawPayload.question || "",
-  //       hasOptions: rawPayload.hasOptions,
-  //       options, // Parsed options object
-  //       audioFile: audioFileBuffer ? Buffer.from(audioFileBuffer) : undefined,
-  //       uploadFile: uploadFileBuffer
-  //         ? Buffer.from(uploadFileBuffer)
-  //         : undefined,
-  //       status: rawPayload.status || "",
-  //       createdDate: rawPayload.createdDate || new Date(),
-  //       createdBy: rawPayload.createdBy || "",
-  //       updatedDate: rawPayload.updatedDate || new Date(),
-  //       updatedBy: rawPayload.updatedBy || "",
-  //       level: rawPayload.level || "",
-  //       courses: rawPayload.courses || "",
-  //       assignedDate: rawPayload.assignedDate || new Date(),
-  //       dueDate: rawPayload.dueDate || new Date(),
-  //       answer: rawPayload.answer || "",
-  //       answerValidation: rawPayload.answerValidation || "",
-  //       assignmentStatus: rawPayload.assignmentStatus || "",
-  //     });
-  //   } catch (error) {
-  //     console.error("Error updating assignment:", error);
-
-  //     console.log("Answer>>>", updateStudentAssignment);
-
-  //     return h.response({ error: "Internal Server Error" }).code(500);
-  //   }
-  // },
-
-  // //get all assignment
-
-  // async getAllAssignment(req: Request, h: ResponseToolkit) {
-  //   try {
-  //     // Parse and validate the input
-  //     const { query } = getAssignmnentListInputValidation.parse({
-  //       query: {
-  //         ...req.query,
-  //         assignmentType: {
-  //           type: req.query?.assignmentType?.type || "", // Default value for type
-  //           name: req.query?.assignmentType?.name || "", // Default value for name
-  //         },
-  //         filterValues: req.query?.filterValues
-  //           ? JSON.parse(req.query.filterValues)
-  //           : {},
-  //       },
-  //     });
-
-  //     // Call the function with the validated query object
-  //     const { assignments, totalCount } = await getAllAssignment(query);
-
-  //     // Return the assignments and the total count
-  //     return h.response({ assignments, totalCount }).code(200);
-  //   } catch (error) {
-  //     console.error("Error getting assignments:", error);
-
-  //     return h
-  //       .response({ error: error || "Invalid query parameters" })
-  //       .code(400);
-  //   }
-  // },
-
+ 
 async getAssignmentsByStudentId(req: Request, h: ResponseToolkit) {
   const { assignmentId, _id } = req.query;
   
@@ -558,7 +456,95 @@ async getStudentCount(req: Request, h: ResponseToolkit) {
       studentId: cleanStudentId
     }).code(400);
   }
+},
+
+//  Update an Assignment
+  async updateAssignment(req: Request, h: ResponseToolkit) {
+    try {
+      // Ensure the payload is valid
+      const rawPayload = req.payload as any;
+      if (!rawPayload || Object.keys(rawPayload).length === 0) {
+        return h.response({ error: "Missing or empty payload" }).code(400);
+      }
+      console.log("Received payload:", rawPayload);
+
+      // Parse and handle boolean fields
+      const chooseType =
+        rawPayload.chooseType === "true" || rawPayload.chooseType === true;
+      const trueorfalseType =
+        rawPayload.trueorfalseType === "true" ||
+        rawPayload.trueorfalseType === true;
+
+      // Handle file buffers (if present)
+      const audioFileBuffer = rawPayload.audioFile
+        ? await streamToBuffer(rawPayload.audioFile)
+        : null;
+      const uploadFileBuffer = rawPayload.uploadFile
+        ? await streamToBuffer(rawPayload.uploadFile)
+        : null;
+
+      // Ensure options are parsed correctly
+      const options = parseJSONSafe(rawPayload.options);
+      if (!options) {
+        return h.response({ error: "Invalid options format" }).code(400);
+      }
+
+      return updateStudentAssignment(String(req.params.assinmentId), {
+        studentId: rawPayload?.studentId || "",
+        studentName: rawPayload?.studentName || "",
+        sessionClassType: rawPayload.sessionClassType || "",
+        assignmentName: rawPayload.assignmentName || "",
+        assignedTeacher: rawPayload.assignedTeacher || "",
+        assignmentType: rawPayload.assignmentType || {},
+        questionName: rawPayload.questionName || {},
+        questionType: rawPayload.questionType || {},
+        typeofQuestion: rawPayload.typeofQuestion || {},
+        title: rawPayload.title || {},
+
+        chooseType, // Parsed boolean
+        trueorfalseType, // Parsed boolean
+        question: rawPayload.question || "",
+        hasOptions: rawPayload.hasOptions,
+        options, // Parsed options object
+        audioFile: audioFileBuffer ? Buffer.from(audioFileBuffer) : undefined,
+        uploadFile: uploadFileBuffer
+          ? Buffer.from(uploadFileBuffer)
+          : undefined,
+        status: rawPayload.status || "",
+        createdDate: rawPayload.createdDate || new Date(),
+        createdBy: rawPayload.createdBy || "",
+        updatedDate: rawPayload.updatedDate || new Date(),
+        updatedBy: rawPayload.updatedBy || "",
+        level: rawPayload.level || "",
+        courses: rawPayload.courses || "",
+        assignedDate: rawPayload.assignedDate || new Date(),
+        dueDate: rawPayload.dueDate || new Date(),
+        answer: rawPayload.answer || "",
+        answerValidation: rawPayload.answerValidation || "",
+        assignmentStatus: rawPayload.assignmentStatus || "",
+      });
+    } catch (error) {
+      console.error("Error updating assignment:", error);
+
+      console.log("Answer>>>", updateStudentAssignment);
+
+      return h.response({ error: "Internal Server Error" }).code(500);
+    }
+  },
+
+//getbyObjectId
+
+async getByObjectId(req: Request, h: ResponseToolkit) {
+  const id = req.params.id; // ✅ This will now work
+  const result = await getAssignmentByObjectId(String(id));
+
+  if (isNil(result)) {
+    return notFound(assignemntMessages.USER_NOT_FOUND);
+  }
+
+  return result;
 }
+
 
 
 

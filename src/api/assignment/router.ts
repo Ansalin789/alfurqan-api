@@ -78,25 +78,39 @@ const register = async (server: Server): Promise<void> => {
     // },
   },
   
+//get assignment by ObjectId
+{
+  method: "GET",
+  path: "/assignments/{id}",
+  options: {
+    handler: handler.getByObjectId,
+    description: "Get assignment by ObjectId",
+    tags: ["api", "assignment"],
+    // auth: {
+    //   strategies: ["jwt"],
+    // },
+  },
+},
 
-//  {
-//       method: "PUT",
-//       path: "/assignments/{assinmentId}",
-//       options: {
-//        handler: handler.updateAssignment,
-//        description: assignemntMessages.UPDATE,
-//        tags: ["api", "assignment"],
-//        payload: {
-//         output: "stream",
-//         parse: true,
-//         maxBytes: 10 * 1024 * 1024,
-//         multipart: true,
-//         allow: "multipart/form-data",
-//       },
-//       auth: {
-//         strategies: ["jwt"],
-//       }, },  
-//     },
+
+ {
+      method: "PUT",
+      path: "/assignments/{assinmentId}",
+      options: {
+       handler: handler.updateAssignment,
+       description: assignemntMessages.UPDATE,
+       tags: ["api", "assignment"],
+       payload: {
+        output: "stream",
+        parse: true,
+        maxBytes: 10 * 1024 * 1024,
+        multipart: true,
+        allow: "multipart/form-data",
+      },
+      auth: {
+        strategies: ["jwt"],
+      }, },  
+    },
 
     
   ];
