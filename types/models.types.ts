@@ -759,7 +759,7 @@ export interface IAssignment extends Document {
   assignedTeacher: string;
   assignedTeacherId: string;
   assignmentType: {
-    type: "quiz" | "writing" | "reading" | "image identification" | "word matching";
+    type: "quiz" | "writing" | "reading" | "image identification" | "word match";
     name?: string;
   };
   chooseType?: boolean;
@@ -802,13 +802,10 @@ export interface IallAssignment {
   assignmentName: string;
   assignedTeacher: string;
   assignedTeacherId: string;
-  assignmentType: { 
-    quiz?: string;
-    writing?: string;
-    reading?: string;
-    imageIdentification?: string;
-    wordMatching?: string;
-  }; // Aligning with IAssignment
+assignmentType: {
+    type: "quiz" | "writing" | "reading" | "image identification" | "word match";
+    name?: string;
+  };
   chooseType: boolean;
   trueorfalseType: boolean;
   question: string;
@@ -846,13 +843,10 @@ export interface IAssignmentCreate {
      title:string;
   assignmentName: string;
   assignedTeacher?: string;
-  assignmentType: { 
-    quiz?: string;
-    writing?: string;
-    reading?: string;
-    imageIdentification?: string;
-    wordMatching?: string;
-  }; // Aligning with IAssignment
+ assignmentType: {
+    type: "quiz" | "writing" | "reading" | "image identification" | "word match";
+    name?: string;
+  };
   chooseType: boolean;
   trueorfalseType: boolean;
   question: string;

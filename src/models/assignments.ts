@@ -44,12 +44,12 @@ const assignmentSchema = new Schema<IAssignment>(
     trueorfalseType: { type: Boolean, required: false },
     question: { type: String, required: true, trim: true },
     hasOptions: { type: Boolean, required: false },
-    options: {
-      optionOne: { type: String, required: false },
-      optionTwo: { type: String, required: false },
-      optionThree: { type: String, required: false },
-      optionFour: { type: String, required: false },
-    },
+   options: {
+  optionOne: { type: String, required: false },
+  optionTwo: { type: String, required: false },
+  optionThree: { type: String, required: false },
+  optionFour: { type: String, required: false },
+},
     audioFile: { type: Buffer, required: false },
     uploadFile: { type: Buffer, required: false },
     status: { type: String, required: true, trim: true },
@@ -100,13 +100,14 @@ export const assignmentValidationSchema = z.object({
   question: z.string(),
   hasOptions: z.boolean().optional(),
 
-  options: z.object({
-    optionOne: z.string().optional(),
-    optionTwo: z.string().optional(),
-    optionThree: z.string().optional(),
-    optionFour: z.string().optional(),
-  }).optional(),
-
+ options: z
+    .object({
+      optionOne: z.string().optional(),
+      optionTwo: z.string().optional(),
+      optionThree: z.string().optional(),
+      optionFour: z.string().optional(),
+    })
+    .optional(),
   audioFile: z
     .union([z.string().nullable(), z.instanceof(Buffer)])
     .optional()

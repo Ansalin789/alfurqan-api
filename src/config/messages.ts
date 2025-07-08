@@ -364,7 +364,7 @@ export const assigmentType: Record<string, any> = Object.freeze({
   WRITING: "writing",
   READING: "reading",
   IMAGE_IDENTIFICATION: "image identification",
-  WORD_MATCHING: "word matching",
+  WORD_MATCHING: "word match",
  });    
 
 

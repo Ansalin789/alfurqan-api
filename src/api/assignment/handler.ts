@@ -15,6 +15,7 @@ import { notFound } from "@hapi/boom";
 import mongoose from "mongoose"; // make sure this is at the top
 import { IAssignment } from "../../../types/models.types";
 import { assignemntMessages } from "../../config/messages";
+import assignments from "../../models/assignments";
 
 // Input Validations for student list
 const getAssignmnentListInputValidation = z.object({
@@ -98,7 +99,8 @@ export default {
 
       const payload = req.payload as any;
       console.log("📥 Raw payload received:", payload);
-
+ const assignmentCount = await assignments.countDocuments({ studentId: payload.studentId });
+    const nextIdNumber = assignmentCount + 1;
       // 🔧 Step 1: Reconstruct nested assignment array from flat form keys
       function reconstructAssignments(flat: Record<string, any>): any[] {
         const assignments: any[] = [];
@@ -151,10 +153,10 @@ export default {
         assignedTeacher,
       });
       // ✅ Generate assignmentId here (for this one group of questions)
-      const studentPrefix = studentName?.slice(0, 3).toUpperCase() || "STU";
-      const currentYear = new Date().getFullYear();
-      const incrementId = "01"; // you can later replace with DB count or auto-ID logic
-      const assignmentId = `${incrementId}-${studentPrefix}-${currentYear}`;
+        const studentPrefix = studentName?.slice(0, 3).toUpperCase() || "STU";
+    const currentDate = new Date();
+    const datePart = `${currentDate.getDate()}${currentDate.getMonth()+1}${currentDate.getFullYear()}`;
+    const assignmentId = `${nextIdNumber}-${studentPrefix}-${datePart}`;
 
       if (!studentId || !mongoose.Types.ObjectId.isValid(studentId)) {
         return h.response({ error: "Invalid studentId" }).code(400);
@@ -190,7 +192,7 @@ export default {
               "writing",
               "reading",
               "image identification",
-              "wordMatching",
+              "word match",
             ].includes(parsedType.type)
           ) {
             console.error(

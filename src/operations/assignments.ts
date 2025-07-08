@@ -62,7 +62,7 @@ export const createAssignment = async (
       "writing",
       "reading",
       "image identification",
-      "word matching",
+      "word match",
     ];
     console.log("✅ Allowed types:", allowedTypes);
 
