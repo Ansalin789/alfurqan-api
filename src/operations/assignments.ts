@@ -383,17 +383,17 @@ export const updateAssignmentsAnswer = async (
     updatedBy: string;
   }[]
 ): Promise<{
-  updated: { _id: string; isCorrect: boolean; status: string }[];
+  updated: { _id: string; isCorrect: boolean; score: number; status: string }[];
   failed: { _id: string; reason: string }[];
+  totalScore: number;
 }> => {
-  const updatedResults: { _id: string; isCorrect: boolean; status: string }[] = [];
+  const updatedResults: { _id: string; isCorrect: boolean; score: number; status: string }[] = [];
   const failedResults: { _id: string; reason: string }[] = [];
 
   for (const item of payloads) {
     const { _id, answer, updatedBy } = item;
 
     try {
-      // ✅ Fetch the assignment by _id AND assignmentId
       const assignmentDoc = await assignment.findOne({ _id, assignmentId });
 
       if (!assignmentDoc) {
@@ -402,6 +402,7 @@ export const updateAssignmentsAnswer = async (
       }
 
       const isCorrect = assignmentDoc.answerValidation === answer;
+      const score = isCorrect ? 1 : 0;
 
       await assignment.findByIdAndUpdate(
         _id,
@@ -410,6 +411,7 @@ export const updateAssignmentsAnswer = async (
           updatedBy,
           updatedDate: new Date(),
           assignmentStatus: "Completed",
+          score,
         },
         { new: true }
       );
@@ -417,6 +419,7 @@ export const updateAssignmentsAnswer = async (
       updatedResults.push({
         _id,
         isCorrect,
+        score,
         status: "Updated",
       });
     } catch (error: any) {
@@ -424,9 +427,35 @@ export const updateAssignmentsAnswer = async (
     }
   }
 
+  let totalScore = 0;
+
+  // After all updates, calculate the new totalScore and rating
+  try {
+    const relatedAssignments = await assignment.find({ assignmentId });
+
+    totalScore = relatedAssignments.reduce(
+      (sum, doc) => sum + Number(doc.score || 0),
+      0
+    );
+
+    const totalCount = relatedAssignments.length;
+    const averageScore = totalCount > 0 ? totalScore / totalCount : 0;
+
+    const rating = Number((averageScore * 5).toFixed(2)); // Convert to 5-star scale
+
+    // Update all documents in this assignment group with the new rating
+    await assignment.updateMany(
+      { assignmentId },
+      { $set: { rating } }
+    );
+  } catch (error) {
+    console.error("Rating update failed:", error);
+  }
+
   return {
     updated: updatedResults,
     failed: failedResults,
+    totalScore,
   };
 };
 

@@ -384,7 +384,7 @@ console.log("getTrailclass>>", getTrailclass[0]);
 await sendNotification({
   messages: `${createEvaluation.student.studentFirstName} ${createEvaluation.student.studentLastName} has been assigned to you for a trial class.`,
   senderId: createEvaluation.academicCoachId?.toString() ?? "system",
-  senderName: "Academic Coach",
+  senderName: createEvaluation.academicCoachName ?? "system",
   senderEmail: createEvaluation.createdBy,
   isRead: false,
   receiverId: [teacherDetails.userId],
