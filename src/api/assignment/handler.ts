@@ -6,11 +6,10 @@ import {
   getAssignmentForStudentId,
   getAssignments,
   getStudentCardCount,
-  updateStudentAssignment,
   getTeacherStudentsAssignmentCount,
+  updateAssignmentsAnswer,
 } from "../../operations/assignments"; // Replace with your service logic
 import * as Stream from "stream";
-import { options } from "joi";
 import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
 import mongoose from "mongoose"; // make sure this is at the top
@@ -309,6 +308,8 @@ if (rawPayload.uploadFile) {
           assignmentStatus: rawPayload.assignmentStatus || "",
           audioFile: audioFileBuffer ? Buffer.from(audioFileBuffer) : undefined,
           uploadFile: uploadFileBufferNew ? Buffer.from(uploadFileBufferNew) : undefined,
+            score: 0,
+           rating: "",
 
         };
         console.log("📌 Prepared assignment object:", newAssignment);
@@ -459,79 +460,7 @@ async getStudentCount(req: Request, h: ResponseToolkit) {
   }
 },
 
-//  Update an Assignment
-  async updateAssignment(req: Request, h: ResponseToolkit) {
-    try {
-      // Ensure the payload is valid
-      const rawPayload = req.payload as any;
-      if (!rawPayload || Object.keys(rawPayload).length === 0) {
-        return h.response({ error: "Missing or empty payload" }).code(400);
-      }
-      console.log("Received payload:", rawPayload);
 
-      // Parse and handle boolean fields
-      const chooseType =
-        rawPayload.chooseType === "true" || rawPayload.chooseType === true;
-      const trueorfalseType =
-        rawPayload.trueorfalseType === "true" ||
-        rawPayload.trueorfalseType === true;
-
-      // Handle file buffers (if present)
-      const audioFileBuffer = rawPayload.audioFile
-        ? await streamToBuffer(rawPayload.audioFile)
-        : null;
-      const uploadFileBuffer = rawPayload.uploadFile
-        ? await streamToBuffer(rawPayload.uploadFile)
-        : null;
-
-      // Ensure options are parsed correctly
-      const options = parseJSONSafe(rawPayload.options);
-      if (!options) {
-        return h.response({ error: "Invalid options format" }).code(400);
-      }
-
-      return updateStudentAssignment(String(req.params.assinmentId), {
-        studentId: rawPayload?.studentId || "",
-        studentName: rawPayload?.studentName || "",
-        sessionClassType: rawPayload.sessionClassType || "",
-        assignmentName: rawPayload.assignmentName || "",
-        assignedTeacher: rawPayload.assignedTeacher || "",
-        assignmentType: rawPayload.assignmentType || {},
-        questionName: rawPayload.questionName || {},
-        questionType: rawPayload.questionType || {},
-        typeofQuestion: rawPayload.typeofQuestion || {},
-        title: rawPayload.title || {},
-
-        chooseType, // Parsed boolean
-        trueorfalseType, // Parsed boolean
-        question: rawPayload.question || "",
-        hasOptions: rawPayload.hasOptions,
-        options, // Parsed options object
-        audioFile: audioFileBuffer ? Buffer.from(audioFileBuffer) : undefined,
-        uploadFile: uploadFileBuffer
-          ? Buffer.from(uploadFileBuffer)
-          : undefined,
-        status: rawPayload.status || "",
-        createdDate: rawPayload.createdDate || new Date(),
-        createdBy: rawPayload.createdBy || "",
-        updatedDate: rawPayload.updatedDate || new Date(),
-        updatedBy: rawPayload.updatedBy || "",
-        level: rawPayload.level || "",
-        courses: rawPayload.courses || "",
-        assignedDate: rawPayload.assignedDate || new Date(),
-        dueDate: rawPayload.dueDate || new Date(),
-        answer: rawPayload.answer || "",
-        answerValidation: rawPayload.answerValidation || "",
-        assignmentStatus: rawPayload.assignmentStatus || "",
-      });
-    } catch (error) {
-      console.error("Error updating assignment:", error);
-
-      console.log("Answer>>>", updateStudentAssignment);
-
-      return h.response({ error: "Internal Server Error" }).code(500);
-    }
-  },
 
 //getbyObjectId
 
@@ -544,7 +473,36 @@ async getByObjectId(req: Request, h: ResponseToolkit) {
   }
 
   return result;
+},
+
+
+//  Update an Assignment
+async bulkUpdateAssignments(req: Request, h: ResponseToolkit) {
+  try {
+    const { assignmentId } = req.query as { assignmentId: string };
+    const payloadAnswers = req.payload as {
+      _id: string;
+      answer: string;
+      updatedBy: string;
+    }[];
+
+    if (!assignmentId) {
+      return h.response({ error: "assignmentId query param is required" }).code(400);
+    }
+
+    if (!Array.isArray(payloadAnswers) || payloadAnswers.length === 0) {
+      return h.response({ error: "Payload must be a non-empty array" }).code(400);
+    }
+
+    const result = await updateAssignmentsAnswer(assignmentId, payloadAnswers);
+
+    return h.response(result).code(200);
+  } catch (error) {
+    console.error("Error in bulk assignment update:", error);
+    return h.response({ error: "Internal Server Error" }).code(500);
+  }
 }
+
 
 
 ,

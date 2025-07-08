@@ -65,6 +65,8 @@ const assignmentSchema = new Schema<IAssignment>(
     answerValidation: { type: String, required: true },
     assignmentStatus: { type: String, required: true },
     commends: { type: String, required: false },
+    score: { type: Number, required: false }, // New field for score
+    rating: { type: String, required: false},
   },
   { timestamps: false }
 );
@@ -171,5 +173,7 @@ export const assignmentValidationSchema = z.object({
     AssignmentStatus.NOTCOMPLETED,
   ]),
   commends: z.string().optional(),
+  score: z.number().optional(),
+  rating: z.string().optional(), 
 });
 export default model<IAssignment>("Assignment", assignmentSchema);

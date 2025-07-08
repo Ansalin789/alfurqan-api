@@ -787,6 +787,8 @@ export interface IAssignment extends Document {
   answerValidation: string;
   assignmentStatus: AssignmentStatus;
   commends?: string;
+  score: number; 
+  rating: string; 
 }
 export interface IallAssignment {
   studentId: string;
@@ -830,7 +832,8 @@ export interface IallAssignment {
   dueDate: Date;
   assignmentStatus: string;
     commends?: string;
-
+  score: number; 
+  rating: string;
 
 }
 export interface IAssignmentCreate {
@@ -875,7 +878,8 @@ export interface IAssignmentCreate {
   answerValidation: string;
   assignmentStatus: string;
     commends?: string;
-
+  score: number; 
+  rating: string;
 }
 export interface IStudentInvoice extends Document {
   student: {
