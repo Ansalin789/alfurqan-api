@@ -695,6 +695,8 @@ export interface IAlStudents extends Document{
     city:string;
     country: string;
   };
+
+  level?: string;
   username: string,
   password: string;
   role: string;
@@ -716,6 +718,7 @@ export interface IAlStudentCreate{
     studentPhone: number;
     gender: string;
   };
+  level?: string;
   username: string,
   role: string;
 }
