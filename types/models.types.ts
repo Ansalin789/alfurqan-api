@@ -692,6 +692,8 @@ export interface IAlStudents extends Document{
     city:string;
     country: string;
   };
+
+  level?: string;
   username: string,
   password: string;
   role: string;

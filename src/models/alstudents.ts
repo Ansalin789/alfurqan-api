@@ -2,6 +2,7 @@ import { model, Schema } from "mongoose";
 import { z } from "zod";
 import { IAlStudents } from "../../types/models.types";
 import { appStatus, commonMessages } from "../config/messages";
+import { string } from "joi";
 
 
 const alStudentSchema = new Schema<IAlStudents>(
@@ -62,6 +63,11 @@ role: {
     type: String,
     required: true,
 },
+level: {
+    type: string,
+    required: false,
+    default: 0, 
+},
 startDate:{
     type: Date,
     required: false,
@@ -109,6 +115,8 @@ export const zodAlStudentSchema = z.object({
       gender: z.string()
     }),
     sessionClassType:z.string().optional(),
+    level:z.string().optional(),
+
     username: z.string().min(3),
     password: z.string().min(8),
     role: z.string(),
