@@ -42,7 +42,9 @@ export default {
   // Get widget counts for students
   async getWidgetStudentCount(req: Request, h: ResponseToolkit) {
     try {
-      const studentCounts = await dashboardWidgetStudentCounts(req.headers.Student as string)
+          const { studentId, courseName } = req.query;
+      const studentCounts = await dashboardWidgetStudentCounts(studentId as string,
+      courseName as string)
       return h.response(studentCounts).code(200)
     } catch (error) {
       console.error("Error in getWidgetStudentCount:", error)

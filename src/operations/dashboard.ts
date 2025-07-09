@@ -1,7 +1,7 @@
 import EvaluationModel from "../models/evaluation"
 import classShedule from "../models/classShedule"
 import recruitment from "../models/recruitment"
-import feedback from "../models/feedback"
+// import feedback from "../models/feedback"
 import alstudents from "../models/alstudents"
 import tenantUser from "../models/users"
 import {
@@ -17,7 +17,8 @@ import {
 } from "date-fns"
 import { Types } from "mongoose"
 import meetingschedule from "../models/calendar"
-import { result } from "lodash"
+// import { result } from "lodash"
+import evaluation from "../models/evaluation"
 
 export interface EvaluationDetails {
   academicCoach: {
@@ -212,46 +213,131 @@ export async function dashboardWidgetTeacherCounts(teacherId: string) {
   }
 }
 
+// export const dashboardWidgetStudentCounts = async (
+//   studentId: string,
+//   courseName: string // Pass course name dynamically from query
+// ): Promise<{
+//   totalLevel: number
+//   totalAttendance: number
+//   totalClasses: number
+//   totalDuration: number
+// }> => {
+//   // Step 1: Get student record from alstudents
+//   const studentRecord = await alstudents.findOne({
+//     _id: studentId,
+//     "course.courseName": courseName,
+//   }).exec();
 
+//   // Step 2: Calculate attendance: present and total class counts
+//   const [presentCount, totalClassCount] = await Promise.all([
+//     classShedule.countDocuments({
+//       "student.studentId": studentId,
+//       "course.courseName": courseName,
+//       "studentAttendee": "present",
+//     }).exec(),
+
+//     classShedule.countDocuments({
+//       "student.studentId": studentId,
+//       "course.courseName": courseName,
+//     }).exec(),
+//   ]);
+
+//   const totalAttendance =
+//     totalClassCount > 0 ? (presentCount / totalClassCount) * 100 : 0;
+
+//   // Step 3: Get totalDuration (accomplished hours from EvaluationModel)
+//   // let totalDuration = 0;
+//   // if (internalStudentId) {
+//   //   const accomplishedHours = await EvaluationModel.aggregate([
+//   //     {
+//   //       $match: {
+//   //         "student.studentId": internalStudentId,
+//   //       },
+//   //     },
+//   //     {
+//   //       $group: {
+//   //         _id: null,
+//   //         totalAccomplishedHours: {
+//   //           $sum: "$student.accomplishedHours", // Update if the field is different
+//   //         },
+//   //       },
+//   //     },
+//   //   ]);
+
+//   //   totalDuration = accomplishedHours[0]?.totalAccomplishedHours || 0;
+//   // }
+
+//   const totalLevel = studentRecord?.level || 1; 
+
+//   // Step 5: Return final metrics
+//   return {
+//     totalLevel,
+//     totalAttendance: parseFloat(totalAttendance.toFixed(2)),
+//     totalClasses: totalClassCount,
+//     // totalDuration,
+//   };
+// };
+
+
+//pass the studentId and course from query
 export const dashboardWidgetStudentCounts = async (
   studentId: string,
+  courseName: string // Needed to filter course-specific data
 ): Promise<{
-  totalLevel: number
+  totalLevel: string
   totalAttendance: number
   totalClasses: number
   totalDuration: number
 }> => {
-  // Fetch counts in parallel
-  const [levelCount, attendanceCount, classCount, totalHours] = await Promise.all([
-    feedback
-      .countDocuments({ studentId: studentId })
-      .exec(), // Fetch level count from feedback
-    classShedule.countDocuments({ studentId: studentId }).exec(),
-    classShedule.countDocuments({ "studentId.studentId": studentId }).exec(),
-    classShedule
-      .aggregate([
-        { $match: { studentId: studentId } },
-        { $group: { _id: null, totalHourse: { $sum: "$totalHourse" } } }, // Summing totalHourse instead of duration
-      ])
-      .exec(),
-  ])
 
-  // Extract total hours value (fallback to 0 if undefined)
-  const totalHoursValue = totalHours?.[0]?.totalHourse || 0
+  const levelCount = await alstudents.findOne({
+     _id: studentId,
+     }).exec();
 
-  // Compute total sum of all categories
-  const totalSum = levelCount + attendanceCount + classCount + totalHoursValue
+  const presentCount = await classShedule.countDocuments({
+    "student.studentId": studentId,
+    "course.courseName": courseName,
+    "student.attendee": "present"
+  }).exec();
 
-  // Avoid division by zero
-  const calculatePercentage = (value: number) => (totalSum > 0 ? (value / totalSum) * 100 : 0)
+  const totalClassCount = await classShedule.countDocuments({
+    "student.studentId": studentId,
+    "course.courseName": courseName,
+  }).exec();
 
-  return {
-    totalLevel: calculatePercentage(levelCount),
-    totalAttendance: calculatePercentage(attendanceCount),
-    totalClasses: calculatePercentage(classCount),
-    totalDuration: calculatePercentage(totalHoursValue),
-  }
-}
+  const attendancePercentage =
+    totalClassCount > 0 ? (presentCount / totalClassCount) * 100 : 0;
+
+  const evaluationRecord = await evaluation.findOne({
+    "student.studentId": levelCount?.student.studentId,
+    "course.courseName": courseName,
+  }).exec();
+
+  const totalDuration = typeof evaluationRecord?.accomplishmentTime === 'number'
+    ? evaluationRecord.accomplishmentTime
+    : 0;
+
+ return {
+    totalLevel: levelCount?.level || "1", 
+    totalAttendance: attendancePercentage,
+    totalClasses: totalClassCount,
+    totalDuration: totalDuration,
+  };
+};
+
+
+/*
+totalLevel: get the level from alstudents collection "_id" == "studentId"
+totalAttendance: step 1: pass the studentid and cours to the classShedule collection - "student.studentId": studentId,
+step 2: from using this list collection get the student attendee == 'present' count
+step3: get toal classchedule count and present count and calculate the percentage
+totalAttendance = (presentCount / totalClassCount) * 100
+totalClasses: get the total class count from classShedule collection using studentId and course
+totalDuration: get the total hours from get student record from alstudents collection "_id" == "studentId" by using studentId and course
+               then pass the alstudent "student.studentId" to evaluation "student.studentId",
+               get evaluation record then get the accomblished hours from evaluation collection
+*/
+
 
 export const dashboardWidgetSupervisorCounts = async (
   supervisorId: string,
@@ -449,6 +535,7 @@ export const totalClassCount = async (
 
   // Ensure all intervals are included (fill missing values with 0)
   const allDates = intervalFn({ start: startDate, end: endDate }).map((d) => format(d, outputFormat))
+  // eslint-disable-next-line prefer-const
   finalResult = allDates.map(
     (date) =>
       groupedResults[date] || { date, classCompleted: 0, classPending: 0, classReschedule: 0, classCancelled: 0 },
