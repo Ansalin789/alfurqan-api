@@ -64,9 +64,8 @@ role: {
     required: true,
 },
 level: {
-    type: string,
+    type: String,
     required: false,
-    default: 0, 
 },
 startDate:{
     type: Date,

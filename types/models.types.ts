@@ -715,6 +715,7 @@ export interface IAlStudentCreate{
     studentPhone: number;
     gender: string;
   };
+  level?: string;
   username: string,
   role: string;
 }
