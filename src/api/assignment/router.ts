@@ -93,26 +93,39 @@ const register = async (server: Server): Promise<void> => {
 },
 
 
- {
-      method: "PUT",
-      path: "/assignments/{assinmentId}",
-      options: {
-       handler: handler.updateAssignment,
-       description: assignemntMessages.UPDATE,
-       tags: ["api", "assignment"],
-       payload: {
-        output: "stream",
-        parse: true,
-        maxBytes: 10 * 1024 * 1024,
-        multipart: true,
-        allow: "multipart/form-data",
-      },
-      auth: {
-        strategies: ["jwt"],
-      }, },  
+{
+  method: "PUT",
+  path: "/assignments/bulk",
+  options: {
+    handler: handler.bulkUpdateAssignments,
+    description: assignemntMessages.UPDATE_BULK,
+    tags: ["api", "assignment"],
+    payload: {
+      parse: true,
+      allow: 'application/json'
     },
+    // auth: {
+    //   strategies: ["jwt"],
+    // },
+  },
+},
+
 
     
+
+     {
+  method: "GET",
+  path: "/assignments/teacher/cardcount",
+  options: {
+    handler: handler.getTeacherStudentAssignmentCount,
+    description: "Get all assignments counts for a student by teacherId",
+    tags: ["api", "assignment"],
+    },
+    // auth: {
+    //   strategies: ["jwt"],
+    // },
+  },
+
   ];
   server.route(routes);
 };

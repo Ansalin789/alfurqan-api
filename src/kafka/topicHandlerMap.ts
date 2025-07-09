@@ -12,7 +12,9 @@ import {
   bookSlot,
   getAllSlotByDate,
   getAllSlots,
+  getTeacherConsistentWeeklySlots,
   getUniqueTeacherList,
+  trailClassTeacherList,
 } from "../redis/handler/teacherSlotHander";
 import { emitEventToClient } from "../shared/socket";
 import AuditLog from "../models/auditlog";
@@ -88,10 +90,14 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
       );
     }
   },
-
+ //frontend binding pending 
   academicTeacherStudentList: async (data: any) => {
     console.log("academicTeacherStudentList");
-    const teacherId = data.data.assignedTeacherId;
+    const teacherId = data?.data?.assignedTeacherId;
+    if (!teacherId) {
+    console.error("No teacherId provided");
+    return;
+    }
     const getTeacherStudentList = getStudentList(teacherId);
     emitEventToClient("academicTeacherStudentList", getTeacherStudentList);
   },
@@ -196,6 +202,18 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
     console.log('academicAvailableTeachersList');
     const teacherLsit = await getUniqueTeacherList(data.startDate , data.WeeklySlots);
     emitEventToClient("availableTeachersListResponse", teacherLsit ,data.requestId);
+  },
+
+  'academicTrailClassTeacher' : async ( data : any) => {
+   console.log("academicTrailClassTeacher");
+   const teacherList = await trailClassTeacherList(data.startDate , data.from , data.to);
+   emitEventToClient("academicTrailClassTeacherListResponse", teacherList ,data.requestId);
+  },
+
+  'academicTeacherWeeklySlots' : async ( data : any) => {
+     console.log("academicTeacherWeeklySlots");
+     const teachersList = await getTeacherConsistentWeeklySlots( data.teacherId ,data.startDate );
+     emitEventToClient("academicTeacherWeeklySlotsListResponse", teachersList ,data.requestId);
   },
 
   'sendLogsToKafka' : async ( data : any) =>{

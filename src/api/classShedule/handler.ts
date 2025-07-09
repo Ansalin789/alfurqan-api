@@ -6,10 +6,11 @@ import { isNil } from "lodash";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
 import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount, getTotalClassesCount, getClassesStatusCount, getClassesWiseCount, getStudentList, getTeacherAttendanceSummary, teacherStudentCount, getgetAnalyticscardCalculation} from "../../operations/classschedule";
-import { academicAvailableTeachers, academicStudentReSchedule, academicTeacherReSchedule } from "../../kafka/producers/academicProducer";
+import { academicAvailableTeachers, academicDashboardTeachersStudentCount, academicStudentReSchedule, academicTeacherStudentList } from "../../kafka/producers/academicProducer";
 import AlStudentModule from "../../models/alstudents"
 import Evaluation from "../../models/evaluation";
 import { Types } from "mongoose";
+import { evaluationTeacherSlotBook } from "../../redis/handler/teacherSlotHander";
 
 const createInputValidation = z.object({
     payload: zodClassScheduleSchema.pick({
@@ -17,6 +18,7 @@ const createInputValidation = z.object({
         classDay: true,
         package: true,
         preferedTeacher: true,
+        weeklySlots:true,
         course: true,
         totalHourse: true,
         startDate: true,
@@ -439,7 +441,7 @@ async updateteacherreschedule(req: Request, h: ResponseToolkit){
   );
   if(classReschudle){
     await academicAvailableTeachers({ event : "update" , data :{ date :payload.startDate , teacherId :payload.teacher?.teacherId , from  : startTimeValues , to : endTimeValues}});
-    await academicTeacherReSchedule({ data: classReschudle });
+    await academicStudentReSchedule({ data: classReschudle });
   }
   return classReschudle;
   
@@ -561,6 +563,7 @@ async bulkcreateandSchedule(req: Request, h: ResponseToolkit) {
       classDay: classDayValues,
       package: payload.package,
       preferedTeacher: payload.preferedTeacher,
+      weeklySlots:payload.weeklySlots,
       sessionClassType: payload.sessionClassType || "",
       sessionStarttime: payload.sessionStarttime || "",
       sessionsEndtime: payload.sessionsEndtime || "",
@@ -575,6 +578,22 @@ async bulkcreateandSchedule(req: Request, h: ResponseToolkit) {
       teacherAttendee: payload.teacherAttendee
     };
 
+      if (
+  payload.startDate instanceof Date &&
+  !isNaN(payload.startDate.getTime()) &&
+  payload.weeklySlots &&
+  Object.keys(payload.weeklySlots).length > 0 &&
+  typeof payload.teacher?.teacherId === "string" &&
+  payload.teacher.teacherId.trim() !== ""
+) {
+  await evaluationTeacherSlotBook(
+    payload.startDate.toISOString(),
+    payload.weeklySlots,
+    payload.teacher.teacherId.trim()
+  );
+}
+
+
     const allResults = [];
     if(rawPayload.students){
   for (const student of rawPayload.students) {
@@ -583,7 +602,12 @@ async bulkcreateandSchedule(req: Request, h: ResponseToolkit) {
         ...commonScheduleData,
         student 
       });
-
+      if(result){
+        const classType = payload?.sessionClassType
+        await academicTeacherStudentList({data : {assignedTeacherId : payload.teacher?.teacherId }});
+        await academicDashboardTeachersStudentCount({classType});
+      }
+       
       allResults.push({
         studentId: student.studentId,
         result

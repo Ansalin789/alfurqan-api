@@ -529,6 +529,12 @@ export interface IClassSchedule extends Document{
   classDay: any;
   package: string;
   preferedTeacher: string;
+  weeklySlots: {
+    [day: string]: {
+      from: string;
+      to: string;
+    }[];
+  };
   course: string;
   totalHourse: number;
   classhour:string;
@@ -580,6 +586,12 @@ export interface IClassScheduleCreate{
   classhour:string;
   amount:string;
   currency:string;
+  weeklySlots: {
+    [day: string]: {
+      from: string;
+      to: string;
+    }[];
+  };
   sessionClassType:string;
   sessionStarttime:string;
   sessionsEndtime:string;
@@ -750,7 +762,7 @@ export interface IAssignment extends Document {
   assignedTeacher: string;
   assignedTeacherId: string;
   assignmentType: {
-    type: "quiz" | "writing" | "reading" | "image identification" | "word matching";
+    type: "quiz" | "writing" | "reading" | "image identification" | "word match";
     name?: string;
   };
   chooseType?: boolean;
@@ -778,6 +790,8 @@ export interface IAssignment extends Document {
   answerValidation: string;
   assignmentStatus: AssignmentStatus;
   commends?: string;
+  score: number; 
+  rating: string; 
 }
 export interface IallAssignment {
   studentId: string;
@@ -791,13 +805,10 @@ export interface IallAssignment {
   assignmentName: string;
   assignedTeacher: string;
   assignedTeacherId: string;
-  assignmentType: { 
-    quiz?: string;
-    writing?: string;
-    reading?: string;
-    imageIdentification?: string;
-    wordMatching?: string;
-  }; // Aligning with IAssignment
+assignmentType: {
+    type: "quiz" | "writing" | "reading" | "image identification" | "word match";
+    name?: string;
+  };
   chooseType: boolean;
   trueorfalseType: boolean;
   question: string;
@@ -821,7 +832,8 @@ export interface IallAssignment {
   dueDate: Date;
   assignmentStatus: string;
     commends?: string;
-
+  score: number; 
+  rating: string;
 
 }
 export interface IAssignmentCreate {
@@ -834,13 +846,10 @@ export interface IAssignmentCreate {
      title:string;
   assignmentName: string;
   assignedTeacher?: string;
-  assignmentType: { 
-    quiz?: string;
-    writing?: string;
-    reading?: string;
-    imageIdentification?: string;
-    wordMatching?: string;
-  }; // Aligning with IAssignment
+ assignmentType: {
+    type: "quiz" | "writing" | "reading" | "image identification" | "word match";
+    name?: string;
+  };
   chooseType: boolean;
   trueorfalseType: boolean;
   question: string;
@@ -866,7 +875,8 @@ export interface IAssignmentCreate {
   answerValidation: string;
   assignmentStatus: string;
     commends?: string;
-
+  score: number; 
+  rating: string;
 }
 export interface IStudentInvoice extends Document {
   student: {
