@@ -1,7 +1,7 @@
 import { Server as SocketIOServer, Socket } from "socket.io";
 import { Server as HttpServer } from "http";
 import AppLogger from "../helpers/logging";
-import { academicAvailableTeachersList } from "../kafka/producers/academicProducer";
+import { academicAvailableTeachersList, academicTeacherWeeklySlots, academicTrailClassTeacher } from "../kafka/producers/academicProducer";
 
 // Map to track sockets connected per userId
 const userSocketsMap = new Map<string, Set<string>>();
@@ -41,7 +41,28 @@ export const initializeSocket = (httpServer: HttpServer): void => {
         AppLogger.error(`Error fetching available teachers list`, error);
        }
     });
-
+    socket.on('academicTrailClassTeacherListRequest',async(data)=>{
+      try{
+            if(!data.startDate || !data.from || !data.to) {
+            AppLogger.error("Invalid request for available teachers list", data);
+           return;
+         }
+             await academicTrailClassTeacher(data);
+        }catch(error){
+         AppLogger.error(`Error fetching available teachers list`, error);
+      }
+    });
+    socket.on('academicTeacherWeeklySlotsListRequest',async(data)=>{
+      try{
+            if(!data.startDate || !data.teacherId) {
+            AppLogger.error("Invalid request for available teachers list", data);
+           return;
+         }
+             await academicTeacherWeeklySlots(data);
+        }catch(error){
+         AppLogger.error(`Error fetching available teachers list`, error);
+      }
+    });
     socket.on("disconnect", () => {
       // Remove socket from all user mappings
       for (const [userId, socketSet] of userSocketsMap.entries()) {

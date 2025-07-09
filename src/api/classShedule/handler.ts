@@ -579,16 +579,20 @@ async bulkcreateandSchedule(req: Request, h: ResponseToolkit) {
     };
 
       if (
-      payload.startDate !== undefined &&
-      payload.weeklySlots !== undefined && 
-      payload.teacher?.teacherId !== undefined 
-    ) {
-      await evaluationTeacherSlotBook(
-        payload.startDate.toISOString(),  
-        payload.weeklySlots,               
-        payload.teacher?.teacherId
-      );
-    }
+  payload.startDate instanceof Date &&
+  !isNaN(payload.startDate.getTime()) &&
+  payload.weeklySlots &&
+  Object.keys(payload.weeklySlots).length > 0 &&
+  typeof payload.teacher?.teacherId === "string" &&
+  payload.teacher.teacherId.trim() !== ""
+) {
+  await evaluationTeacherSlotBook(
+    payload.startDate.toISOString(),
+    payload.weeklySlots,
+    payload.teacher.teacherId.trim()
+  );
+}
+
 
     const allResults = [];
     if(rawPayload.students){

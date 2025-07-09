@@ -165,20 +165,22 @@ console.log("createEvaluation>>>",createEvaluation)
 
       await trialClassAssigned(createEvaluation, teacherDetails)
     }
-    if (
+     if (
   payload.classType === 'REGULARCLASS' &&
   newEvaluation.studentStatus === "JOINED" &&
   newEvaluation.classStatus === "COMPLETED" &&
-  payload.joiningDate !== undefined &&
-  payload.weeklySlots !== undefined && 
-  teacherDetails?.userId !== undefined 
-) {
+  payload.joiningDate instanceof Date &&
+  !isNaN(payload.joiningDate.getTime()) &&
+  payload.weeklySlots && Object.keys(payload.weeklySlots).length > 0 &&
+ typeof teacherDetails?.userId === "string" &&
+  teacherDetails.userId.trim() !== ""
+  ) {
   await evaluationTeacherSlotBook(
     payload.joiningDate.toISOString(),  
     payload.weeklySlots,               
-    teacherDetails?.userId
+    teacherDetails?.userId?.trim()
   );
-}
+  }
 
   
     return createEvaluation;
@@ -380,7 +382,7 @@ console.log("getTrailclass>>", getTrailclass[0]);
   });
  await CreatemeetingDetails.save();
 
- 
+ if(teacherDetails.userId){
 await sendNotification({
   messages: `${createEvaluation.student.studentFirstName} ${createEvaluation.student.studentLastName} has been assigned to you for a trial class.`,
   senderId: createEvaluation.academicCoachId?.toString() ?? "system",
@@ -396,7 +398,7 @@ await sendNotification({
   createdBy: "system",
   updatedBy: "system",
 });
-
+ }
 
   if(CreatemeetingDetails){
     const teacherId = CreatemeetingDetails.teacher.teacherId;
