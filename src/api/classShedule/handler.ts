@@ -12,6 +12,7 @@ import Evaluation from "../../models/evaluation";
 import { Types } from "mongoose";
 import { evaluationTeacherSlotBook } from "../../redis/handler/teacherSlotHander";
 import { teacherDashboardCardCount } from "../../kafka/producers/teacherProducer";
+import alstudents from "../../models/alstudents";
 
 const createInputValidation = z.object({
     payload: zodClassScheduleSchema.pick({
@@ -251,8 +252,14 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
           .code(404);
       }
 
+      const getLevel = await alstudents
+        .findOne({ _id: result.student.studentId })
+        .exec();
+
+      const response = { result, level: getLevel?.level };
       // Return the found student
-      return h.response(result).code(200);
+      // Return the found student
+      return h.response(response).code(200);
     } catch (error) {
       // Handle errors (unexpected or other)
       return h
