@@ -147,6 +147,7 @@ export const updateStudentClassSchedule = async (
           studentLastName: alfurqanStudent?.username,
           studentEmail: alfurqanStudent?.student.studentEmail,
           gender: alfurqanStudent?.student.gender,
+          level : alfurqanStudent?.level
         },
         teacher: {
           teacherId: teacher?.teacherId,

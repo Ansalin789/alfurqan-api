@@ -28,6 +28,10 @@ const classScheduleSchema = new Schema<IClassSchedule>(
         gender: {
           type: String,
           required: true,
+      },
+      level:{
+        type: String,
+        required: true,
       }
       },
       teacher: {
@@ -213,6 +217,7 @@ export const zodClassScheduleSchema = z.object({
         studentLastName: z.string(),
         studentEmail: z.string(),
         gender: z.string(),
+        level: z.string(),
     }),
     teacher: z.object({
         teacherId: z.string(),

@@ -132,7 +132,7 @@ async function createStudentPortal(updatedEvaluation: any) {
       },
       username: updatedEvaluation.student.studentFirstName,
       sessionClassType: updatedEvaluation.classType,
-     
+      level: "1",
       password: password,
       role: "Student",
       status: "Active",
@@ -193,7 +193,8 @@ async function createStudentPortal(updatedEvaluation: any) {
               studentLastName: studentDetails.username,
               studentEmail: studentDetails.student.studentEmail,
               gender: studentDetails.student.gender,
-              package: updatedEvaluation.subscription?.subscriptionName
+              package: updatedEvaluation.subscription?.subscriptionName,
+              level: studentDetails.level
             },
             teacher: {
               teacherId: teacherDetails?.userId,
@@ -323,7 +324,7 @@ export const createStudentPaymentIntent = async (request: Request, h: ResponseTo
       const updateInvoice = await InvoiceModel.findByIdAndUpdate(
         invoiceId,
         {
-          invoiceStatus: paymentIntentResponse.status === "succeeded" ? "Paid" : "Completed",
+          invoiceStatus: paymentIntentResponse.status === "succeeded" ? "Paid" : "Completed",         
         },
         { new: true }
       );
