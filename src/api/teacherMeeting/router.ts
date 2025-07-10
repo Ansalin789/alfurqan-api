@@ -10,7 +10,10 @@ const register = async (server:Server): Promise <void> => {
             options: {
                 handler: handler.createTeacherMeeting,
                 description:addMeetingMessages.CREATE,
-                tags: ['api', 'teacherMeeting']
+                tags: ['api', 'teacherMeeting'],
+                                auth: {
+        strategies: ["jwt"],
+      },
             },
         },
         {
@@ -45,7 +48,10 @@ const register = async (server:Server): Promise <void> => {
         options: {
             handler: handler.updateTeacherMeeting,
             description:addMeetingMessages.CREATE,
-            tags: ['api', 'teacherMeeting']
+            tags: ['api', 'teacherMeeting'],
+                            auth: {
+        strategies: ["jwt"],
+      },
         },
     },
     ];
