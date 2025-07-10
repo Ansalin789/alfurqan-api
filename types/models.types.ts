@@ -884,6 +884,7 @@ export interface IStudentInvoice extends Document {
     country: string;
     city: string;
   };
+  paymentDate?: Date; 
   courseName: string;
   amount: number; 
   packageType:string;

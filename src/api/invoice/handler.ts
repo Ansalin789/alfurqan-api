@@ -153,6 +153,7 @@ if (payload.attachFile) {
           },
           courseName: payload.courseName ?? "",
           amount: payload.amount ?? 0,
+          paymentDate:undefined,
           invoiceStatus: payload.invoiceStatus ?? "Pending",
           packageType: payload.packageType ?? "",
           itemDescription: payload.itemDescription ?? "",

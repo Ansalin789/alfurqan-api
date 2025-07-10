@@ -302,7 +302,8 @@ export const sendInvoiceOperation = async (
     if (!validation.success) {
       return { error: validation.error.flatten().fieldErrors };
     }
-
+    
+      // ✅ correct Date object
     // ✅ Create and save the invoice
     const newInvoice = new StudentInvoiceModel({
       student: {
@@ -319,9 +320,9 @@ export const sendInvoiceOperation = async (
       itemDescription: payload.itemDescription ?? "",
       duration: payload.duration ?? "",
       rate: payload.rate ?? "",
+      paymentDate: "",
       description: payload.description ?? "",
       attachFile: payload.attachFile ?? undefined,
-
       invoiceStatus: payload.invoiceStatus ?? "Pending",
       status: payload.status ?? "Active",
       dueDate: payload.dueDate ?? undefined,
