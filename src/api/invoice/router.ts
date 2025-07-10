@@ -19,15 +19,17 @@ const register = async (server: Server): Promise<void> => {
         }, },
     },
     {
-      method: "GET",
-      path: "/studentinvoice/{id}",
-      options: {
-        handler: handler.getStudetnInVoiceDetails,
-        tags: ["api", "evaluationlist"],
-        auth: {
-          strategies: ["jwt"],
-        }, },
+  method: "GET",
+  path: "/studentinvoiceById",
+  options: {
+    handler: handler.getStudentInvoicesByQuery,
+    tags: ["api", "evaluationlist"],
+    auth: {
+      strategies: ["jwt"],
     },
+  },
+},
+
     {
       method: "GET",
       path: "/studentrevenue",

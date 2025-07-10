@@ -58,13 +58,33 @@ export const getAllStudetnInVoiceList = async (
     return { totalCount, invoice };
   };
 
-  export const getStudetnInVoiceDetailsById = async (
-    id: string
-  ): Promise<IStudentInvoice | null> => {
-    return StudentInvoiceModel.findOne({
-      "student.studentId": new Types.ObjectId(id),
-    }).lean();
-  };
+export const getStudentInvoicesByStudentId = async (
+  studentId: string
+): Promise<IStudentInvoice[]> => {
+  return StudentInvoiceModel.aggregate([
+    {
+      $match: {
+        "student.studentId": studentId,
+      },
+    },
+    {
+      $sort: {
+        lastUpdatedDate: -1, // Sort by date descending
+      },
+    },
+    {
+      $group: {
+        _id: "$lastUpdatedDate",      // Group by lastUpdatedDate
+        doc: { $first: "$$ROOT" },     // Pick first doc in group
+      },
+    },
+    {
+      $replaceRoot: { newRoot: "$doc" }, // Replace root with grouped doc
+    },
+  ]);
+};
+
+
 
  
   export const getStudentAllRevenue = async (
