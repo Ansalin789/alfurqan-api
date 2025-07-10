@@ -2,6 +2,7 @@ import { model, Schema } from "mongoose";
 import {  z } from "zod";
 import { IStudentInvoice } from "../../types/models.types";
 import { appStatus, commonMessages } from "../config/messages";
+import { required } from "joi";
 
 // Mongoose Schema
 const studentInvoiceSchema = new Schema<IStudentInvoice>(
@@ -82,6 +83,8 @@ const studentInvoiceSchema = new Schema<IStudentInvoice>(
     type: String,
     required:false,
     },
+     paymentDate: { type: Date,required:false },
+    
     createdDate: {
       type: String,
       required :false,
@@ -99,6 +102,8 @@ const studentInvoiceSchema = new Schema<IStudentInvoice>(
       type: String,
       required: false,
     },
+      // <-- Ensure this exists
+
   },
   {
     collection: "stinvoice",
@@ -125,6 +130,13 @@ export const zodAlStudentInvoiceSchema = z.object({
   rate: z.string().optional(),
   description: z.string().optional(),
   attachFile:  z.union([z.instanceof(Buffer), z.string()]).optional(),
+paymentDate: z
+  .string()
+  .refine((val) => !isNaN(Date.parse(val)), {
+    message: commonMessages.INVALID_DATE_FORMAT,
+  })
+  .transform((val) => new Date(val))
+  .optional(),
 
   invoiceStatus: z.string().optional().default("Pending"),
   status: z.enum([appStatus.ACTIVE, appStatus.IN_ACTIVE, appStatus.DELETED]).default(appStatus.ACTIVE),

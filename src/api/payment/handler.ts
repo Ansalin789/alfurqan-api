@@ -284,7 +284,9 @@ export const createStudentPaymentIntent = async (request: Request, h: ResponseTo
   
   const { amount, currency, invoiceId, paymentIntentResponse }: any = request.payload;
   const stripe = new Stripe(config.stripeKey.stripesecretkey);
-
+    const paymentDate = paymentIntentResponse.created; // e.g., 1735216832
+     const formattedDate = new Date(paymentDate * 1000); // ✅ correct Date object
+     console.log("Payment Date:", formattedDate);
   try {
     console.log("Finding invoice details for invoiceId:", invoiceId);
 
@@ -311,7 +313,7 @@ export const createStudentPaymentIntent = async (request: Request, h: ResponseTo
         paymentAmount: paymentIntent.amount,
         paymentResponse: paymentIntentResponse,
         paymentResponseId: paymentIntent.client_secret,
-        paymentDate: new Date(),
+        paymentDate: "", // Use the formatted date
         createdDate:new Date(),
         status: "Active",
         createdBy: "System",
@@ -324,7 +326,9 @@ export const createStudentPaymentIntent = async (request: Request, h: ResponseTo
       const updateInvoice = await InvoiceModel.findByIdAndUpdate(
         invoiceId,
         {
-          invoiceStatus: paymentIntentResponse.status === "succeeded" ? "Paid" : "Completed",         
+          invoiceStatus: paymentIntentResponse.status === "succeeded" ? "Paid" : "Completed",
+          paymentDate: formattedDate, // Use the formatted date
+
         },
         { new: true }
       );
