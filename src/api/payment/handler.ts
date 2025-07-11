@@ -168,7 +168,7 @@ async function createStudentPortal(updatedEvaluation: any) {
         // Fetch teacher details
         const teacherDetails = await UserModel.findOne({
           role: "TEACHER",
-          userId: updatedEvaluation.assignedTeacherId
+          userId: updatedEvaluation.teacher.teacherId
         }).exec();
      
 

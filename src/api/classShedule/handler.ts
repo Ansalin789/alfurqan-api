@@ -11,6 +11,7 @@ import AlStudentModule from "../../models/alstudents"
 import Evaluation from "../../models/evaluation";
 import { Types } from "mongoose";
 import { evaluationTeacherSlotBook } from "../../redis/handler/teacherSlotHander";
+import { teacherDashboardCardCount } from "../../kafka/producers/teacherProducer";
 
 const createInputValidation = z.object({
     payload: zodClassScheduleSchema.pick({
@@ -307,7 +308,10 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
     if(result){
       await academicStudentReSchedule({data : result});
        await academicAvailableTeachers({ event : "update" , data :{ date :payload.startDate , teacherId :payload.teacher?.teacherId , from  : startTimeValues , to : endTimeValues}}); 
-    }
+        if(payload.teacher?.teacherId){
+               await teacherDashboardCardCount({sender : payload.teacher?.teacherId });
+            }
+      }
 
     return result;
    },
@@ -606,6 +610,9 @@ async bulkcreateandSchedule(req: Request, h: ResponseToolkit) {
         const classType = payload?.sessionClassType
         await academicTeacherStudentList({data : {assignedTeacherId : payload.teacher?.teacherId }});
         await academicDashboardTeachersStudentCount({classType});
+        if(payload.teacher?.teacherId){
+               await teacherDashboardCardCount({sender : payload.teacher?.teacherId });
+          }
       }
        
       allResults.push({

@@ -14,6 +14,8 @@ import { cleanupOldDates } from "./redis/manage/autoClearSlots";
 import { restoreCacheFromDb } from "./redis/manage/restoreCache";
 import { loggerPlugin } from "./plugins/auditlog";
 import teachermeeting from "./models/teachermeeting";
+import Evaluation from "./models/evaluation";
+import { removeBookedSlots } from "./redis/handler/teacherSlotHander";
 
 
 const start = async () => {
@@ -221,3 +223,23 @@ cron.schedule("*/5 * * * *", async () => {
   }
 });  
 
+
+//invoice update cron every night at 12:00 AM (midnight)
+cron.schedule("0 0 * * *", async () => {
+  console.log("🧹 Invoice update for glass schedule");
+  const currentDate = new Date()
+  const formattedDate = currentDate.toISOString().split("T")[0]
+
+  const startOfDayIST = `${formattedDate}T00:00:00.000+00:00`
+  const endOfDayIST = `${formattedDate}T23:59:59.999+00:00`
+  const getPaymentDetails = await Evaluation.find({
+    joiningDate: { $gte: startOfDayIST, $lte: endOfDayIST }
+  });
+  for(const evaluation of getPaymentDetails){
+  
+  if( evaluation.classType == "REGULARCLASS"&& evaluation.weeklySlots && (!evaluation.paymentStatus||evaluation.paymentStatus == "Pending" || evaluation.paymentStatus == "" )){
+    removeBookedSlots(evaluation.joiningDate.toString(), evaluation.weeklySlots, evaluation.teacher.teacherId);
+  }
+  
+}
+});

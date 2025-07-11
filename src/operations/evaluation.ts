@@ -47,6 +47,7 @@ export const createEvaluationRecord = async (
     payload: IEvaluationCreate
   ): Promise<IEvaluation | { error: any }> => {
     let newStudent = new StudentModel(payload.student);
+    console.log("payload>>>", payload);
 
     // if (payload.student.preferredDate?.toDateString() === new Date().toDateString()) {
     //     return {
@@ -156,14 +157,13 @@ newEvaluation.assignedTeacherId = teacherDetails?.userId || " ";
 newEvaluation.assignedTeacherEmail = teacherDetails?.email || " ";
 newEvaluation.teacherStatus = newEvaluation.teacher.teacherName ? "Assigned": "Not Assigned";
 const createEvaluation = await newEvaluation.save();
-console.log("createEvaluation>>>",createEvaluation)
 
 
 
 
     if(newEvaluation.studentStatus == "JOINED" && newEvaluation.classStatus == "COMPLETED" ){
 
-      await trialClassAssigned(createEvaluation, teacherDetails)
+      await trialClassAssigned(createEvaluation, teacherDetails,payload. preferredTrialDate,payload.preferredTrialFromTime, payload.preferredTrialToTime);
     }
      if (
   payload.classType === 'REGULARCLASS' &&
@@ -277,10 +277,11 @@ if(emailTemplate && payload.student && payload.subscription && evaluation ){
    
 };
 
-async function trialClassAssigned(createEvaluation: any, teacherDetails: any) {
+async function trialClassAssigned(createEvaluation: any, teacherDetails: any, preferredTrialDate: any, preferredTrialFromTime: any, preferredTrialToTime: any ) {
 
 //const meetingTiming = await getTeacherAvaialbleTime()
-
+console.log("Date>>>>>>>",new Date(preferredTrialDate));
+const startOfDayIST = `${preferredTrialDate}T00:00:00.000+00:00`
 const today = new Date();
 const nextDay = new Date(today);
 nextDay.setDate(today.getDate() + 1);
@@ -295,9 +296,7 @@ if(createEvaluation.student.learningInterest == learningInterest.QURAN ){
   alfTeacherPosition = teacherPosition.ARABICTEACHER
 }
  let availableTeacher;
- console.log(">>>>",createEvaluation.teacher.teacherId );
-  console.log("formattedDate",formattedDate );
-  console.log("alfTeacherPosition",alfTeacherPosition );
+
 let availableTeacherId; 
 let teacherEmail;
 if(createEvaluation.teacher.teacherId == " "){
@@ -309,7 +308,6 @@ if(createEvaluation.teacher.teacherId == " "){
   teacherEmail = teacherDetails;
 }
 
-console.log("availableTeacher>>>", availableTeacher? availableTeacher[0] : " " );
 
 const getTrailclass = await teacherAvaliableSlots.find({
 teacherId: availableTeacherId,
@@ -317,7 +315,6 @@ isStatus: true,
 date: formattedDate.toString()
 }).exec();
 
-console.log("getTrailclass>>", getTrailclass[0]);
   const meetingDetails = await zoomMeetingInvite(createEvaluation, getTrailclass);
   const zoomMailTemplate = await EmailTemplate.findOne({
     templateKey: 'trailmanagement',
@@ -366,10 +363,10 @@ console.log("getTrailclass>>", getTrailclass[0]);
         meetingType: 'Online',
         meetingLink: meetingDetails.join_url,
         isScheduledMeeting: true,
-        scheduledStartDate: nextDay,
-        scheduledEndDate: nextDay,
-        scheduledFrom: getTrailclass[0].from,
-        scheduledTo: getTrailclass[0].to,
+        scheduledStartDate: startOfDayIST ,
+        scheduledEndDate: startOfDayIST,
+        scheduledFrom: preferredTrialFromTime,
+        scheduledTo: preferredTrialToTime,
         timeZone: createEvaluation.student.timeZone,
         description: 'Test Description',
         meetingStatus: 'Scheduled',
