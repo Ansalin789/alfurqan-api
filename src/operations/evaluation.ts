@@ -309,19 +309,13 @@ if(createEvaluation.teacher.teacherId == " "){
 }
 
 
-const getTrailclass = await teacherAvaliableSlots.find({
-teacherId: availableTeacherId,
-isStatus: true,
-date: formattedDate.toString()
-}).exec();
-
-  const meetingDetails = await zoomMeetingInvite(createEvaluation, getTrailclass);
+  const meetingDetails = await zoomMeetingInvite(createEvaluation, preferredTrialFromTime);
   const zoomMailTemplate = await EmailTemplate.findOne({
     templateKey: 'trailmanagement',
 }).exec();
 
   const subject = 'Trail class';
-      const htmlPart = zoomMailTemplate?.templateContent.replace('<date>', getTrailclass[0].date).replace('<meetingTime>', getTrailclass[0].from).replace('<zoomlink>', meetingDetails.join_url);
+      const htmlPart = zoomMailTemplate?.templateContent.replace('<date>', preferredTrialDate).replace('<meetingTime>', preferredTrialFromTime).replace('<zoomlink>', meetingDetails.join_url);
       const emailTo = [
         { email: teacherEmail.email}, { email: createEvaluation.student.studentEmail }
     ];
@@ -401,20 +395,21 @@ await sendNotification({
     const teacherId = CreatemeetingDetails.teacher.teacherId;
     const from = CreatemeetingDetails.scheduledFrom;
     const to = CreatemeetingDetails.scheduledTo;
-    await academicAvailableTeachers({event : "update" , data : {nextDay, teacherId, from , to}});
+    const date = CreatemeetingDetails.scheduledStartDate;
+    await academicAvailableTeachers({event : "update" , data : {date, teacherId, from , to}});
   }
 }
 
 
 
-async function zoomMeetingInvite(newEvaluation: any, getTrailclass: any) {
+async function zoomMeetingInvite(newEvaluation: any, preferredTrialFromTime: any) {
 const token = await getZoomAccessToken();
 const response = await axios.post(
  'https://api.zoom.us/v2/users/me/meetings',
   {
    topic: 'Teacher Meeting',
     type: 2,
-    start_time: getTrailclass[0].from, // Start in 10 minutes
+    start_time: preferredTrialFromTime, // Start in 10 minutes
     duration: 60,
     timezone: newEvaluation.student.timeZone,
     settings: {

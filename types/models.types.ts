@@ -529,12 +529,6 @@ export interface IClassSchedule extends Document{
   classDay: any;
   package: string;
   preferedTeacher: string;
-  weeklySlots: {
-    [day: string]: {
-      from: string;
-      to: string;
-    }[];
-  };
   course: string;
   totalHourse: number;
   classhour:string;

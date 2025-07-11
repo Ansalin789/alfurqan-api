@@ -6,6 +6,7 @@ import {
 import {
   dashboardWidgetCounts,
   dashboardWidgetSupervisorCounts,
+  dashboardWidgetTeacherCounts,
 } from "../operations/dashboard";
 import { getTotalAmountByCourse } from "../operations/invoice";
 import {
@@ -62,26 +63,21 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
   academicDashboardCard: async (data: any) => {
     console.log("academicDashboardCard");
     const cardcount = await dashboardWidgetCounts(data.academicCoachId);
-    console.log("fetched  academic dashboard card");
-    console.log("data ", data);
     emitEventToClient("academicDashboardCard", cardcount, data.academicCoachId);
   },
 
   academicStudentList: async (data: any) => {
     console.log("academicStudentList");
-    console.log("data ", data);
     emitEventToClient("academicStudentList", data, data.sender);
   },
 
   academicStudentProfile: async (data: any) => {
     console.log("academicStudentProfile");
-    console.log("data ", data);
     emitEventToClient("academicStudentProfile", data, data.sender);
   },
 
   academicDashboardTeachersStudentCount: async (data: any) => {
     console.log("academicDashboardTeachersStudentCount");
-    console.log("data ", data);
     if (data.classType == "REGULARCLASS" || data.classType == "GROUPCLASS") {
       const getTeacherStudentCount = teacherStudentCount();
       emitEventToClient(
@@ -157,7 +153,7 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
       console.error("❌ Redis/Kafka handler error:", err.message);
     }
   },
-
+   //kept inactive 
   'academicTeacherReSchedule' : async (data: any) => {
     console.log("academicTeacherReSchedule");
     emitEventToClient("academicTeacherReSchedule", data);
@@ -170,14 +166,13 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
 
   'teacherDashboardCardCount' : async ( data : any) =>{
     console.log("teacherDashboardCardCount");
-    // not complete i need api method for count
-    emitEventToClient("teacherDashboardCardCount", data , data.data.sender);
+    const teacherCounts = await dashboardWidgetTeacherCounts(data.sender);
+    emitEventToClient("teacherDashboardCardCount", teacherCounts , data.sender);
   },
 
   'teacherStudentMeeting' : async ( data : any) =>{
     console.log("teacherStudentMeeting");
-    // sending data to client in all students / particular student
-    emitEventToClient("teacherStudentMeeting", data );
+    emitEventToClient("teacherStudentMeeting", data.data );
   },
 
   'teacherReScheduleNotify' : async ( data : any) => {

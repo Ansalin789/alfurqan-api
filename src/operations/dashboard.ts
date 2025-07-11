@@ -197,7 +197,7 @@ export async function dashboardWidgetTeacherCounts(teacherId: string) {
   }
 ];
 
-    console.log("Executing aggregation pipeline:", JSON.stringify(pipeline, null, 2));
+   
 
     const result = await classShedule.aggregate(pipeline);
 

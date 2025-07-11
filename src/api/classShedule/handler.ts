@@ -19,7 +19,6 @@ const createInputValidation = z.object({
         classDay: true,
         package: true,
         preferedTeacher: true,
-        weeklySlots:true,
         course: true,
         totalHourse: true,
         startDate: true,
@@ -565,9 +564,9 @@ async bulkcreateandSchedule(req: Request, h: ResponseToolkit) {
       },
       classLink: meetingId,
       classDay: classDayValues,
-      package: payload.package,
+      package: alfurqanStudents?.student.package,
       preferedTeacher: payload.preferedTeacher,
-      weeklySlots:payload.weeklySlots,
+      weeklySlots:rawPayload.weeklySlots,
       sessionClassType: payload.sessionClassType || "",
       sessionStarttime: payload.sessionStarttime || "",
       sessionsEndtime: payload.sessionsEndtime || "",
@@ -585,14 +584,14 @@ async bulkcreateandSchedule(req: Request, h: ResponseToolkit) {
       if (
   payload.startDate instanceof Date &&
   !isNaN(payload.startDate.getTime()) &&
-  payload.weeklySlots &&
-  Object.keys(payload.weeklySlots).length > 0 &&
+  rawPayload.weeklySlots &&
+  Object.keys(rawPayload.weeklySlots).length > 0 &&
   typeof payload.teacher?.teacherId === "string" &&
   payload.teacher.teacherId.trim() !== ""
 ) {
   await evaluationTeacherSlotBook(
     payload.startDate.toISOString(),
-    payload.weeklySlots,
+    rawPayload.weeklySlots,
     payload.teacher.teacherId.trim()
   );
 }

@@ -7,6 +7,7 @@ import { addMeetingMessages, evaluationMessages } from "../../config/messages";
 import { checkTeacherMeetingConflict, getTeacherMeetingById} from "../../shared/utils/meetingUtils";
 import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
+import { teacherStudentMeeting } from "../../kafka/producers/teacherProducer";
 
 const createInputValidation = z.object({
     payload : zodTeacherMeetingSchema.pick({
@@ -100,7 +101,9 @@ export default {
     });
 
     console.log('teacherid...', meeting);
-
+    if(meeting){
+      await teacherStudentMeeting({data : meeting});
+    }
     return h.response({ meeting }).code(200);
   } catch (error) {
     console.error("Create Meeting Error:", error);
