@@ -39,6 +39,19 @@ const register = async (server: Server): Promise<void> => {
       },
 
       {
+        method: "PUT",
+        path: "/classShedule/requestReshedule",
+        options: {
+         handler: handler.requestReschedule,
+         description: evaluationMessages.UPDATE,
+         tags: ["api", "classShedule"],
+         auth: {
+          strategies: ["jwt"],
+        }, 
+      },  
+      },
+
+      {
         method: "GET",
         path: "/classShedule/students",
         options: {

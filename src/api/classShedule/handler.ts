@@ -5,7 +5,7 @@ import { ClassSchedulesMessages } from "../../config/messages";
 import { isNil } from "lodash";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
-import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount, getTotalClassesCount, getClassesStatusCount, getClassesWiseCount, getStudentList, getTeacherAttendanceSummary, teacherStudentCount, getgetAnalyticscardCalculation} from "../../operations/classschedule";
+import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount, getTotalClassesCount, getClassesStatusCount, getClassesWiseCount, getStudentList, getTeacherAttendanceSummary, teacherStudentCount, getgetAnalyticscardCalculation, requestReschedule} from "../../operations/classschedule";
 import { academicAvailableTeachers, academicDashboardTeachersStudentCount, academicStudentReSchedule, academicTeacherStudentList } from "../../kafka/producers/academicProducer";
 import AlStudentModule from "../../models/alstudents"
 import Evaluation from "../../models/evaluation";
@@ -641,7 +641,22 @@ async bulkcreateandSchedule(req: Request, h: ResponseToolkit) {
       message: error?.message || "Something went wrong while scheduling classes."
     }).code(500);
   }
-}
+},
+
+async requestReschedule (req : Request , h :ResponseToolkit){
+   try {
+    const payload = req.payload;
+    console.log("Parsed Payload:", payload);
+    const result = await requestReschedule(payload);
+    return h.response(result).code(result.success ? 200 : 400);
+  } catch (err: any) {
+    console.error("Error in requestRescheduleHandler:", err.message);
+    return h.response({
+      success: false,
+      message: "Internal server error",
+    }).code(500);
+  }
+} 
 
 }
 

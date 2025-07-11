@@ -29,6 +29,9 @@ import {
   format,
 } from "date-fns";
 import assignment from "../models/assignments";
+import { sendNotification } from "./notification";
+import { getIO } from "../shared/socket";
+import realtimemessage from "../models/realtimemessage";
 
 type AssignmentItem = {
   assignmentId: string;
@@ -310,6 +313,81 @@ export const getAllClassShedule = async (
 
   // Return total count and fetched students
   return { totalCount, students };
+};
+
+export const requestReschedule = async (payload: any) => {
+  try {
+    const classSchedule = await ClassScheduleModel.findOne({
+      _id: new Types.ObjectId(payload._id),
+    });
+    const alfstudent = await AlStudenModel.findOne({
+      _id: new Types.ObjectId(classSchedule?.student.studentId),
+    });
+    const evaluation = await Evaluation.findOne({
+  "student.studentId": alfstudent?.student.studentId,
+    });
+    const rescheduleResult = await ClassScheduleModel.findOneAndUpdate(
+      { _id: new Types.ObjectId(payload._id) },
+      { $set: { scheduleStatus: "RequestReschedule" } },
+      { new: true }
+    );
+    const academicCoachId = evaluation?.academicCoachId;
+    const academicCoach = await UserModel.findOne({_id : new Types.ObjectId(academicCoachId)});
+    const requestName = payload.requestedBy === "student" ? classSchedule?.student.studentFirstName : classSchedule?.teacher.teacherName;
+    const requestUserId = payload.requestedBy === "student" ? classSchedule?.student.studentId : classSchedule?.teacher.teacherId;
+    const requestEmail = payload.requestedBy === "student" ? classSchedule?.student.studentEmail : classSchedule?.teacher.teacherEmail;
+    const message = `${requestName} (${payload.requestedBy}) has requested to reschedule class on ${classSchedule?.startDate} at ${classSchedule?.startTime[0]}.`;
+    const messageContent = 
+     `Requesting to reschedule class on ${classSchedule?.startDate} at ${classSchedule?.startTime[0]} from ${classSchedule?.endTime[0]} to ${payload.requestDate} at ${payload.fromTime} - ${payload.toTime}.\n` +
+     `Comment: ${payload.comment}`;
+    if(rescheduleResult){
+    await sendNotification({
+                 messages: message,
+                 senderId: requestUserId?.toString(),
+                 senderName: requestName,
+                 senderEmail: requestEmail,
+                 isRead : false,
+                 receiverId: [academicCoach?._id.toString()],
+                 receiverName: [academicCoach?.userName],
+                 receiverEmail: [academicCoach?.email],
+                 notificationType: " REQUEST_RESCHEDULE",
+                 notificationStatus: "Unseen",
+                 status: "active",
+                 createdBy: "system",
+                 updatedBy: "system",
+               });
+    const newMessage = new realtimemessage({
+        messages: messageContent,
+        isRead: false,
+        senderId:  requestUserId?.toString(),
+        senderName: requestName,
+        senderEmail: requestEmail ?? '', 
+        receiverId: academicCoach?._id,
+        receiverName: academicCoach?.userName,
+        receiverEmail: academicCoach?.email ?? '', 
+        notificationStatus: "Unseen",
+        status: payload.status ?? '', 
+        createdDate:  new Date(),
+        createdBy:  'System',
+        updatedDate:  new Date(),
+        updatedBy:  'System', 
+      });
+      const savedMessage = await newMessage.save();
+      const io = getIO();
+    io.to(newMessage.receiverId).emit("newmessage", savedMessage);
+    AppLogger.info(`Notification(s) sent: ${JSON.stringify(savedMessage)}`);           
+    }
+    return {
+      success: true,
+      message: "Class reschedule requested successfully",
+    };
+  } catch (error: any) {
+    console.error("Error in requestReschedule:", error.message);
+    return {
+      success: false,
+      message: error.message,
+    };
+  }
 };
 
 export const getAllClassSheduleById = async (
