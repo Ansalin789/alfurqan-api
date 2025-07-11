@@ -5,11 +5,14 @@ import { ClassSchedulesMessages } from "../../config/messages";
 import { isNil } from "lodash";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
-import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount, getTotalClassesCount, getClassesStatusCount, getClassesWiseCount, getStudentList, getTeacherAttendanceSummary, teacherStudentCount, getgetAnalyticscardCalculation} from "../../operations/classschedule";
-import { academicAvailableTeachers, academicStudentReSchedule, academicTeacherReSchedule } from "../../kafka/producers/academicProducer";
+import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount, getTotalClassesCount, getClassesStatusCount, getClassesWiseCount, getStudentList, getTeacherAttendanceSummary, teacherStudentCount, getgetAnalyticscardCalculation, requestReschedule} from "../../operations/classschedule";
+import { academicAvailableTeachers, academicDashboardTeachersStudentCount, academicStudentReSchedule, academicTeacherStudentList } from "../../kafka/producers/academicProducer";
 import AlStudentModule from "../../models/alstudents"
 import Evaluation from "../../models/evaluation";
 import { Types } from "mongoose";
+import { evaluationTeacherSlotBook } from "../../redis/handler/teacherSlotHander";
+import { teacherDashboardCardCount } from "../../kafka/producers/teacherProducer";
+import alstudents from "../../models/alstudents";
 
 const createInputValidation = z.object({
     payload: zodClassScheduleSchema.pick({
@@ -249,6 +252,12 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
           .code(404);
       }
 
+      // const getLevel = await alstudents
+      //   .findOne({ _id: result.student.studentId })
+      //   .exec();
+
+      // const response = { result, level: getLevel?.level };
+      // Return the found student
       // Return the found student
       return h.response(result).code(200);
     } catch (error) {
@@ -275,6 +284,7 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
         studentLastName: payload.student?.studentLastName ?? "",
         studentEmail: payload.student?.studentEmail ?? "",
         gender: payload.student?.gender ?? "",
+        level: payload.student?.level ?? ""
       },
       teacher: {
         teacherId: payload.teacher?.teacherId ?? "",
@@ -305,7 +315,10 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
     if(result){
       await academicStudentReSchedule({data : result});
        await academicAvailableTeachers({ event : "update" , data :{ date :payload.startDate , teacherId :payload.teacher?.teacherId , from  : startTimeValues , to : endTimeValues}}); 
-    }
+        if(payload.teacher?.teacherId){
+               await teacherDashboardCardCount({sender : payload.teacher?.teacherId });
+            }
+      }
 
     return result;
    },
@@ -439,7 +452,7 @@ async updateteacherreschedule(req: Request, h: ResponseToolkit){
   );
   if(classReschudle){
     await academicAvailableTeachers({ event : "update" , data :{ date :payload.startDate , teacherId :payload.teacher?.teacherId , from  : startTimeValues , to : endTimeValues}});
-    await academicTeacherReSchedule({ data: classReschudle });
+    await academicStudentReSchedule({ data: classReschudle });
   }
   return classReschudle;
   
@@ -540,8 +553,8 @@ async bulkcreateandSchedule(req: Request, h: ResponseToolkit) {
     ) {
      return h.response({
       status: "error",
-      message: "All students must have the same course, package, and total hours. Mismatch found in student ${student.studentId || student.studentEmail}"
-    }).code(404);
+      message: `All students must have the same course, package, and total hours. Mismatch found in student ${student.studentId || student.studentEmail}`
+    }).code(400);
     }
   }
 
@@ -559,13 +572,14 @@ async bulkcreateandSchedule(req: Request, h: ResponseToolkit) {
       },
       classLink: meetingId,
       classDay: classDayValues,
-      package: payload.package,
+      package: alfurqanStudents?.student.package,
       preferedTeacher: payload.preferedTeacher,
+      weeklySlots:rawPayload.weeklySlots,
       sessionClassType: payload.sessionClassType || "",
       sessionStarttime: payload.sessionStarttime || "",
       sessionsEndtime: payload.sessionsEndtime || "",
       sessionStatus: "NotCompleted",
-      totalHourse: payload.totalHourse,
+      totalHourse: Number(evaluation?.accomplishmentTime) ,
       startDate: payload.startDate,
       endDate: payload.endDate,
       startTime: startTimeValues,
@@ -575,6 +589,22 @@ async bulkcreateandSchedule(req: Request, h: ResponseToolkit) {
       teacherAttendee: payload.teacherAttendee
     };
 
+      if (
+  payload.startDate instanceof Date &&
+  !isNaN(payload.startDate.getTime()) &&
+  rawPayload.weeklySlots &&
+  Object.keys(rawPayload.weeklySlots).length > 0 &&
+  typeof payload.teacher?.teacherId === "string" &&
+  payload.teacher.teacherId.trim() !== ""
+) {
+  await evaluationTeacherSlotBook(
+    payload.startDate.toISOString(),
+    rawPayload.weeklySlots,
+    payload.teacher.teacherId.trim()
+  );
+}
+
+
     const allResults = [];
     if(rawPayload.students){
   for (const student of rawPayload.students) {
@@ -583,7 +613,15 @@ async bulkcreateandSchedule(req: Request, h: ResponseToolkit) {
         ...commonScheduleData,
         student 
       });
-
+      if(result){
+        const classType = payload?.sessionClassType
+        await academicTeacherStudentList({data : {assignedTeacherId : payload.teacher?.teacherId }});
+        await academicDashboardTeachersStudentCount({classType});
+        if(payload.teacher?.teacherId){
+               await teacherDashboardCardCount({sender : payload.teacher?.teacherId });
+          }
+      }
+       
       allResults.push({
         studentId: student.studentId,
         result
@@ -603,7 +641,22 @@ async bulkcreateandSchedule(req: Request, h: ResponseToolkit) {
       message: error?.message || "Something went wrong while scheduling classes."
     }).code(500);
   }
-}
+},
+
+async requestReschedule (req : Request , h :ResponseToolkit){
+   try {
+    const payload = req.payload;
+    console.log("Parsed Payload:", payload);
+    const result = await requestReschedule(payload);
+    return h.response(result).code(result.success ? 200 : 400);
+  } catch (err: any) {
+    console.error("Error in requestRescheduleHandler:", err.message);
+    return h.response({
+      success: false,
+      message: "Internal server error",
+    }).code(500);
+  }
+} 
 
 }
 

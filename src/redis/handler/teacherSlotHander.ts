@@ -204,8 +204,104 @@ export async function bookSlot(date: string, teacherId: string, from: string, to
   return fullyAvailableTeachers;
 }
 
+export async function getTeacherConsistentWeeklySlots(
+  teacherId: string,
+  startDate: string
+): Promise<WeeklySlotMap> {
+  const parsedDate = dayjs(startDate, "YYYY-MM-DD", true); 
+
+  if (!parsedDate.isValid()) {
+    console.error("❌ Invalid startDate received in getTeacherConsistentWeeklySlots:", startDate);
+    return {};
+  }
+
+  const start = parsedDate.startOf("day");
+  const end = start.add(27, "day");
+
+  const redisData = await getAllSlots();
+
+  const daySlotMap: Record<string, Map<string, number>> = {};
+
+  for (
+    let current = start.clone();
+    current.isSameOrBefore(end);
+    current = current.add(1, "day")
+  ) {
+    const dateStr = current.format("YYYY-MM-DD");
+    const dayName = current.format("dddd");
+
+    const teacherSlots = redisData[dateStr]?.[teacherId];
+
+    if (!teacherSlots) {
+      console.log(`📭 No slots for teacher ${teacherId} on ${dateStr}`);
+      continue;
+    }
+    for (const slot of teacherSlots) {
+      if (!slot.isStatus) {
+        continue;
+      }
+
+      const key = `${slot.from}-${slot.to}`;
+
+      if (!daySlotMap[dayName]) {
+        daySlotMap[dayName] = new Map();
+      }
+
+      const currentCount = daySlotMap[dayName].get(key) ?? 0;
+      daySlotMap[dayName].set(key, currentCount + 1);
+
+    }
+  }
+
+  const consistentWeeklySlots: WeeklySlotMap = {};
+
+  for (const day of Object.keys(daySlotMap)) {
+    const timeMap = daySlotMap[day];
+    const validSlots: { from: string; to: string }[] = [];
+
+    for (const [key, count] of timeMap.entries()) {
+      if (count === 4) {
+        const [from, to] = key.split("-");
+        validSlots.push({ from, to });
+      } else {
+        console.log(`🟡 ${day}: slot ${key} appeared ${count} times, not enough`);
+      }
+    }
+
+    if (validSlots.length > 0) {
+      consistentWeeklySlots[day] = validSlots;
+    }
+  }
+  return consistentWeeklySlots;
+}
+
+
+export async function trailClassTeacherList (startDate : string , from :  string , to : string ){
+  try{
+
+     if (!startDate || !from || !to) return;
+     const dateStr = dayjs(startDate).format("YYYY-MM-DD");
+     const redisData = await getAllSlots();
+     const teacherNameMap: Record<string, string> = {};
+     if (!redisData[dateStr]) return;
+     for(const teacherId in redisData[dateStr]){
+      const slots = redisData[dateStr][teacherId];
+      const slot = slots.find((slot : any)=>slot.from === from && slot.to ===  to && slot.isStatus === true);
+      if(slot){
+        teacherNameMap[teacherId] = slot?.name ?? "unknown"
+       }
+     }
+     return teacherNameMap;
+
+  }catch(error){
+   console.error("❌ Error in trailclassTeacherSlotBook:", error);
+  }
+}
+ 
   export async function evaluationTeacherSlotBook ( startDate : string , WeeklySlots : WeeklySlotMap , teacherId : string ) {
          try{
+              if (!WeeklySlots || Object.keys(WeeklySlots).length === 0) return;
+              if (!teacherId) return;
               const start = dayjs(startDate).startOf("day");
               const end = start.add(27, "day");
               for(

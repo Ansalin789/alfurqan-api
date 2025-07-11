@@ -1,16 +1,24 @@
-import { badRequest } from "@hapi/boom";
 import {
-  IallAssignment,
   IAssignment,
   IAssignmentCreate,
 } from "../../types/models.types";
 import assignment from "../models/assignments";
-import userModel from "../models/users";
 import alstudents from "../models/alstudents";
 import { Types } from "mongoose";
 import Stream from "stream";
-import mongoose from "mongoose";
+import assignments from "../models/assignments";
 
+interface AssignmentQuery {
+  assignmentId?: string;
+  _id?: string;
+}
+
+interface IAssignmentUpdatePayload {
+  _id: string;
+  answer: string;
+  answerValidation: string;
+  updatedBy?: string;
+}
 /**
  * Creates a new assignment record in the database.
  * @param {IAssignmentCreate} payload - The data required to create a new assignment record.
@@ -53,8 +61,8 @@ export const createAssignment = async (
       "quiz",
       "writing",
       "reading",
-      "imageIdentification",
-      "wordMatching",
+      "image identification",
+      "word match",
     ];
     console.log("✅ Allowed types:", allowedTypes);
 
@@ -151,6 +159,8 @@ console.log("👩‍🏫 Assigned Teacher:", {
         answer:"",
         answerValidation: item.answerValidation || "",
         assignmentStatus: item.assignmentStatus,
+         score: 0,
+        rating: "",
       };
 
       console.log("📌 New assignment record prepared:", newAssignment);
@@ -180,115 +190,7 @@ console.log("👩‍🏫 Assigned Teacher:", {
   }
 };
 
-//Update Assignments
 
-// export const updateStudentAssignment = async (
-//   id: string,
-//   payload: IAssignmentCreate | null
-// ): Promise<
-//   { totalCount: number; assignments: IAssignment[] } | { error: any }
-// > => {
-//   try {
-//     console.log("Received payload:", payload);
-//     console.log("AssignmentID>>>>", id);
-
-//     // Validate Payload
-//     if (!payload || !payload.studentId) {
-//       console.error("Error: Received null or invalid payload");
-//       return {
-//         error:
-//           "Invalid request: Payload is missing or studentId is not provided",
-//       };
-//     }
-
-//     // Answer Validation Check
-//     const { answer, answerValidation } = payload;
-//     const isCorrect = answer === answerValidation;
-//     console.log("Answer validation result:", isCorrect);
-
-//     // Fetch student details
-//     const studentDetails = await alstudents
-//       .findOne({ _id: payload.studentId })
-//       .exec();
-//     console.log("studentDetails>>>>", studentDetails);
-
-//     // Fetch the existing assignment
-//     const existingAssignment = await assignment.findOne({ _id: id }).exec();
-//     if (!existingAssignment) {
-//       console.error("Error: Assignment not found with ID:", id);
-//       return { error: "Assignment not found" };
-//     }
-//     console.log("Existing Assignment:", existingAssignment);
-
-//     // Ensure `assignedTeacher` is properly extracted
-//     const assignedTeacher = payload.assignedTeacher || "Unknown Teacher";
-
-//     // Ensure `audioFile` and `uploadFile` are properly formatted as Buffers
-//     const audioFile =
-//       typeof payload.audioFile === "string"
-//         ? Buffer.from(payload.audioFile, "base64")
-//         : payload.audioFile;
-//     const uploadFile =
-//       typeof payload.uploadFile === "string"
-//         ? Buffer.from(payload.uploadFile, "base64")
-//         : payload.uploadFile;
-
-//     // Updating the Assignment
-//     const updatedAssignment = await assignment
-//       .findByIdAndUpdate(
-//         String(id),
-//         {
-//           studentId: studentDetails?._id || "",
-//           studentName: studentDetails?.username || "",
-//           sessionClassType: studentDetails?.sessionClassType || "",
-//           assignmentName: payload.assignmentName || "",
-//           assignedTeacher,
-//           assignmentType: payload.assignmentType,
-//           chooseType: payload.chooseType,
-//           trueorfalseType: payload.trueorfalseType,
-//           question: payload.question || "",
-//           hasOptions: payload.hasOptions,
-//           options: {
-//             optionOne: payload.options?.optionOne,
-//             optionTwo: payload.options?.optionTwo,
-//             optionThree: payload.options?.optionThree,
-//             optionFour: payload.options?.optionFour,
-//           },
-//           audioFile,
-//           uploadFile,
-//           status: payload.status || "Pending",
-//           createdDate: existingAssignment.createdDate,
-//           createdBy: existingAssignment.createdBy,
-//           updatedDate: new Date(),
-//           updatedBy: payload.updatedBy || "",
-//           level: payload.level || "",
-//           courses: payload.courses || "",
-//           assignedDate: payload.assignedDate || new Date(),
-//           dueDate: payload.dueDate || new Date(),
-//           answer: payload.answer || "",
-//           answerValidation: payload.answerValidation || "",
-//         },
-//         { new: true }
-//       )
-//       .exec();
-
-//     console.log("New Updated Record>>>>", answer);
-
-//     // Error Handling for Update Failure
-//     if (!updatedAssignment) {
-//       console.error("Error: Failed to update assignment for _id:", id);
-//       return { error: "Failed to update assignment" };
-//     }
-
-//     console.log("Updated assignment:", updatedAssignment);
-//     return { totalCount: 1, assignments: [updatedAssignment] };
-//   } catch (error) {
-//     console.log("the error>>>>>>", error);
-
-//     console.error("Error updating assignment:", error);
-//     return { error: "Internal Server Error" };
-//   }
-// };
 
 // //Get All Assignment
 
@@ -338,12 +240,363 @@ console.log("👩‍🏫 Assigned Teacher:", {
 //   }
 // };
 
-export const getAssignmentsByStudentId = async (
-  studentId: string
-): Promise<IAssignment[]> => {
-  if (!Types.ObjectId.isValid(studentId)) {
-    throw new Error("Invalid studentId");
+
+
+
+export const getAssignments = async ({
+  assignmentId,
+  _id
+}: AssignmentQuery): Promise<IAssignment[]> => {
+  if (!assignmentId && !_id) {
+    throw new Error('Must provide either assignmentId or _id');
   }
 
-  return assignment.find({ studentId }).sort({ createdDate: -1 }).lean();
+  const query: any = {};
+
+  if (_id) {
+    if (!Types.ObjectId.isValid(_id)) {
+      throw new Error('Invalid _id format');
+    }
+    query._id = new Types.ObjectId(_id);
+  }
+
+  if (assignmentId) {
+    // Exact match with string trimming
+    query.assignmentId = assignmentId.trim();
+  }
+
+  console.log('Final query:', JSON.stringify(query)); // Debug log
+
+  return await assignments
+    .find(query)
+    .collation({ locale: 'en', strength: 2 }) // Case-insensitive
+    .sort({ createdDate: -1 })
+    .lean<IAssignment[]>()
+    .exec();
+};
+
+
+export const getAssignmentForStudentId = async ({
+  studentId
+}: {
+  studentId: string;
+}): Promise<IAssignment[]> => {
+  const trimmedId = studentId.trim();
+
+  return await assignments.aggregate([
+    {
+      $match: {
+        studentId: trimmedId
+      }
+    },
+    {
+      $sort: {
+        createdDate: -1 // latest assignment first
+      }
+    },
+    {
+      $group: {
+        _id: "$assignmentId",
+        doc: { $first: "$$ROOT" }
+      }
+    },
+    {
+      $replaceWith: "$doc"
+    },
+  
+  ]).exec();
+};
+
+
+export const getStudentCardCount = async ({
+  studentId
+}: {
+  studentId: string;
+}): Promise<{
+  totalAssigned: number;
+  totalCompleted: number;
+  totalPending: number;
+}> => {
+  const trimmedId = studentId.trim();
+
+  const result = await assignments.aggregate([
+    {
+      $match: {
+        studentId: trimmedId
+      }
+    },
+    {
+      $group: {
+        _id: "$assignmentStatus", 
+        count: { $sum: 1 }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        assignmentStatus: "$_id", 
+        count: 1
+      }
+    }
+  ]).exec();
+
+  const response = {
+    totalAssigned: 0,
+    totalCompleted: 0,
+    totalPending: 0
+  };
+
+  for (const item of result) {
+    if (item.assignmentStatus === "Assigned") {
+      response.totalAssigned = item.count;
+    } else if (item.assignmentStatus === "Completed") {
+      response.totalCompleted = item.count;
+    } else if (item.assignmentStatus === "InProgress") {
+      response.totalPending = item.count;
+    }
+  }
+
+  return response;
+};
+
+
+
+
+//getByObjectId
+
+
+export const getAssignmentByObjectId = async (
+  id: string
+): Promise<IAssignment | null> => {
+  return assignment.findOne({
+    _id: new Types.ObjectId(id),
+  }).lean();
+};
+
+// Update Assignments
+
+export const updateAssignmentsAnswer = async (
+  assignmentId: string,
+  payloads: {
+    _id: string;
+    answer: string;
+    updatedBy: string;
+  }[]
+): Promise<{
+  updated: { _id: string; isCorrect: boolean; score: number; status: string }[];
+  failed: { _id: string; reason: string }[];
+  totalScore: number;
+}> => {
+  const updatedResults: { _id: string; isCorrect: boolean; score: number; status: string }[] = [];
+  const failedResults: { _id: string; reason: string }[] = [];
+
+  for (const item of payloads) {
+    const { _id, answer, updatedBy } = item;
+
+    try {
+      const assignmentDoc = await assignment.findOne({ _id, assignmentId });
+
+      if (!assignmentDoc) {
+        failedResults.push({ _id, reason: "Assignment not found for provided assignmentId" });
+        continue;
+      }
+
+      const isCorrect = assignmentDoc.answerValidation === answer;
+      const score = isCorrect ? 1 : 0;
+
+      await assignment.findByIdAndUpdate(
+        _id,
+        {
+          answer,
+          updatedBy,
+          updatedDate: new Date(),
+          assignmentStatus: "Completed",
+          score,
+        },
+        { new: true }
+      );
+
+      updatedResults.push({
+        _id,
+        isCorrect,
+        score,
+        status: "Updated",
+      });
+    } catch (error: any) {
+      failedResults.push({ _id, reason: error.message });
+    }
+  }
+
+  let totalScore = 0;
+
+  // After all updates, calculate the new totalScore and rating
+  try {
+    const relatedAssignments = await assignment.find({ assignmentId });
+
+    totalScore = relatedAssignments.reduce(
+      (sum, doc) => sum + Number(doc.score || 0),
+      0
+    );
+
+    const totalCount = relatedAssignments.length;
+    const averageScore = totalCount > 0 ? totalScore / totalCount : 0;
+
+    const rating = Number((averageScore * 5).toFixed(2)); // Convert to 5-star scale
+
+    // Update all documents in this assignment group with the new rating
+    await assignment.updateMany(
+      { assignmentId },
+      { $set: { rating } }
+    );
+  } catch (error) {
+    console.error("Rating update failed:", error);
+  }
+
+  return {
+    updated: updatedResults,
+    failed: failedResults,
+    totalScore,
+  };
+};
+
+
+export const getTeacherStudentsAssignmentCount = async ({
+  teacherId
+}: {
+  teacherId: string;
+}): Promise<{
+  teacherId: string;
+  teacherName: string;
+  totalStudents: number;
+  assignments: {
+    total: number;
+    assigned: number;
+    completed: number;
+    pending: number;
+    overdue: number;
+  };
+  students: Array<{
+    studentId: string;
+    studentName: string;
+    assignments: {
+      total: number;
+      assigned: number;
+      completed: number;
+      pending: number;
+      overdue: number;
+    };
+    performance: {
+      completionRate: number;
+      accuracy: number;
+    };
+  }>;
+}> => {
+  const trimmedId = teacherId.trim();
+
+  // Get all assignments for this teacher
+  const assignments = await assignment.aggregate([
+    {
+      $match: {
+        assignedTeacherId: trimmedId
+      }
+    },
+    {
+      $group: {
+        _id: "$studentId",
+        studentName: { $first: "$studentName" },
+        teacherName: { $first: "$assignedTeacher" },
+        assignments: {
+          $push: {
+            status: "$assignmentStatus",
+            dueDate: "$dueDate",
+            isCorrect: { $cond: [{ $eq: ["$answer", "$answerValidation"] }, 1, 0] }
+          }
+        }
+      }
+    },
+    {
+      $project: {
+        studentId: "$_id",
+        studentName: 1,
+        teacherName: 1,
+        assignments: 1,
+        _id: 0
+      }
+    }
+  ]).exec();
+
+  // Calculate statistics
+  let totalAssigned = 0;
+  let totalCompleted = 0;
+  let totalPending = 0;
+  let totalOverdue = 0;
+  const now = new Date();
+
+  const studentsWithStats = assignments.map((student: { assignments: { status: string; isCorrect: number; dueDate: string | number | Date; }[]; studentId: any; studentName: any; }) => {
+    let studentAssigned = 0;
+    let studentCompleted = 0;
+    let studentPending = 0;
+    let studentOverdue = 0;
+    let correctAnswers = 0;
+    let totalAnswered = 0;
+
+    student.assignments.forEach((assignment: { status: string; isCorrect: number; dueDate: string | number | Date; }) => {
+      if (assignment.status === "Assigned") {
+        studentAssigned++;
+        totalAssigned++;
+      }
+      if (assignment.status === "Completed") {
+        studentCompleted++;
+        totalCompleted++;
+        totalAnswered++;
+        correctAnswers += assignment.isCorrect;
+      }
+      if (assignment.status === "InProgress") {
+        studentPending++;
+        totalPending++;
+        if (new Date(assignment.dueDate) < now) {
+          studentOverdue++;
+          totalOverdue++;
+        }
+      }
+    });
+
+    const studentTotal = studentAssigned + studentCompleted + studentPending;
+    const completionRate = studentTotal > 0 ? (studentCompleted / studentTotal) * 100 : 0;
+    const accuracy = totalAnswered > 0 ? (correctAnswers / totalAnswered) * 100 : 0;
+
+    return {
+      studentId: student.studentId,
+      studentName: student.studentName,
+      assignments: {
+        total: studentTotal,
+        assigned: studentAssigned,
+        completed: studentCompleted,
+        pending: studentPending,
+        overdue: studentOverdue
+      },
+      performance: {
+        completionRate: parseFloat(completionRate.toFixed(2)),
+        accuracy: parseFloat(accuracy.toFixed(2))
+      }
+    };
+  });
+
+  const teacherName = assignments.length > 0 
+    ? assignments[0].teacherName 
+    : "Unknown";
+
+  return {
+    teacherId: trimmedId,
+    teacherName,
+    totalStudents: studentsWithStats.length,
+    assignments: {
+      total: totalAssigned + totalCompleted + totalPending,
+      assigned: totalAssigned,
+      completed: totalCompleted,
+      pending: totalPending,
+      overdue: totalOverdue
+    },
+    students: studentsWithStats
+  };
 };

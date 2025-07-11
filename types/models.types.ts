@@ -374,6 +374,12 @@ subscription: {
 };
 planTotalPrice: number
 classStartDate: Date;
+ weeklySlots?: {
+    [day: string]: {
+      from: string;
+      to: string;
+    }[];
+  };
 classEndDate: Date;
 classStartTime: string;
 classEndTime: string;
@@ -456,6 +462,12 @@ planTotalPrice: number
 classStartDate: Date;
 classEndDate: Date;
 classStartTime: string;
+weeklySlots?: {
+    [day: string]: {
+      from: string;
+      to: string;
+    }[];
+  };
 classEndTime: string;
 gardianName: string;
 gardianEmail: string;
@@ -477,6 +489,9 @@ paymentStatus?: string;
 teacherStatus?: string;
 amount?: string;
 currency?: string;
+preferredTrialFromTime?:string;
+preferredTrialToTime?:string;
+preferredTrialDate? : Date;
 status?: string;
 createdDate: Date;
 createdBy?: string;
@@ -505,6 +520,7 @@ export interface IClassSchedule extends Document{
     studentLastName: string;
     studentEmail: string;
     gender: string;
+    level: string;
   },
   teacher:{
     teacherId: string;
@@ -556,6 +572,8 @@ export interface IClassScheduleCreate{
     studentLastName: string;
     studentEmail: string;
     gender: string;
+    level: string;
+
   },
   teacher:{
     teacherId: string;
@@ -565,6 +583,12 @@ export interface IClassScheduleCreate{
   classhour:string;
   amount:string;
   currency:string;
+  weeklySlots: {
+    [day: string]: {
+      from: string;
+      to: string;
+    }[];
+  };
   sessionClassType:string;
   sessionStarttime:string;
   sessionsEndtime:string;
@@ -668,6 +692,8 @@ export interface IAlStudents extends Document{
     city:string;
     country: string;
   };
+
+  level?: string;
   username: string,
   password: string;
   role: string;
@@ -689,6 +715,7 @@ export interface IAlStudentCreate{
     studentPhone: number;
     gender: string;
   };
+  level?: string;
   username: string,
   role: string;
 }
@@ -730,23 +757,23 @@ export interface IAssignment extends Document {
   questionName: string;
   questionType: string;
   typeofQuestion: string;
-  title: string;
+  title: string;                         
   assignmentName: string;
   assignedTeacher: string;
   assignedTeacherId: string;
   assignmentType: {
-    type: "quiz" | "writing" | "reading" | "imageIdentification" | "wordMatching";
+    type: "quiz" | "writing" | "reading" | "image identification" | "word match";
     name?: string;
   };
-  chooseType: boolean;
-  trueorfalseType: boolean;
+  chooseType?: boolean;
+  trueorfalseType?: boolean;
   question: string;
-  hasOptions: boolean;
-  options: {
-    optionOne: string;
-    optionTwo: string;
-    optionThree: string;
-    optionFour: string;
+  hasOptions?: boolean;
+  options?: {
+    optionOne?: string;
+    optionTwo?: string;
+    optionThree?: string;
+    optionFour?: string;
   };
   audioFile?: Buffer;
   uploadFile?: Buffer;
@@ -755,14 +782,16 @@ export interface IAssignment extends Document {
   createdBy: string;
   updatedDate: Date;
   updatedBy: string;
-  level: string;
-  courses: string;
+  level?: string;
+  courses?: string;
   assignedDate: Date;
   dueDate: Date;
   answer: string;
   answerValidation: string;
   assignmentStatus: AssignmentStatus;
   commends?: string;
+  score: number; 
+  rating: string; 
 }
 export interface IallAssignment {
   studentId: string;
@@ -776,13 +805,10 @@ export interface IallAssignment {
   assignmentName: string;
   assignedTeacher: string;
   assignedTeacherId: string;
-  assignmentType: { 
-    quiz?: string;
-    writing?: string;
-    reading?: string;
-    imageIdentification?: string;
-    wordMatching?: string;
-  }; // Aligning with IAssignment
+assignmentType: {
+    type: "quiz" | "writing" | "reading" | "image identification" | "word match";
+    name?: string;
+  };
   chooseType: boolean;
   trueorfalseType: boolean;
   question: string;
@@ -806,7 +832,8 @@ export interface IallAssignment {
   dueDate: Date;
   assignmentStatus: string;
     commends?: string;
-
+  score: number; 
+  rating: string;
 
 }
 export interface IAssignmentCreate {
@@ -819,13 +846,10 @@ export interface IAssignmentCreate {
      title:string;
   assignmentName: string;
   assignedTeacher?: string;
-  assignmentType: { 
-    quiz?: string;
-    writing?: string;
-    reading?: string;
-    imageIdentification?: string;
-    wordMatching?: string;
-  }; // Aligning with IAssignment
+ assignmentType: {
+    type: "quiz" | "writing" | "reading" | "image identification" | "word match";
+    name?: string;
+  };
   chooseType: boolean;
   trueorfalseType: boolean;
   question: string;
@@ -851,7 +875,8 @@ export interface IAssignmentCreate {
   answerValidation: string;
   assignmentStatus: string;
     commends?: string;
-
+  score: number; 
+  rating: string;
 }
 export interface IStudentInvoice extends Document {
   student: {
@@ -862,6 +887,7 @@ export interface IStudentInvoice extends Document {
     country: string;
     city: string;
   };
+  paymentDate?: Date; 
   courseName: string;
   amount: number; 
   packageType:string;

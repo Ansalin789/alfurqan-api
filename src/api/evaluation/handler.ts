@@ -7,6 +7,7 @@ import { evaluationMessages } from "../../config/messages";
 import { isNil, result } from "lodash";
 import { notFound } from "@hapi/boom";
 import { academicDashboardCard, academicDashboardTeachersStudentCount, academicStudentList, academicTeacherStudentList } from "../../kafka/producers/academicProducer";
+import { teacherDashboardCardCount } from "../../kafka/producers/teacherProducer";
 
 
 
@@ -18,8 +19,9 @@ const createInputValidation = z.object({
     student:true,
     classType: true,
     teacher: true,
-    classDay: true,
     joiningDate: true,
+    classDay: true,
+    weeklySlots:true,
     startTime:true,
     endTime:true,
     subscription:true,
@@ -95,7 +97,7 @@ export default {
         const { payload } = createInputValidation.parse({
             payload: req.payload,
         });
-
+        const rawPayload = req.payload as any;
         const classDayValues = payload.classDay?.map((day: { value: string; label: string }) => day.value);
         const startTimeValues = payload.startTime?.map((time: { value: string; label: string }) => time.value);
         const endTimeValues = payload.endTime?.map((time: { value: string; label: string }) => time.value);
@@ -131,6 +133,7 @@ export default {
               teacherId: payload.teacher?.teacherId  ?? "Not Assigned"
             },
             joiningDate: payload.joiningDate ?? new Date() ,
+            weeklySlots:payload.classType == "REGULARCLASS"? payload.weeklySlots : undefined,
             classDay : payload.classType == "REGULARCLASS"? classDayValues : undefined,
             startTime:payload.classType == "REGULARCLASS"? startTimeValues : undefined ,
             endTime: payload.classType == "REGULARCLASS"? endTimeValues: undefined,
@@ -167,6 +170,9 @@ export default {
            paymentLink: payload.paymentLink ?? "",
            paymentStatus: payload.paymentStatus ?? "Pending",
            teacherStatus: payload.teacher?.teacherId ? "Assigned" : "Not Assigned",
+          preferredTrialFromTime:rawPayload.preferredTrialFromTime,
+          preferredTrialToTime:rawPayload.preferredTrialToTime,
+          preferredTrialDate : rawPayload.preferredTrialDate,
            amount: "0.00",
            currency: "$",
            status: payload.status,
@@ -182,6 +188,9 @@ export default {
             await academicStudentList({event : "update", data : result ,sender : payload.academicCoachId});
             await academicDashboardTeachersStudentCount({classType});
             await academicTeacherStudentList({data : result});
+            if(payload.teacher?.teacherId){
+               await teacherDashboardCardCount({sender : payload.teacher?.teacherId });
+            }
         }
         return result;
     },

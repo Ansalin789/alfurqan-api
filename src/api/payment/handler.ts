@@ -132,7 +132,7 @@ async function createStudentPortal(updatedEvaluation: any) {
       },
       username: updatedEvaluation.student.studentFirstName,
       sessionClassType: updatedEvaluation.classType,
-     
+      level: "1",
       password: password,
       role: "Student",
       status: "Active",
@@ -168,7 +168,7 @@ async function createStudentPortal(updatedEvaluation: any) {
         // Fetch teacher details
         const teacherDetails = await UserModel.findOne({
           role: "TEACHER",
-          userId: updatedEvaluation.assignedTeacherId
+          userId: updatedEvaluation.teacher.teacherId
         }).exec();
      
 
@@ -193,7 +193,8 @@ async function createStudentPortal(updatedEvaluation: any) {
               studentLastName: studentDetails.username,
               studentEmail: studentDetails.student.studentEmail,
               gender: studentDetails.student.gender,
-              package: updatedEvaluation.subscription?.subscriptionName
+              package: updatedEvaluation.subscription?.subscriptionName,
+              level: studentDetails.level
             },
             teacher: {
               teacherId: teacherDetails?.userId,
@@ -283,7 +284,9 @@ export const createStudentPaymentIntent = async (request: Request, h: ResponseTo
   
   const { amount, currency, invoiceId, paymentIntentResponse }: any = request.payload;
   const stripe = new Stripe(config.stripeKey.stripesecretkey);
-
+    const paymentDate = paymentIntentResponse.created; // e.g., 1735216832
+     const formattedDate = new Date(paymentDate * 1000); // ✅ correct Date object
+     console.log("Payment Date:", formattedDate);
   try {
     console.log("Finding invoice details for invoiceId:", invoiceId);
 
@@ -310,7 +313,7 @@ export const createStudentPaymentIntent = async (request: Request, h: ResponseTo
         paymentAmount: paymentIntent.amount,
         paymentResponse: paymentIntentResponse,
         paymentResponseId: paymentIntent.client_secret,
-        paymentDate: new Date(),
+        paymentDate: "", // Use the formatted date
         createdDate:new Date(),
         status: "Active",
         createdBy: "System",
@@ -324,6 +327,8 @@ export const createStudentPaymentIntent = async (request: Request, h: ResponseTo
         invoiceId,
         {
           invoiceStatus: paymentIntentResponse.status === "succeeded" ? "Paid" : "Completed",
+          paymentDate: formattedDate, // Use the formatted date
+
         },
         { new: true }
       );

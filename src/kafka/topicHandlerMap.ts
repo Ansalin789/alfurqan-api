@@ -6,13 +6,16 @@ import {
 import {
   dashboardWidgetCounts,
   dashboardWidgetSupervisorCounts,
+  dashboardWidgetTeacherCounts,
 } from "../operations/dashboard";
 import { getTotalAmountByCourse } from "../operations/invoice";
 import {
   bookSlot,
   getAllSlotByDate,
   getAllSlots,
+  getTeacherConsistentWeeklySlots,
   getUniqueTeacherList,
+  trailClassTeacherList,
 } from "../redis/handler/teacherSlotHander";
 import { emitEventToClient } from "../shared/socket";
 import AuditLog from "../models/auditlog";
@@ -60,26 +63,21 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
   academicDashboardCard: async (data: any) => {
     console.log("academicDashboardCard");
     const cardcount = await dashboardWidgetCounts(data.academicCoachId);
-    console.log("fetched  academic dashboard card");
-    console.log("data ", data);
     emitEventToClient("academicDashboardCard", cardcount, data.academicCoachId);
   },
 
   academicStudentList: async (data: any) => {
     console.log("academicStudentList");
-    console.log("data ", data);
     emitEventToClient("academicStudentList", data, data.sender);
   },
 
   academicStudentProfile: async (data: any) => {
     console.log("academicStudentProfile");
-    console.log("data ", data);
     emitEventToClient("academicStudentProfile", data, data.sender);
   },
 
   academicDashboardTeachersStudentCount: async (data: any) => {
     console.log("academicDashboardTeachersStudentCount");
-    console.log("data ", data);
     if (data.classType == "REGULARCLASS" || data.classType == "GROUPCLASS") {
       const getTeacherStudentCount = teacherStudentCount();
       emitEventToClient(
@@ -88,10 +86,14 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
       );
     }
   },
-
+ //frontend binding pending 
   academicTeacherStudentList: async (data: any) => {
     console.log("academicTeacherStudentList");
-    const teacherId = data.data.assignedTeacherId;
+    const teacherId = data?.data?.assignedTeacherId;
+    if (!teacherId) {
+    console.error("No teacherId provided");
+    return;
+    }
     const getTeacherStudentList = getStudentList(teacherId);
     emitEventToClient("academicTeacherStudentList", getTeacherStudentList);
   },
@@ -151,7 +153,7 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
       console.error("❌ Redis/Kafka handler error:", err.message);
     }
   },
-
+   //kept inactive 
   'academicTeacherReSchedule' : async (data: any) => {
     console.log("academicTeacherReSchedule");
     emitEventToClient("academicTeacherReSchedule", data);
@@ -164,14 +166,13 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
 
   'teacherDashboardCardCount' : async ( data : any) =>{
     console.log("teacherDashboardCardCount");
-    // not complete i need api method for count
-    emitEventToClient("teacherDashboardCardCount", data , data.data.sender);
+    const teacherCounts = await dashboardWidgetTeacherCounts(data.sender);
+    emitEventToClient("teacherDashboardCardCount", teacherCounts , data.sender);
   },
 
   'teacherStudentMeeting' : async ( data : any) =>{
     console.log("teacherStudentMeeting");
-    // sending data to client in all students / particular student
-    emitEventToClient("teacherStudentMeeting", data );
+    emitEventToClient("teacherStudentMeeting", data.data );
   },
 
   'teacherReScheduleNotify' : async ( data : any) => {
@@ -196,6 +197,18 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
     console.log('academicAvailableTeachersList');
     const teacherLsit = await getUniqueTeacherList(data.startDate , data.WeeklySlots);
     emitEventToClient("availableTeachersListResponse", teacherLsit ,data.requestId);
+  },
+
+  'academicTrailClassTeacher' : async ( data : any) => {
+   console.log("academicTrailClassTeacher");
+   const teacherList = await trailClassTeacherList(data.startDate , data.from , data.to);
+   emitEventToClient("academicTrailClassTeacherListResponse", teacherList ,data.requestId);
+  },
+
+  'academicTeacherWeeklySlots' : async ( data : any) => {
+     console.log("academicTeacherWeeklySlots");
+     const teachersList = await getTeacherConsistentWeeklySlots( data.teacherId ,data.startDate );
+     emitEventToClient("academicTeacherWeeklySlotsListResponse", teachersList ,data.requestId);
   },
 
   'sendLogsToKafka' : async ( data : any) =>{

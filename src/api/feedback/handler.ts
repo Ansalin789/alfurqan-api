@@ -4,7 +4,7 @@ import { zodFeedbackSchema } from "../../models/feedback";
 import { createFeedback, createSupervisorFeedback, createTeacherFeedback, getAllFeedbackRecords, getAllSupervisorRecords, getcreateAllTeacherFeedback } from "../../operations/feedback";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { supervisorFeedBackList } from "../../kafka/producers/supervisorProducer";
-
+import AlStudentsModel from "../../models/alstudents";
 const createFeedbackValidation = z.object({
   payload: zodFeedbackSchema.pick({
     sessionId:true,
@@ -71,7 +71,7 @@ export default {
         createdBy: payload.createdBy || "System",
         lastUpdatedDate: new Date(),
         lastUpdatedBy: payload.lastUpdatedBy || "System",
-        level: 0,
+        level: payload.level || 0,
         teacherRatings: {
           listeningAbility: payload.teacherRatings?.listeningAbility || 0,
           readingAbility: payload.teacherRatings?.readingAbility || 0,

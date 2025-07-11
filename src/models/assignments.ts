@@ -40,16 +40,16 @@ const assignmentSchema = new Schema<IAssignment>(
       type: assignmentTypeSchema,
       required: true,
     },
-    chooseType: { type: Boolean, required: true },
-    trueorfalseType: { type: Boolean, required: true },
+    chooseType: { type: Boolean, required: false },
+    trueorfalseType: { type: Boolean, required: false },
     question: { type: String, required: true, trim: true },
-    hasOptions: { type: Boolean, required: true },
-    options: {
-      optionOne: { type: String, required: true },
-      optionTwo: { type: String, required: true },
-      optionThree: { type: String, required: true },
-      optionFour: { type: String, required: true },
-    },
+    hasOptions: { type: Boolean, required: false },
+   options: {
+  optionOne: { type: String, required: false },
+  optionTwo: { type: String, required: false },
+  optionThree: { type: String, required: false },
+  optionFour: { type: String, required: false },
+},
     audioFile: { type: Buffer, required: false },
     uploadFile: { type: Buffer, required: false },
     status: { type: String, required: true, trim: true },
@@ -57,14 +57,16 @@ const assignmentSchema = new Schema<IAssignment>(
     createdBy: { type: String, required: true, trim: true },
     updatedDate: { type: Date, required: true },
     updatedBy: { type: String, required: true, trim: true },
-    level: { type: String, required: true, trim: true },
-    courses: { type: String, required: true, trim: true },
+    level: { type: String, required: false, trim: true },
+    courses: { type: String, required: false, trim: true },
     assignedDate: { type: Date, required: true },
     dueDate: { type: Date, required: true },
     answer: { type: String, required: false },
     answerValidation: { type: String, required: true },
     assignmentStatus: { type: String, required: true },
     commends: { type: String, required: false },
+    score: { type: Number, required: false }, // New field for score
+    rating: { type: String, required: false},
   },
   { timestamps: false }
 );
@@ -93,18 +95,19 @@ export const assignmentValidationSchema = z.object({
     name: z.string(), // optional in schema
   }),
 
-  chooseType: z.boolean(),
-  trueorfalseType: z.boolean(),
+  chooseType: z.boolean().optional(),
+  trueorfalseType: z.boolean().optional(),
   question: z.string(),
-  hasOptions: z.boolean(),
+  hasOptions: z.boolean().optional(),
 
-  options: z.object({
-    optionOne: z.string(),
-    optionTwo: z.string(),
-    optionThree: z.string(),
-    optionFour: z.string(),
-  }),
-
+ options: z
+    .object({
+      optionOne: z.string().optional(),
+      optionTwo: z.string().optional(),
+      optionThree: z.string().optional(),
+      optionFour: z.string().optional(),
+    })
+    .optional(),
   audioFile: z
     .union([z.string().nullable(), z.instanceof(Buffer)])
     .optional()
@@ -144,8 +147,8 @@ export const assignmentValidationSchema = z.object({
 
   updatedBy: z.string(),
 
-  level: z.string(),
-  courses: z.string(),
+  level: z.string().optional(),
+  courses: z.string().optional(),
 
   assignedDate: z
     .string()
@@ -171,5 +174,7 @@ export const assignmentValidationSchema = z.object({
     AssignmentStatus.NOTCOMPLETED,
   ]),
   commends: z.string().optional(),
+  score: z.number().optional(),
+  rating: z.string().optional(), 
 });
 export default model<IAssignment>("Assignment", assignmentSchema);

@@ -2,14 +2,20 @@ import { Request, ResponseToolkit } from "@hapi/hapi";
 import { z } from "zod";
 import {
   createAssignment,
-  getAssignmentsByStudentId,
+  getAssignmentByObjectId,
+  getAssignmentForStudentId,
+  getAssignments,
+  getStudentCardCount,
+  getTeacherStudentsAssignmentCount,
+  updateAssignmentsAnswer,
 } from "../../operations/assignments"; // Replace with your service logic
 import * as Stream from "stream";
-import { options } from "joi";
 import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
 import mongoose from "mongoose"; // make sure this is at the top
 import { IAssignment } from "../../../types/models.types";
+import { assignemntMessages } from "../../config/messages";
+import assignments from "../../models/assignments";
 
 // Input Validations for student list
 const getAssignmnentListInputValidation = z.object({
@@ -93,7 +99,8 @@ export default {
 
       const payload = req.payload as any;
       console.log("📥 Raw payload received:", payload);
-
+ const assignmentCount = await assignments.countDocuments({ studentId: payload.studentId });
+    const nextIdNumber = assignmentCount + 1;
       // 🔧 Step 1: Reconstruct nested assignment array from flat form keys
       function reconstructAssignments(flat: Record<string, any>): any[] {
         const assignments: any[] = [];
@@ -146,10 +153,10 @@ export default {
         assignedTeacher,
       });
       // ✅ Generate assignmentId here (for this one group of questions)
-      const studentPrefix = studentName?.slice(0, 3).toUpperCase() || "STU";
-      const currentYear = new Date().getFullYear();
-      const incrementId = "01"; // you can later replace with DB count or auto-ID logic
-      const assignmentId = `${incrementId}-${studentPrefix}-${currentYear}`;
+        const studentPrefix = studentName?.slice(0, 3).toUpperCase() || "STU";
+    const currentDate = new Date();
+    const datePart = `${currentDate.getDate()}${currentDate.getMonth()+1}${currentDate.getFullYear()}`;
+    const assignmentId = `${nextIdNumber}-${studentPrefix}-${datePart}`;
 
       if (!studentId || !mongoose.Types.ObjectId.isValid(studentId)) {
         return h.response({ error: "Invalid studentId" }).code(400);
@@ -184,8 +191,8 @@ export default {
               "quiz",
               "writing",
               "reading",
-              "imageIdentification",
-              "wordMatching",
+              "image identification",
+              "word match",
             ].includes(parsedType.type)
           ) {
             console.error(
@@ -246,6 +253,28 @@ export default {
         const uploadFileBuffer = rawPayload.uploadFile
           ? await streamToBuffer(rawPayload.uploadFile)
           : null;
+// image Refactor 
+
+// 🔹 Image Upload Processing (refactored)
+let uploadFileBufferNew: Buffer | null = null;
+if (rawPayload.uploadFile) {
+  try {
+    if (typeof rawPayload.uploadFile._data === "object") {
+      // Case: Hapi stream upload (from multipart/form)
+      uploadFileBufferNew = rawPayload.uploadFile._data;
+    } else if (rawPayload.uploadFile instanceof Buffer) {
+      // Case: Already a Buffer
+      uploadFileBufferNew = rawPayload.uploadFile;
+    } else {
+      // Fallback to stream handling
+      uploadFileBufferNew = await streamToBuffer(rawPayload.uploadFile);
+    }
+    console.log("🖼️ Image file processed, size:", uploadFileBufferNew != null ? uploadFileBufferNew.length : 0);
+  } catch (err) {
+    console.error("❌ Failed to process uploaded image:", err);
+    return h.response({ error: "Image file upload failed" }).code(400);
+  }
+}
 
         // 🔹 Final Assignment Object
         const newAssignment = {
@@ -280,9 +309,10 @@ export default {
           answerValidation: rawPayload.answerValidation || "",
           assignmentStatus: rawPayload.assignmentStatus || "",
           audioFile: audioFileBuffer ? Buffer.from(audioFileBuffer) : undefined,
-          uploadFile: uploadFileBuffer
-            ? Buffer.from(uploadFileBuffer)
-            : undefined,
+          uploadFile: uploadFileBufferNew ? Buffer.from(uploadFileBufferNew) : undefined,
+            score: 0,
+           rating: "",
+
         };
         console.log("📌 Prepared assignment object:", newAssignment);
 
@@ -291,6 +321,7 @@ export default {
 
       // 🔗 Add Shared Fields
       const finalAssignments = preparedAssignments.map((item) => ({
+        
         ...item,
         studentId,
         assignmentId, // ✅ same for all
@@ -312,128 +343,201 @@ export default {
       return h.response({ error: "Internal server error" }).code(500);
     }
   },
-  // Update an Assignment
-  // async updateAssignment(req: Request, h: ResponseToolkit) {
-  //   try {
-  //     // Ensure the payload is valid
-  //     const rawPayload = req.payload as any;
-  //     if (!rawPayload || Object.keys(rawPayload).length === 0) {
-  //       return h.response({ error: "Missing or empty payload" }).code(400);
-  //     }
-  //     console.log("Received payload:", rawPayload);
+ 
+async getAssignmentsByStudentId(req: Request, h: ResponseToolkit) {
+  const { assignmentId, _id } = req.query;
+  
+  // Clean and validate parameters
+  const cleanAssignmentId = assignmentId?.toString().trim();
+  const cleanId = _id?.toString().trim();
 
-  //     // Parse and handle boolean fields
-  //     const chooseType =
-  //       rawPayload.chooseType === "true" || rawPayload.chooseType === true;
-  //     const trueorfalseType =
-  //       rawPayload.trueorfalseType === "true" ||
-  //       rawPayload.trueorfalseType === true;
+  try {
+    const results = await getAssignments({
+      assignmentId: cleanAssignmentId,
+      _id: cleanId
+    });
 
-  //     // Handle file buffers (if present)
-  //     const audioFileBuffer = rawPayload.audioFile
-  //       ? await streamToBuffer(rawPayload.audioFile)
-  //       : null;
-  //     const uploadFileBuffer = rawPayload.uploadFile
-  //       ? await streamToBuffer(rawPayload.uploadFile)
-  //       : null;
-
-  //     // Ensure options are parsed correctly
-  //     const options = parseJSONSafe(rawPayload.options);
-  //     if (!options) {
-  //       return h.response({ error: "Invalid options format" }).code(400);
-  //     }
-
-  //     return updateStudentAssignment(String(req.params.assinmentId), {
-  //       studentId: rawPayload?.studentId || "",
-  //       studentName: rawPayload?.studentName || "",
-  //       sessionClassType: rawPayload.sessionClassType || "",
-  //       assignmentName: rawPayload.assignmentName || "",
-  //       assignedTeacher: rawPayload.assignedTeacher || "",
-  //       assignmentType: rawPayload.assignmentType || {},
-  //       questionName: rawPayload.questionName || {},
-  //       questionType: rawPayload.questionType || {},
-  //       typeofQuestion: rawPayload.typeofQuestion || {},
-  //       title: rawPayload.title || {},
-
-  //       chooseType, // Parsed boolean
-  //       trueorfalseType, // Parsed boolean
-  //       question: rawPayload.question || "",
-  //       hasOptions: rawPayload.hasOptions,
-  //       options, // Parsed options object
-  //       audioFile: audioFileBuffer ? Buffer.from(audioFileBuffer) : undefined,
-  //       uploadFile: uploadFileBuffer
-  //         ? Buffer.from(uploadFileBuffer)
-  //         : undefined,
-  //       status: rawPayload.status || "",
-  //       createdDate: rawPayload.createdDate || new Date(),
-  //       createdBy: rawPayload.createdBy || "",
-  //       updatedDate: rawPayload.updatedDate || new Date(),
-  //       updatedBy: rawPayload.updatedBy || "",
-  //       level: rawPayload.level || "",
-  //       courses: rawPayload.courses || "",
-  //       assignedDate: rawPayload.assignedDate || new Date(),
-  //       dueDate: rawPayload.dueDate || new Date(),
-  //       answer: rawPayload.answer || "",
-  //       answerValidation: rawPayload.answerValidation || "",
-  //       assignmentStatus: rawPayload.assignmentStatus || "",
-  //     });
-  //   } catch (error) {
-  //     console.error("Error updating assignment:", error);
-
-  //     console.log("Answer>>>", updateStudentAssignment);
-
-  //     return h.response({ error: "Internal Server Error" }).code(500);
-  //   }
-  // },
-
-  // //get all assignment
-
-  // async getAllAssignment(req: Request, h: ResponseToolkit) {
-  //   try {
-  //     // Parse and validate the input
-  //     const { query } = getAssignmnentListInputValidation.parse({
-  //       query: {
-  //         ...req.query,
-  //         assignmentType: {
-  //           type: req.query?.assignmentType?.type || "", // Default value for type
-  //           name: req.query?.assignmentType?.name || "", // Default value for name
-  //         },
-  //         filterValues: req.query?.filterValues
-  //           ? JSON.parse(req.query.filterValues)
-  //           : {},
-  //       },
-  //     });
-
-  //     // Call the function with the validated query object
-  //     const { assignments, totalCount } = await getAllAssignment(query);
-
-  //     // Return the assignments and the total count
-  //     return h.response({ assignments, totalCount }).code(200);
-  //   } catch (error) {
-  //     console.error("Error getting assignments:", error);
-
-  //     return h
-  //       .response({ error: error || "Invalid query parameters" })
-  //       .code(400);
-  //   }
-  // },
-
-  async getAssignmentsByStudentId(req: Request, h: ResponseToolkit) {
-    const studentId = String(req.query.studentId); // ✅ Correct usage
-
-    try {
-      const result = await getAssignmentsByStudentId(studentId);
-
-      if (!result || result.length === 0) {
-        return h
-          .response({ message: "No assignments found for this student." })
-          .code(404);
-      }
-
-      return h.response(result).code(200);
-    } catch (error) {
-      console.error("❌ Error fetching assignments:", error);
-      return h.response({ error: "Failed to fetch assignments." }).code(500);
+    if (results.length === 0) {
+      return h.response({
+        status: 'not_found',
+        message: 'No assignments found',
+        query: { 
+          assignmentId: cleanAssignmentId,
+          _id: cleanId,
+          note: 'Query was executed but returned empty results'
+        }
+      }).code(404);
     }
-  },
+
+    return h.response({
+      status: 'success',
+      count: results.length,
+      data: results
+    }).code(200);
+
+  } catch (error: any) {
+    console.error('Database error:', error);
+    return h.response({
+      status: 'error',
+      message: error.message,
+      details: {
+        receivedQuery: {
+          assignmentId: assignmentId?.toString(),
+          _id: _id?.toString()
+        },
+        cleanedQuery: {
+          assignmentId: cleanAssignmentId,
+          _id: cleanId
+        }
+      }
+    }).code(400);
+  }
+},
+
+async getByStudentId(req: Request, h: ResponseToolkit) {
+  const { studentId } = req.query;
+
+  const cleanStudentId = studentId?.toString().trim();
+
+  if (!cleanStudentId) {
+    return h.response({
+      status: 'error',
+      message: 'studentId is required'
+    }).code(400);
+  }
+
+  try {
+    const results = await getAssignmentForStudentId({ studentId: cleanStudentId });
+
+    if (results.length === 0) {
+      return h.response({
+        status: 'not_found',
+        message: 'No assignments found for the given studentId',
+        studentId: cleanStudentId
+      }).code(404);
+    }
+
+    return h.response({
+      status: 'success',
+      count: results.length,
+      data: results
+    }).code(200);
+
+  } catch (error: any) {
+    console.error('Database error:', error);
+    return h.response({
+      status: 'error',
+      message: error.message,
+      studentId: cleanStudentId
+    }).code(400);
+  }
+},
+
+async getStudentCount(req: Request, h: ResponseToolkit) {
+  const { studentId } = req.query;
+  const cleanStudentId = studentId?.toString().trim();
+
+  if (!cleanStudentId) {
+    return h.response({
+      status: 'error',
+      message: 'studentId is required'
+    }).code(400);
+  }
+
+  try {
+    const results = await getStudentCardCount({ studentId: cleanStudentId });
+
+    return h.response({
+      status: 'success',
+      data: results
+    }).code(200);
+
+  } catch (error: any) {
+    console.error('Database error:', error);
+    return h.response({
+      status: 'error',
+      message: error.message,
+      studentId: cleanStudentId
+    }).code(400);
+  }
+},
+
+
+
+//getbyObjectId
+
+async getByObjectId(req: Request, h: ResponseToolkit) {
+  const id = req.params.id; // ✅ This will now work
+  const result = await getAssignmentByObjectId(String(id));
+
+  if (isNil(result)) {
+    return notFound(assignemntMessages.USER_NOT_FOUND);
+  }
+
+  return result;
+},
+
+
+//  Update an Assignment
+async bulkUpdateAssignments(req: Request, h: ResponseToolkit) {
+  try {
+    const { assignmentId } = req.query as { assignmentId: string };
+    const payloadAnswers = req.payload as {
+      _id: string;
+      answer: string;
+      updatedBy: string;
+    }[];
+
+    if (!assignmentId) {
+      return h.response({ error: "assignmentId query param is required" }).code(400);
+    }
+
+    if (!Array.isArray(payloadAnswers) || payloadAnswers.length === 0) {
+      return h.response({ error: "Payload must be a non-empty array" }).code(400);
+    }
+
+    const result = await updateAssignmentsAnswer(assignmentId, payloadAnswers);
+
+    return h.response(result).code(200);
+  } catch (error) {
+    console.error("Error in bulk assignment update:", error);
+    return h.response({ error: "Internal Server Error" }).code(500);
+  }
+}
+
+
+
+,
+
+async getTeacherStudentAssignmentCount(req: Request, h: ResponseToolkit) {
+  const { teacherId } = req.query;
+  const cleanTeacherId = teacherId?.toString().trim();
+
+  if (!cleanTeacherId) {
+    return h.response({
+      status: 'error',
+      message: 'teacherId is required'
+    }).code(400);
+  }
+
+  try {
+    const results = await getTeacherStudentsAssignmentCount({ teacherId: cleanTeacherId });
+
+    return h.response({
+      status: 'success',
+      data: results
+    }).code(200);
+
+  } catch (error: any) {
+    console.error('Database error:', error);
+    return h.response({
+      status: 'error',
+      message: error.message,
+      teacherId: cleanTeacherId
+    }).code(400);
+  }
+}
+
+
+
 };
