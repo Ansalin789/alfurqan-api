@@ -727,7 +727,7 @@ export interface IPaymentDetails extends Document{
   paymentAmount: string;
   paymentResponse: JSON;
   paymentResponseId: string;
-  paymentDate: Date;
+  paymentDate?: Date;
   status: string;
   createdDate: Date;
   createdBy: string;

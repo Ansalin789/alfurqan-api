@@ -83,8 +83,10 @@ const studentInvoiceSchema = new Schema<IStudentInvoice>(
     type: String,
     required:false,
     },
-     paymentDate: { type: Date,required:false },
-    
+     paymentDate: { 
+      type: Date,
+      required:false,
+     },
     createdDate: {
       type: String,
       required :false,
@@ -130,7 +132,7 @@ export const zodAlStudentInvoiceSchema = z.object({
   rate: z.string().optional(),
   description: z.string().optional(),
   attachFile:  z.union([z.instanceof(Buffer), z.string()]).optional(),
-paymentDate: z
+  paymentDate: z
   .string()
   .refine((val) => !isNaN(Date.parse(val)), {
     message: commonMessages.INVALID_DATE_FORMAT,
