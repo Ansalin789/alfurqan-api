@@ -129,13 +129,19 @@ export interface GetAlluserRecordsParams {
   date?: string;
   role?: string;
   studentId?:string;
-  // startdate?: string;
-  // enddate?: string;
+
 }
 
 export interface GetAllTeachersRecordsParams {
   teacherGroup?: string;
   supervisorId?: string;
+}
+
+export interface GetAllAssignmentRecordsParams {
+  studentId?: string;
+  assignmentId?: string;
+
+
 }
 
 export default CustomEnumerator;

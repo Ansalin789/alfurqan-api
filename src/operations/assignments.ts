@@ -7,6 +7,7 @@ import alstudents from "../models/alstudents";
 import { Types } from "mongoose";
 import Stream from "stream";
 import assignments from "../models/assignments";
+import { GetAllAssignmentRecordsParams } from "../shared/enum";
 
 interface AssignmentQuery {
   assignmentId?: string;
@@ -583,4 +584,54 @@ export const getTeacherStudentsAssignmentCount = async ({
     },
     students: studentsWithStats
   };
+};
+interface IAssignmentData{
+  _id: any,
+  assignmentId: string,
+  assignmentName: string,
+  assignmentType : any,
+  questionName : string,
+  assignedDate : Date,
+  dueDate: Date,
+  assignmentStatus: string
+}
+
+export const getAssignmentRecords = async (
+  params: GetAllAssignmentRecordsParams
+): Promise<{ assignmentData: IAssignmentData[]; totalCount: number }> => {
+  const { studentId, assignmentId } = params;
+
+  // Construct query based on role if provided
+  const query: any = {};
+  
+  
+  console.log(">>>>",query);
+
+   if (studentId) {
+    query.studentId = studentId;
+  }
+    if (assignmentId) {
+    query.assignmentId = studentId;
+  }
+  // Fetch all users matching the query and return plain JavaScript objects using .lean()
+  let assignmentRawtData;
+  let totalCount;
+
+    assignmentRawtData  = await assignment.find(query).exec();
+    totalCount = await assignment.countDocuments(query);
+
+  // Get the total count of users matching the query
+  const assignmentData =  assignmentRawtData.map(item => ({
+    _id: item._id,
+    assignmentId: item.assignmentId,
+    assignmentName: item.assignmentName,
+    assignmentType: {
+      type: item.assignmentType?.type || ""
+    },
+    questionName: item.questionName,
+    assignedDate: item.assignedDate,
+    dueDate: item.dueDate,
+    assignmentStatus: item.assignmentStatus
+  }));
+  return { assignmentData , totalCount }; // Return both users and totalCount
 };
