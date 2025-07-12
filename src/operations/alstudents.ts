@@ -263,3 +263,77 @@ export const getStudentCountriesCount = async() =>{
   return { studentCount, studentCountByCountry: results };
 
 };
+
+export const getStudentlevel = async () => {
+  const now = new Date();
+  const firstDayOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const firstDayOfPreviousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+  const studentCountByLevel = await AlStudentsModel.aggregate([
+    {
+      $match: {
+        status: "Active",
+        createdDate: {
+          $gte: firstDayOfPreviousMonth,
+          $lt: firstDayOfCurrentMonth,
+        },
+      },
+    },
+    {
+      $group: {
+        _id: {
+          level: "$level",
+          month: { $month: "$createdDate" },
+          year: { $year: "$createdDate" },
+        },
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        level: "$_id.level",
+        count: 1,
+        month: "$_id.month",
+        year: "$_id.year",
+        monthName: {
+          $arrayElemAt: [
+            ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+            "$_id.month"
+          ]
+        },
+        monthLabel: {
+          $concat: [
+            {
+              $arrayElemAt: [
+                ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+                "$_id.month"
+              ]
+            },
+            " ",
+            { $toString: "$_id.year" }
+          ]
+        }
+      }
+    },
+    {
+      $sort: { year: -1, month: -1, count: -1 }
+    }
+  ]);
+
+  const studentCount = await AlStudentsModel.countDocuments({
+    status: "Active",
+    createdDate: {
+      $gte: firstDayOfPreviousMonth,
+      $lt: firstDayOfCurrentMonth,
+    },
+  });
+
+  return {
+    studentCount,
+    studentCountByLevel,
+    fromDate: firstDayOfPreviousMonth.toISOString().split("T")[0],
+    toDate: firstDayOfCurrentMonth.toISOString().split("T")[0],
+  };
+};
+
