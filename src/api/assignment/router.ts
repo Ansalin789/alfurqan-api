@@ -21,9 +21,9 @@ const register = async (server: Server): Promise<void> => {
           multipart: true,
           allow: "multipart/form-data",
         },
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
+        auth: {
+          strategies: ["jwt"],
+        },
        },
     },
 //     {
@@ -38,6 +38,7 @@ const register = async (server: Server): Promise<void> => {
 //         },  },
 //     },
 
+//janani
    {
   method: "GET",
   path: "/assignments",
@@ -45,12 +46,14 @@ const register = async (server: Server): Promise<void> => {
     handler: handler.getAssignmentsByStudentId,
     description: "Get all assignments for a student by studentId",
     tags: ["api", "assignment"],
+    
+    auth: {
+      strategies: ["jwt"],
     },
-    // auth: {
-    //   strategies: ["jwt"],
-    // },
   },
+   },
 
+  //jo
    {
   method: "GET",
   path: "/assignments/student",
@@ -58,12 +61,14 @@ const register = async (server: Server): Promise<void> => {
     handler: handler.getByStudentId,
     description: "Get all assignments for a student by studentId",
     tags: ["api", "assignment"],
+    
+    auth: {
+      strategies: ["jwt"],
     },
-    // auth: {
-    //   strategies: ["jwt"],
-    // },
   },
+   },
 
+//jo
 
      {
   method: "GET",
@@ -72,13 +77,13 @@ const register = async (server: Server): Promise<void> => {
     handler: handler.getStudentCount,
     description: "Get all assignments for a student by studentId",
     tags: ["api", "assignment"],
-    },
-    // auth: {
-    //   strategies: ["jwt"],
-    // },
-  },
   
-//get assignment by ObjectId
+    auth: {
+      strategies: ["jwt"],
+    },
+  },
+},
+//get assignment by ObjectId jo
 {
   method: "GET",
   path: "/assignments/{id}",
@@ -86,13 +91,13 @@ const register = async (server: Server): Promise<void> => {
     handler: handler.getByObjectId,
     description: "Get assignment by ObjectId",
     tags: ["api", "assignment"],
-    // auth: {
-    //   strategies: ["jwt"],
-    // },
+    auth: {
+      strategies: ["jwt"],
+    },
   },
 },
 
-
+//jo
 {
   method: "PUT",
   path: "/assignments/bulk",
@@ -104,14 +109,14 @@ const register = async (server: Server): Promise<void> => {
       parse: true,
       allow: 'application/json'
     },
-    // auth: {
-    //   strategies: ["jwt"],
-    // },
+    auth: {
+      strategies: ["jwt"],
+    },
   },
 },
 
 
-    
+    //janani
 
      {
   method: "GET",
@@ -120,11 +125,25 @@ const register = async (server: Server): Promise<void> => {
     handler: handler.getTeacherStudentAssignmentCount,
     description: "Get all assignments counts for a student by teacherId",
     tags: ["api", "assignment"],
+    auth: {
+      strategies: ["jwt"],
     },
+  },
+     },
+
+  {
+  method: "GET",
+  path: "/assignments/questionlist",
+  options: {
+    handler: handler.getAssignmentQuestionList,
+    description: "Get all assignments counts for a student by teacherId",
+    tags: ["api", "assignment"],
     // auth: {
     //   strategies: ["jwt"],
     // },
   },
+     },
+
 
   ];
   server.route(routes);

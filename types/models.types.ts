@@ -521,6 +521,7 @@ export interface IClassSchedule extends Document{
     studentEmail: string;
     gender: string;
     level: string;
+
   },
   teacher:{
     teacherId: string;
@@ -573,7 +574,6 @@ export interface IClassScheduleCreate{
     studentEmail: string;
     gender: string;
     level: string;
-
   },
   teacher:{
     teacherId: string;

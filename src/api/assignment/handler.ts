@@ -4,6 +4,7 @@ import {
   createAssignment,
   getAssignmentByObjectId,
   getAssignmentForStudentId,
+  getAssignmentRecords,
   getAssignments,
   getStudentCardCount,
   getTeacherStudentsAssignmentCount,
@@ -11,11 +12,13 @@ import {
 } from "../../operations/assignments"; // Replace with your service logic
 import * as Stream from "stream";
 import { isNil } from "lodash";
-import { notFound } from "@hapi/boom";
+import { badRequest, notFound } from "@hapi/boom";
 import mongoose from "mongoose"; // make sure this is at the top
 import { IAssignment } from "../../../types/models.types";
 import { assignemntMessages } from "../../config/messages";
 import assignments from "../../models/assignments";
+import { zodGetAllUserRecordsQuerySchema, zodGetAssignmentList } from "../../shared/zod_schema_validation";
+import { GetAllAssignmentRecordsParams, GetAlluserRecordsParams } from "../../shared/enum";
 
 // Input Validations for student list
 const getAssignmnentListInputValidation = z.object({
@@ -58,6 +61,13 @@ const getAssignmnentListInputValidation = z.object({
     answerValidation: z.string().optional(),
     assignmentStatus: z.string().optional(),
   }),
+});
+
+let getAssignmentInputValidation = z.object({
+  query: zodGetAssignmentList.pick({
+    studentId: true,
+    assignmentId: true
+  })
 });
 
 // Helper function to convert a readable stream to a buffer
@@ -536,8 +546,41 @@ async getTeacherStudentAssignmentCount(req: Request, h: ResponseToolkit) {
       teacherId: cleanTeacherId
     }).code(400);
   }
-}
+},
 
+
+async getAssignmentQuestionList (req: Request, h: ResponseToolkit){
+
+   try {
+      // Parse and validate the query parameters
+      const { query } = getAssignmentInputValidation.parse({
+        query: req.query,
+      });
+
+      const { studentId, assignmentId } = query;
+      // Build the filter object
+      const filter: GetAllAssignmentRecordsParams = {
+        studentId,
+         assignmentId
+      };
+      if (studentId) {
+        filter.studentId = studentId;
+      }
+      if(assignmentId){
+        filter.assignmentId = assignmentId;
+
+      }
+
+      // Fetch user records using the filter
+      const result = await getAssignmentRecords(filter);
+
+      return result;
+    } catch (error) {
+      console.error("Validation Error:", error);
+      return badRequest("Validation error: ");
+    }
+
+}
 
 
 };
