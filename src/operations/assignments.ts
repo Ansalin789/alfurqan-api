@@ -313,51 +313,35 @@ export const getStudentCardCount = async ({
 }: {
   studentId: string;
 }): Promise<{
-  totalAssigned: number;
+  totalAssignments: number;
   totalCompleted: number;
   totalPending: number;
 }> => {
   const trimmedId = studentId.trim();
 
-  const result = await assignments.aggregate([
-    {
-      $match: {
-        studentId: trimmedId
-      }
-    },
-    {
-      $group: {
-        _id: "$assignmentStatus", 
-        count: { $sum: 1 }
-      }
-    },
-    {
-      $project: {
-        _id: 0,
-        assignmentStatus: "$_id", 
-        count: 1
-      }
-    }
-  ]).exec();
+  const allAssignments = await assignments.find({ studentId: trimmedId }).lean();
 
-  const response = {
-    totalAssigned: 0,
-    totalCompleted: 0,
-    totalPending: 0
-  };
+  let totalCompleted = 0;
+  let totalPending = 0;
 
-  for (const item of result) {
-    if (item.assignmentStatus === "Assigned") {
-      response.totalAssigned = item.count;
-    } else if (item.assignmentStatus === "Completed") {
-      response.totalCompleted = item.count;
-    } else if (item.assignmentStatus === "InProgress") {
-      response.totalPending = item.count;
+  for (const assignment of allAssignments) {
+    if (assignment.assignmentStatus === "Completed") {
+      totalCompleted++;
+    } else if (
+      assignment.assignmentStatus === "Assigned" ||
+      assignment.assignmentStatus === "Pending"
+    ) {
+      totalPending++;
     }
   }
 
-  return response;
+  return {
+    totalAssignments: allAssignments.length,
+    totalCompleted,
+    totalPending
+  };
 };
+
 
 
 
