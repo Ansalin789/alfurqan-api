@@ -141,10 +141,15 @@ const handler = {
 
  }
  ,
-  async getStudentlevel(req: Request, h: ResponseToolkit){
-  return getStudentlevel();
+async getStudentlevel(req: Request, h: ResponseToolkit) {
+const studentId = req.query.studentId; // if it's in the query
+  if (!studentId) {
+    return h.response({ error: "Student ID is required" }).code(400);
+  }
 
- }
+  return getStudentlevel(studentId);
+}
+
 };
 
 
