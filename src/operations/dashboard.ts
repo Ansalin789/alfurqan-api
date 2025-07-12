@@ -282,46 +282,65 @@ export async function dashboardWidgetTeacherCounts(teacherId: string) {
 //pass the studentId and course from query
 export const dashboardWidgetStudentCounts = async (
   studentId: string,
-  courseName: string // Needed to filter course-specific data
+  courseName: string
 ): Promise<{
-  totalLevel: string
-  totalAttendance: number
-  totalClasses: number
-  totalDuration: number
+  totalLevel: string;
+  totalAttendance: number;
+  totalClasses: number;
+  totalDuration: number;
 }> => {
+  console.log(`Fetching dashboard widget counts for studentId: ${studentId}, courseName: ${courseName}`);
 
-  const levelCount = await alstudents.findOne({
-     _id: studentId,
-     }).exec();
+  // Step 1: Get student record from alstudents
+  const studentRecord = await alstudents.findOne({ _id: studentId }).exec();
+  console.log("Student Record:", studentRecord);
 
+  // Step 2: Get attendance counts from classShedule
   const presentCount = await classShedule.countDocuments({
     "student.studentId": studentId,
     "course.courseName": courseName,
-    "student.attendee": "present"
+    "student.attendee": "present",
   }).exec();
+  console.log("Present Count:", presentCount);
 
   const totalClassCount = await classShedule.countDocuments({
     "student.studentId": studentId,
     "course.courseName": courseName,
   }).exec();
+  console.log("Total Class Count:", totalClassCount);
 
   const attendancePercentage =
     totalClassCount > 0 ? (presentCount / totalClassCount) * 100 : 0;
+  console.log("Attendance Percentage:", attendancePercentage);
 
-  const evaluationRecord = await evaluation.findOne({
-    "student.studentId": levelCount?.student.studentId,
-    "course.courseName": courseName,
-  }).exec();
+  // Step 3: Get accomplishmentTime from evaluation
+  let totalDuration = 0;
 
-  const totalDuration = typeof evaluationRecord?.accomplishmentTime === 'number'
-    ? evaluationRecord.accomplishmentTime
-    : 0;
+  if (studentRecord?.student?.studentId) {
+    const innerStudentId = studentRecord.student.studentId;
+    console.log("Inner Student ID for evaluation lookup:", innerStudentId);
 
- return {
-    totalLevel: levelCount?.level || "1", 
+    const evaluationRecord = await evaluation.findOne({
+      "student.studentId": innerStudentId,
+    }).exec();
+
+    console.log("Evaluation Record:", evaluationRecord);
+
+    totalDuration = Number(evaluationRecord?.accomplishmentTime) || 0;
+  } else {
+    console.log("No valid studentRecord.student.studentId found");
+  }
+
+  // Step 4: Return all the values
+  const totalLevel = studentRecord?.level || "1";
+  console.log("Total Level:", totalLevel);
+  console.log("Total Duration:", totalDuration);
+
+  return {
+    totalLevel,
     totalAttendance: attendancePercentage,
     totalClasses: totalClassCount,
-    totalDuration: totalDuration,
+    totalDuration,
   };
 };
 
