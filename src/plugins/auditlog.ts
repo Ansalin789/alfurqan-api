@@ -11,59 +11,85 @@ export const loggerPlugin: Plugin<{}> = {
       return h.continue;
     });
 
-    server.ext('onPreResponse', async (request, h) => {
-      const response = request.response;
-      const startTime = (request.plugins as any).startTime ?? Date.now();
-      const duration = Date.now() - startTime;
+   server.ext('onPreResponse', async (request, h) => {
+  const response = request.response;
+  const startTime = (request.plugins as any).startTime ?? Date.now();
+  const duration = Date.now() - startTime;
 
-      const isBoomError = Boom.isBoom(response);
-      const statusCode = isBoomError
-        ? response.output?.statusCode
-        : (response as any)?.statusCode ?? 200;
+  const isBoomError = Boom.isBoom(response);
+  const statusCode = isBoomError
+    ? response.output?.statusCode
+    : (response as any)?.statusCode ?? 200;
 
-      const logType = getLogTypeByStatus(statusCode);
-      const forwardedIp = request.headers['x-forwarded-for'];
-      const remoteIp = request.info.remoteAddress;
+  const logType = getLogTypeByStatus(statusCode);
+  const forwardedIp = request.headers['x-forwarded-for'];
+  const remoteIp = request.info.remoteAddress;
 
-      const clientIp = forwardedIp
-      ? forwardedIp.split(',')[0].trim()
-      : remoteIp;
+  const clientIp = forwardedIp
+    ? forwardedIp.split(',')[0].trim()
+    : remoteIp;
 
-      const logPayload = {
-        userId: request.auth?.credentials?.id ?? 'anonymous',
-        logType,
-        route: request.route?.path ?? request.path ?? 'unknown',
-        action: detectActionFromMethod(request.method),
-        description:
-          logType === 'ERROR'
-            ? `Request failed: ${request.path}`
-            : `Request ${request.method.toUpperCase()} to ${request.path}`,
-        errorMessage: isBoomError ? response.message : undefined,
-        stack: isBoomError ? response.stack : undefined,
-        ip: clientIp,
-        meta: {
-          method: request.method,
-          path: request.path,
-          payload: request.payload,
-          query: request.query,
-          response: isBoomError
-            ? response.output?.payload
-            : (response as any)?.source ?? null,
-          statusCode,
-          durationMs: duration,
-          headers: request.headers,
-        },
-        createdDate: new Date(),
-      };
+  const truncate = (input: any, max = 1000) => {
+  try {
+    const str = typeof input === 'string' 
+      ? input 
+      : input === undefined || input === null 
+        ? '' 
+        : JSON.stringify(input);
 
-      try {
-        await sendLogsToKafka({ data: logPayload });
-      } catch (err: any) {
-        console.error('❌ Kafka send failed:', err.message);
-      }
+    return str.length > max ? str.substring(0, max) + '... [truncated]' : str;
+  } catch {
+    return '[Unserializable data]';
+  }
+};
 
-      return h.continue;
-    });
+  // First draft of logPayload
+  let logPayload: any = {
+    userId: request.auth?.credentials?.id ?? 'anonymous',
+    logType,
+    route: request.route?.path ?? request.path ?? 'unknown',
+    action: detectActionFromMethod(request.method),
+    description:
+      logType === 'ERROR'
+        ? `Request failed: ${request.path}`
+        : `Request ${request.method.toUpperCase()} to ${request.path}`,
+    errorMessage: isBoomError ? truncate(response.message, 500) : undefined,
+    stack: isBoomError ? truncate(response.stack, 1000) : undefined,
+    ip: clientIp,
+    meta: {
+      method: request.method,
+      path: request.path,
+      payload: truncate(request.payload, 1000),
+      query: truncate(request.query, 500),
+      response: isBoomError
+        ? truncate(response.output?.payload, 1000)
+        : truncate((response as any)?.source ?? null, 1000),
+      statusCode,
+      durationMs: duration,
+      headers: truncate(request.headers, 1000),
+    },
+    createdDate: new Date(),
+  };
+
+  // 💥 Check size
+  const sizeInBytes = Buffer.byteLength(JSON.stringify(logPayload), 'utf8');
+
+  // 🧹 If too big, strip errorMessage and stack
+  if (sizeInBytes > 1024 * 1024) {
+    logPayload.errorMessage = undefined;
+    logPayload.stack = undefined;
+    console.warn("⚠ Log payload exceeded 1MB. Removed errorMessage and stack.");
+  }
+
+  try {
+    await sendLogsToKafka({ data: logPayload });
+  } catch (err: any) {
+    console.error('❌ Kafka send failed:', err.message);
+  }
+
+  return h.continue;
+});
+
   },
 };
 
