@@ -77,7 +77,8 @@ export default {
         teacherRatings: {
           listeningAbility: 0,
           readingAbility:0,
-          overallPerformance: 0
+          overallPerformance: 0,
+          communicationConcentration: 0
         },
         studentsRating: {
           classUnderstanding: 0,

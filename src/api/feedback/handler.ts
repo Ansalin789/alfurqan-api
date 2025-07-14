@@ -76,6 +76,8 @@ export default {
           listeningAbility: payload.teacherRatings?.listeningAbility || 0,
           readingAbility: payload.teacherRatings?.readingAbility || 0,
           overallPerformance: payload.teacherRatings?.overallPerformance || 0,
+          communicationConcentration: payload.teacherRatings?.communicationConcentration || 0,
+
         },
       });
       if(result){
@@ -107,6 +109,7 @@ export default {
           listeningAbility: payload.teacherRatings?.listeningAbility ?? 0,
           readingAbility: payload.teacherRatings?.readingAbility ?? 0,
           overallPerformance: payload.teacherRatings?.overallPerformance ?? 0,
+          communicationConcentration: payload.teacherRatings?.communicationConcentration ?? 0,
         },
 
         level: payload.level ?? 0,
@@ -215,7 +218,8 @@ export default {
         teacherRatings: {
           listeningAbility: 0,
           readingAbility:0,
-          overallPerformance: 0
+          overallPerformance: 0,
+          communicationConcentration: 0
         },
         studentsRating: {
           classUnderstanding: 0,
