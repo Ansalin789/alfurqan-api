@@ -2,7 +2,7 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
-import { createAlStudent, getAllalstudentsList, getalstudentsById, getStudentCountriesCount, getStudentPercentage, getStudentRecordCount} from "../../operations/alstudents";
+import { createAlStudent, getAllalstudentsList, getalstudentsById, getStudentCountriesCount, getStudentlevel, getStudentPercentage, getStudentRecordCount} from "../../operations/alstudents";
 import { alstudentsMessages } from "../../config/messages";
 import { isNil } from "lodash";
 import { zodAlStudentSchema } from "../../models/alstudents";
@@ -140,6 +140,16 @@ const handler = {
   return getStudentCountriesCount();
 
  }
+ ,
+async getStudentlevel(req: Request, h: ResponseToolkit) {
+const studentId = req.query.studentId; // if it's in the query
+  if (!studentId) {
+    return h.response({ error: "Student ID is required" }).code(400);
+  }
+
+  return getStudentlevel(studentId);
+}
+
 };
 
 

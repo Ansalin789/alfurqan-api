@@ -1,4 +1,4 @@
-import { Partitioners } from "kafkajs";
+import { CompressionTypes, Partitioners } from "kafkajs";
 import { kafka } from "./client";
 
 const producer = kafka.producer({
@@ -22,6 +22,7 @@ export const sendMessage = async (topic: string, message: any) => {
     await producer.send({
       topic,
       messages: [{ value }],
+      compression: CompressionTypes.GZIP,
     });
     console.log(`📤 Kafka Producer sent to topic: ${topic}`);
   } catch (err) {

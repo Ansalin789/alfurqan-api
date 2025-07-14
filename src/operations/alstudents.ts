@@ -263,3 +263,49 @@ export const getStudentCountriesCount = async() =>{
   return { studentCount, studentCountByCountry: results };
 
 };
+
+
+
+export const getStudentlevel = async (studentId: string) => {
+  const now = new Date();
+  const firstDayOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const firstDayOfPreviousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+  const studentLevelData = await AlStudentsModel.aggregate([
+    {
+      $match: {
+        status: "Active",
+        createdDate: {
+          $gte: firstDayOfPreviousMonth,
+          $lt: firstDayOfCurrentMonth,
+        },
+        _id: new Types.ObjectId(studentId),
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        studentId: "$_id",
+        level: "$level",
+        monthLabel: {
+          $dateToString: {
+            format: "%b %Y", // "Jun 2025"
+            date: "$createdDate"
+          }
+        }
+      }
+    }
+  ]);
+
+  return {
+    studentCount: studentLevelData.length,
+    studentCountByLevel: studentLevelData,
+    fromDate: firstDayOfPreviousMonth.toISOString().split("T")[0],
+    toDate: firstDayOfCurrentMonth.toISOString().split("T")[0],
+  };
+};
+
+
+
+
+

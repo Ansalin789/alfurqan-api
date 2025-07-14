@@ -29,7 +29,7 @@ const paymentDetailsSchema = new Schema<IPaymentDetails>(
       },
       paymentDate:{
         type: Date,
-        required: true,
+        required: false,
       },
       status:{
         type: String,

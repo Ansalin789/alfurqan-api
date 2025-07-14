@@ -66,6 +66,7 @@ export const createTeacherFeedback = async (
         listeningAbility: payload.teacherRatings?.listeningAbility ?? 0,
         readingAbility: payload.teacherRatings?.readingAbility ?? 0,
         overallPerformance: payload.teacherRatings?.overallPerformance ?? 0,
+        communicationConcentration: payload.teacherRatings?.communicationConcentration ?? 0,
       },
 
       // Add Student Level, with a default value if missing

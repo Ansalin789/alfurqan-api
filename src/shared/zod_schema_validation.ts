@@ -49,6 +49,10 @@ export const zodAuthenticationSchema = z.object({
   password: z.string().min(8),
 });
 
+export const zodGetAssignmentList = z.object({
+  studentId: z.string().optional(),
+  assignmentId:z.string().optional(),
+});
 
 
 export const zodAlStudentInvoiceSchemaValidation = z.object({

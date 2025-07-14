@@ -65,6 +65,19 @@ const register = async (server: Server): Promise<void> => {
               strategies: ["jwt"],
             },},
         }, 
+           {
+          method: "GET",
+          path: "/alstudents/studentslevel",
+          options: {
+            handler: handler.getStudentlevel,
+            description: alstudentsMessages.BYID,
+            tags: ["api", "alstudents"],
+            // auth: {
+            //   strategies: ["jwt"],
+            // },
+          },
+        },
+
 
   ];
   server.route(routes);

@@ -7,6 +7,7 @@ import alstudents from "../models/alstudents";
 import { Types } from "mongoose";
 import Stream from "stream";
 import assignments from "../models/assignments";
+import { GetAllAssignmentRecordsParams } from "../shared/enum";
 
 interface AssignmentQuery {
   assignmentId?: string;
@@ -313,51 +314,35 @@ export const getStudentCardCount = async ({
 }: {
   studentId: string;
 }): Promise<{
-  totalAssigned: number;
+  totalAssignments: number;
   totalCompleted: number;
   totalPending: number;
 }> => {
   const trimmedId = studentId.trim();
 
-  const result = await assignments.aggregate([
-    {
-      $match: {
-        studentId: trimmedId
-      }
-    },
-    {
-      $group: {
-        _id: "$assignmentStatus", 
-        count: { $sum: 1 }
-      }
-    },
-    {
-      $project: {
-        _id: 0,
-        assignmentStatus: "$_id", 
-        count: 1
-      }
-    }
-  ]).exec();
+  const allAssignments = await assignments.find({ studentId: trimmedId }).lean();
 
-  const response = {
-    totalAssigned: 0,
-    totalCompleted: 0,
-    totalPending: 0
-  };
+  let totalCompleted = 0;
+  let totalPending = 0;
 
-  for (const item of result) {
-    if (item.assignmentStatus === "Assigned") {
-      response.totalAssigned = item.count;
-    } else if (item.assignmentStatus === "Completed") {
-      response.totalCompleted = item.count;
-    } else if (item.assignmentStatus === "InProgress") {
-      response.totalPending = item.count;
+  for (const assignment of allAssignments) {
+    if (assignment.assignmentStatus === "Completed") {
+      totalCompleted++;
+    } else if (
+      assignment.assignmentStatus === "Assigned" ||
+      assignment.assignmentStatus === "Pending"
+    ) {
+      totalPending++;
     }
   }
 
-  return response;
+  return {
+    totalAssignments: allAssignments.length,
+    totalCompleted,
+    totalPending
+  };
 };
+
 
 
 
@@ -599,4 +584,56 @@ export const getTeacherStudentsAssignmentCount = async ({
     },
     students: studentsWithStats
   };
+};
+interface IAssignmentData{
+  _id: any,
+  assignmentId: string,
+  assignmentName: string,
+  assignmentType : any,
+  questionName : string,
+  assignedDate : Date,
+  dueDate: Date,
+  assignmentStatus: string
+}
+
+export const getAssignmentRecords = async (
+  params: GetAllAssignmentRecordsParams
+): Promise<{ assignmentData: IAssignmentData[]; totalCount: number }> => {
+  const { studentId, assignmentId } = params;
+
+  // Construct query based on role if provided
+  const query: any = {};
+  
+  
+  console.log(">>>>",query);
+
+   if (studentId) {
+    query.studentId = studentId;
+  }
+    if (assignmentId) {
+    query.assignmentId = assignmentId;
+  }
+
+  console.log(">>>>>>",query.studentId, query.assignmentId)
+  // Fetch all users matching the query and return plain JavaScript objects using .lean()
+  let assignmentRawtData;
+  let totalCount;
+
+    assignmentRawtData  = await assignment.find(query).exec();
+    totalCount = await assignment.countDocuments(query);
+
+  // Get the total count of users matching the query
+  const assignmentData =  assignmentRawtData.map(item => ({
+    _id: item._id,
+    assignmentId: item.assignmentId,
+    assignmentName: item.assignmentName,
+    assignmentType: {
+      type: item.assignmentType?.type || ""
+    },
+    questionName: item.questionName,
+    assignedDate: item.assignedDate,
+    dueDate: item.dueDate,
+    assignmentStatus: item.assignmentStatus
+  }));
+  return { assignmentData , totalCount }; // Return both users and totalCount
 };

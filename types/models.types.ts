@@ -521,6 +521,7 @@ export interface IClassSchedule extends Document{
     studentEmail: string;
     gender: string;
     level: string;
+
   },
   teacher:{
     teacherId: string;
@@ -573,7 +574,6 @@ export interface IClassScheduleCreate{
     studentEmail: string;
     gender: string;
     level: string;
-
   },
   teacher:{
     teacherId: string;
@@ -727,7 +727,7 @@ export interface IPaymentDetails extends Document{
   paymentAmount: string;
   paymentResponse: JSON;
   paymentResponseId: string;
-  paymentDate: Date;
+  paymentDate?: Date;
   status: string;
   createdDate: Date;
   createdBy: string;
@@ -1031,6 +1031,7 @@ export interface IFeedbackCreate {
     listeningAbility?: number;
     readingAbility?: number;
     overallPerformance?: number;
+    communicationConcentration?: number;
   };
 
   studentsRating?: {  // ✅ Made optional
@@ -1065,8 +1066,8 @@ export interface IFeedback  extends Document{
   supervisorRating?: {
     knowledgeofstudentsandcontent?:number;
     assessmentofstudents?: number;
-    communicationandcollaboration?: number;
     professionalism?: number;
+    communicationandcollaboration?: number;
   },
   teacher?: {
     teacherId?: string;
@@ -1095,6 +1096,8 @@ export interface IFeedback  extends Document{
     listeningAbility?: number;
     readingAbility? : number;
     overallPerformance?: number;
+        communicationConcentration?: number;
+
   };
 
   // ✅ NEW: Student-Specific Ratings
@@ -1151,6 +1154,8 @@ export interface ISupervisorFeedbackCreate {
     listeningAbility?: number;
     readingAbility?: number;
     overallPerformance?: number;
+    communicationConcentration?: number;  // ✅ Added new field
+
   };
 
   studentsRating?: {  // ✅ Made optional
@@ -1215,6 +1220,7 @@ export interface ISuperviosrFeedback  extends Document{
     listeningAbility?: number;
     readingAbility? : number;
     overallPerformance?: number;
+    communicationConcentration?: number;
   };
 
   // ✅ NEW: Student-Specific Ratings
