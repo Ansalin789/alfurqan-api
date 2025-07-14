@@ -611,8 +611,10 @@ export const getAssignmentRecords = async (
     query.studentId = studentId;
   }
     if (assignmentId) {
-    query.assignmentId = studentId;
+    query.assignmentId = assignmentId;
   }
+
+  console.log(">>>>>>",query.studentId, query.assignmentId)
   // Fetch all users matching the query and return plain JavaScript objects using .lean()
   let assignmentRawtData;
   let totalCount;
