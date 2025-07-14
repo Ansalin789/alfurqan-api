@@ -34,7 +34,7 @@ import salaryandwagesAPI from "../api/salarywages/router";
 import packageAPI from "../api/package/router"
 import leaveRequestAPI from "../api/leaveRequest/router";
 import TeachermeetingAPI from "../api/teacherMeeting/router"
-
+import Level from "../api/level/router"; 
 
 
 export const appPlugins = [
@@ -141,5 +141,8 @@ export const appPlugins = [
   },
   {
     plugin:TeachermeetingAPI,
+  },
+  {
+    plugin:Level,
   }
 ];
