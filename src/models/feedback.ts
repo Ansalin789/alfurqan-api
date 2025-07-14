@@ -33,6 +33,7 @@ const FeedbackSchema = new Schema<IFeedbackCreate>(
       listeningAbility: { type: Number, required: false, min: 0, max: 5 },
       readingAbility: { type: Number, required: false, min: 0, max: 5 },
       overallPerformance: { type: Number, required: false, min: 0, max: 5 },
+      communicationConcentration: { type: Number, required: false, min: 0, max: 5 },
     },
 
     // ✅ NEW: Separate Student-Specific Ratings
@@ -124,6 +125,7 @@ export const zodFeedbackSchema = z.object({
     listeningAbility: z.number().min(0).max(5).optional(),
     readingAbility: z.number().min(0).max(5).optional(),
     overallPerformance: z.number().min(0).max(5).optional(),
+    communicationConcentration: z.number().min(0).max(5).optional(),
   }),
 
   studentsRating: z.object({
