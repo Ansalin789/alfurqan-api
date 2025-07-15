@@ -16,33 +16,20 @@ import { GetAllRecordsParams, GetAlluserRecordsParams } from "../shared/enum";
  */
 
 
+
+
 export const getAllUserRecords = async (
   params: GetAlluserRecordsParams
 ): Promise<{ users: IUser[]; totalCount: number }> => {
   const { role } = params;
 
-  // Construct query based on role if provided
-  const query: any = { role };
-  
-  
-  console.log(">>>>",query);
-  // Fetch all users matching the query and return plain JavaScript objects using .lean()
-  let users;
-  let totalCount;
-  if(query.length == 0){
-    users  = await UserModel.find(query).exec();
-    totalCount = await UserModel.countDocuments(query);
+  const query: any = {};
+  if (role) query.role = role;
 
-
-  }else{
-    users  = await UserModel.find().exec();
-     totalCount = await UserModel.countDocuments();
-
-  }
- console.log("users>>>>>>>>",users);
-  // Get the total count of users matching the query
-
-  return { users, totalCount }; // Return both users and totalCount
+  // Fetch all users matching the query
+  const users = await UserModel.find(query).exec();
+  const totalCount = await UserModel.countDocuments(query);
+  return { users, totalCount };
 };
 
 
