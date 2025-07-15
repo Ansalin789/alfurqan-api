@@ -35,7 +35,7 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
 
   supervisorcardcount: async (data: any) => {
     console.log("running supervisor card count");
-    const cardcount = await dashboardWidgetSupervisorCounts(data.supervisorId);
+    const cardcount = await dashboardWidgetSupervisorCounts();
     console.log("cardcount", cardcount);
     emitEventToClient("supervisordashboardcount", cardcount, data.supervisorId);
   },
