@@ -4,6 +4,8 @@ import LeaveRequestModel from "../models/leaverequest";
 import User from "../models/users";
 import LeaveSummaryModel from "../models/leavesummary"
 import AppLogger from "../helpers/logging";
+import { leaveStatus } from "../config/messages";
+import leaverequest from "../models/leaverequest";
 
 export const createLeaveRequest = async (
     payload: Partial<ILeaveRequestCreate> 
@@ -205,4 +207,29 @@ export const getLeaveSummaryRecordById = async (
     _id: new Types.ObjectId(id),
   }).lean();
 };
+
+//card counts for leave requests
+
+export const dashboardLeaveRequestCounts = async (): Promise<{
+  totalApplication: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+}> => {
+  // Fetch counts in parallel
+  const [pending, approved, rejected, totalApplication] = await Promise.all([
+    leaverequest.countDocuments({ leaveStatus: "WAITINGLIST" }).exec(),
+    leaverequest.countDocuments({ leaveStatus: "APPROVED" }).exec(),
+    leaverequest.countDocuments({ leaveStatus: "REJECTED" }).exec(),
+    leaverequest.countDocuments().exec(),
+  ]);
+
+  return {
+    totalApplication,
+    pending,
+    approved,
+    rejected,
+  };
+};
+
 
