@@ -26,27 +26,6 @@ const register = async (server: Server): Promise<void> => {
             strategies: ["jwt"],
           }, },
       },
-
-      {
-        method: "PUT",
-        path: "/courses/{courseId}",  // Include the courseId path parameter
-        options: {
-          handler:handler.UpdateAllCourseLevel,  
-          tags: ["api", "course"],  
-          auth: {
-            strategies: ["jwt"],
-          }, },
-      },
-      {
-        method: "GET",
-        path: "/courseslevels",
-        options: {
-          handler:handler.getAllCourseLevelByCourseId,  
-          tags: ["api", "course"],  
-          auth: {
-            strategies: ["jwt"],
-          }, },
-      },
   ];
 
 

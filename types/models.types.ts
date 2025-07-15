@@ -282,12 +282,7 @@ export interface ICourse extends Document {
     courseDescription: string;
     courseLevel: string;
   };
-  level: {
-    levelId: string;
-    contentLevel: string;
-    descriptions: Buffer;
-    duration: string;
-  }[]; // <-- make level an array
+  level:string;
   courseName: string;
   status: string;
   createdDate: Date;
@@ -296,6 +291,24 @@ export interface ICourse extends Document {
   lastUpdatedBy: string;
 }
 
+export interface ILevel extends Document{
+  courseId: string;
+  level:string;
+  duration:string;
+  description:Buffer;
+  createdDate: Date;
+  createdBy: string;
+}
+
+export interface ILevelCreate {
+courseId: string;
+  level:string;
+  duration:Buffer;
+  description:string;
+  createdDate: Date;
+  createdBy: string;
+}
+ 
 export interface ICourseCreate {
   course: {
     courseId?: string;
@@ -304,13 +317,7 @@ export interface ICourseCreate {
     courseDescription:string;
     courseLevel:string;
   };
-  level :{
-    levelId:string;
-    contentLevel:string;
-    descriptions:Buffer;
-    duration:string;
-
-  }[]
+  level :string;
   courseName: string;
   status: string;
   createdDate: Date;
