@@ -1,7 +1,4 @@
-import {
-  IAssignment,
-  IAssignmentCreate,
-} from "../../types/models.types";
+import { IAssignment, IAssignmentCreate } from "../../types/models.types";
 import assignment from "../models/assignments";
 import alstudents from "../models/alstudents";
 import { Types } from "mongoose";
@@ -86,26 +83,25 @@ export const createAssignment = async (
       const studentId = studentDetails._id.toString();
       const studentName = studentDetails.username || "";
       const sessionClassType = studentDetails.sessionClassType || "";
+      const level = studentDetails.level || "";
+      const course = studentDetails.student.course || "";
       console.log("✅ Student found:", {
         studentId,
         studentName,
         sessionClassType,
+        level,
+        course,
       });
 
+      console.log("🔍 Finding student by ID:", item.studentId);
 
-       console.log("🔍 Finding student by ID:", item.studentId);
+      const assignedTeacher = item.assignedTeacher;
+      const assignedTeacherId = item.assignedTeacherId;
 
-
-       
-
-
-const assignedTeacher = item.assignedTeacher;
-const assignedTeacherId = item.assignedTeacherId ;
-
-console.log("👩‍🏫 Assigned Teacher:", {
-  assignedTeacher,
-  assignedTeacherId,
-});;
+      console.log("👩‍🏫 Assigned Teacher:", {
+        assignedTeacher,
+        assignedTeacherId,
+      });
 
       const assignmentType = item.assignmentType;
       console.log("🧩 assignmentType object:", assignmentType);
@@ -127,20 +123,21 @@ console.log("👩‍🏫 Assigned Teacher:", {
       };
       console.log("📝 Parsed options:", parsedOptions);
 
-  
       const newAssignment: Partial<IAssignment> = {
         studentId,
         studentName,
         sessionClassType,
-        assignmentId:item .assignmentId,
-        title:item.title || "",
+        course,
+        level,
+        assignmentId: item.assignmentId,
+        title: item.title || "",
         assignmentName: item.assignmentName || "",
         questionName: item.questionName || "",
         questionType: item.questionType || "",
         typeofQuestion: item.typeofQuestion || "",
         assignedTeacher,
         assignedTeacherId, // ✅ Now this is just a string
-         assignmentType,
+        assignmentType,
         chooseType: item.chooseType === true,
         trueorfalseType: item.trueorfalseType === true,
         question: item.question || "",
@@ -153,14 +150,12 @@ console.log("👩‍🏫 Assigned Teacher:", {
         createdBy: item.createdBy || "System",
         updatedDate: new Date(),
         updatedBy: item.updatedBy || "",
-        level: item.level || "",
-        courses: item.courses || "",
         assignedDate: item.assignedDate || new Date(),
         dueDate: item.dueDate || new Date(),
-        answer:"",
+        answer: "",
         answerValidation: item.answerValidation || "",
         assignmentStatus: item.assignmentStatus,
-         score: 0,
+        score: 0,
         rating: "",
       };
 
@@ -190,8 +185,6 @@ console.log("👩‍🏫 Assigned Teacher:", {
     return { error };
   }
 };
-
-
 
 // //Get All Assignment
 
@@ -241,22 +234,19 @@ console.log("👩‍🏫 Assigned Teacher:", {
 //   }
 // };
 
-
-
-
 export const getAssignments = async ({
   assignmentId,
-  _id
+  _id,
 }: AssignmentQuery): Promise<IAssignment[]> => {
   if (!assignmentId && !_id) {
-    throw new Error('Must provide either assignmentId or _id');
+    throw new Error("Must provide either assignmentId or _id");
   }
 
   const query: any = {};
 
   if (_id) {
     if (!Types.ObjectId.isValid(_id)) {
-      throw new Error('Invalid _id format');
+      throw new Error("Invalid _id format");
     }
     query._id = new Types.ObjectId(_id);
   }
@@ -266,51 +256,50 @@ export const getAssignments = async ({
     query.assignmentId = assignmentId.trim();
   }
 
-  console.log('Final query:', JSON.stringify(query)); // Debug log
+  console.log("Final query:", JSON.stringify(query)); // Debug log
 
   return await assignments
     .find(query)
-    .collation({ locale: 'en', strength: 2 }) // Case-insensitive
+    .collation({ locale: "en", strength: 2 }) // Case-insensitive
     .sort({ createdDate: -1 })
     .lean<IAssignment[]>()
     .exec();
 };
 
-
 export const getAssignmentForStudentId = async ({
-  studentId
+  studentId,
 }: {
   studentId: string;
 }): Promise<IAssignment[]> => {
   const trimmedId = studentId.trim();
 
-  return await assignments.aggregate([
-    {
-      $match: {
-        studentId: trimmedId
-      }
-    },
-    {
-      $sort: {
-        createdDate: -1 // latest assignment first
-      }
-    },
-    {
-      $group: {
-        _id: "$assignmentId",
-        doc: { $first: "$$ROOT" }
-      }
-    },
-    {
-      $replaceWith: "$doc"
-    },
-  
-  ]).exec();
+  return await assignments
+    .aggregate([
+      {
+        $match: {
+          studentId: trimmedId,
+        },
+      },
+      {
+        $sort: {
+          createdDate: -1, // latest assignment first
+        },
+      },
+      {
+        $group: {
+          _id: "$assignmentId",
+          doc: { $first: "$$ROOT" },
+        },
+      },
+      {
+        $replaceWith: "$doc",
+      },
+    ])
+    .exec();
 };
 
-
 export const getStudentCardCount = async ({
-  studentId
+  studentId,
 }: {
   studentId: string;
 }): Promise<{
@@ -324,6 +313,35 @@ export const getStudentCardCount = async ({
 
   let totalCompleted = 0;
   let totalPending = 0;
+  const result = await assignments
+    .aggregate([
+      {
+        $match: {
+          studentId: trimmedId,
+        },
+      },
+      {
+        $group: {
+          _id: "$assignmentStatus",
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          assignmentStatus: "$_id",
+          count: 1,
+        },
+      },
+    ])
+    .exec();
+
+  const response = {
+    totalAssigned: 0,
+    totalCompleted: 0,
+    totalPending: 0,
+  };
+
 
   for (const assignment of allAssignments) {
     if (assignment.assignmentStatus === "Completed") {
@@ -347,15 +365,18 @@ export const getStudentCardCount = async ({
 
 
 
-//getByObjectId
 
+
+//getByObjectId
 
 export const getAssignmentByObjectId = async (
   id: string
 ): Promise<IAssignment | null> => {
-  return assignment.findOne({
-    _id: new Types.ObjectId(id),
-  }).lean();
+  return assignment
+    .findOne({
+      _id: new Types.ObjectId(id),
+    })
+    .lean();
 };
 
 // Update Assignments
@@ -372,7 +393,12 @@ export const updateAssignmentsAnswer = async (
   failed: { _id: string; reason: string }[];
   totalScore: number;
 }> => {
-  const updatedResults: { _id: string; isCorrect: boolean; score: number; status: string }[] = [];
+  const updatedResults: {
+    _id: string;
+    isCorrect: boolean;
+    score: number;
+    status: string;
+  }[] = [];
   const failedResults: { _id: string; reason: string }[] = [];
 
   for (const item of payloads) {
@@ -382,7 +408,10 @@ export const updateAssignmentsAnswer = async (
       const assignmentDoc = await assignment.findOne({ _id, assignmentId });
 
       if (!assignmentDoc) {
-        failedResults.push({ _id, reason: "Assignment not found for provided assignmentId" });
+        failedResults.push({
+          _id,
+          reason: "Assignment not found for provided assignmentId",
+        });
         continue;
       }
 
@@ -429,10 +458,7 @@ export const updateAssignmentsAnswer = async (
     const rating = Number((averageScore * 5).toFixed(2)); // Convert to 5-star scale
 
     // Update all documents in this assignment group with the new rating
-    await assignment.updateMany(
-      { assignmentId },
-      { $set: { rating } }
-    );
+    await assignment.updateMany({ assignmentId }, { $set: { rating } });
   } catch (error) {
     console.error("Rating update failed:", error);
   }
@@ -444,9 +470,8 @@ export const updateAssignmentsAnswer = async (
   };
 };
 
-
 export const getTeacherStudentsAssignmentCount = async ({
-  teacherId
+  teacherId,
 }: {
   teacherId: string;
 }): Promise<{
@@ -479,36 +504,40 @@ export const getTeacherStudentsAssignmentCount = async ({
   const trimmedId = teacherId.trim();
 
   // Get all assignments for this teacher
-  const assignments = await assignment.aggregate([
-    {
-      $match: {
-        assignedTeacherId: trimmedId
-      }
-    },
-    {
-      $group: {
-        _id: "$studentId",
-        studentName: { $first: "$studentName" },
-        teacherName: { $first: "$assignedTeacher" },
-        assignments: {
-          $push: {
-            status: "$assignmentStatus",
-            dueDate: "$dueDate",
-            isCorrect: { $cond: [{ $eq: ["$answer", "$answerValidation"] }, 1, 0] }
-          }
-        }
-      }
-    },
-    {
-      $project: {
-        studentId: "$_id",
-        studentName: 1,
-        teacherName: 1,
-        assignments: 1,
-        _id: 0
-      }
-    }
-  ]).exec();
+  const assignments = await assignment
+    .aggregate([
+      {
+        $match: {
+          assignedTeacherId: trimmedId,
+        },
+      },
+      {
+        $group: {
+          _id: "$studentId",
+          studentName: { $first: "$studentName" },
+          teacherName: { $first: "$assignedTeacher" },
+          assignments: {
+            $push: {
+              status: "$assignmentStatus",
+              dueDate: "$dueDate",
+              isCorrect: {
+                $cond: [{ $eq: ["$answer", "$answerValidation"] }, 1, 0],
+              },
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          studentId: "$_id",
+          studentName: 1,
+          teacherName: 1,
+          assignments: 1,
+          _id: 0,
+        },
+      },
+    ])
+    .exec();
 
   // Calculate statistics
   let totalAssigned = 0;
@@ -517,59 +546,76 @@ export const getTeacherStudentsAssignmentCount = async ({
   let totalOverdue = 0;
   const now = new Date();
 
-  const studentsWithStats = assignments.map((student: { assignments: { status: string; isCorrect: number; dueDate: string | number | Date; }[]; studentId: any; studentName: any; }) => {
-    let studentAssigned = 0;
-    let studentCompleted = 0;
-    let studentPending = 0;
-    let studentOverdue = 0;
-    let correctAnswers = 0;
-    let totalAnswered = 0;
-
-    student.assignments.forEach((assignment: { status: string; isCorrect: number; dueDate: string | number | Date; }) => {
-      if (assignment.status === "Assigned") {
-        studentAssigned++;
-        totalAssigned++;
-      }
-      if (assignment.status === "Completed") {
-        studentCompleted++;
-        totalCompleted++;
-        totalAnswered++;
-        correctAnswers += assignment.isCorrect;
-      }
-      if (assignment.status === "InProgress") {
-        studentPending++;
-        totalPending++;
-        if (new Date(assignment.dueDate) < now) {
-          studentOverdue++;
-          totalOverdue++;
-        }
-      }
-    });
-
-    const studentTotal = studentAssigned + studentCompleted + studentPending;
-    const completionRate = studentTotal > 0 ? (studentCompleted / studentTotal) * 100 : 0;
-    const accuracy = totalAnswered > 0 ? (correctAnswers / totalAnswered) * 100 : 0;
-
-    return {
-      studentId: student.studentId,
-      studentName: student.studentName,
+  const studentsWithStats = assignments.map(
+    (student: {
       assignments: {
-        total: studentTotal,
-        assigned: studentAssigned,
-        completed: studentCompleted,
-        pending: studentPending,
-        overdue: studentOverdue
-      },
-      performance: {
-        completionRate: parseFloat(completionRate.toFixed(2)),
-        accuracy: parseFloat(accuracy.toFixed(2))
-      }
-    };
-  });
+        status: string;
+        isCorrect: number;
+        dueDate: string | number | Date;
+      }[];
+      studentId: any;
+      studentName: any;
+    }) => {
+      let studentAssigned = 0;
+      let studentCompleted = 0;
+      let studentPending = 0;
+      let studentOverdue = 0;
+      let correctAnswers = 0;
+      let totalAnswered = 0;
 
-  const teacherName = assignments.length > 0 
-    ? assignments[0].teacherName 
-    : "Unknown";
+      student.assignments.forEach(
+        (assignment: {
+          status: string;
+          isCorrect: number;
+          dueDate: string | number | Date;
+        }) => {
+          if (assignment.status === "Assigned") {
+            studentAssigned++;
+            totalAssigned++;
+          }
+          if (assignment.status === "Completed") {
+            studentCompleted++;
+            totalCompleted++;
+            totalAnswered++;
+            correctAnswers += assignment.isCorrect;
+          }
+          if (assignment.status === "InProgress") {
+            studentPending++;
+            totalPending++;
+            if (new Date(assignment.dueDate) < now) {
+              studentOverdue++;
+              totalOverdue++;
+            }
+          }
+        }
+      );
+
+      const studentTotal = studentAssigned + studentCompleted + studentPending;
+      const completionRate =
+        studentTotal > 0 ? (studentCompleted / studentTotal) * 100 : 0;
+      const accuracy =
+        totalAnswered > 0 ? (correctAnswers / totalAnswered) * 100 : 0;
+
+      return {
+        studentId: student.studentId,
+        studentName: student.studentName,
+        assignments: {
+          total: studentTotal,
+          assigned: studentAssigned,
+          completed: studentCompleted,
+          pending: studentPending,
+          overdue: studentOverdue,
+        },
+        performance: {
+          completionRate: parseFloat(completionRate.toFixed(2)),
+          accuracy: parseFloat(accuracy.toFixed(2)),
+        },
+      };
+    }
+  );
+
+  const teacherName =
+    assignments.length > 0 ? assignments[0].teacherName : "Unknown";
 
   return {
     teacherId: trimmedId,
@@ -580,9 +626,9 @@ export const getTeacherStudentsAssignmentCount = async ({
       assigned: totalAssigned,
       completed: totalCompleted,
       pending: totalPending,
-      overdue: totalOverdue
+      overdue: totalOverdue,
     },
-    students: studentsWithStats
+    students: studentsWithStats,
   };
 };
 interface IAssignmentData{
