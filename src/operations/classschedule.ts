@@ -1,12 +1,10 @@
-import { FlattenMaps, Types } from "mongoose";
+import { Types } from "mongoose";
 import {
-  IAssignment,
   IClassSchedule,
   IClassScheduleCreate,
 } from "../../types/models.types";
 
 import ClassScheduleModel from "../models/classShedule";
-import StudentModel from "../models/alstudents";
 import UserModel from "../models/users";
 
 import AppLogger from "../helpers/logging";
@@ -390,6 +388,44 @@ export const requestReschedule = async (payload: any) => {
   }
 };
 
+
+export interface IClassScheduleUpdate{
+  student: {
+    studentId: string;
+    studentFirstName: string;
+    studentLastName: string;
+    studentEmail: string;
+    gender: string;
+    level: string;
+    studnetSessionStart: any;
+    studnetSessionEnd: any;
+  },
+  teacher:{
+    teacherId: string;
+    teacherName: string;
+    teacherEmail: string;
+    teacherSessionStart: any;
+    teacherSessionEnd: any;
+  },
+
+}
+
+export const updateClassAttendanceById = async (
+  id: string,
+  payload: Partial<IClassScheduleUpdate>
+): Promise<IClassSchedule | null> => {
+
+ return ClassScheduleModel.findOneAndUpdate(
+    { _id: new Types.ObjectId(id) },
+    {
+      $set: {
+        ...payload,
+      },
+    },
+    { new: true }
+  ).lean();
+};
+
 export const getAllClassSheduleById = async (
   _id: string
 ): Promise<IClassSchedule | null> => {
@@ -498,41 +534,12 @@ export const updateClassscheduleById = async (
     throw new Error("Class schedule not found");
   }
 
-  // Determine class type and session times
-  const classType = payload.sessionClassType || existingClass.sessionClassType;
-  const startTime = payload.sessionStarttime || existingClass.sessionStarttime;
-  const endTime = payload.sessionsEndtime || existingClass.sessionsEndtime;
-
-  let amount = 0;
-  let sessionStatus = "NotCompleted";
-
-  if (startTime && endTime) {
-    const startMinutes = convertTimeToMinutes(startTime);
-    const endMinutes = convertTimeToMinutes(endTime);
-    const duration = endMinutes - startMinutes;
-
-    if (duration > 0) {
-      if (classType === "REGULARCLASS") {
-        amount = (duration / 60) * 4;
-      } else if (classType === "GROUPCLASS") {
-        amount = (duration / 60) * 6;
-      } else if (classType === "TRAILCLASS") {
-        amount = 2;
-      }
-
-      sessionStatus = "COMPLETED";
-    }
-  }
-
-  const formattedAmount = `$${amount.toFixed(2)}`;
 
   return ClassScheduleModel.findOneAndUpdate(
     { _id: new Types.ObjectId(id) },
     {
       $set: {
         ...payload,
-        amount: formattedAmount,
-        sessionStatus,
       },
     },
     { new: true }

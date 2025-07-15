@@ -521,12 +521,16 @@ export interface IClassSchedule extends Document{
     studentEmail: string;
     gender: string;
     level: string;
+    studnetSessionStart: any;
+    studnetSessionEnd: any;
 
   },
   teacher:{
     teacherId: string;
     teacherName: string;
     teacherEmail: string;
+    teacherSessionStart: any;
+    teacherSessionEnd: any;
   },
   classDay: any;
   package: string;
@@ -574,11 +578,15 @@ export interface IClassScheduleCreate{
     studentEmail: string;
     gender: string;
     level: string;
+    studnetSessionStart: any;
+    studnetSessionEnd: any;
   },
   teacher:{
     teacherId: string;
     teacherName: string;
     teacherEmail: string;
+    teacherSessionStart: any;
+    teacherSessionEnd: any;
   },
   classhour:string;
   amount:string;

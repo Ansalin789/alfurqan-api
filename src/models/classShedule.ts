@@ -9,111 +9,126 @@ import { appStatus, attendeeStatus, commonMessages } from "../config/messages";
 const classScheduleSchema = new Schema<IClassSchedule>(
   {
     student: {
-        studentId: {
-           type: String,
-           required: true,
-        },
-        studentFirstName: {
-            type: String,
-            required: true,
-        },
-        studentLastName: {
-            type: String,
-            required: true,
-        },
-        studentEmail: {
-            type: String,
-            required: true,
-        }, 
-        gender: {
-          type: String,
-          required: true,
-      },
-      level:{
+      studentId: {
         type: String,
         required: true,
+      },
+      studentFirstName: {
+        type: String,
+        required: true,
+      },
+      studentLastName: {
+        type: String,
+        required: true,
+      },
+      studentEmail: {
+        type: String,
+        required: true,
+      },
+      gender: {
+        type: String,
+        required: true,
+      },
+      level: {
+        type: String,
+        required: true,
+      },
+      studnetSessionStart: {
+        type: Array,
+        required: false
+      },
+      studnetSessionEnd: {
+        type: Array,
+        required: false
+      },
+    },
+    teacher: {
+      teacherId: {
+        type: String,
+        required: false,
+      },
+      teacherName: {
+        type: String,
+        required: false,
+      },
+
+      teacherEmail: {
+        type: String,
+        required: false,
+      },
+      teacherSessionStart: {
+        type: Array,
+        required: false
+      },
+      teacherSessionEnd: {
+        type: Array,
+        required: false
+      },
+    },
+    classDay: {
+      type: Array,
+      required: false,
+    },
+    package: {
+      type: String,
+      required: true,
+    },
+    preferedTeacher: {
+      type: String,
+      required: false,
+    },
+    course: {
+      courseId: {
+        type: String,
+        required: false,
+      },
+      courseName: {
+        type: String,
+        required: false,
       }
-      },
-      teacher: {
-        teacherId: {
-           type: String,
-           required: false,
-        },
-        teacherName: {
-            type: String,
-            required: false,
-        },
-       
-        teacherEmail: {
-            type: String,
-            required: false,
-        }
-       
-      },
-      classDay:{
-        type: Array,
-        required: false,
-      },
-      package: {
-        type: String,
-        required: true,
-      },
-      preferedTeacher:{
-        type: String,
-        required: false,
-      },
-      course:{
-        courseId:{
-          type: String,
-          required: false,
-        },
-        courseName:{
-          type: String,
-          required: false,
-        }
-      
-      },
-      totalHourse:{
-        type: Number,
-        required: false,
-      },
-      startDate:{
-        type: Date,
-        required: true,
-      },
-      endDate:{
-        type: Date,
-        required: true,
-      },
-      startTime:{
-        type: Array,
-        required: false,
-      },
-      endTime:{
-        type: Array,
-        required: false,
-      },
-      scheduleStatus:{
-        type: String,
-        required: true,
-      },
+
+    },
+    totalHourse: {
+      type: Number,
+      required: false,
+    },
+    startDate: {
+      type: Date,
+      required: true,
+    },
+    endDate: {
+      type: Date,
+      required: true,
+    },
+    startTime: {
+      type: Array,
+      required: false,
+    },
+    endTime: {
+      type: Array,
+      required: false,
+    },
+    scheduleStatus: {
+      type: String,
+      required: true,
+    },
     scheduledStartDate: {
       type: Date,
       required: false,
     },
-    classStatus:{
+    classStatus: {
       type: String,
       required: false,
     },
-    classType:{
+    classType: {
       type: String,
       required: false,
     },
-    classLink:{
+    classLink: {
       type: String,
       required: false,
     },
-    isScheduledMeeting:{
+    isScheduledMeeting: {
       type: Boolean,
       required: false,
     },
@@ -171,29 +186,29 @@ const classScheduleSchema = new Schema<IClassSchedule>(
     classhour: {
       type: String,
       required: false
-    }, 
+    },
     currency: {
       type: String,
       required: false
-    }, 
+    },
     amount: {
       type: String,
       required: false
     },
     earnings: {
-  type: Number,
-  required: false,
-  default: 0,
-},
+      type: Number,
+      required: false,
+      default: 0,
+    },
 
     sessionClassType: {
       type: String,
       required: false
-    }, 
+    },
     sessionStarttime: {
       type: String,
       required: false
-    }, 
+    },
     sessionsEndtime: {
       type: String,
       required: false
@@ -211,61 +226,61 @@ const classScheduleSchema = new Schema<IClassSchedule>(
 
 
 export const zodClassScheduleSchema = z.object({
-    student: z.object({
-        studentId: z.string(),
-        studentFirstName: z.string(),
-        studentLastName: z.string(),
-        studentEmail: z.string(),
-        gender: z.string(),
-        level: z.string(),
-    }),
-    teacher: z.object({
-        teacherId: z.string(),
-        teacherName: z.string(),
-        teacherEmail: z.string(),
-    }),
-    classDay:z.array(
-        z.object({
-            label: z.string(),
-            value: z.string(),
-        })
-    ),
-    sessionClassType:z.string().optional(),
-    sessionStarttime:z.string().optional(),
-    sessionsEndtime:z.string().optional(),
-    sessionStatus:z.string().optional(),
-    package:z.string(),
-    preferedTeacher:z.string().optional(),
-    course:z.object({
-        courseId:z.string().optional(),
-        courseName:z.string().optional()
-    }     
-    ),
-    totalHourse: z.number().optional(),
-    classhour: z.string().optional(),
-    currency: z.string().optional(),
-    amount: z.string().optional(),
-    startDate:z.string().refine((val) => !isNaN(Date.parse(val)), {
-        message: commonMessages.INVALID_DATE_FORMAT,
-      }).transform((val) => new Date(val)),
-    endDate:z.string().refine((val) => !isNaN(Date.parse(val)), {
-        message: commonMessages.INVALID_DATE_FORMAT,
-      }).transform((val) => new Date(val)),
-    startTime:z.array(
-      z.object({
-          label: z.string(),
-          value: z.string(),
-      })
+  student: z.object({
+    studentId: z.string(),
+    studentFirstName: z.string(),
+    studentLastName: z.string(),
+    studentEmail: z.string(),
+    gender: z.string(),
+    level: z.string()
+  }),
+  teacher: z.object({
+    teacherId: z.string(),
+    teacherName: z.string(),
+    teacherEmail: z.string(),
+  }),
+  classDay: z.array(
+    z.object({
+      label: z.string(),
+      value: z.string(),
+    })
   ),
-    endTime:z.array(
-      z.object({
-          label: z.string(),
-          value: z.string(),
-      })
+  sessionClassType: z.string().optional(),
+  sessionStarttime: z.string().optional(),
+  sessionsEndtime: z.string().optional(),
+  sessionStatus: z.string().optional(),
+  package: z.string(),
+  preferedTeacher: z.string().optional(),
+  course: z.object({
+    courseId: z.string().optional(),
+    courseName: z.string().optional()
+  }
   ),
-    scheduleStatus: z.string(),
-    classStatus: z.string(),
-    status: z.enum([appStatus.ACTIVE, appStatus.IN_ACTIVE, appStatus.DELETED]),
+  totalHourse: z.number().optional(),
+  classhour: z.string().optional(),
+  currency: z.string().optional(),
+  amount: z.string().optional(),
+  startDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: commonMessages.INVALID_DATE_FORMAT,
+  }).transform((val) => new Date(val)),
+  endDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: commonMessages.INVALID_DATE_FORMAT,
+  }).transform((val) => new Date(val)),
+  startTime: z.array(
+    z.object({
+      label: z.string(),
+      value: z.string(),
+    })
+  ),
+  endTime: z.array(
+    z.object({
+      label: z.string(),
+      value: z.string(),
+    })
+  ),
+  scheduleStatus: z.string(),
+  classStatus: z.string(),
+  status: z.enum([appStatus.ACTIVE, appStatus.IN_ACTIVE, appStatus.DELETED]),
   createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: commonMessages.INVALID_DATE_FORMAT,
   }).transform((val) => new Date(val)).optional(),
