@@ -359,7 +359,6 @@ totalDuration: get the total hours from get student record from alstudents colle
 
 
 export const dashboardWidgetSupervisorCounts = async (
-  supervisorId: string,
 ): Promise<{
   totalApplication: number
   shortlisted: number
@@ -372,15 +371,15 @@ export const dashboardWidgetSupervisorCounts = async (
   // Fetch counts in parallel
   const [shortlisted, rejected, waiting, totalApplication] = await Promise.all([
     recruitment
-      .countDocuments({ "supervisor.supervisorId": new Types.ObjectId(supervisorId), applicationStatus: "SHORTLISTED" })
+      .countDocuments({ applicationStatus: "SHORTLISTED" })
       .exec(),
     recruitment
-      .countDocuments({ "supervisor.supervisorId": new Types.ObjectId(supervisorId), applicationStatus: "REJECTED" })
+      .countDocuments({ applicationStatus: "REJECTED" })
       .exec(),
     recruitment
-      .countDocuments({ "supervisor.supervisorId": new Types.ObjectId(supervisorId), applicationStatus: "WAITING" })
+      .countDocuments({ applicationStatus: "WAITING" })
       .exec(),
-    recruitment.countDocuments({ "supervisor.supervisorId": new Types.ObjectId(supervisorId) }).exec(),
+    recruitment.countDocuments().exec(),
   ])
 
   const shortlistedPercentage = (shortlisted / totalApplication) * 100
