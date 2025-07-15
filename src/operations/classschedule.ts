@@ -1210,6 +1210,8 @@ export const getStudentList = async (
   {
     studentId: string;
     name: string;
+        level?: string;
+
     classType?: string;
     groupClassId?: string;
     assignment?: {
@@ -1291,6 +1293,8 @@ export const getStudentList = async (
         uniqueStudentsMap.set(student.studentId, {
           studentId: student.studentId,
           name: student.studentFirstName,
+                    level: alstudent?.level || "", // ✅ Add level here
+
           studentDetails: {
             student: evaluation?.student,
             teacher: evaluation?.teacher,

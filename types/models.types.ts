@@ -772,7 +772,8 @@ export interface IAssignment extends Document {
   questionName: string;
   questionType: string;
   typeofQuestion: string;
-  title: string;                         
+  title: string;   
+  course?: string;                      
   assignmentName: string;
   assignedTeacher: string;
   assignedTeacherId: string;
