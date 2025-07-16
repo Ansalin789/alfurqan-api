@@ -17,7 +17,7 @@ import {
 } from "date-fns"
 import { Types } from "mongoose"
 import meetingschedule from "../models/calendar"
-// import { result } from "lodash"
+import { PipelineStage } from "mongoose";
 import evaluation from "../models/evaluation"
 
 export interface EvaluationDetails {
@@ -125,93 +125,193 @@ export async function dashboardWidgetTeacherCounts(teacherId: string) {
       throw new Error("Invalid teacher ID format");
     }
 
- const pipeline = [
-  // Fixed $match stage
-  {
-    $match: {
-      "teacher.teacherId": teacherId,
-      $or: [
-        { deletedAt: { $exists: false } },
-        { deletedAt: null }
-      ]
-    }
-  },
-  {
-    $group: {
-      _id: null,
-      totalClasses: { $sum: 1 },
-      // Fixed student count
-      uniqueStudents: {
-        $addToSet: {
-          $cond: [
-            { $and: [
-              { $ne: ["$student.studentId", null] },
-              { $ne: ["$student.studentId", ""] }
-            ]},
-            "$student.studentId",
-            "$$REMOVE"
-          ]
-        }
-      },
-      // Fixed hours calculation
-      totalHours: {
-        $sum: {
-          $switch: {
-            branches: [
-              { case: { $gt: ["$totalHourse", 0] }, then: "$totalHourse" },
-              { case: { $gt: ["$totalHours", 0] }, then: "$totalHours" }
-            ],
-            default: 1
-          }
-        }
-      },
-      // Fixed earnings calculation
-      totalEarnings: {
-        $sum: {
-          $let: {
-            vars: {
-              cleanAmount: {
-                $toDouble: {
-                  $replaceAll: {
-                    input: { $replaceAll: { input: "$amount", find: ",", replacement: "" } },
-                    find: { $literal: "$" },
-                    replacement: ""
-                  }
-                }
-              }
-            },
-            in: { $ifNull: ["$$cleanAmount", 0] }
-          }
-        }
+    // Shared match stage
+    const matchStage = {
+      $match: {
+        "teacher.teacherId": teacherId,
+        $or: [
+          { deletedAt: { $exists: false } },
+          { deletedAt: null }
+        ]
       }
-    }
-  },
-  {
-    $project: {
-      _id: 0,
-      totalclasses: "$totalClasses",
-      totalstudents: { $size: "$uniqueStudents" },
-      totalhours: "$totalHours",
-      totalearnings: "$totalEarnings"
+    };
+
+    // Total Aggregation Pipeline
+    const totalPipeline = [
+      matchStage,
+      {
+        $group: {
+          _id: null,
+          totalClasses: { $sum: 1 },
+          uniqueStudents: {
+            $addToSet: {
+              $cond: [
+                {
+                  $and: [
+                    { $ne: ["$student.studentId", null] },
+                    { $ne: ["$student.studentId", ""] }
+                  ]
+                },
+                "$student.studentId",
+                "$$REMOVE"
+              ]
+            }
+          },
+          totalHours: {
+            $sum: {
+              $switch: {
+                branches: [
+                  { case: { $gt: ["$totalHourse", 0] }, then: "$totalHourse" },
+                  { case: { $gt: ["$totalHours", 0] }, then: "$totalHours" }
+                ],
+                default: 1
+              }
+            }
+          },
+         totalEarnings: {
+  $sum: {
+    $let: {
+      vars: {
+        cleanAmount: {
+          $toDouble: {
+            $replaceAll: {
+              input: {
+                $replaceAll: {
+                  input: "$amount",
+                  find: ",",
+                  replacement: ""
+                }
+              },
+              find: { $literal: "$" }, // ✅ FIXED HERE
+              replacement: ""
+            }
+          }
+        }
+      },
+      in: { $ifNull: ["$$cleanAmount", 0] }
     }
   }
-];
+}
 
-   
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          totalclasses: "$totalClasses",
+          totalstudents: { $size: "$uniqueStudents" },
+          totalhours: { $round: ["$totalHours", 0] },
+          totalearnings: { $round: ["$totalEarnings", 0] }
+        }
+      }
+    ];
 
-    const result = await classShedule.aggregate(pipeline);
+const totalResult = await classShedule.aggregate(totalPipeline as PipelineStage[]);
 
-    return result[0] || {
-      totalclasses: 0,
-      totalstudents: 0,
-      totalhours: 0,
-      totalearnings: 0,
+    // Monthly Aggregation Pipeline
+    const monthlyPipeline = [
+      matchStage,
+      {
+        $addFields: {
+          createdAtSafe: { $ifNull: ["$createdAt", new Date()] },
+        }
+      },
+      {
+        $addFields: {
+          year: { $year: "$createdAtSafe" },
+          month: { $month: "$createdAtSafe" }
+        }
+      },
+      {
+        $group: {
+          _id: { year: "$year", month: "$month" },
+          totalClasses: { $sum: 1 },
+          uniqueStudents: {
+            $addToSet: {
+              $cond: [
+                {
+                  $and: [
+                    { $ne: ["$student.studentId", null] },
+                    { $ne: ["$student.studentId", ""] }
+                  ]
+                },
+                "$student.studentId",
+                "$$REMOVE"
+              ]
+            }
+          },
+          totalHours: {
+            $sum: {
+              $switch: {
+                branches: [
+                  { case: { $gt: ["$totalHourse", 0] }, then: "$totalHourse" },
+                  { case: { $gt: ["$totalHours", 0] }, then: "$totalHours" }
+                ],
+                default: 1
+              }
+            }
+          },
+        totalEarnings: {
+  $sum: {
+    $let: {
+      vars: {
+        cleanAmount: {
+          $toDouble: {
+            $replaceAll: {
+              input: {
+                $replaceAll: {
+                  input: "$amount",
+                  find: ",",
+                  replacement: ""
+                }
+              },
+              find: { $literal: "$" }, // ✅ FIXED HERE
+              replacement: ""
+            }
+          }
+        }
+      },
+      in: { $ifNull: ["$$cleanAmount", 0] }
+    }
+  }
+}
+
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          year: "$_id.year",
+          month: "$_id.month",
+          totalclasses: "$totalClasses",
+          totalstudents: { $size: "$uniqueStudents" },
+          totalhours: { $round: ["$totalHours", 0] },
+          totalearnings: { $round: ["$totalEarnings", 0] }
+        }
+      },
+      {
+        $sort: { year: 1, month: 1 }
+      }
+    ];
+
+const monthlyResult = await classShedule.aggregate(monthlyPipeline as PipelineStage[]);
+
+    return {
+      ...(totalResult[0] || {
+        totalclasses: 0,
+        totalstudents: 0,
+        totalhours: 0,
+        totalearnings: 0,
+      }),
+      monthlyData: monthlyResult
     };
   } catch (error) {
     console.error("Error in dashboardWidgetTeacherCounts:", error);
     throw error;
   }
 }
+
+
 
 // export const dashboardWidgetStudentCounts = async (
 //   studentId: string,

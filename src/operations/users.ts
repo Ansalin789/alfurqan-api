@@ -227,7 +227,7 @@ export const getTeacherGenderCountDetails = async () => {
   const teacherCount = await UserModel.aggregate([
     {
       $match: {
-        role: "TEACHER",
+        role: { $in: ["TEACHER"] }, // fix: match against array
       },
     },
     {
@@ -235,10 +235,14 @@ export const getTeacherGenderCountDetails = async () => {
         _id: null,
         teacherTotalCount: { $sum: 1 },
         maleTeacher: {
-          $sum: { $cond: [{ $eq: ["$gender", "male"] }, 1, 0] },
+          $sum: {
+            $cond: [{ $eq: [{ $toLower: "$gender" }, "male"] }, 1, 0],
+          },
         },
         femaleTeacher: {
-          $sum: { $cond: [{ $eq: ["$gender", "female"] }, 1, 0] },
+          $sum: {
+            $cond: [{ $eq: [{ $toLower: "$gender" }, "female"] }, 1, 0],
+          },
         },
       },
     },
@@ -268,6 +272,7 @@ export const getTeacherGenderCountDetails = async () => {
     teacherFemalePercentage,
   };
 };
+
 
 
 
