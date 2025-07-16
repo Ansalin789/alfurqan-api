@@ -253,7 +253,7 @@ export default{
     },
 
     async updateAdminApplicantRecordById(req: Request, h: ResponseToolkit) {
-
+try{
       const { payload } = updateAdminInputValidation.parse({
         payload: req.payload
       });
@@ -305,7 +305,10 @@ export default{
             }
 
       return result;
-    },
+          }catch (error) {
+      console.error("Error updating applicant record:", error);       
+    }
+  },
 
   async getTeacherList (req: Request, h: ResponseToolkit){
       const { query } = getTeacherInputValidation.parse({

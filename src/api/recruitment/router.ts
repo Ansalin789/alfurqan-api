@@ -75,9 +75,9 @@ const register = async (server: Server): Promise<void> => {
             //   multipart: true,
             //  // allow: "multipart/form-data",
             // },
-            auth: {
-              strategies: ["jwt"],
-            },
+            // auth: {
+            //   strategies: ["jwt"],
+            // },
           },
         },
         {

@@ -1,3 +1,4 @@
+import moment from "moment";
 import { IUsershiftschedule } from "../../types/models.types";
 import usershiftschedule from "../models/usershiftschedule";
 import { GetAlluserRecordsParams } from "../shared/enum";
@@ -35,4 +36,38 @@ export const getAllTeachers = async (
   const totalCount = await usershiftschedule.countDocuments(query);
 
   return { users: usersFormatted, totalCount }; // Return both users and totalCount
+};
+
+
+export const getDayWiseShiftSchedule = async (
+  id: string
+): Promise<any[] | null> => {
+  const schedule = await usershiftschedule.findOne({ teacherId: id }).lean();
+
+  if (!schedule) {
+    return null;
+  }
+
+  const dayWiseSchedule = [];
+
+  const startDate = new Date(schedule.startdate);
+  const endDate = new Date(schedule.enddate);
+  const fromTime = schedule.fromtime;
+  const toTime = schedule.totime;
+
+  for (
+    let d = new Date(startDate);
+    d <= endDate;
+    d.setDate(d.getDate() + 1)
+  ) {
+    const date = new Date(d);
+    dayWiseSchedule.push({
+      date: moment(date).format("YYYY-MM-DD"),
+      day: moment(date).format("dddd"),
+      fromTime,
+      toTime,
+    });
+  }
+
+  return dayWiseSchedule;
 };
