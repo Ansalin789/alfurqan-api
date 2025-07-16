@@ -5,7 +5,7 @@ import { zodGetAllRecordsQuerySchema, zodGetAllUserRecordsQuerySchema } from "..
 import UserShiftSchedule from "../../models/usershiftschedule";
 import { GetAlluserRecordsParams } from "../../shared/enum";
 import { badRequest } from "@hapi/boom";
-import { getAllTeachers } from "../../operations/shiftshedule";
+import { getAllTeachers, getDayWiseShiftSchedule } from "../../operations/shiftshedule";
 
 
 
@@ -120,8 +120,12 @@ async getAllUsers(req: Request, h: ResponseToolkit) {
     });
   },
 
-
-  // Delete user by userI
+//getBYId
+         async getShiftscheduleById(req: Request, h: ResponseToolkit){
+                const result = await getDayWiseShiftSchedule(String(req.params.id));
+          
+            return result;
+              },
 
 
 
@@ -130,5 +134,7 @@ async function createShiftschedule(arg0: { academicCoachId: string; teacherId: s
 const shiftScheduleRecord = await UserShiftSchedule.create(arg0);
 console.log(shiftScheduleRecord);
 return shiftScheduleRecord;
-}
+};
+
+
 

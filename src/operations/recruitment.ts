@@ -15,6 +15,7 @@ import { eachDayOfInterval, eachMonthOfInterval, format } from "date-fns";
 import ShiftSchedule from "../models/usershiftschedule"
 import { generateSlotsFromUserSchedule } from "../redis/handler/teacherSlotHander";
 import { academicAvailableTeachers } from "../kafka/producers/academicProducer";
+import SalaryAndWages from "../models/empwages";
 
 export interface IRecruitmentUpdate{
   supervisor:{
@@ -195,127 +196,215 @@ export const updateApplicantByAdminId = async (
   id: string,
   payload: Partial<IRecruitmentAdminUpdate>
 ): Promise<IRecruitment | null> => {
+  try {
+    const getSupervisor = await User.findOne({
+      _id: payload.supervisor?.supervisorId,
+    }).exec();
 
-let getSupervisor = await User.findOne({
-_id: payload.supervisor?.supervisorId,
-}).exec();
+    const approvalData = await RecruitModel.findOne({
+      _id: new Types.ObjectId(id),
+    }).lean();
 
-  let approvalData = await RecruitModel.findOne(
-    { _id: new Types.ObjectId(id) },
-  ).lean();
-  let approvedData;
-if(getSupervisor &&approvalData && approvalData.applicationStatus == applicationStatus.NEWAPPLICATION){
-  approvalData = {
-    ...approvalData,
-    supervisor: {
-      supervisorId: getSupervisor._id.toString(),
-      supervisorName: getSupervisor.userName,
-      supervisorEmail: getSupervisor.email,
-      supervisorRole: getSupervisor.role[0]
-    },
-    status: "Active"
+    let approvedData;
+
+    if (
+      getSupervisor &&
+      approvalData &&
+      approvalData.applicationStatus === applicationStatus.NEWAPPLICATION
+    ) {
+      const updatedApprovalData = {
+        ...approvalData,
+        supervisor: {
+          supervisorId: getSupervisor._id.toString(),
+          supervisorName: getSupervisor.userName,
+          supervisorEmail: getSupervisor.email,
+          supervisorRole: getSupervisor.role[0],
+        },
+        status: "Active",
+      };
+
+      approvedData = await RecruitModel.findOneAndUpdate(
+        { _id: new Types.ObjectId(id) },
+        { $set: updatedApprovalData },
+        { new: true }
+      ).lean();
+    } else if (
+      approvalData &&
+      (approvalData.applicationStatus === applicationStatus.SHORTLISTED ||
+        approvalData.applicationStatus === applicationStatus.SENDAPPROVAL)
+    ) {
+      approvedData = await RecruitModel.findOneAndUpdate(
+        { _id: new Types.ObjectId(id) },
+        { $set: payload },
+        { new: true }
+      ).lean();
+    }
+
+    if (!approvedData) {
+      console.warn("No applicant record updated.");
+      return null;
+    }
+
+    const updateData = approvedData as IRecruitment;
+
+    if (updateData.applicationStatus === "APPROVED") {
+      await createTeacherPortalPortal(updateData);
+    }
+
+    console.log("updateData", updateData);
+    return updateData;
+  } catch (error) {
+    console.error("Error in updateApplicantByAdminId:", error);
+    throw error;
   }
-  approvedData = await RecruitModel.findOneAndUpdate(
-    { _id: new Types.ObjectId(id) },
-    { $set: approvalData },
-    { new: true }
-  ).lean();
-  
-}
-else if(approvalData &&  approvalData.applicationStatus == applicationStatus.SHORTLISTED || applicationStatus.SENDAPPROVAL){
-    approvedData = await RecruitModel.findOneAndUpdate(
-      { _id: new Types.ObjectId(id) },
-      { $set: payload },
-      { new: true }
-    ).lean();
-  } 
-  const updateData = approvedData as IRecruitment;
-  if(updateData.applicationStatus == "APPROVED"){
-    await createTeacherPortalPortal(updateData)
-  }
-  console.log("updateData", updateData);
-  return updateData;
 };
 
- async function createTeacherPortalPortal(updateData:any) {
- console.log("updateData>>", updateData);
-    const specialChars = '@#$%&*!';
-    const randomNum = Math.floor(Math.random() * 1000); // Random number between 0-999
-    const randomSpecial = specialChars[Math.floor(Math.random() * specialChars.length)]; // Random special character
-  
-    // Generate password
-    const firstThreeChars = updateData.candidateFirstName.substring(0, 3); // First 3 characters of the username
-    const reversedUsername = updateData.candidateFirstName.split('').reverse().join(''); // Reverse the username
-  
-    const password = `${firstThreeChars}${randomSpecial}${randomNum}${reversedUsername}`;
+async function createTeacherPortalPortal(updateData: any) {
+  console.log("Creating teacher portal for:", updateData);
 
-  let createTeacherPortal = await User.create({
+  const specialChars = '@#$%&*!';
+  const randomNum = Math.floor(Math.random() * 1000);
+  const randomSpecial = specialChars[Math.floor(Math.random() * specialChars.length)];
+  const firstThreeChars = updateData.candidateFirstName.substring(0, 3);
+  const reversedUsername = updateData.candidateFirstName.split('').reverse().join('');
+  const password = `${firstThreeChars}${randomSpecial}${randomNum}${reversedUsername}`;
+
+  const createTeacherPortal = await User.create({
     userName: updateData.candidateFirstName,
-    email:updateData.candidateEmail,
+    email: updateData.candidateEmail,
     password: password,
     profileImage: null,
-    userId:updateData._id,
+    userId: updateData._id,
     role: "TEACHER",
     position: updateData.positionApplied,
     gender: updateData.gender,
     status: "Active",
     createdBy: "Admin",
-    createdDate: new Date,
-    lastUpdatedBy: "Admin" ,   
-    updatedDate: new Date
+    createdDate: new Date(),
+    lastUpdatedBy: "Admin",
+    updatedDate: new Date(),
+  });
+
+  const emailTemplate = await EmailTemplate.findOne({
+    templateKey: 'Teacher Portal',
+  }).exec();
+
+  if (emailTemplate) {
+    const emailTo = [{ email: createTeacherPortal.email }];
+    const subject = "Welcome To Alfurqan Team";
+    const htmlPart = emailTemplate.templateContent
+      .replace('<username>', createTeacherPortal.userName)
+      .replace('<password>', createTeacherPortal.password);
+    sendEmailClient(emailTo, subject, htmlPart);
   }
-   )
 
-    const emailTemplate = await EmailTemplate.findOne({
-           templateKey: 'Teacher Portal',
-       }).exec();
-       if(emailTemplate){
-           const emailTo = [
-               { email: createTeacherPortal.email }
-           ];
-           const subject = "Welcome To Alfurqan Team";
-           const htmlPart = emailTemplate.templateContent.replace('<username>', createTeacherPortal.userName).replace('<password>',createTeacherPortal.password );
-           sendEmailClient(emailTo, subject,htmlPart);
-       }
+  const saveTeacher = await createTeacherPortal.save();
+console.log("Teacher portal created:", saveTeacher);
+  // Add salary and wage records with error handling
+  const salaryRecords = [
+    {
+      employeeName: saveTeacher.userName,
+      employeeId: saveTeacher.userId,
+       classType:{
+            className: "TRAILCLASS",
+            hoursMins: "1 day",
+            rate: 1,
+            currency: "$",
+        },
+       status:"Active",
+       createdDate:  new Date(),
+       createdBy: "Admin",
+       updatedDate:  new Date(),
+       updatedBy:  "Admin"
+    },
+    {
+      employeeName: saveTeacher.userName,
+      employeeId: saveTeacher.userId,
+             classType:{
+            className: "REGULARCLASS",
+            hoursMins: "30 min",
+            rate: 2,
+            currency: "$",
+        },
+       status:"Active",
+       createdDate:  new Date(),
+       createdBy: "Admin",
+       updatedDate:  new Date(),
+       updatedBy:  "Admin"
+    },
+    
+    {
+      employeeName: saveTeacher.userName,
+      employeeId: saveTeacher.userId,
+             classType:{
+            className: "GRUOPCLASS",
+            hoursMins: "60 min",
+            rate: 4,
+            currency: "$",
+        },
+       status:"Active",
+       createdDate:  new Date(),
+       createdBy: "Admin",
+       updatedDate:  new Date(),
+       updatedBy:  "Admin"
+    },
+    
+  ];
 
-const saveTeacher = await createTeacherPortal.save()
-const result = await createShiftSchedule(saveTeacher, updateData);
-await generateSlotsFromUserSchedule(result);
-await academicAvailableTeachers({event : 'create'});
-console.log("teacher portal",saveTeacher )
-return saveTeacher;
-};
+  try {
+  const resuit =  await SalaryAndWages.insertMany(salaryRecords);
+  console.log(">>>>>>>>>>>>>>>>:", resuit);
 
-async function createShiftSchedule(saveTeacher: any ,updateData : any) {
+
+    console.log("Salary and wage records inserted successfully.");
+  } catch (error) {
+    console.error("Error inserting salary and wage records:", error);
+    // Optionally, throw or handle error based on your application flow
+  }
+
+  const result = await createShiftSchedule(saveTeacher, updateData);
+  await generateSlotsFromUserSchedule(result);
+  await academicAvailableTeachers({ event: 'create' });
+
+  console.log("Teacher portal created:", saveTeacher);
+  return saveTeacher;
+}
+
+
+async function createShiftSchedule(saveTeacher: any, updateData: any) {
   const startDate = new Date();
   const endDate = new Date(startDate);
-  const workhrs = updateData.preferedWorkingHours; 
-const [startTime, endTime] = workhrs.split(" - ");
- // endDate.setFullYear(startDate.getFullYear() + 1);
- endDate.setDate(startDate.getDate() + 40); 
-  let createShift = await ShiftSchedule.create({
-        academicCoachId : null,
-        teacherId : saveTeacher.userId,
-        supervisorId: null,
-        employeeId: null,
-        name: saveTeacher.userName,
-        email: saveTeacher.email,
-        role: "TEACHER",
-        position: saveTeacher.position,
-        workhrs: updateData.preferedWorkingHours,
-        startdate: startDate,
-        enddate : endDate, 
-        fromtime: startTime,
-        totime: endTime,
-        createdDate: new Date(),
-        createdBy: "Admin",
-        lastUpdatedBy: "Admin"
-    }
-     );
-     console.log("createShift", createShift);
+  endDate.setDate(startDate.getDate() + 40);
 
-     return createShift;
-};
+  const workhrs = updateData.preferedWorkingHours;
+  const [startTime, endTime] = workhrs.split(" - ");
+
+  const createShift = await ShiftSchedule.create({
+    academicCoachId: null,
+    teacherId: saveTeacher.userId,
+    supervisorId: null,
+    employeeId: null,
+    name: saveTeacher.userName,
+    email: saveTeacher.email,
+    role: "TEACHER",
+    position: saveTeacher.position,
+    workhrs: updateData.preferedWorkingHours,
+    startdate: startDate,
+    enddate: endDate,
+    fromtime: startTime,
+    totime: endTime,
+    createdDate: new Date(),
+    createdBy: "Admin",
+    lastUpdatedBy: "Admin",
+  });
+
+  console.log("Shift schedule created:", createShift);
+  return createShift;
+}
+
+
+
+
 
 export const getTeacherCountriesCountDetails = async() =>{
 

@@ -17,7 +17,7 @@ import {
 } from "date-fns"
 import { Types } from "mongoose"
 import meetingschedule from "../models/calendar"
-// import { result } from "lodash"
+import { PipelineStage } from "mongoose";
 import evaluation from "../models/evaluation"
 
 export interface EvaluationDetails {
@@ -125,93 +125,193 @@ export async function dashboardWidgetTeacherCounts(teacherId: string) {
       throw new Error("Invalid teacher ID format");
     }
 
- const pipeline = [
-  // Fixed $match stage
-  {
-    $match: {
-      "teacher.teacherId": teacherId,
-      $or: [
-        { deletedAt: { $exists: false } },
-        { deletedAt: null }
-      ]
-    }
-  },
-  {
-    $group: {
-      _id: null,
-      totalClasses: { $sum: 1 },
-      // Fixed student count
-      uniqueStudents: {
-        $addToSet: {
-          $cond: [
-            { $and: [
-              { $ne: ["$student.studentId", null] },
-              { $ne: ["$student.studentId", ""] }
-            ]},
-            "$student.studentId",
-            "$$REMOVE"
-          ]
-        }
-      },
-      // Fixed hours calculation
-      totalHours: {
-        $sum: {
-          $switch: {
-            branches: [
-              { case: { $gt: ["$totalHourse", 0] }, then: "$totalHourse" },
-              { case: { $gt: ["$totalHours", 0] }, then: "$totalHours" }
-            ],
-            default: 1
-          }
-        }
-      },
-      // Fixed earnings calculation
-      totalEarnings: {
-        $sum: {
-          $let: {
-            vars: {
-              cleanAmount: {
-                $toDouble: {
-                  $replaceAll: {
-                    input: { $replaceAll: { input: "$amount", find: ",", replacement: "" } },
-                    find: { $literal: "$" },
-                    replacement: ""
-                  }
-                }
-              }
-            },
-            in: { $ifNull: ["$$cleanAmount", 0] }
-          }
-        }
+    // Shared match stage
+    const matchStage = {
+      $match: {
+        "teacher.teacherId": teacherId,
+        $or: [
+          { deletedAt: { $exists: false } },
+          { deletedAt: null }
+        ]
       }
-    }
-  },
-  {
-    $project: {
-      _id: 0,
-      totalclasses: "$totalClasses",
-      totalstudents: { $size: "$uniqueStudents" },
-      totalhours: "$totalHours",
-      totalearnings: "$totalEarnings"
+    };
+
+    // Total Aggregation Pipeline
+    const totalPipeline = [
+      matchStage,
+      {
+        $group: {
+          _id: null,
+          totalClasses: { $sum: 1 },
+          uniqueStudents: {
+            $addToSet: {
+              $cond: [
+                {
+                  $and: [
+                    { $ne: ["$student.studentId", null] },
+                    { $ne: ["$student.studentId", ""] }
+                  ]
+                },
+                "$student.studentId",
+                "$$REMOVE"
+              ]
+            }
+          },
+          totalHours: {
+            $sum: {
+              $switch: {
+                branches: [
+                  { case: { $gt: ["$totalHourse", 0] }, then: "$totalHourse" },
+                  { case: { $gt: ["$totalHours", 0] }, then: "$totalHours" }
+                ],
+                default: 1
+              }
+            }
+          },
+         totalEarnings: {
+  $sum: {
+    $let: {
+      vars: {
+        cleanAmount: {
+          $toDouble: {
+            $replaceAll: {
+              input: {
+                $replaceAll: {
+                  input: "$amount",
+                  find: ",",
+                  replacement: ""
+                }
+              },
+              find: { $literal: "$" }, // ✅ FIXED HERE
+              replacement: ""
+            }
+          }
+        }
+      },
+      in: { $ifNull: ["$$cleanAmount", 0] }
     }
   }
-];
+}
 
-   
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          totalclasses: "$totalClasses",
+          totalstudents: { $size: "$uniqueStudents" },
+          totalhours: { $round: ["$totalHours", 0] },
+          totalearnings: { $round: ["$totalEarnings", 0] }
+        }
+      }
+    ];
 
-    const result = await classShedule.aggregate(pipeline);
+const totalResult = await classShedule.aggregate(totalPipeline as PipelineStage[]);
 
-    return result[0] || {
-      totalclasses: 0,
-      totalstudents: 0,
-      totalhours: 0,
-      totalearnings: 0,
+    // Monthly Aggregation Pipeline
+    const monthlyPipeline = [
+      matchStage,
+      {
+        $addFields: {
+          createdAtSafe: { $ifNull: ["$createdAt", new Date()] },
+        }
+      },
+      {
+        $addFields: {
+          year: { $year: "$createdAtSafe" },
+          month: { $month: "$createdAtSafe" }
+        }
+      },
+      {
+        $group: {
+          _id: { year: "$year", month: "$month" },
+          totalClasses: { $sum: 1 },
+          uniqueStudents: {
+            $addToSet: {
+              $cond: [
+                {
+                  $and: [
+                    { $ne: ["$student.studentId", null] },
+                    { $ne: ["$student.studentId", ""] }
+                  ]
+                },
+                "$student.studentId",
+                "$$REMOVE"
+              ]
+            }
+          },
+          totalHours: {
+            $sum: {
+              $switch: {
+                branches: [
+                  { case: { $gt: ["$totalHourse", 0] }, then: "$totalHourse" },
+                  { case: { $gt: ["$totalHours", 0] }, then: "$totalHours" }
+                ],
+                default: 1
+              }
+            }
+          },
+        totalEarnings: {
+  $sum: {
+    $let: {
+      vars: {
+        cleanAmount: {
+          $toDouble: {
+            $replaceAll: {
+              input: {
+                $replaceAll: {
+                  input: "$amount",
+                  find: ",",
+                  replacement: ""
+                }
+              },
+              find: { $literal: "$" }, // ✅ FIXED HERE
+              replacement: ""
+            }
+          }
+        }
+      },
+      in: { $ifNull: ["$$cleanAmount", 0] }
+    }
+  }
+}
+
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          year: "$_id.year",
+          month: "$_id.month",
+          totalclasses: "$totalClasses",
+          totalstudents: { $size: "$uniqueStudents" },
+          totalhours: { $round: ["$totalHours", 0] },
+          totalearnings: { $round: ["$totalEarnings", 0] }
+        }
+      },
+      {
+        $sort: { year: 1, month: 1 }
+      }
+    ];
+
+const monthlyResult = await classShedule.aggregate(monthlyPipeline as PipelineStage[]);
+
+    return {
+      ...(totalResult[0] || {
+        totalclasses: 0,
+        totalstudents: 0,
+        totalhours: 0,
+        totalearnings: 0,
+      }),
+      monthlyData: monthlyResult
     };
   } catch (error) {
     console.error("Error in dashboardWidgetTeacherCounts:", error);
     throw error;
   }
 }
+
+
 
 // export const dashboardWidgetStudentCounts = async (
 //   studentId: string,
@@ -474,47 +574,29 @@ export const totalTrialRequestCount = async (): Promise<{
   }
 }
 
-export const totalClassCount = async (
-  dateRange: string,
-): Promise<
-  { date: string; classCompleted: number; classPending: number; classReschedule: number; classCancelled: number }[]
-> => {
-  let startDate: Date
-  let endDate: Date = new Date() // Default to today
-  let dateFormat: string
-  let intervalFn: (interval: { start: Date; end: Date }) => Date[]
-  let outputFormat: string
+export const totalClassCount = async (dateRange: string) => {
+  let startDate: Date;
+  let endDate: Date = new Date();
 
-  // Determine start and end dates based on dateRange
   switch (dateRange.toLowerCase()) {
     case "yearly":
-      startDate = startOfYear(new Date())
-      endDate = endOfYear(new Date())
-      dateFormat = "%Y-%m" // MongoDB format for months
-      intervalFn = eachMonthOfInterval
-      outputFormat = "MMM-yyyy" // Output format for months
-      break
+      startDate = startOfYear(new Date());
+      endDate = endOfYear(new Date());
+      break;
     case "monthly":
-      startDate = startOfMonth(new Date())
-      endDate = endOfMonth(new Date())
-      dateFormat = "%Y-%m-%d" // MongoDB format for days
-      intervalFn = eachDayOfInterval
-      outputFormat = "yyyy-MM-dd" // Output format for days
-      break
+      startDate = startOfMonth(new Date());
+      endDate = endOfMonth(new Date());
+      break;
     case "weekly":
-      startDate = startOfWeek(new Date(), { weekStartsOn: 1 }) // Monday start
-      endDate = endOfWeek(new Date(), { weekStartsOn: 1 }) // Sunday end
-      dateFormat = "%Y-%m-%d"
-      intervalFn = eachDayOfInterval
-      outputFormat = "yyyy-MM-dd"
-      break
+      startDate = startOfWeek(new Date(), { weekStartsOn: 1 });
+      endDate = endOfWeek(new Date(), { weekStartsOn: 1 });
+      break;
     default:
-      throw new Error("Invalid dateRange value. Use 'weekly', 'monthly', or 'yearly'.")
+      throw new Error("Invalid dateRange value. Use 'weekly', 'monthly', or 'yearly'.");
   }
 
-  console.log(`Fetching results from ${startDate.toISOString()} to ${endDate.toISOString()}`)
+  console.log(`Fetching results from ${startDate.toISOString()} to ${endDate.toISOString()}`);
 
-  // Aggregation query to count class statuses per date/month
   const result = await classShedule.aggregate([
     {
       $match: {
@@ -524,43 +606,31 @@ export const totalClassCount = async (
     },
     {
       $group: {
-        _id: { date: { $dateToString: { format: dateFormat, date: "$startDate" } }, status: "$scheduleStatus" },
+        _id: "$scheduleStatus",
         count: { $sum: 1 },
       },
     },
-  ])
+  ]);
 
-  let finalResult: any
+  console.log("Aggregation Result:", result);
 
-  // Convert aggregation results into a structured object
-  const groupedResults: Record<string, any> = {}
+  const finalResult = {
+    classCompleted: 0,
+    classScheduled: 0,
+    classRescheduled: 0,
+    classCancelled: 0,
+  };
+
   result.forEach(({ _id, count }) => {
-    const date = format(new Date(_id.date), outputFormat) // Convert to correct format safely
-    if (!groupedResults[date]) {
-      groupedResults[date] = {
-        date,
-        classCompleted: 0,
-        classPending: 0,
-        classReschedule: 0,
-        classCancelled: 0,
-      }
-    }
-    if (_id.status === "Complete") groupedResults[date].classCompleted += count
-    if (_id.status === "Pending") groupedResults[date].classPending += count
-    if (_id.status === "Reschedule") groupedResults[date].classReschedule += count
-    if (_id.status === "Cancelled") groupedResults[date].classCancelled += count
-  })
+    if (_id === "Completed") finalResult.classCompleted += count;
+    if (_id === "Scheduled") finalResult.classScheduled += count;
+    if (_id === "Rescheduled") finalResult.classRescheduled += count;
+    if (_id === "Cancelled") finalResult.classCancelled += count;
+  });
 
-  // Ensure all intervals are included (fill missing values with 0)
-  const allDates = intervalFn({ start: startDate, end: endDate }).map((d) => format(d, outputFormat))
-  // eslint-disable-next-line prefer-const
-  finalResult = allDates.map(
-    (date) =>
-      groupedResults[date] || { date, classCompleted: 0, classPending: 0, classReschedule: 0, classCancelled: 0 },
-  )
-
-  return finalResult
-}
+  console.log("Final Result:", finalResult);
+  return finalResult;
+};
 
 export const acUpcomingClassList = async (academicCoachId: string) => {
   const currentDate = new Date()

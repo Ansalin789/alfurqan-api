@@ -903,6 +903,7 @@ export interface IStudentInvoice extends Document {
     country: string;
     city: string;
   };
+  evaluationData: any,
   paymentDate?: Date; 
   courseName: string;
   amount: number; 
@@ -919,6 +920,7 @@ export interface IStudentInvoice extends Document {
   createdBy: string;
   lastUpdatedDate?: string;
   lastUpdatedBy: string;
+  invoiceNumber?: number; // <-- Added this line
 }
 
 
