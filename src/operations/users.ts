@@ -4,7 +4,7 @@ import { IUser, IUserCreate } from "../../types/models.types";
 import { appStatus } from "../config/messages";
 import {  isNil } from "lodash";
 import { GetAllRecordsParams, GetAlluserRecordsParams } from "../shared/enum";
-
+import RecruitmentModel from "../models/recruitment";
 /**
  * Retrieves all user records for a given tenant, with support for search, pagination, sorting, role filtering, and excluding passwords.
  *
@@ -47,13 +47,24 @@ export const getAllUserRecords = async (
 export const getUserRecordById = async (
   id: string,
   role?: string
-  
-): Promise<IUser | null> => {
-  const query: any = { _id: new Types.ObjectId(id) };
+): Promise<any> => {
+  const query: any = { userId: new Types.ObjectId(id) };
   if (!isNil(role)) query.role = role;
 
-  return UserModel.findOne(query).select("-password").lean();
+  const user = await UserModel.findOne(query).select("-password").lean();
+  if (!user) return null;
+
+  // user.userId is the _id of the recruitment table
+  const recruitment = await RecruitmentModel.findById(user.userId).lean();
+
+  return {
+    ...user,
+    contact: recruitment?.candidatePhoneNumber || null,
+    city: recruitment?.candidateCity || null,
+    country: recruitment?.candidateCountry || null,
+  };
 };
+
 
 /**
  * Fetches an active user record from the database based on the provided query, optionally filtered by role.
