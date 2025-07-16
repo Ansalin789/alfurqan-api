@@ -7,7 +7,7 @@ import AppLogger from "../helpers/logging";
 import AlStudentsModel from "../models/alstudents"; // Ensure proper model import
 import { Types } from "mongoose";
 import  ClassScheduleModel  from "../models/classShedule"
-
+import Evaluation from "../models/evaluation"; 
 
 export const getAllalstudentsList = async (
   params: GetAllRecordsParams
@@ -83,11 +83,18 @@ const studentsWithClassScheduleCount = await Promise.all(
       { 'teacher.teacherName': 1, 'sessionClassType': 1 }
     ).sort({ _id: -1 }).lean();
 
+    // 2️⃣ fetch the matching evaluation(s)
+    const evaluations = await Evaluation.find({
+      'student.studentId': student.student.studentId  // or: stu._id.toString() if that’s your key
+    })
+    .lean()
+    .exec();
     return {
       ...student.toObject(),
       classScheduleCount, // ✅ original logic
       teacherName: classSchedule?.teacher?.teacherName || "",  // Ensure string
-      sessionClassType: classSchedule?.sessionClassType || ""  // Ensure string
+      sessionClassType: classSchedule?.sessionClassType || "" , // Ensure string
+      evaluation: evaluations                     // ← now non-empty if matches exist      // ← new field
     };
   })
 );
