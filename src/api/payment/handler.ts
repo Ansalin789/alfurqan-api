@@ -14,7 +14,6 @@ import { ClientSecretCredential } from "@azure/identity";
 import Course from "../../models/course";
 import { sendInvoiceEvent } from "../../kafka/producers/adminProducer";
 import {
-  academicAvailableTeachers,
   academicDashboardCard,
   academicStudentList,
   academicStudentProfile,
@@ -110,7 +109,6 @@ export const createPaymentIntent = async (
       });
       await academicStudentProfile({ data: result, sender: academicCoachId });
     }
-    console.log("Created Stripe PaymentIntent:", paymentIntent);
 
     return h.response({
       clientSecret: paymentIntent.client_secret,
@@ -121,6 +119,12 @@ export const createPaymentIntent = async (
   }
 };
 
+interface WeeklySlot {
+  from: string;
+  to: string;
+}
+
+type WeeklySlots = Record<string, WeeklySlot[]>;
 async function createStudentPortal(updatedEvaluation: any) {
   try {
     const specialChars = "@#$%&*!";
@@ -169,122 +173,236 @@ async function createStudentPortal(updatedEvaluation: any) {
     // Validate payload
     //const classDay, startTime, endTime, startDate, endDate }  = classSchedule;
     if (updatedEvaluation.classType == "REGULARCLASS") {
-      const classDayValues = updatedEvaluation.classDay;
-      const startTimeValues = updatedEvaluation.startTime;
-      const endTimeValues = updatedEvaluation.endTime;
-      const results: (IClassSchedule | { error: any })[] = [];
+      const weeklySlotsRaw = updatedEvaluation.weeklySlots;
 
-      for (let i = 0; i < classDayValues.length; i++) {
-        const day = classDayValues[i];
-        const start = startTimeValues[i];
-        const end = endTimeValues[i];
+const weeklySlots: WeeklySlots =
+  weeklySlotsRaw instanceof Map
+    ? Object.fromEntries(weeklySlotsRaw.entries())
+    : weeklySlotsRaw;
 
-        try {
-          console.log("updatedEvaluationNew>>", updatedEvaluation);
-          // Fetch student details
-          const studentDetails = await StudentPortModel.findById(
-            studentPortal._id
-          ).exec();
-          console.log("studentDetails>>", studentDetails);
+const results: (IClassSchedule | { error: any })[] = [];
 
-          if (!studentDetails) throw new Error("Student details not found");
+// ✅ Loop over days
+for (const [day, slots] of Object.entries(weeklySlots)) {
+  console.log("Processing day:", day);
+  console.log("Slots:", slots);
 
-          // Fetch teacher details
-          const teacherDetails = await UserModel.findOne({
-            role: "TEACHER",
-            userId: updatedEvaluation.teacher.teacherId,
-          }).exec();
+  for (const slot of slots) {
+    const start = slot.from;
+    const end = slot.to;
+    try {
+      // Student & teacher lookup
+      const studentDetails = await StudentPortModel.findById(
+        studentPortal._id
+      ).exec();
 
-          // Map day name to numeric day (0=Sunday, ..., 6=Saturday)
-          const dayIndex = [
-            "Sunday",
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday",
-          ].indexOf(day);
-          if (dayIndex === -1) {
-            throw new Error(`Invalid classDay: ${day}`);
-          }
+      if (!studentDetails) throw new Error("Student details not found");
 
-          // Generate class dates within the range
-          const classDates = getDatesForWeekdays(
-            new Date(updatedEvaluation.classStartDate),
-            new Date(updatedEvaluation.classEndDate),
-            dayIndex
-          );
-          const meetingId = `alfregularclass-${studentDetails._id}`;
+      const teacherDetails = await UserModel.findOne({
+        role: "TEACHER",
+        userId: updatedEvaluation.teacher.teacherId,
+      }).exec();
 
-          for (const classDate of classDates) {
-            const newClassSchedule = new ClassScheduleModel({
-              student: {
-                studentId: studentDetails._id,
-                studentFirstName: studentDetails.username,
-                studentLastName: studentDetails.username,
-                studentEmail: studentDetails.student.studentEmail,
-                gender: studentDetails.student.gender,
-                package: updatedEvaluation.subscription?.subscriptionName,
-                studnetSessionStart: "",
-                studnetSessionEnd: "",
-              },
-              teacher: {
-                teacherId: teacherDetails?.userId,
-                teacherName: teacherDetails?.userName,
-                teacherEmail: teacherDetails?.email,
-                teacherSessionStart: "",
-                teacherSessionEnd: "",
-              },
-              classhour: 0,
-              amount: 0,
-              currency: "$",
-              sessionClassType: updatedEvaluation.classType,
-              sessionStarttime: "",
-              sessionsEndtime: "",
-              teacherAttendee: "",
-              studentAttendee: "",
-              sessionStatus: "",
-              classLink: meetingId,
-              classDay: day,
-              startTime: start,
-              endTime: end,
-              course: {
-                courseId: courseDetails?._id,
-                courseName: courseDetails?.courseName,
-              },
-              package: studentDetails.student.package,
-              totalHourse: updatedEvaluation.hours,
-              startDate: classDate,
-              endDate: classDate,
-              createdBy: updatedEvaluation.createdBy,
-              status: "Active",
-              scheduleStatus: "Scheduled",
-              totalHours: updatedEvaluation.accomplishmentTime,
-              preferredTeacher: updatedEvaluation.student?.preferredTeacher,
-            });
+      // Day to numeric index
+      const dayIndex = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+      ].indexOf(day);
 
-            // Create event
-            await createEvent(newClassSchedule);
-
-            // Save schedule
-            const savedClassSchedule = await newClassSchedule.save();
-            await academicAvailableTeachers({
-              event: "update",
-              data: {
-                date: classDate,
-                teacherId: teacherDetails?.userId,
-                from: start,
-                to: end,
-              },
-            });
-            results.push(savedClassSchedule);
-          }
-        } catch (error) {
-          console.error("Error in scheduling:", error);
-          results.push({ error });
-        }
+      if (dayIndex === -1) {
+        throw new Error(`Invalid classDay: ${day}`);
       }
+
+      // Get all dates for this weekday in range
+      const classDates = getDatesForWeekdays(
+        new Date(updatedEvaluation.classStartDate),
+        new Date(updatedEvaluation.classEndDate),
+        dayIndex
+      );
+
+      const meetingId = `alfregularclass-${studentDetails._id}`;
+
+      for (const classDate of classDates) {
+        const newClassSchedule = new ClassScheduleModel({
+          student: {
+            studentId: studentDetails._id,
+            studentFirstName: studentDetails.username,
+            studentLastName: studentDetails.username,
+            studentEmail: studentDetails.student.studentEmail,
+            gender: studentDetails.student.gender,
+            package: updatedEvaluation.subscription?.subscriptionName,
+            studnetSessionStart: "",
+            studnetSessionEnd: "",
+            level: studentDetails.level,
+          },
+          teacher: {
+            teacherId: teacherDetails?.userId,
+            teacherName: teacherDetails?.userName,
+            teacherEmail: teacherDetails?.email,
+            teacherSessionStart: "",
+            teacherSessionEnd: "",
+          },
+          classhour: 0,
+          amount: 0,
+          currency: "$",
+          sessionClassType: updatedEvaluation.classType,
+          sessionStarttime: "",
+          sessionsEndtime: "",
+          teacherAttendee: "",
+          studentAttendee: "",
+          sessionStatus: "",
+          classLink: meetingId,
+          classDay: day,
+          startTime: start,
+          endTime: end,
+          course: {
+            courseId: courseDetails?._id,
+            courseName: courseDetails?.courseName,
+          },
+          package: studentDetails.student.package,
+          totalHourse: updatedEvaluation.hours,
+          startDate: classDate,
+          endDate: classDate,
+          createdBy: updatedEvaluation.createdBy,
+          status: "Active",
+          scheduleStatus: "Scheduled",
+          totalHours: updatedEvaluation.accomplishmentTime,
+          preferredTeacher: updatedEvaluation.student?.preferredTeacher,
+        });
+
+        const saved = await newClassSchedule.save();
+        await createEvent(saved);
+        results.push(saved);
+      
+      }
+    } catch (error) {
+      results.push({ error });
+    }
+  }
+}
+
+      // const classDayValues = updatedEvaluation.classDay;
+      // const startTimeValues = updatedEvaluation.startTime;
+      // const endTimeValues = updatedEvaluation.endTime;
+      // const results: (IClassSchedule | { error: any })[] = [];
+
+      // for (let i = 0; i < classDayValues.length; i++) {
+      //   const day = classDayValues[i];
+      //   const start = startTimeValues[i];
+      //   const end = endTimeValues[i];
+
+      //   try {
+      //     console.log("updatedEvaluationNew>>", updatedEvaluation);
+      //     // Fetch student details
+      //     const studentDetails = await StudentPortModel.findById(
+      //       studentPortal._id
+      //     ).exec();
+      //     console.log("studentDetails>>", studentDetails);
+
+      //     if (!studentDetails) throw new Error("Student details not found");
+
+      //     // Fetch teacher details
+      //     const teacherDetails = await UserModel.findOne({
+      //       role: "TEACHER",
+      //       userId: updatedEvaluation.teacher.teacherId,
+      //     }).exec();
+
+      //     // Map day name to numeric day (0=Sunday, ..., 6=Saturday)
+      //     const dayIndex = [
+      //       "Sunday",
+      //       "Monday",
+      //       "Tuesday",
+      //       "Wednesday",
+      //       "Thursday",
+      //       "Friday",
+      //       "Saturday",
+      //     ].indexOf(day);
+      //     if (dayIndex === -1) {
+      //       throw new Error(`Invalid classDay: ${day}`);
+      //     }
+
+      //     // Generate class dates within the range
+      //     const classDates = getDatesForWeekdays(
+      //       new Date(updatedEvaluation.classStartDate),
+      //       new Date(updatedEvaluation.classEndDate),
+      //       dayIndex
+      //     );
+      //     const meetingId = `alfregularclass-${studentDetails._id}`;
+
+      //     for (const classDate of classDates) {
+      //       const newClassSchedule = new ClassScheduleModel({
+      //         student: {
+      //           studentId: studentDetails._id,
+      //           studentFirstName: studentDetails.username,
+      //           studentLastName: studentDetails.username,
+      //           studentEmail: studentDetails.student.studentEmail,
+      //           gender: studentDetails.student.gender,
+      //           package: updatedEvaluation.subscription?.subscriptionName,
+      //           studnetSessionStart: "",
+      //           studnetSessionEnd: "",
+      //           level: studentDetails.level,
+      //         },
+      //         teacher: {
+      //           teacherId: teacherDetails?.userId,
+      //           teacherName: teacherDetails?.userName,
+      //           teacherEmail: teacherDetails?.email,
+      //           teacherSessionStart: "",
+      //           teacherSessionEnd: "",
+      //         },
+      //         classhour: 0,
+      //         amount: 0,
+      //         currency: "$",
+      //         sessionClassType: updatedEvaluation.classType,
+      //         sessionStarttime: "",
+      //         sessionsEndtime: "",
+      //         teacherAttendee: "",
+      //         studentAttendee: "",
+      //         sessionStatus: "",
+      //         classLink: meetingId,
+      //         classDay: day,
+      //         startTime: start,
+      //         endTime: end,
+      //         course: {
+      //           courseId: courseDetails?._id,
+      //           courseName: courseDetails?.courseName,
+      //         },
+      //         package: studentDetails.student.package,
+      //         totalHourse: updatedEvaluation.hours,
+      //         startDate: classDate,
+      //         endDate: classDate,
+      //         createdBy: updatedEvaluation.createdBy,
+      //         status: "Active",
+      //         scheduleStatus: "Scheduled",
+      //         totalHours: updatedEvaluation.accomplishmentTime,
+      //         preferredTeacher: updatedEvaluation.student?.preferredTeacher,
+      //       });
+
+      //       // Create event
+      //       await createEvent(newClassSchedule);
+
+      //       // Save schedule
+      //       const savedClassSchedule = await newClassSchedule.save();
+      //       await academicAvailableTeachers({
+      //         event: "update",
+      //         data: {
+      //           date: classDate,
+      //           teacherId: teacherDetails?.userId,
+      //           from: start,
+      //           to: end,
+      //         },
+      //       });
+      //       results.push(savedClassSchedule);
+      //     }
+      //   } catch (error) {
+      //     console.error("Error in scheduling:", error);
+      //     results.push({ error });
+      //   }
+      // }
     }
     await StudentPortalMail(studentPortal);
     return {
@@ -334,14 +452,12 @@ export const createStudentPaymentIntent = async (
       _id: new Types.ObjectId(invoiceId),
     });
 
-    console.log("Invoice Details:", InvoiceDetails);
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency,
     });
 
-    console.log("Created Stripe PaymentIntent:", paymentIntent);
 
     if (paymentIntentResponse) {
       console.log("Saving payment details...");
