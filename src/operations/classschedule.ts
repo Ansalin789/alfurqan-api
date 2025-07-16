@@ -745,8 +745,15 @@ export const getStudentClassHours = async (
 export const teacherStudentCount = async () => {
   const teachers = await classShedule.aggregate([
     {
+      $match: {
+        "teacher.teacherId": { $ne: null },
+        "teacher.teacherName": { $ne: null },
+        "teacher.teacherEmail": { $ne: null },
+      },
+    },
+    {
       $group: {
-        _id: "$teacher.teacherId", // Group by teacherEmail
+        _id: "$teacher.teacherId", // Group by teacherId
         teacherId: { $first: "$teacher.teacherId" },
         teacherName: { $first: "$teacher.teacherName" },
         teacherEmail: { $first: "$teacher.teacherEmail" },
@@ -755,7 +762,7 @@ export const teacherStudentCount = async () => {
             studentId: "$student.studentId",
             gender: "$student.gender",
           },
-        }, // Collect unique student IDs and gender
+        },
       },
     },
     {
@@ -763,7 +770,7 @@ export const teacherStudentCount = async () => {
         teacherId: 1,
         teacherName: 1,
         teacherEmail: 1,
-        studentCount: { $size: "$uniqueStudents" }, // Total unique students
+        studentCount: { $size: "$uniqueStudents" },
         maleCount: {
           $size: {
             $filter: {
@@ -772,7 +779,7 @@ export const teacherStudentCount = async () => {
               cond: { $eq: ["$$student.gender", "MALE"] },
             },
           },
-        }, // Count only male students
+        },
         femaleCount: {
           $size: {
             $filter: {
@@ -781,12 +788,13 @@ export const teacherStudentCount = async () => {
               cond: { $eq: ["$$student.gender", "FEMALE"] },
             },
           },
-        }, // Count only female students
+        },
       },
     },
   ]);
   return teachers;
 };
+
 
 export const teachingActivity = async (
   studentId: string
