@@ -189,13 +189,47 @@ export const getAllLeaveSummaryList = async (): Promise<{ totalCount: number; le
 
 //LeaveRequestById
 
-export const getLeaveRequestRecordById = async (
-  id: string
-): Promise<ILeaveRequest | null> => {
-  return LeaveRequestModel.findOne({
-    _id: new Types.ObjectId(id),
-  }).lean();
+export const getLeaveRequestRecordByEmployeeId = async (
+  employeeId: string
+): Promise<any> => {
+  const objectId = new Types.ObjectId(employeeId); // Optional: only needed if `_id` filtering is used
+
+  const [leaveRecords, counts] = await Promise.all([
+    LeaveRequestModel.find({ employeeId }).lean(), // ✅ return all matching records
+    LeaveRequestModel.aggregate([
+      { $match: { employeeId } },
+      {
+        $group: {
+          _id: "$leaveStatus",
+          count: { $sum: 1 },
+        },
+      },
+    ]),
+  ]);
+
+  const countMap = {
+    totalApplied: 0,
+    totalApproved: 0,
+    totalDeclined: 0,
+  };
+
+  counts.forEach((item) => {
+    if (item._id === "WAITINGLIST") {
+      countMap.totalApplied = item.count;
+    } else if (item._id === "APPROVED") {
+      countMap.totalApproved = item.count;
+    } else if (item._id === "DECLINED") {
+      countMap.totalDeclined = item.count;
+    }
+  });
+
+  return {
+    records: leaveRecords, // ✅ list of leave records
+    ...countMap,           // ✅ summary counts
+  };
 };
+
+
 
 
 //LeaveSummary
