@@ -19,7 +19,7 @@ import {
   isWithinInterval
 } from "date-fns";
 import stinvoice from "../models/stinvoice";
-import { Request, Response } from "express";
+import { Request, ResponseToolkit } from "@hapi/hapi";
 
 /**
  * Retrieves a list of all evaluation records with filters, sorting, and pagination.
@@ -313,21 +313,32 @@ export const getTotalAmountByCourse = async (
 };
 
 
-export const sendInvoice = async (req: Request, res: Response) => {
+
+export const sendInvoice = async (req: Request, h: ResponseToolkit) => {
   try {
-    // Validate and parse the incoming payload using Zod
-    const parseResult = zodAlStudentInvoiceSchema.safeParse(req.body);
+    // ✅ Validate payload using Zod
+    const parseResult = zodAlStudentInvoiceSchema.safeParse(req.payload);
     if (!parseResult.success) {
-      return res.status(400).json({ error: parseResult.error.errors });
+      return h.response({ success: false, error: parseResult.error.errors }).code(400);
     }
+
     const payload = parseResult.data;
 
-    // Validate required fields (redundant with Zod, but kept for clarity)
+    // ✅ Manual fallback (can be redundant, but useful for clarity)
     if (!payload.student || !payload.courseName || !payload.amount) {
-      return res.status(400).json({ error: 'Missing required fields' });
+      return h
+        .response({ success: false, error: "Missing required fields" })
+        .code(400);
     }
 
-    // Create new invoice document
+    const invoiceNumber =
+      typeof payload.invoiceNumber === "number"
+        ? payload.invoiceNumber
+        : Math.floor(100000 + Math.random() * 900000);
+
+    const now = new Date().toISOString();
+
+    // ✅ Construct invoice document
     const newInvoice = new StudentInvoiceModel({
       student: {
         studentId: payload.student.studentId,
@@ -340,36 +351,46 @@ export const sendInvoice = async (req: Request, res: Response) => {
       evaluationData: payload.evaluationData || undefined,
       courseName: payload.courseName,
       amount: payload.amount,
-      invoiceNumber: payload.invoiceNumber || Math.floor(100000 + Math.random() * 900000),
-      invoiceStatus: payload.invoiceStatus || 'Pending',
+      invoiceNumber,
+      invoiceStatus: payload.invoiceStatus || "Pending",
       packageType: payload.packageType,
       itemDescription: payload.itemDescription,
       duration: payload.duration,
       rate: payload.rate,
       description: payload.description,
-      attachFile: payload.attachFile || '',
-      status: payload.status || 'Active',
+      attachFile: payload.attachFile || "",
+      status: payload.status || "Active",
       dueDate: payload.dueDate,
-      createdBy: payload.createdBy || 'Admin',
-      lastUpdatedBy: payload.lastUpdatedBy || 'Admin',
-      createdDate: payload.createdDate || new Date().toISOString(),
-      lastUpdatedDate: payload.lastUpdatedDate || new Date().toISOString(),
+      createdBy: payload.createdBy || "Admin",
+      lastUpdatedBy: payload.lastUpdatedBy || "Admin",
+      createdDate: payload.createdDate || now,
+      lastUpdatedDate: payload.lastUpdatedDate || now,
     });
 
     const savedInvoice = await newInvoice.save();
 
-    AppLogger.info(`Invoice created: ${JSON.stringify(savedInvoice)}`);
-    return res.status(201).json({ invoice: savedInvoice });
+    AppLogger.info(`✅ Invoice created: ${JSON.stringify(savedInvoice)}`);
+    return h
+      .response({
+        success: true,
+        message: "Invoice created successfully",
+        data: savedInvoice,
+      })
+      .code(201);
   } catch (error) {
-    AppLogger.error(`Error saving invoice: ${error}`);
-    return res.status(500).json({ 
-      error: {
-        message: "Failed to save invoice",
-        details: error instanceof Error ? error.message : String(error)
-      } 
-    });
+    AppLogger.error(`🔥 Error saving invoice: ${error}`);
+    return h
+      .response({
+        success: false,
+        error: {
+          message: "Failed to save invoice",
+          details: error instanceof Error ? error.message : String(error),
+        },
+      })
+      .code(500);
   }
 };
+
 
 export const sendInvoiceOperation = async (payload: IStudentInvoice) => {
   try {
