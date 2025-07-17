@@ -4,7 +4,7 @@ import { IUser, IUserCreate } from "../../types/models.types";
 import { appStatus } from "../config/messages";
 import {  isNil } from "lodash";
 import { GetAllRecordsParams, GetAlluserRecordsParams } from "../shared/enum";
-
+import RecruitmentModel from "../models/recruitment";
 /**
  * Retrieves all user records for a given tenant, with support for search, pagination, sorting, role filtering, and excluding passwords.
  *
@@ -16,33 +16,20 @@ import { GetAllRecordsParams, GetAlluserRecordsParams } from "../shared/enum";
  */
 
 
+
+
 export const getAllUserRecords = async (
   params: GetAlluserRecordsParams
 ): Promise<{ users: IUser[]; totalCount: number }> => {
   const { role } = params;
 
-  // Construct query based on role if provided
-  const query: any = { role };
-  
-  
-  console.log(">>>>",query);
-  // Fetch all users matching the query and return plain JavaScript objects using .lean()
-  let users;
-  let totalCount;
-  if(query.length == 0){
-    users  = await UserModel.find(query).exec();
-    totalCount = await UserModel.countDocuments(query);
+  const query: any = {};
+  if (role) query.role = role;
 
-
-  }else{
-    users  = await UserModel.find().exec();
-     totalCount = await UserModel.countDocuments();
-
-  }
- console.log("users>>>>>>>>",users);
-  // Get the total count of users matching the query
-
-  return { users, totalCount }; // Return both users and totalCount
+  // Fetch all users matching the query
+  const users = await UserModel.find(query).exec();
+  const totalCount = await UserModel.countDocuments(query);
+  return { users, totalCount };
 };
 
 
@@ -60,13 +47,24 @@ export const getAllUserRecords = async (
 export const getUserRecordById = async (
   id: string,
   role?: string
-  
-): Promise<IUser | null> => {
-  const query: any = { _id: new Types.ObjectId(id) };
+): Promise<any> => {
+  const query: any = { userId: new Types.ObjectId(id) };
   if (!isNil(role)) query.role = role;
 
-  return UserModel.findOne(query).select("-password").lean();
+  const user = await UserModel.findOne(query).select("-password").lean();
+  if (!user) return null;
+
+  // user.userId is the _id of the recruitment table
+  const recruitment = await RecruitmentModel.findById(user.userId).lean();
+
+  return {
+    ...user,
+    contact: recruitment?.candidatePhoneNumber || null,
+    city: recruitment?.candidateCity || null,
+    country: recruitment?.candidateCountry || null,
+  };
 };
+
 
 /**
  * Fetches an active user record from the database based on the provided query, optionally filtered by role.
@@ -185,34 +183,8 @@ export const bulkDeleteUsers = async (
   return updatedUsers as (Omit<IUser, "password"> | null)[];
 };
 
-export const getTeacherCardCount = async() => {
-
-    const teacherCount= await UserModel.aggregate([
-      {
-        $match: {
-          role: "TEACHER",
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          teacherTotalCount: { $sum: 1 },
-          activeTeacher: { $sum: { $cond: [{ $eq: ["$status", "Active"] }, 1, 0] } },
-          inActiveTeacher: { $sum: { $cond: [{ $eq: ["$status", "InActive"] }, 1, 0] } },
-          leaveOnTeacher: { $sum: { $cond: [{ $eq: ["$status", "HOLD"] }, 1, 0] } },
-        },
-      },
-      {
-        $sort: { count: -1 }, // Optional: sort descending
-      },
-    ]);
-    
-    return  teacherCount ;
-     
-};
-
-export const getTeacherGenderCountDetails = async() => {
-  const teacherCount= await UserModel.aggregate([
+export const getTeacherCardCount = async () => {
+  const teacherCount = await UserModel.aggregate([
     {
       $match: {
         role: "TEACHER",
@@ -222,21 +194,98 @@ export const getTeacherGenderCountDetails = async() => {
       $group: {
         _id: null,
         teacherTotalCount: { $sum: 1 },
-        maleTeacher: { $sum: { $cond: [{ $eq: ["$gender", "Male"] }, 1, 0] } },
-        femaleTeacher: { $sum: { $cond: [{ $eq: ["$gender", "Female"] }, 1, 0] } },
+        activeTeacher: {
+          $sum: { $cond: [{ $eq: ["$status", "Active"] }, 1, 0] },
+        },
+        inActiveTeacher: {
+          $sum: { $cond: [{ $eq: ["$status", "InActive"] }, 1, 0] },
+        },
+        leaveOnTeacher: {
+          $sum: { $cond: [{ $eq: ["$status", "HOLD"] }, 1, 0] },
+        },
       },
     },
     {
-      $sort: { count: -1 }, // Optional: sort descending
+      $project: {
+        _id: 0,
+        teacherTotalCount: 1,
+        activeTeacher: 1,
+        inActiveTeacher: 1,
+        leaveOnTeacher: 1,
+        overallCount: {
+          $add: [
+            "$teacherTotalCount",
+            "$activeTeacher",
+            "$inActiveTeacher",
+            "$leaveOnTeacher",
+          ],
+        },
+      },
     },
   ]);
-  const teacherPercentage = teacherCount[0].teacherTotalCount;
-  const teacherMalePercentage = ((teacherCount[0].maleTeacher/ teacherCount[0].teacherTotalCount)*100).toFixed(2);
-  const teacherFemalePercentage = ((teacherCount[0].femaleTeacher/ teacherCount[0].teacherTotalCount)*100).toFixed(2);
-  
-  return {teacherPercentage, teacherMalePercentage, teacherFemalePercentage};
 
-}
+  return teacherCount[0] || {
+    teacherTotalCount: 0,
+    activeTeacher: 0,
+    inActiveTeacher: 0,
+    leaveOnTeacher: 0,
+    overallCount: 0,
+  };
+};
+
+
+export const getTeacherGenderCountDetails = async () => {
+  const teacherCount = await UserModel.aggregate([
+    {
+      $match: {
+        role: { $in: ["TEACHER"] }, // fix: match against array
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        teacherTotalCount: { $sum: 1 },
+        maleTeacher: {
+          $sum: {
+            $cond: [{ $eq: [{ $toLower: "$gender" }, "male"] }, 1, 0],
+          },
+        },
+        femaleTeacher: {
+          $sum: {
+            $cond: [{ $eq: [{ $toLower: "$gender" }, "female"] }, 1, 0],
+          },
+        },
+      },
+    },
+  ]);
+
+  if (!teacherCount || teacherCount.length === 0) {
+    return {
+      teacherPercentage: 0,
+      teacherMalePercentage: "0.00",
+      teacherFemalePercentage: "0.00",
+    };
+  }
+
+  const count = teacherCount[0];
+  const total = count.teacherTotalCount || 0;
+  const male = count.maleTeacher || 0;
+  const female = count.femaleTeacher || 0;
+
+  const teacherMalePercentage =
+    total > 0 ? ((male / total) * 100).toFixed(2) : "0.00";
+  const teacherFemalePercentage =
+    total > 0 ? ((female / total) * 100).toFixed(2) : "0.00";
+
+  return {
+    teacherPercentage: total,
+    teacherMalePercentage,
+    teacherFemalePercentage,
+  };
+};
+
+
+
 
 
 
@@ -290,6 +339,9 @@ export const getOtherEmpCardCount = async() =>{
   return { totalOtherEmpCount, otherEmpCount: results };
 
 };
+
+
+
 export const getOtherEmpGender = async() => {
   const otherEmpCount= await UserModel.aggregate([
     {

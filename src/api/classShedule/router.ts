@@ -223,6 +223,19 @@ const register = async (server: Server): Promise<void> => {
          tags: ["api", "evaluation"],
       },
       },
+
+        {
+        method: "PUT",
+        path: "/classShedule/attendanceupdate/{classSheduleId}",
+        options: {
+         handler: handler.updateClassAttendanceById,
+         description: evaluationMessages.UPDATE,
+         tags: ["api", "classShedule"],
+         auth: {
+          strategies: ["jwt"],
+        },
+       },  
+      },
     ];
     server.route(routes);
   };

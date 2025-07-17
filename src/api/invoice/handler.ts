@@ -9,7 +9,8 @@ import { zodAlStudentInvoiceSchema } from "../../models/stinvoice";
 
 const createInvoiceValidation = z.object({
   payload: z.object({
-    student: zodAlStudentInvoiceSchema.shape.student, // full required nested student object
+    student: zodAlStudentInvoiceSchema.shape.student,
+    evaluationData: z.any().optional(), // <-- add this line
     ...zodAlStudentInvoiceSchema.pick({
       courseName: true,
       amount: true,
@@ -110,6 +111,7 @@ async getStudentInvoicesByQuery(req: Request, h: ResponseToolkit) {
     
       return getTotalAmountByCourse(query.type); // ✅ Only pass `type`
     },
+    
     async sendInvoice(req: Request, h: ResponseToolkit) {
       try {
         // Log incoming request data for debugging
@@ -159,6 +161,7 @@ if (payload.attachFile) {
             country: payload.student?.country ?? "",
             city: payload.student?.city ?? "",
           },
+          evaluationData: payload.evaluationData, // <-- FIXED
           courseName: payload.courseName ?? "",
           amount: payload.amount ?? 0,
           paymentDate:undefined,
@@ -175,7 +178,7 @@ if (payload.attachFile) {
           createdBy: payload.createdBy ?? "System",  // default to "System" if missing
           lastUpdatedDate: lastUpdatedDate,  // always use current date for lastUpdatedDate
           lastUpdatedBy: payload.lastUpdatedBy ?? "System",  // default to "System" if missing
-        });
+        } as any);
     
         // Debugging: Log the result of the operation
         console.log("Result from sendInvoiceOperation:", result);

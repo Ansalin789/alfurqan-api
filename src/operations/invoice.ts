@@ -19,6 +19,7 @@ import {
   isWithinInterval
 } from "date-fns";
 import stinvoice from "../models/stinvoice";
+import { Request, ResponseToolkit } from "@hapi/hapi";
 
 /**
  * Retrieves a list of all evaluation records with filters, sorting, and pagination.
@@ -313,53 +314,110 @@ export const getTotalAmountByCourse = async (
 
 
 
-export const sendInvoiceOperation = async (
-  payload: Partial<IStudentInvoice>
-): Promise<{ invoice: IStudentInvoice } | { error: any }> => {
+export const sendInvoice = async (req: Request, h: ResponseToolkit) => {
   try {
-    // ✅ Validate payload with Zod
-    const validation = zodAlStudentInvoiceSchema.safeParse(payload);
-    if (!validation.success) {
-      return { error: validation.error.flatten().fieldErrors };
+    // ✅ Validate payload using Zod
+    const parseResult = zodAlStudentInvoiceSchema.safeParse(req.payload);
+    if (!parseResult.success) {
+      return h.response({ success: false, error: parseResult.error.errors }).code(400);
     }
-     
 
-      // ✅ correct Date object
-    // ✅ Create and save the invoice
+    const payload = parseResult.data;
+
+    // ✅ Manual fallback (can be redundant, but useful for clarity)
+    if (!payload.student || !payload.courseName || !payload.amount) {
+      return h
+        .response({ success: false, error: "Missing required fields" })
+        .code(400);
+    }
+
+    const invoiceNumber =
+      typeof payload.invoiceNumber === "number"
+        ? payload.invoiceNumber
+        : Math.floor(100000 + Math.random() * 900000);
+
+    const now = new Date().toISOString();
+
+    // ✅ Construct invoice document
     const newInvoice = new StudentInvoiceModel({
       student: {
-        studentId: payload.student?.studentId ?? "",
-        studentName: payload.student?.studentName ?? "",
-        studentEmail: payload.student?.studentEmail ?? "",
-        studentPhone: payload.student?.studentPhone ?? "",
-        country: payload.student?.country ?? "",
-        city: payload.student?.city ?? "",
+        studentId: payload.student.studentId,
+        studentName: payload.student.studentName,
+        studentEmail: payload.student.studentEmail,
+        studentPhone: payload.student.studentPhone,
+        country: payload.student.country,
+        city: payload.student.city,
       },
-      courseName: payload.courseName ?? "",
-      amount: payload.amount ?? 0,
-      packageType: payload.packageType ?? "",
-      itemDescription: payload.itemDescription ?? "",
-      duration: payload.duration ?? "",
-      rate: payload.rate ?? "",
-      description: payload.description ?? "",
-      attachFile: payload.attachFile ?? undefined,
-      invoiceStatus: payload.invoiceStatus ?? "Pending",
-      status: payload.status ?? "Active",
-      dueDate: payload.dueDate ?? undefined,
-      createdDate: payload.createdDate ?? "",
-      createdBy: payload.createdBy ?? "",
-      lastUpdatedDate: payload.lastUpdatedDate ?? new Date(),
-      lastUpdatedBy: payload.lastUpdatedBy ?? "",
+      evaluationData: payload.evaluationData || undefined,
+      courseName: payload.courseName,
+      amount: payload.amount,
+      invoiceNumber,
+      invoiceStatus: payload.invoiceStatus || "Pending",
+      packageType: payload.packageType,
+      itemDescription: payload.itemDescription,
+      duration: payload.duration,
+      rate: payload.rate,
+      description: payload.description,
+      attachFile: payload.attachFile || "",
+      status: payload.status || "Active",
+      dueDate: payload.dueDate,
+      createdBy: payload.createdBy || "Admin",
+      lastUpdatedBy: payload.lastUpdatedBy || "Admin",
+      createdDate: payload.createdDate || now,
+      lastUpdatedDate: payload.lastUpdatedDate || now,
     });
 
     const savedInvoice = await newInvoice.save();
 
+    AppLogger.info(`✅ Invoice created: ${JSON.stringify(savedInvoice)}`);
+    return h
+      .response({
+        success: true,
+        message: "Invoice created successfully",
+        data: savedInvoice,
+      })
+      .code(201);
+  } catch (error) {
+    AppLogger.error(`🔥 Error saving invoice: ${error}`);
+    return h
+      .response({
+        success: false,
+        error: {
+          message: "Failed to save invoice",
+          details: error instanceof Error ? error.message : String(error),
+        },
+      })
+      .code(500);
+  }
+};
+
+
+export const sendInvoiceOperation = async (payload: IStudentInvoice) => {
+  try {
+    // Create new invoice document
+    const newInvoice = new StudentInvoiceModel({
+      ...payload,
+      invoiceNumber: payload.invoiceNumber || Math.floor(100000 + Math.random() * 900000),
+      invoiceStatus: payload.invoiceStatus || 'Pending',
+      status: payload.status || 'Active',
+      createdBy: payload.createdBy || 'Admin',
+      lastUpdatedBy: payload.lastUpdatedBy || 'Admin',
+      createdDate: payload.createdDate || new Date().toISOString(),
+      lastUpdatedDate: payload.lastUpdatedDate || new Date().toISOString(),
+    });
+
+    const savedInvoice = await newInvoice.save();
 
     AppLogger.info(`Invoice created: ${JSON.stringify(savedInvoice)}`);
     return { invoice: savedInvoice };
   } catch (error) {
-    console.error("Error saving invoice:", error);
-    return { error: "Failed to save invoice: " + error };
+    AppLogger.error(`Error saving invoice: ${error}`);
+    return {
+      error: {
+        message: "Failed to save invoice",
+        details: error instanceof Error ? error.message : String(error)
+      }
+    };
   }
 };
 

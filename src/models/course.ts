@@ -13,17 +13,7 @@ const courseSchema = new Schema<ICourse>({
       courseLevel: { type: String, required: true },
     },
     courseName: { type: String, required: true },
-    level: [
-      {
-        levelId: {
-          type: String, // You can also use mongoose.Types.ObjectId if auto-generated
-          required: true,
-        },
-        contentLevel: { type: String, required: true },
-        descriptions: { type: Buffer, required: true },
-        duration: { type: String, required: true },
-      }
-    ],
+    level:{ type: String, required: true }, 
     status: {
       type: String,
       enum: CustomEnumerator.Status,
@@ -50,22 +40,7 @@ const courseSchema = new Schema<ICourse>({
       courseLevel: z.string(),
     }),
     courseName: z.string(),
-    level: z.array(  // Make sure `level` is defined as an array
-      z.object({
-        levelId: z.string(),
-        contentLevel: z.string(),
-        descriptions: z.preprocess(
-          (val) => {
-            if (typeof val === 'string') return Buffer.from(val);  // Convert string to Buffer
-            return val;
-          },
-          z.custom<Buffer>((val) => val instanceof Buffer, {
-            message: 'Expected a Buffer',
-          })
-        ),
-        duration: z.string(),
-      })
-    ),  // `level` should be an array of objects
+    level:z.string(),
     status: z.string().default('Active'),
     createdDate: z.string(),
     createdBy: z.string(),

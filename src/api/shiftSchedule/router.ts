@@ -39,6 +39,18 @@ const register = async (server: Server): Promise<void> => {
           strategies: ["jwt"],
         },  },
     },
+
+    {
+            method: "GET",
+            path: "/shiftschedule/{id}",
+            options: {
+              handler: handler.getShiftscheduleById,
+              description: userMessages.CREATE,
+              tags: ["api", "users"],
+              auth: {
+                strategies: ["jwt"],
+              },  },
+          },
     // {
     //   method: "PUT",
     //   path: "/users/{userId}",

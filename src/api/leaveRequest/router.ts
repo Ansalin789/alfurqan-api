@@ -80,8 +80,19 @@ const register = async (server: Server): Promise<void> => {
               },  },
           },
 
-
-
+//card count
+    {
+      method: "GET",
+      path: "/leaverequest/card",
+      options: {
+        handler: handler.getLeaveRequestCount,
+        description: leaveRequestMessages.WIDGET_COUNT,
+        tags: ["api", "leaverequest"],
+        auth: {
+          strategies: ["jwt"],
+        },
+      },
+    },
 
   ];
 

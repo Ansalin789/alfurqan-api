@@ -1,7 +1,7 @@
 import { Request, ResponseObject, ResponseToolkit } from '@hapi/hapi'; 
 import { zodleaverequestSchema } from '../../models/leaverequest';
 import { z } from 'zod';
-import { createLeaveRequest, getAllLeaveList, getAllLeaveSummaryList, getLeaveRequestRecordById, getLeaveSummaryRecordById, updateLeaveRequest } from '../../operations/leaveRequest';
+import { createLeaveRequest, dashboardLeaveRequestCounts, getAllLeaveList, getAllLeaveSummaryList, getLeaveRequestRecordById, getLeaveSummaryRecordById, updateLeaveRequest } from '../../operations/leaveRequest';
 import { ILeaveRequest } from '../../../types/models.types';
 import mongoose from 'mongoose';
 import { isNil } from 'lodash';
@@ -127,8 +127,18 @@ async getLeaveSummaryRecordById(req: Request, h: ResponseToolkit) {
   }
 
   return result;
-}
+},
 
+//card counts
+  async getLeaveRequestCount(req: Request, h: ResponseToolkit) {
+    try {
+      const leaveRequest = await dashboardLeaveRequestCounts()
+      return h.response(leaveRequest).code(200)
+    } catch (error) {
+      console.error("Error in leaveRequest:", error)
+      return h.response({ error: "Failed to fetch leaveRequest counts." }).code(500)
+    }
+  },
 
 
 }

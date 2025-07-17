@@ -5,7 +5,7 @@ import { ClassSchedulesMessages } from "../../config/messages";
 import { isNil } from "lodash";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
-import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount, getTotalClassesCount, getClassesStatusCount, getClassesWiseCount, getStudentList, getTeacherAttendanceSummary, teacherStudentCount, getgetAnalyticscardCalculation, requestReschedule} from "../../operations/classschedule";
+import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount, getTotalClassesCount, getClassesStatusCount, getClassesWiseCount, getStudentList, getTeacherAttendanceSummary, teacherStudentCount, getgetAnalyticscardCalculation, requestReschedule, updateClassAttendanceById} from "../../operations/classschedule";
 import { academicAvailableTeachers, academicDashboardTeachersStudentCount, academicStudentReSchedule, academicTeacherStudentList } from "../../kafka/producers/academicProducer";
 import AlStudentModule from "../../models/alstudents"
 import Evaluation from "../../models/evaluation";
@@ -13,6 +13,7 @@ import { Types } from "mongoose";
 import { evaluationTeacherSlotBook } from "../../redis/handler/teacherSlotHander";
 import { teacherDashboardCardCount } from "../../kafka/producers/teacherProducer";
 import alstudents from "../../models/alstudents";
+import ClassScheduleModel from "../../models/classShedule"
 
 const createInputValidation = z.object({
     payload: zodClassScheduleSchema.pick({
@@ -66,9 +67,24 @@ const updateClassScheduleInputValidation = z.object({
     sessionClassType:true,
     sessionStarttime:true,
     sessionsEndtime:true,
-
 }).partial()
 })
+
+const updateClassAttendanceInputValidation = z.object({
+    payload: zodClassScheduleSchema.pick({
+    student: true,
+    teacher: true,
+    totalHourse: true,
+    scheduleStatus: true,
+    sessionClassType:true,
+    sessionStarttime:true,
+    sessionsEndtime:true,
+    sessionStatus : true,
+    lastUpdatedDate:true,
+    studentAttendee: true,
+    teacherAttendee: true,
+    }).partial()
+    })
 
 export default {
 // async createandUpdateSchedule(req: Request, h: ResponseToolkit){
@@ -273,10 +289,32 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
     const { payload } = updateClassScheduleInputValidation.parse({
       payload: req.payload
     });
+
+    const classSchedule = await ClassScheduleModel.findById(req.params.classSheduleId).lean();
+if (!classSchedule) {
+  return notFound(ClassSchedulesMessages.CANDIDATE_NOT_FOUND);
+}
+    // 🧩 2. Read existing session start/end arrays (or make empty array)
+let existingStart = [];
+let existingEnd = [];
+    const rawPayload = req.payload  as any;
+try {
+ existingStart = JSON.parse(classSchedule.student?.studnetSessionStart || "[]");
+ existingEnd = JSON.parse(classSchedule.student?.studnetSessionEnd || "[]");
+} catch (e) {
+  existingStart = [];
+  existingEnd = [];
+}
+
+existingStart.push(rawPayload.student.studnetSessionStart);
+existingEnd.push(rawPayload.student.studnetSessionEnd);
+
+
     console.log("Payload received:", req.payload);
     const classDayValues = payload.classDay?.map((day: { value: string; label: string }) => day.value);
     const startTimeValues = payload.startTime?.map((time: { value: string; label: string }) => time.value);
     const endTimeValues = payload.endTime?.map((time: { value: string; label: string }) => time.value);
+    
     const result = await updateClassscheduleById(String(req.params.classSheduleId), {
       student: {
         studentId: payload.student?.studentId ?? "",
@@ -284,12 +322,16 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
         studentLastName: payload.student?.studentLastName ?? "",
         studentEmail: payload.student?.studentEmail ?? "",
         gender: payload.student?.gender ?? "",
-        level: payload.student?.level ?? ""
+        level: payload.student?.level ?? "",
+       studnetSessionStart: JSON.stringify(existingStart),
+       studnetSessionEnd: JSON.stringify(existingEnd),
       },
       teacher: {
         teacherId: payload.teacher?.teacherId ?? "",
         teacherName: payload.teacher?.teacherName ?? "",
-        teacherEmail: payload.teacher?.teacherEmail ?? ""
+        teacherEmail: payload.teacher?.teacherEmail ?? "",
+       teacherSessionStart: rawPayload.teacher?.teacherSessionStart,
+       teacherSessionEnd: rawPayload.teacher?.teacherSessionEnd
       },
       classDay: classDayValues,
       package: payload.package,
@@ -302,8 +344,8 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
       scheduleStatus: payload.scheduleStatus,
     
       // ✅ Add these:
-      sessionStarttime: payload.sessionStarttime,
-      sessionsEndtime: payload.sessionsEndtime,
+      sessionStarttime: "",
+      sessionsEndtime: "",
       sessionClassType: payload.sessionClassType,
       sessionStatus:"NotCompleted"
 
@@ -411,8 +453,7 @@ async teachingActivity(req: Request, h: ResponseToolkit) {
     // Handle errors properly
     return h.response({ error }).code(400);
   }
-}
-,
+},
 
 async updateteacherreschedule(req: Request, h: ResponseToolkit){
   console.log("Raw Request Payload:", req.payload);
@@ -420,6 +461,7 @@ async updateteacherreschedule(req: Request, h: ResponseToolkit){
     payload: req.payload,
  });
  console.log("Parsed Payload:", payload);
+    const rawPayload = req.payload  as any;
 
  const classDayValues = payload.classDay?.map((day: { value: string; label: string }) => day.value);
  const startTimeValues = payload.startTime?.map((time: { value: string; label: string }) => time.value);
@@ -430,7 +472,9 @@ async updateteacherreschedule(req: Request, h: ResponseToolkit){
   teacher :{
     teacherId: payload.teacher?.teacherId ?? "",
     teacherName: payload.teacher?.teacherName ?? "",
-    teacherEmail: payload.teacher?.teacherEmail ?? ""
+    teacherEmail: payload.teacher?.teacherEmail ?? "",
+   teacherSessionStart: rawPayload.teacher?.teacherSessionStart,
+   teacherSessionEnd: rawPayload.teacher?.teacherSessionEnd
   } ,
   classDay :classDayValues,
   package: payload.package,
@@ -568,7 +612,9 @@ async bulkcreateandSchedule(req: Request, h: ResponseToolkit) {
       teacher: {
         teacherId: payload.teacher?.teacherId ?? "",
         teacherName: payload.teacher?.teacherName ?? "",
-        teacherEmail: payload.teacher?.teacherEmail ?? ""
+        teacherEmail: payload.teacher?.teacherEmail ?? "",
+        teacherSessionStart: rawPayload.teacher?.teacherSessionStart,
+        teacherSessionEnd: rawPayload.teacher?.teacherSessionEnd
       },
       classLink: meetingId,
       classDay: classDayValues,
@@ -656,7 +702,74 @@ async requestReschedule (req : Request , h :ResponseToolkit){
       message: "Internal server error",
     }).code(500);
   }
-} 
+} ,
+
+async updateClassAttendanceById(req : Request , h :ResponseToolkit){
+
+try{
+    const classSchedule = await ClassScheduleModel.findById(req.params.classSheduleId).lean();
+if (!classSchedule) {
+  return notFound(ClassSchedulesMessages.CANDIDATE_NOT_FOUND);
+}
+    const rawPayload = req.payload as any;
+
+   // 🧩 1. Existing student session arrays
+   
+    // ✅ If they are real arrays, use them directly.
+    const existingStart: string[] = classSchedule.student?.studnetSessionStart || [];
+    const existingEnd: string[] = classSchedule.student?.studnetSessionEnd || [];
+
+    const teacherStart: string[] = classSchedule.teacher?.teacherSessionStart || [];
+    const teacherEnd: string[] = classSchedule.teacher?.teacherSessionEnd || [];
+
+    if (rawPayload.student?.studnetSessionStart) {
+      existingStart.push(rawPayload.student.studnetSessionStart);
+    }
+    if (rawPayload.student?.studnetSessionEnd) {
+      existingEnd.push(rawPayload.student.studnetSessionEnd);
+    }
+
+    if (rawPayload.teacher?.teacherSessionStart) {
+      teacherStart.push(rawPayload.teacher.teacherSessionStart);
+    }
+    if (rawPayload.teacher?.teacherSessionEnd) {
+      teacherEnd.push(rawPayload.teacher.teacherSessionEnd);
+    }
+console.log("existingStart: ",existingStart);
+console.log("existingEnd: ",existingEnd);
+
+console.log("teacherStart: ",teacherStart);
+
+console.log("teacherEnd: ",teacherEnd);
+  
+    const result = await updateClassAttendanceById(String(req.params.classSheduleId), {
+      student: {
+       studentId: classSchedule.student.studentId,
+       studentFirstName: classSchedule.student.studentFirstName,
+       studentLastName: classSchedule.student.studentLastName,
+       studentEmail: classSchedule.student.studentEmail,
+       gender: classSchedule.student.gender,
+       level: classSchedule.student.level,
+       studnetSessionStart: existingStart,
+      studnetSessionEnd: existingEnd ,
+      },
+      teacher: {
+        teacherId: classSchedule.teacher.teacherId,
+        teacherName: classSchedule.teacher.teacherName,
+        teacherEmail: classSchedule.teacher.teacherEmail,
+       teacherSessionStart: teacherStart,
+       teacherSessionEnd: teacherEnd
+      },
+
+    });
+    
+
+
+    return result;
+  }catch(e){
+    console.log("Error>>", e)
+  }
+}
 
 }
 

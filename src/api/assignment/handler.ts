@@ -149,6 +149,8 @@ export default {
         studentId,
         studentName,
         title,
+        course,
+        level,
         sessionClassType,
         assignedTeacherId,
         assignedTeacher,
@@ -340,6 +342,8 @@ if (rawPayload.uploadFile) {
         assignedTeacherId: assignedTeacherId || "",
         assignedTeacher: assignedTeacher || "",
         title: title || "",
+        level: level ||  "",
+        course: course || "",
       }));
       console.log("✅ Final assignment payload ready:", finalAssignments);
 

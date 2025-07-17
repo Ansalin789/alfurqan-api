@@ -69,7 +69,7 @@ export default {
 
   async getWidgetSupervisorCount(req: Request, h: ResponseToolkit) {
     try {
-      const supervisorCounts = await dashboardWidgetSupervisorCounts(req.headers.supervisor as string)
+      const supervisorCounts = await dashboardWidgetSupervisorCounts()
       return h.response(supervisorCounts).code(200)
     } catch (error) {
       console.error("Error in getWidgetStudentCount:", error)

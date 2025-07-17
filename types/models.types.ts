@@ -282,12 +282,7 @@ export interface ICourse extends Document {
     courseDescription: string;
     courseLevel: string;
   };
-  level: {
-    levelId: string;
-    contentLevel: string;
-    descriptions: Buffer;
-    duration: string;
-  }[]; // <-- make level an array
+  level:string;
   courseName: string;
   status: string;
   createdDate: Date;
@@ -296,6 +291,24 @@ export interface ICourse extends Document {
   lastUpdatedBy: string;
 }
 
+export interface ILevel extends Document{
+  courseId: string;
+  level:string;
+  duration:string;
+  description:Buffer;
+  createdDate: Date;
+  createdBy: string;
+}
+
+export interface ILevelCreate {
+courseId: string;
+  level:string;
+  duration:Buffer;
+  description:string;
+  createdDate: Date;
+  createdBy: string;
+}
+ 
 export interface ICourseCreate {
   course: {
     courseId?: string;
@@ -304,13 +317,7 @@ export interface ICourseCreate {
     courseDescription:string;
     courseLevel:string;
   };
-  level :{
-    levelId:string;
-    contentLevel:string;
-    descriptions:Buffer;
-    duration:string;
-
-  }[]
+  level :string;
   courseName: string;
   status: string;
   createdDate: Date;
@@ -521,12 +528,16 @@ export interface IClassSchedule extends Document{
     studentEmail: string;
     gender: string;
     level: string;
+    studnetSessionStart: any;
+    studnetSessionEnd: any;
 
   },
   teacher:{
     teacherId: string;
     teacherName: string;
     teacherEmail: string;
+    teacherSessionStart: any;
+    teacherSessionEnd: any;
   },
   classDay: any;
   package: string;
@@ -574,11 +585,15 @@ export interface IClassScheduleCreate{
     studentEmail: string;
     gender: string;
     level: string;
+    studnetSessionStart: any;
+    studnetSessionEnd: any;
   },
   teacher:{
     teacherId: string;
     teacherName: string;
     teacherEmail: string;
+    teacherSessionStart: any;
+    teacherSessionEnd: any;
   },
   classhour:string;
   amount:string;
@@ -757,7 +772,8 @@ export interface IAssignment extends Document {
   questionName: string;
   questionType: string;
   typeofQuestion: string;
-  title: string;                         
+  title: string;   
+  course?: string;                      
   assignmentName: string;
   assignedTeacher: string;
   assignedTeacherId: string;
@@ -887,6 +903,7 @@ export interface IStudentInvoice extends Document {
     country: string;
     city: string;
   };
+  evaluationData: any,
   paymentDate?: Date; 
   courseName: string;
   amount: number; 
@@ -903,6 +920,7 @@ export interface IStudentInvoice extends Document {
   createdBy: string;
   lastUpdatedDate?: string;
   lastUpdatedBy: string;
+  invoiceNumber?: number; // <-- Added this line
 }
 
 

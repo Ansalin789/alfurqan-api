@@ -571,7 +571,8 @@ export const getTotalTrialClassRequestCount = async() => {
         maleCount: { $sum: { $cond: [{ $eq: ["$student.studentGender", "male"] }, 1, 0] } },
         femaleCount: { $sum: { $cond: [{ $eq: ["$student.studentGender", "female"] }, 1, 0] } },
         completedCount: { $sum: { $cond: [{ $eq: ["$trialClassStatus", "COMPLETED"] }, 1, 0] } },
-        pendingCount: { $sum: { $cond: [{ $eq: ["$trialClassStatus", "PENDING"] }, 1, 0] } },
+        pendingCount: { $sum: { $cond: [{ $eq: ["$trialClassStatus", ""] }, 1, 0] } },
+        inprogressCount: { $sum: { $cond: [{ $eq: ["$trialClassStatus", "INPROGRESS"] }, 1, 0] } },
         studentJointCount: { $sum: { $cond: [{ $eq: ["$studentStatus", "JOINED"] }, 1, 0] } },
         studentNotJointCount: { $sum: { $cond: [{ $eq: ["$studentStatus", "NOTJOINED"] }, 1, 0] } },
 

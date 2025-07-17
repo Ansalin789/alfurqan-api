@@ -33,9 +33,17 @@ const studentInvoiceSchema = new Schema<IStudentInvoice>(
         required: true,
       },
     },
+    evaluationData: {
+      type: Schema.Types.Mixed,
+      required: false,
+    },
     courseName: {
       type: String,
       required: true,
+    },
+    invoiceNumber: {
+      type: Number,
+      required: false,
     },
     amount: {
       type: Number,
@@ -123,9 +131,10 @@ export const zodAlStudentInvoiceSchema = z.object({
     country: z.string(),
     city: z.string(),
   }),
-
+  evaluationData: z.any().optional(),
   courseName: z.string(),
   amount: z.number(),
+  invoiceNumber: z.number().optional(),
   packageType: z.string().optional(),
   itemDescription: z.string().optional(),
   duration: z.string().optional(),

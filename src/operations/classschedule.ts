@@ -1,12 +1,10 @@
-import { FlattenMaps, Types } from "mongoose";
+import { Types } from "mongoose";
 import {
-  IAssignment,
   IClassSchedule,
   IClassScheduleCreate,
 } from "../../types/models.types";
 
 import ClassScheduleModel from "../models/classShedule";
-import StudentModel from "../models/alstudents";
 import UserModel from "../models/users";
 
 import AppLogger from "../helpers/logging";
@@ -390,6 +388,44 @@ export const requestReschedule = async (payload: any) => {
   }
 };
 
+
+export interface IClassScheduleUpdate{
+  student: {
+    studentId: string;
+    studentFirstName: string;
+    studentLastName: string;
+    studentEmail: string;
+    gender: string;
+    level: string;
+    studnetSessionStart: any;
+    studnetSessionEnd: any;
+  },
+  teacher:{
+    teacherId: string;
+    teacherName: string;
+    teacherEmail: string;
+    teacherSessionStart: any;
+    teacherSessionEnd: any;
+  },
+
+}
+
+export const updateClassAttendanceById = async (
+  id: string,
+  payload: Partial<IClassScheduleUpdate>
+): Promise<IClassSchedule | null> => {
+
+ return ClassScheduleModel.findOneAndUpdate(
+    { _id: new Types.ObjectId(id) },
+    {
+      $set: {
+        ...payload,
+      },
+    },
+    { new: true }
+  ).lean();
+};
+
 export const getAllClassSheduleById = async (
   _id: string
 ): Promise<IClassSchedule | null> => {
@@ -498,41 +534,12 @@ export const updateClassscheduleById = async (
     throw new Error("Class schedule not found");
   }
 
-  // Determine class type and session times
-  const classType = payload.sessionClassType || existingClass.sessionClassType;
-  const startTime = payload.sessionStarttime || existingClass.sessionStarttime;
-  const endTime = payload.sessionsEndtime || existingClass.sessionsEndtime;
-
-  let amount = 0;
-  let sessionStatus = "NotCompleted";
-
-  if (startTime && endTime) {
-    const startMinutes = convertTimeToMinutes(startTime);
-    const endMinutes = convertTimeToMinutes(endTime);
-    const duration = endMinutes - startMinutes;
-
-    if (duration > 0) {
-      if (classType === "REGULARCLASS") {
-        amount = (duration / 60) * 4;
-      } else if (classType === "GROUPCLASS") {
-        amount = (duration / 60) * 6;
-      } else if (classType === "TRAILCLASS") {
-        amount = 2;
-      }
-
-      sessionStatus = "COMPLETED";
-    }
-  }
-
-  const formattedAmount = `$${amount.toFixed(2)}`;
 
   return ClassScheduleModel.findOneAndUpdate(
     { _id: new Types.ObjectId(id) },
     {
       $set: {
         ...payload,
-        amount: formattedAmount,
-        sessionStatus,
       },
     },
     { new: true }
@@ -738,8 +745,15 @@ export const getStudentClassHours = async (
 export const teacherStudentCount = async () => {
   const teachers = await classShedule.aggregate([
     {
+      $match: {
+        "teacher.teacherId": { $ne: null },
+        "teacher.teacherName": { $ne: null },
+        "teacher.teacherEmail": { $ne: null },
+      },
+    },
+    {
       $group: {
-        _id: "$teacher.teacherId", // Group by teacherEmail
+        _id: "$teacher.teacherId", // Group by teacherId
         teacherId: { $first: "$teacher.teacherId" },
         teacherName: { $first: "$teacher.teacherName" },
         teacherEmail: { $first: "$teacher.teacherEmail" },
@@ -748,7 +762,7 @@ export const teacherStudentCount = async () => {
             studentId: "$student.studentId",
             gender: "$student.gender",
           },
-        }, // Collect unique student IDs and gender
+        },
       },
     },
     {
@@ -756,7 +770,7 @@ export const teacherStudentCount = async () => {
         teacherId: 1,
         teacherName: 1,
         teacherEmail: 1,
-        studentCount: { $size: "$uniqueStudents" }, // Total unique students
+        studentCount: { $size: "$uniqueStudents" },
         maleCount: {
           $size: {
             $filter: {
@@ -765,7 +779,7 @@ export const teacherStudentCount = async () => {
               cond: { $eq: ["$$student.gender", "MALE"] },
             },
           },
-        }, // Count only male students
+        },
         femaleCount: {
           $size: {
             $filter: {
@@ -774,12 +788,13 @@ export const teacherStudentCount = async () => {
               cond: { $eq: ["$$student.gender", "FEMALE"] },
             },
           },
-        }, // Count only female students
+        },
       },
     },
   ]);
   return teachers;
 };
+
 
 export const teachingActivity = async (
   studentId: string
@@ -1203,6 +1218,8 @@ export const getStudentList = async (
   {
     studentId: string;
     name: string;
+        level?: string;
+
     classType?: string;
     groupClassId?: string;
     assignment?: {
@@ -1284,6 +1301,8 @@ export const getStudentList = async (
         uniqueStudentsMap.set(student.studentId, {
           studentId: student.studentId,
           name: student.studentFirstName,
+                    level: alstudent?.level || "", // ✅ Add level here
+
           studentDetails: {
             student: evaluation?.student,
             teacher: evaluation?.teacher,
