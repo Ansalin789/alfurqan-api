@@ -1,7 +1,7 @@
 import { Request, ResponseToolkit } from '@hapi/hapi';
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { z } from "zod";
-import { getAllSalaryList } from '../../operations/salarywages';
+import { getAllSalaryCardCounts, getAllSalaryList } from '../../operations/salarywages';
 
 const getSalaryInputValidation = z.object({
     query: zodGetAllRecordsQuerySchema.pick({
@@ -24,4 +24,14 @@ export default {
      return getAllSalaryList(query);
    },
 
+   
+   async getAllSalaryCard(req: Request, h: ResponseToolkit) {
+    const { query } = getSalaryInputValidation.parse({
+      query: {
+        ...req.query,
+        filterValues: req.query?.filterValues ? JSON.parse(req.query.filterValues) : {},
+      },
+    });
+    return getAllSalaryCardCounts(query);
+  },
 }

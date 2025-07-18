@@ -29,7 +29,17 @@ const register = async (server: Server): Promise<void> => {
             strategies: ["jwt"],
           }, },
       },
- 
+      {
+        method: "GET",
+        path: "/expenseCardCounts",
+        options: {
+          handler: handler.getAllExpensesCardCount,
+          // description: userMessages.CREATE,
+          tags: ["api", "expense"],
+          auth: {
+            strategies: ["jwt"],
+          }, },
+      },
 
   ];
   server.route(routes);

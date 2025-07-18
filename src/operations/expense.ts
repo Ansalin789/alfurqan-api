@@ -1,6 +1,7 @@
 import { isNil } from "lodash";
 import {  IExpense } from "../../types/models.types";
 import expense from "../models/expense";
+import paymentDetails from "../models/paymentDetails";
 import { GetAllRecordsParams } from "../shared/enum";
 import AppLogger from "../helpers/logging";
 
@@ -31,9 +32,6 @@ export const createExpense = async (
     return { error };
   }
 };
-
-
-
 
 export const getExpenses = async (
   params: GetAllRecordsParams
@@ -97,7 +95,46 @@ export const getExpenses = async (
   return { totalCount, expenses };
 };
 
+export const getAllExpensesCardCounts = async (): Promise<{
+  totalExpense: number;
+  totalPending: number;
+  totalRevenue: number;
+  balance: number;
+}> => {
+  // 1. Get all expenses
+  const allExpenses = await expense.find();
+  // 2. Get all payments (revenue)
+  const allPayments = await paymentDetails.find(); // get all payment records
 
+  // 3. Calculate totals
+  let totalExpense = 0;
+  let totalPending = 0;
+  for (const exp of allExpenses) {
+    const amount = parseFloat(exp.amount);
+    if (isNaN(amount)) continue;
+    totalExpense += amount;
+    if (exp.status === "Pending") {
+      totalPending += amount;
+    }
+  }
+
+  let totalRevenue = 0;
+  for (const pay of allPayments) {
+    const amount = parseFloat(pay.paymentAmount);
+    if (isNaN(amount)) continue;
+    totalRevenue += amount;
+  }
+
+  // 4. Calculate balance
+  const balance = totalRevenue - totalExpense;
+
+  return {
+    totalExpense,
+    totalPending,
+    totalRevenue,
+    balance,
+  };
+};
 
 
 
