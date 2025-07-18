@@ -16,6 +16,7 @@ import { loggerPlugin } from "./plugins/auditlog";
 import teachermeeting from "./models/teachermeeting";
 import Evaluation from "./models/evaluation";
 import { removeBookedSlots } from "./redis/handler/teacherSlotHander";
+import { updateEarningsCalculation } from "./operations/classschedule";
 
 
 const start = async () => {
@@ -243,4 +244,8 @@ cron.schedule("0 0 * * *", async () => {
 }
 });
 
-
+// cron  run 5 mins once
+cron.schedule("*/5 * * * *", async () => {
+  console.log("🧹 attendance and earnings uupdate schedule");
+    updateEarningsCalculation();
+});
