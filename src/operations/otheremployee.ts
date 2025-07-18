@@ -4,6 +4,7 @@ import User from "../models/users"
 import ShiftSchedule from "../models/usershiftschedule"
 import OtherEmpModel from "../models/otheremployee"
 import { Types } from "mongoose"
+import SalaryAndWages from "../models/empwages";
 
 /**
  * Creates a new user.
@@ -22,6 +23,38 @@ otherempdetails.preferedShiftTo = preffredToTime;
 
          // Convert file to string (Base64 encoding)
           const savedOtherEmployee = await newOtherEmployee.save();
+  // Add salary and wage records with error handling
+  const salaryRecords = [
+    {
+      employeeName: savedOtherEmployee.firstName + " " + savedOtherEmployee.lastName,
+      employeeId: savedOtherEmployee._id.toString(),
+       classType:{
+            className: "FIXEDSALARY",
+            hoursMins: "1 month",
+            rate: 10,
+            currency: "$",
+        },
+       status:"Active",
+       createdDate:  new Date(),
+       createdBy: "Admin",
+       updatedDate:  new Date(),
+       updatedBy:  "Admin"
+    },
+
+    
+  ];
+
+  try {
+  const resuit =  await SalaryAndWages.insertMany(salaryRecords);
+  console.log(">>>>>>>>>>>>>>>>:", resuit);
+
+
+    console.log("Salary and wage records inserted successfully.");
+  } catch (error) {
+    console.error("Error inserting salary and wage records:", error);
+    // Optionally, throw or handle error based on your application flow
+  }
+
          const saveUser = await createTeacherPortalPortal(savedOtherEmployee)
          createShiftSchedule(savedOtherEmployee, saveUser);
 
@@ -100,7 +133,7 @@ export const getOhterEmpCountriesCount = async() =>{
 
   return saveStudent;
 };
-async function createShiftSchedule(saveStudent:any, saveUser: any) {
+async function createShiftSchedule(saveOtherEmployee:any, saveUser: any) {
 
 
   const startDate = new Date();
@@ -109,18 +142,18 @@ async function createShiftSchedule(saveStudent:any, saveUser: any) {
   const endDate = new Date(startDate);
   endDate.setDate(startDate.getDate() + 30);
   let createShift = await ShiftSchedule.create({
-        academicCoachId : null,
+        academicCoachId : saveOtherEmployee.designation == "ACADEMICCOACH" ? saveUser.userId : null,
         teacherId : null,
-        supervisorId: null,
-        employeeId: saveStudent._id.toString(),
+        supervisorId: saveOtherEmployee.designation == "SUPERVISOR" ? saveUser.userId : null,
+        employeeId: saveOtherEmployee._id.toString(),
         name: saveUser.userName,
         email: saveUser.email,
         role: saveUser.role[0],
-        workhrs: saveStudent.preferedWorkingHours,
+        workhrs: saveOtherEmployee.preferedWorkingHours,
         startdate: startDate,
         enddate : endDate, 
-        fromtime: saveStudent.preferedShiftFrom,
-        totime: saveStudent.preferedShiftTo,
+        fromtime: saveOtherEmployee.preferedShiftFrom,
+        totime: saveOtherEmployee.preferedShiftTo,
         createdDate: new Date(),
         createdBy: "Admin",
         lastUpdatedBy: "Admin"
@@ -129,7 +162,7 @@ async function createShiftSchedule(saveStudent:any, saveUser: any) {
      console.log("createShift", createShift);
      await createShift.save();
      
-  console.log("Student portal",saveStudent )
+  console.log("Student portal",saveOtherEmployee )
 };
 
 export const getOhterEmployeeById = async (

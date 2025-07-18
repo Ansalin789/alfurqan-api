@@ -1181,16 +1181,29 @@ export const getClassesStatusCount = async () => {
 };
 
 export const getClassesWiseCount = async () => {
-  const classschedule = await classShedule.aggregate([
+  const classscheduleRegular = await classShedule.aggregate([
     {
       $match: {
-        status: "Active",
+        sessionClassType: "REGULARCLASS",
       },
     },
     {
       $group: {
         _id: null,
         totalRegularClassCount: { $sum: 1 },
+      },
+    },
+  ]);
+   const classscheduleGroup = await classShedule.aggregate([
+    {
+      $match: {
+        sessionClassType: "GROUPCLASS",
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalGroupClassCount: { $sum: 1 },
       },
     },
   ]);
@@ -1209,7 +1222,7 @@ export const getClassesWiseCount = async () => {
     },
   ]);
 
-  return { classschedule, evaluationStats };
+  return { classscheduleRegular, evaluationStats, classscheduleGroup };
 };
 
 export const getStudentList = async (
@@ -1506,3 +1519,207 @@ export const getgetAnalyticscardCalculation = async (
     throw new Error("Failed to generate teacher analytics summary");
   }
 };
+
+// attendance and earnings update
+export const updateEarningsCalculation = async()=>{
+try{
+const currentDate = new Date()
+  const formattedDate = currentDate.toISOString().split("T")[0]
+  console.log("dateRange>>>>", formattedDate);
+  const startOfDayIST = `${formattedDate}T00:00:00.000+00:00`
+  const endOfDayIST = `${formattedDate}T23:59:59.999+00:00`
+  const getClasses = await ClassScheduleModel.find({
+    startDate:  {
+        $gte: startOfDayIST,
+        $lte: endOfDayIST,
+      },
+      status: "Active"
+  });
+
+for(const scheduleClass of getClasses){
+const [startHour, startMinute] = scheduleClass.startTime[0].split(":").map(Number);
+const totalMinutes = startHour * 60 + startMinute + 15;
+const attendanceHour = Math.floor(totalMinutes / 60);
+const attendanceMinute = totalMinutes % 60;
+const attendanceTime = `${attendanceHour.toString().padStart(2, "0")}:${attendanceMinute.toString().padStart(2, "0")}`;
+console.log("Attendance Time:", attendanceTime);
+
+const studentSessionStartTimes = await getSessionTime(scheduleClass.student.studnetSessionStart) ; 
+const teacherSessionStartTime = await getSessionTime(scheduleClass.teacher.teacherSessionStart) ;
+console.log("studentSessionStartTimes>>",studentSessionStartTimes);
+console.log("teacherSessionStartTime>>",teacherSessionStartTime);
+
+if(scheduleClass.studentAttendee == ""){
+ await studentAttendanceUpdate(attendanceTime,studentSessionStartTimes,scheduleClass);
+};
+//console.log("studentAttendance>>>>>",studentAttendance);
+ if(scheduleClass.teacherAttendee==""){
+ await teacherAttendanceUpdate(attendanceTime,teacherSessionStartTime,scheduleClass);
+};
+///console.log("teacherAttendance>>>>>",teacherAttendance);
+const sessionlHours = await getSessionTotalHours(studentSessionStartTimes,teacherSessionStartTime,scheduleClass);
+
+}
+}catch(error) {
+  console.error("Error in updateEarningsCalculation:", error);
+  throw new Error("Failed to update earnings calculation");
+}
+  
+return "Earnings calculation updated successfully";
+} 
+
+function getSessionTime(times: any): any {
+// 1️⃣ Filter out "00:00"
+const validTimes = times.filter((time: string) => time !== "00:00");
+
+// 2️⃣ Convert to minutes since midnight
+const timesInMinutes = validTimes.map((time:any) => {
+  const [h, m] = time.split(":").map(Number);
+  return h * 60 + m;
+});
+
+// 3️⃣ Find minimum
+const minMinutes = Math.min(...timesInMinutes);
+
+// 4️⃣ Convert back to HH:mm
+const minHour = Math.floor(minMinutes / 60);
+const minMinute = minMinutes % 60;
+const earliestTime = `${minHour.toString().padStart(2, "0")}:${minMinute.toString().padStart(2, "0")}`;
+return earliestTime;
+};
+async function studentAttendanceUpdate(attendanceTime:any,studentSessionStartTimes:any,scheduleClass:any ) {
+let studentAttendance;
+  if( attendanceTime>studentSessionStartTimes){
+ studentAttendance = await ClassScheduleModel.findOneAndUpdate(
+  {_id:new Types.ObjectId(scheduleClass._id)},
+   {
+      $set: {
+       studentAttendee: "present"
+      },
+    },
+    { new: true }
+
+).lean();
+}else if(attendanceTime<=studentSessionStartTimes){
+ studentAttendance = await ClassScheduleModel.findOneAndUpdate(
+  {_id:new Types.ObjectId(scheduleClass._id)},
+   {
+      $set: {
+       studentAttendee: "absent"
+      },
+    },
+    { new: true }
+
+).lean();
+}
+console.log("studentAttendance>>>>>>", studentAttendance);
+
+return studentAttendance;
+};
+
+async function teacherAttendanceUpdate(attendanceTime: string, teacherSessionStartTime: any, scheduleClass: any ) {
+let teacherAttendance;
+  if(attendanceTime>teacherSessionStartTime){
+ teacherAttendance = await ClassScheduleModel.findOneAndUpdate(
+  {_id:new Types.ObjectId(scheduleClass._id)},
+   {
+      $set: {
+       teacherAttendee: "present"
+      },
+    },
+    { new: true }
+
+).lean();
+}else if(attendanceTime<=teacherSessionStartTime){
+ teacherAttendance = await ClassScheduleModel.findOneAndUpdate(
+  {_id:new Types.ObjectId(scheduleClass._id)},
+   {
+      $set: {
+       teacherAttendee: "absent"
+      },
+    },
+    { new: true }
+
+).lean();
+}
+console.log("teacherAttendance>>>>>>", teacherAttendance);
+return teacherAttendance;
+}
+
+
+async function getSessionTotalHours(studentSessionStartTimes: any, teacherSessionStartTime: any, scheduleClass: any) {
+ 
+  // Convert to minutes
+const [studentHour, studentMinute] = studentSessionStartTimes.split(":").map(Number);
+const [teacherHour, teacherMinute] = teacherSessionStartTime.split(":").map(Number);
+
+const studentMinutes = studentHour * 60 + studentMinute;
+const teacherMinutes = teacherHour * 60 + teacherMinute;
+
+const earliestMinutes = Math.min(studentMinutes, teacherMinutes);
+
+// Convert back to HH:mm
+const earliestHour = Math.floor(earliestMinutes / 60).toString().padStart(2, "0");
+const earliestMinute = (earliestMinutes % 60).toString().padStart(2, "0");
+
+const earliestTime = `${earliestHour}:${earliestMinute}`;
+if(scheduleClass.studentAttendee || scheduleClass.teacherAttendee && scheduleClass.sessionStarttime == ""){
+let sessioStartUpdate = await ClassScheduleModel.findOneAndUpdate(
+  {_id:new Types.ObjectId(scheduleClass._id)},
+   {
+      $set: {
+       sessionStarttime: earliestTime.toString()
+      },
+    },
+    { new: true }
+
+).lean();
+}
+if(scheduleClass?.teacherAttendee == "present"){
+const teacherSessionStartTime = scheduleClass.teacher.teacherSessionStart;
+const teacherSessionEndTime = scheduleClass.teacher.teacherSessionEnd
+const validStartTimes = teacherSessionStartTime.filter((time: string) => time !== "00:00");
+const validEndTimes = teacherSessionEndTime.filter((time: string) => time !== "00:00");
+console.log("validstartTimes",validStartTimes);
+console.log("validendTimes",validEndTimes);
+
+const pairCount = Math.min(validStartTimes.length, validEndTimes.length);
+console.log("pairCount>>>", pairCount);
+let totalMinutes = 0;
+
+for (let i = 0; i < pairCount; i++) {
+  const [startH, startM] = validStartTimes[i].split(":").map(Number);
+  const [endH, endM] = validEndTimes[i].split(":").map(Number);
+
+  const startTotal = startH * 60 + startM;
+  const endTotal = endH * 60 + endM;
+
+  const diff = endTotal - startTotal;
+  console.log(`Session ${i + 1}: ${validStartTimes[i]} - ${validEndTimes[i]} => ${diff} mins`);
+
+  totalMinutes += diff;
+}
+console.log(`Total time: ${totalMinutes} mins`);
+
+if(scheduleClass.sessionClassType == "REGULARCLASS"){
+const regularClassAmount = 4.00;
+const classDefaultHours = 60;
+const classTotalEarnings = ( totalMinutes/classDefaultHours) * regularClassAmount;
+
+ await ClassScheduleModel.findOneAndUpdate(
+  {_id:new Types.ObjectId(scheduleClass._id)},
+   {
+      $set: {
+       classhour: totalMinutes.toString(),
+       amount: classTotalEarnings
+      },
+    },
+    { new: true }
+
+).lean();
+}
+
+}
+ 
+
+}

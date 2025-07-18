@@ -52,19 +52,20 @@ const register = async (server: Server): Promise<void> => {
             },  },
          },
 
-         
-          {
-            method: "GET",
-            path: "/leaverequest/{id}",
-            options: {
-              handler: handler.getLeaveRecordById,
-              description: leaveRequestMessages.LIST,
-              tags: ["api", "LeaveRequest"],
-          
-              auth: {
-                strategies: ["jwt"],
-              },  },
-          },
+
+{
+  method: "GET",
+  path: "/leaverequest",
+  options: {
+    handler: handler.getLeaveRecordById,
+    description: leaveRequestMessages.LIST,
+    tags: ["api", "LeaveRequest"],
+    auth: {
+      strategies: ["jwt"],
+    },
+  },
+},
+
 
                  
           {

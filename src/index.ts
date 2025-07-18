@@ -16,6 +16,7 @@ import { loggerPlugin } from "./plugins/auditlog";
 import teachermeeting from "./models/teachermeeting";
 import Evaluation from "./models/evaluation";
 import { removeBookedSlots } from "./redis/handler/teacherSlotHander";
+import { updateEarningsCalculation } from "./operations/classschedule";
 
 
 const start = async () => {
@@ -236,10 +237,15 @@ cron.schedule("0 0 * * *", async () => {
     joiningDate: { $gte: startOfDayIST, $lte: endOfDayIST }
   });
   for(const evaluation of getPaymentDetails){
-  
   if( evaluation.classType == "REGULARCLASS"&& evaluation.weeklySlots && (!evaluation.paymentStatus||evaluation.paymentStatus == "Pending" || evaluation.paymentStatus == "" )){
-    removeBookedSlots(evaluation.joiningDate.toString(), evaluation.weeklySlots, evaluation.teacher.teacherId);
-  }
-  
+    console.log("deleting booked");
+     await removeBookedSlots(evaluation.joiningDate.toString(), evaluation.weeklySlots, evaluation.teacher.teacherId);
+  } 
 }
+});
+
+// cron  run 5 mins once
+cron.schedule("*/5 * * * *", async () => {
+  console.log("🧹 attendance and earnings uupdate schedule");
+    updateEarningsCalculation();
 });
