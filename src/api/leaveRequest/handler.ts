@@ -1,7 +1,7 @@
 import { Request, ResponseObject, ResponseToolkit } from '@hapi/hapi'; 
 import { zodleaverequestSchema } from '../../models/leaverequest';
 import { z } from 'zod';
-import { createLeaveRequest, dashboardLeaveRequestCounts, getAllLeaveList, getAllLeaveSummaryList, getLeaveRequestRecordById, getLeaveSummaryRecordById, updateLeaveRequest } from '../../operations/leaveRequest';
+import { createLeaveRequest, dashboardLeaveRequestCounts, getAllLeaveList, getAllLeaveSummaryList, getLeaveRequestRecordByEmployeeId, getLeaveSummaryRecordById, updateLeaveRequest } from '../../operations/leaveRequest';
 import { ILeaveRequest } from '../../../types/models.types';
 import mongoose from 'mongoose';
 import { isNil } from 'lodash';
@@ -109,14 +109,16 @@ async getleaveSummaryList(req: Request, h: ResponseToolkit) {
 
 //LeaveRequestByID
 async getLeaveRecordById(req: Request, h: ResponseToolkit) {
-  const result = await getLeaveRequestRecordById(String(req.params.id)); // ✅ Fix here
+  const employeeId = req.query.employeeId;
+  const result = await getLeaveRequestRecordByEmployeeId(employeeId);
 
-  if (isNil(result)) {
-    return notFound(leaveRequestMessages.USER_NOT_FOUND);
+  if (!result || result.length === 0) {
+    return h.response({ message: "No leave records found" }).code(404);
   }
 
   return result;
-},
+}
+,
 
 //LeaveSummaryById
 async getLeaveSummaryRecordById(req: Request, h: ResponseToolkit) {

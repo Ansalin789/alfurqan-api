@@ -1181,16 +1181,29 @@ export const getClassesStatusCount = async () => {
 };
 
 export const getClassesWiseCount = async () => {
-  const classschedule = await classShedule.aggregate([
+  const classscheduleRegular = await classShedule.aggregate([
     {
       $match: {
-        status: "Active",
+        sessionClassType: "REGULARCLASS",
       },
     },
     {
       $group: {
         _id: null,
         totalRegularClassCount: { $sum: 1 },
+      },
+    },
+  ]);
+   const classscheduleGroup = await classShedule.aggregate([
+    {
+      $match: {
+        sessionClassType: "GROUPCLASS",
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalGroupClassCount: { $sum: 1 },
       },
     },
   ]);
@@ -1209,7 +1222,7 @@ export const getClassesWiseCount = async () => {
     },
   ]);
 
-  return { classschedule, evaluationStats };
+  return { classscheduleRegular, evaluationStats, classscheduleGroup };
 };
 
 export const getStudentList = async (

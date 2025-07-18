@@ -121,11 +121,21 @@ async getAllUsers(req: Request, h: ResponseToolkit) {
   },
 
 //getBYId
-         async getShiftscheduleById(req: Request, h: ResponseToolkit){
-                const result = await getDayWiseShiftSchedule(String(req.params.id));
-          
-            return result;
-              },
+async getShiftscheduleById(req: Request, h: ResponseToolkit) {
+  const id = String(req.query.id);
+  const type = String(req.query.type); // expected: 'teacherId', 'employeeId', etc.
+
+  if (!id || !type) {
+    return h.response({ error: "Missing id or type" }).code(400);
+  }
+
+  // Build the dynamic query object
+  const query: Record<string, string> = {};
+  query[type] = id;
+
+  const result = await getDayWiseShiftSchedule(query);
+  return result;
+}
 
 
 

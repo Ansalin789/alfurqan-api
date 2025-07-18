@@ -236,10 +236,11 @@ cron.schedule("0 0 * * *", async () => {
     joiningDate: { $gte: startOfDayIST, $lte: endOfDayIST }
   });
   for(const evaluation of getPaymentDetails){
-  
   if( evaluation.classType == "REGULARCLASS"&& evaluation.weeklySlots && (!evaluation.paymentStatus||evaluation.paymentStatus == "Pending" || evaluation.paymentStatus == "" )){
-    removeBookedSlots(evaluation.joiningDate.toString(), evaluation.weeklySlots, evaluation.teacher.teacherId);
-  }
-  
+    console.log("deleting booked");
+     await removeBookedSlots(evaluation.joiningDate.toString(), evaluation.weeklySlots, evaluation.teacher.teacherId);
+  } 
 }
 });
+
+

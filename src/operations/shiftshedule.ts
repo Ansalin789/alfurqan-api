@@ -39,10 +39,25 @@ export const getAllTeachers = async (
 };
 
 
+interface ShiftScheduleQuery {
+  teacherId?: string;
+  academicCoachId?: string;
+  supervisorId?: string;
+  employeeId?: string;
+}
+
 export const getDayWiseShiftSchedule = async (
-  id: string
+  query: ShiftScheduleQuery
 ): Promise<any[] | null> => {
-  const schedule = await usershiftschedule.findOne({ teacherId: id }).lean();
+  // Dynamically build the filter object
+  const filter: any = {};
+
+  if (query.teacherId) filter.teacherId = query.teacherId;
+  else if (query.academicCoachId) filter.academicCoachId = query.academicCoachId;
+  else if (query.supervisorId) filter.supervisorId = query.supervisorId;
+  else if (query.employeeId) filter.employeeId = query.employeeId;
+
+  const schedule = await usershiftschedule.findOne(filter).lean();
 
   if (!schedule) {
     return null;
