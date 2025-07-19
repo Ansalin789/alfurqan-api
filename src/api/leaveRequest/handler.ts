@@ -64,16 +64,22 @@ export default {
 
 async updateLeaveRequestHandler(req: Request, h: ResponseToolkit) {
   try {
-    const { employeeId } = req.params as { employeeId: string };
+    const { id } = req.params as { id: string };
+    console.log("Received leave _id:", id);
 
-    if (!mongoose.Types.ObjectId.isValid(employeeId)) {
-      return h.response({ error: "Invalid employeeId format" }).code(400);
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      console.error("Invalid leave _id format");
+      return h.response({ error: "Invalid leave request ID format" }).code(400);
     }
 
     const payload = req.payload as Partial<ILeaveRequest>;
-    const result = await updateLeaveRequest(employeeId, payload);
+    console.log("Payload received for update:", payload);
+
+    const result = await updateLeaveRequest(id, payload);  // now passing _id
+    console.log("Update result:", result);
 
     if (result.error) {
+      console.error("Update failed with error:", result.error);
       return h.response({ error: result.error }).code(400);
     }
 
@@ -82,11 +88,14 @@ async updateLeaveRequestHandler(req: Request, h: ResponseToolkit) {
       data: result,
     }).code(200);
   } catch (error) {
+    console.error("Unexpected error during leave request update:", error);
     return h.response({
       error: error instanceof Error ? error.message : error,
     }).code(500);
   }
-},
+}
+
+,
 
 
 
