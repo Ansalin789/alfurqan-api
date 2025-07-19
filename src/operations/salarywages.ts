@@ -114,3 +114,45 @@ export const getAllSalaryList = async (
     salarywages: unifiedSalaryList
   };
 };
+
+
+export const getAllSalaryCardCounts = async (
+  params: GetAllRecordsParams
+): Promise<{
+  totalCount: number;
+  salarywages: ISalarywagesCreate[];
+  totalSalaryPaid: number;
+  totalPendingSalary: number;
+  balanceSalary: number;
+}> => {
+
+
+  // ✅ Simulated or actual merged list from source(s)
+  const SalaryList = await salaryandwages.find(); // get all salary records
+
+  // Calculate totals, etc. using SalaryList
+
+  let totalSalaryPaid = 0;
+  let totalPendingSalary = 0;
+
+  for (const salary of SalaryList) {
+    const amount = parseFloat(salary.salaryAmount);
+    if (isNaN(amount)) continue;
+
+    if (salary.paymentStatus === "Paid") {
+      totalSalaryPaid += amount;
+    } else if (salary.paymentStatus === "Pending") {
+      totalPendingSalary += amount;
+    }
+  }
+
+  const balanceSalary = totalSalaryPaid - totalPendingSalary;
+
+  return {
+    totalCount: SalaryList.length,
+    salarywages: SalaryList,
+    totalSalaryPaid,
+    totalPendingSalary,
+    balanceSalary,
+  };
+};

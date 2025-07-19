@@ -30,6 +30,7 @@ import assignment from "../models/assignments";
 import { sendNotification } from "./notification";
 import { getIO } from "../shared/socket";
 import realtimemessage from "../models/realtimemessage";
+import dayjs from "dayjs";
 
 type AssignmentItem = {
   assignmentId: string;
@@ -1533,10 +1534,58 @@ const currentDate = new Date()
         $gte: startOfDayIST,
         $lte: endOfDayIST,
       },
-      status: "Active"
+      status: "Active",
+      sessionStatus: "NotCompleted"
   });
+const now = new Date();
+const hours = now.getHours();
+const minutes = now.getMinutes();
+
+// Always pad single digits:
+const formattedTime = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+
+console.log("current time",formattedTime);
+
 
 for(const scheduleClass of getClasses){
+
+const dateStr = dayjs(scheduleClass.startDate).format("YYYY-MM-DD");
+
+// Full class start datetime
+const classEndDateTime = dayjs(`${dateStr} ${scheduleClass.endTime}`, `YYYY-MM-DD HH:mm`);
+
+// Current datetime
+const now = dayjs();
+
+console.log(`Class ends at: ${classEndDateTime.format()}`);
+console.log(`Now: ${now.format()}`);
+
+// Check if class start time is before now
+if (classEndDateTime.isBefore(now)) {
+  await ClassScheduleModel.findOneAndUpdate(
+  {_id:new Types.ObjectId(scheduleClass._id)},
+   {
+      $set: {
+       sessionStatus: "Completed"
+      },
+    },
+    { new: true }
+
+).lean();
+  console.log("✅ Session status: Completed");
+} else {
+    await ClassScheduleModel.findOneAndUpdate(
+  {_id:new Types.ObjectId(scheduleClass._id)},
+   {
+      $set: {
+       sessionStatus: "NotCompleted"
+      },
+    },
+    { new: true }
+
+).lean();
+  console.log("⏳ Session status: Not Completed");
+}
 const [startHour, startMinute] = scheduleClass.startTime[0].split(":").map(Number);
 const totalMinutes = startHour * 60 + startMinute + 15;
 const attendanceHour = Math.floor(totalMinutes / 60);
@@ -1546,17 +1595,16 @@ console.log("Attendance Time:", attendanceTime);
 
 const studentSessionStartTimes = await getSessionTime(scheduleClass.student.studnetSessionStart) ; 
 const teacherSessionStartTime = await getSessionTime(scheduleClass.teacher.teacherSessionStart) ;
-console.log("studentSessionStartTimes>>",studentSessionStartTimes);
-console.log("teacherSessionStartTime>>",teacherSessionStartTime);
+
 
 if(scheduleClass.studentAttendee == ""){
  await studentAttendanceUpdate(attendanceTime,studentSessionStartTimes,scheduleClass);
 };
-//console.log("studentAttendance>>>>>",studentAttendance);
+
  if(scheduleClass.teacherAttendee==""){
  await teacherAttendanceUpdate(attendanceTime,teacherSessionStartTime,scheduleClass);
 };
-///console.log("teacherAttendance>>>>>",teacherAttendance);
+
 const sessionlHours = await getSessionTotalHours(studentSessionStartTimes,teacherSessionStartTime,scheduleClass);
 
 }
@@ -1587,39 +1635,45 @@ const minMinute = minMinutes % 60;
 const earliestTime = `${minHour.toString().padStart(2, "0")}:${minMinute.toString().padStart(2, "0")}`;
 return earliestTime;
 };
-async function studentAttendanceUpdate(attendanceTime:any,studentSessionStartTimes:any,scheduleClass:any ) {
+async function studentAttendanceUpdate(
+  attendanceTime:any,studentSessionStartTimes:any,scheduleClass:any ) {
+const dateStr = moment(scheduleClass.startDate).format("YYYY-MM-DD");
+const studentSessionStart = dayjs(`${dateStr} ${studentSessionStartTimes}`, "YYYY-MM-DD HH:mm");
+
+console.log("Attendance time:", attendanceTime.format());
+console.log("Session starts at:", studentSessionStart.format());
+
 let studentAttendance;
-  if( attendanceTime>studentSessionStartTimes){
- studentAttendance = await ClassScheduleModel.findOneAndUpdate(
-  {_id:new Types.ObjectId(scheduleClass._id)},
-   {
-      $set: {
-       studentAttendee: "present"
-      },
-    },
-    { new: true }
 
-).lean();
-}else if(attendanceTime<=studentSessionStartTimes){
- studentAttendance = await ClassScheduleModel.findOneAndUpdate(
-  {_id:new Types.ObjectId(scheduleClass._id)},
-   {
-      $set: {
-       studentAttendee: "absent"
-      },
-    },
+if (attendanceTime.isBefore(studentSessionStart) || attendanceTime.isSame(studentSessionStart)) {
+  // Arrived before or exactly at session start time — present
+  studentAttendance = await ClassScheduleModel.findOneAndUpdate(
+    { _id: new Types.ObjectId(scheduleClass._id) },
+    { $set: { studentAttendee: "present" } },
     { new: true }
-
-).lean();
+  ).lean();
+  console.log("✅ Student is present");
+} else {
+  // Arrived late — absent
+  studentAttendance = await ClassScheduleModel.findOneAndUpdate(
+    { _id: new Types.ObjectId(scheduleClass._id) },
+    { $set: { studentAttendee: "absent" } },
+    { new: true }
+  ).lean();
+  console.log("❌ Student is absent");
 }
-console.log("studentAttendance>>>>>>", studentAttendance);
 
-return studentAttendance;
 };
 
-async function teacherAttendanceUpdate(attendanceTime: string, teacherSessionStartTime: any, scheduleClass: any ) {
-let teacherAttendance;
-  if(attendanceTime>teacherSessionStartTime){
+async function teacherAttendanceUpdate(attendanceTime: any, teacherSessionStartTime: any, scheduleClass: any ) {
+
+const dateStr = moment(scheduleClass.startDate).format("YYYY-MM-DD");
+const teacherSessionStart = dayjs(`${dateStr} ${teacherSessionStartTime}`, "YYYY-MM-DD HH:mm");
+
+console.log("Attendance time:", attendanceTime.format());
+console.log("Session starts at:", teacherSessionStart.format());
+  let teacherAttendance;
+  if(attendanceTime.isBefore(teacherSessionStart) || attendanceTime.isSame(teacherSessionStart)){
  teacherAttendance = await ClassScheduleModel.findOneAndUpdate(
   {_id:new Types.ObjectId(scheduleClass._id)},
    {
@@ -1630,7 +1684,9 @@ let teacherAttendance;
     { new: true }
 
 ).lean();
-}else if(attendanceTime<=teacherSessionStartTime){
+  console.log("✅ teacher is present");
+
+}else{
  teacherAttendance = await ClassScheduleModel.findOneAndUpdate(
   {_id:new Types.ObjectId(scheduleClass._id)},
    {
@@ -1641,6 +1697,8 @@ let teacherAttendance;
     { new: true }
 
 ).lean();
+  console.log("✅ teacher is present");
+
 }
 console.log("teacherAttendance>>>>>>", teacherAttendance);
 return teacherAttendance;

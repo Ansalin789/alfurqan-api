@@ -246,6 +246,13 @@ cron.schedule("0 0 * * *", async () => {
 
 // cron  run 5 mins once
 cron.schedule("*/5 * * * *", async () => {
+  try{
   console.log("🧹 attendance and earnings uupdate schedule");
     updateEarningsCalculation();
+  }
+  catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("❌ Unexpected error in earnings update cron:", message);
+  }
+
 });

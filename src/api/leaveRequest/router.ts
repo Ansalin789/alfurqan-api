@@ -18,7 +18,7 @@ const register = async (server: Server): Promise<void> => {
     },
     {
       method: "PUT",
-      path: "/leaverequest/{employeeId}",
+      path: "/leaverequest/{id}",
       options: {
         handler: handler.updateLeaveRequestHandler,
         description: leaveRequestMessages.LIST,

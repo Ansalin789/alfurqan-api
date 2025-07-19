@@ -1,7 +1,7 @@
 import { Request, ResponseToolkit } from "@hapi/hapi";
 import { z } from "zod";
 import { zodExpenseSchema } from "../../models/expense";
-import { createExpense, getExpenses } from "../../operations/expense";
+import { createExpense, getAllExpensesCardCounts, getExpenses } from "../../operations/expense";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 
 
@@ -59,5 +59,15 @@ export default {
      });
      return getExpenses(query);
    },
+
+   async getAllExpensesCardCount(req: Request, h: ResponseToolkit) {
+    const { query } = getExpenseInputValidation.parse({
+      query: {
+        ...req.query,
+        filterValues: req.query?.filterValues ? JSON.parse(req.query.filterValues) : {},
+      },
+    });
+    return getAllExpensesCardCounts();
+  },
 
 }

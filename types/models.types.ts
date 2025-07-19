@@ -1901,6 +1901,8 @@ export interface ILeaveRequestCreate {
   toDate: Date,
   leaveType: string,
   leaveStatus: string,
+   deductionDays?: string;
+  approvedDays: string;
   approvedId: string,
   approvedName: string,
   reason: string,
@@ -1921,6 +1923,8 @@ export interface ILeaveRequest extends Document {
   toDate: Date,
   leaveType: string,
   leaveStatus: string,
+  deductionDays?: string;
+  approvedDays: string;
   approvedId: string,
   approvedName: string,
   reason: string,

@@ -59,71 +59,44 @@ export const createLeaveRequest = async (
 //Update leave summary
 
 
-const DEFAULT_MONTHLY_QUOTA = 5;
-
 export const updateLeaveRequest = async (
-  employeeId: string,
+  leaveRequestId: string,
   updates: Partial<ILeaveRequest>
 ): Promise<{
   updatedLeave?: ILeaveRequest;
-  leavesTaken?: number;
-  remainingLeaves?: number;
   error?: any;
 }> => {
   try {
-    // 1. Get the latest leave request for the employee
-    const existingLeave = await LeaveRequestModel.findOne({ employeeId }).sort({ createdDate: -1 }).exec();
-    if (!existingLeave) return { error: "Leave request not found" };
+    console.log("Searching for leave request by _id:", leaveRequestId);
+    const existingLeave = await LeaveRequestModel.findById(leaveRequestId).exec();
 
-    // 2. Determine date range for updated or existing leave
-    const from = new Date(updates.fromDate || existingLeave.fromDate);
-    const to = new Date(updates.toDate || existingLeave.toDate);
-    const thisLeaveDays = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-
-    // 3. Define month range
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-    // 4. Fetch other approved leaves for this employee in the current month
-    const approvedLeaves = await LeaveRequestModel.find({
-      employeeId,
-      leaveStatus: "APPROVED",
-      _id: { $ne: existingLeave._id },
-      fromDate: { $gte: monthStart, $lte: monthEnd },
-    });
-
-    // 5. Sum days from approved leaves (excluding current)
-    const takenSoFar = approvedLeaves.reduce((sum, leave) => {
-      const fromDate = new Date(leave.fromDate);
-      const toDate = new Date(leave.toDate);
-      const days = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-      return sum + days;
-    }, 0);
-
-    const isBeingApproved = updates.leaveStatus === "APPROVED";
-    const totalWithThis = isBeingApproved ? takenSoFar + thisLeaveDays : takenSoFar;
-
-    // 6. Validate leave quota only for APPROVED
-    if (isBeingApproved && totalWithThis > DEFAULT_MONTHLY_QUOTA) {
-      return {
-        error: `Leave quota exceeded. Requested ${totalWithThis} days, but monthly quota is ${DEFAULT_MONTHLY_QUOTA}.`,
-        leavesTaken: takenSoFar,
-        remainingLeaves: DEFAULT_MONTHLY_QUOTA - takenSoFar,
-      };
+    if (!existingLeave) {
+      console.warn("Leave request not found for _id:", leaveRequestId);
+      return { error: "Leave request not found" };
     }
 
-    // 7. Update the leave request document
+    if (!updates.fromDate || !updates.toDate || updates.approvedDays == null) {
+      console.warn("Missing required fields in update:", updates);
+      return { error: "Missing required fields: fromDate, toDate, approvedDays" };
+    }
+
+    console.log("Updating leave request with:", updates);
     const updatedLeave = await LeaveRequestModel.findByIdAndUpdate(
-      existingLeave._id,
+      leaveRequestId,
       updates,
       { new: true }
     ).exec();
-    if (!updatedLeave) return { error: "Failed to update leave request." };
 
-    // 8. Upsert summary per employeeId
+    if (!updatedLeave) {
+      console.error("Failed to update leave request.");
+      return { error: "Failed to update leave request." };
+    }
+
+    console.log("Leave request updated:", updatedLeave);
+    console.log("Upserting LeaveSummaryModel...");
+
     await LeaveSummaryModel.findOneAndUpdate(
-      { employeeId: updatedLeave.employeeId }, // single summary per employee
+      { employeeId: updatedLeave.employeeId },
       {
         employeeId: updatedLeave.employeeId,
         name: updatedLeave.name,
@@ -132,8 +105,8 @@ export const updateLeaveRequest = async (
         toDate: updatedLeave.toDate,
         leaveType: updatedLeave.leaveType,
         leaveStatus: updatedLeave.leaveStatus,
-        leavesTaken: totalWithThis.toString(),
-        remainingLeaves: (DEFAULT_MONTHLY_QUOTA - totalWithThis).toString(),
+        approvedDays: updates.approvedDays,
+        deductionDays: updates.deductionDays,
         approvedId: updatedLeave.approvedId,
         approvedName: updatedLeave.approvedName,
         reason: updatedLeave.reason,
@@ -148,13 +121,15 @@ export const updateLeaveRequest = async (
 
     return {
       updatedLeave,
-      leavesTaken: totalWithThis,
-      remainingLeaves: DEFAULT_MONTHLY_QUOTA - totalWithThis,
     };
   } catch (error) {
+    console.error("Error in updateLeaveRequest:", error);
     return { error: error instanceof Error ? error.message : error };
   }
 };
+
+
+
 
 
 

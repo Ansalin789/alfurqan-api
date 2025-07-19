@@ -19,6 +19,17 @@ const register = async (server: Server): Promise<void> => {
           }, },
       },
  
+      {
+        method: "GET",
+        path: "/salarywagesCardCount",
+        options: {
+          handler: handler.getAllSalaryCard,
+          // description: userMessages.CREATE,
+          tags: ["api", "expense"],
+          auth: {
+            strategies: ["jwt"],
+          }, },
+      },
 
   ];
   server.route(routes);
