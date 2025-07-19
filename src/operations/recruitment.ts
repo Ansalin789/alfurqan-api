@@ -308,7 +308,7 @@ console.log("Teacher portal created:", saveTeacher);
        classType:{
             className: "TRAILCLASS",
             hoursMins: "1 day",
-            rate: 1,
+            rate: 2,
             currency: "$",
         },
        status:"Active",
@@ -322,8 +322,8 @@ console.log("Teacher portal created:", saveTeacher);
       employeeId: saveTeacher.userId,
              classType:{
             className: "REGULARCLASS",
-            hoursMins: "30 min",
-            rate: 2,
+            hoursMins: "60 min",
+            rate: 4,
             currency: "$",
         },
        status:"Active",
@@ -339,7 +339,7 @@ console.log("Teacher portal created:", saveTeacher);
              classType:{
             className: "GRUOPCLASS",
             hoursMins: "60 min",
-            rate: 4,
+            rate: 6,
             currency: "$",
         },
        status:"Active",
