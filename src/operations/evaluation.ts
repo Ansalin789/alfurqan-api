@@ -568,8 +568,8 @@ export const getTotalTrialClassRequestCount = async() => {
       $group: {
         _id: null,
         totalCount: { $sum: 1 },
-        maleCount: { $sum: { $cond: [{ $eq: ["$student.studentGender", "male"] }, 1, 0] } },
-        femaleCount: { $sum: { $cond: [{ $eq: ["$student.studentGender", "female"] }, 1, 0] } },
+        maleCount: { $sum: { $cond: [{ $eq: ["$student.studentGender", "Male"] }, 1, 0] } },
+        femaleCount: { $sum: { $cond: [{ $eq: ["$student.studentGender", "Female"] }, 1, 0] } },
         completedCount: { $sum: { $cond: [{ $eq: ["$trialClassStatus", "COMPLETED"] }, 1, 0] } },
         pendingCount: { $sum: { $cond: [{ $eq: ["$trialClassStatus", ""] }, 1, 0] } },
         inprogressCount: { $sum: { $cond: [{ $eq: ["$trialClassStatus", "INPROGRESS"] }, 1, 0] } },

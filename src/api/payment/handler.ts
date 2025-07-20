@@ -255,7 +255,7 @@ for (const [day, slots] of Object.entries(weeklySlots)) {
           sessionsEndtime: "",
           teacherAttendee: "",
           studentAttendee: "",
-          sessionStatus: "",
+          sessionStatus: "NotCompleted",
           classLink: meetingId,
           classDay: day,
           startTime: start,
