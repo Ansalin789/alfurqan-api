@@ -576,7 +576,50 @@ export interface IClassSchedule extends Document{
   earnings?: number;
 
 }
-
+export type QuestionType = "quiz" | "writing" | "reading" | "image" | "wordmatch";
+export type ContentType = "text" | "audio" | "image";
+export type AnswerType = "choose" | "trueorfalse" | "nooption"
+export interface IAdminAssignmentCreate {
+  levelId: string;
+  levelName: string;
+  courseId: string;
+  courseName: string;
+  assignmentName: string;
+  questions: 
+  {
+  assignmentType: QuestionType;       
+  questionName: string;            
+  question: 
+  {
+  contentType: ContentType;                         
+  question: string | string[] | Buffer; 
+  answerType : AnswerType;
+  options?: string[];              
+  correctAnswer: string | string[];      
+  }
+  }[];
+}
+export interface IAdminAssignment extends Document{
+  levelId: string;
+  levelName: string;
+  courseId: string;
+  courseName: string;
+   assignmentId: string;
+   assignmentName: string;
+   assignmentType:string;
+   questionName: string;
+   chooseType?: boolean;
+  trueorfalseType?: boolean;
+  question?: string;
+   options?: string[];
+  audioFile?: Buffer;
+  uploadFile?: Buffer;
+  answerValidation: string;
+   createdDate: Date;
+  createdBy: string;
+  updatedDate: Date;
+  updatedBy: string;
+} 
 export interface IClassScheduleCreate{
   student: {
     studentId?: string;
