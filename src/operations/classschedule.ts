@@ -1640,8 +1640,8 @@ async function studentAttendanceUpdate(
 const dateStr = moment(scheduleClass.startDate).format("YYYY-MM-DD");
 const studentSessionStart = dayjs(`${dateStr} ${studentSessionStartTimes}`, "YYYY-MM-DD HH:mm");
 
-console.log("Attendance time:", attendanceTime.format());
-console.log("Session starts at:", studentSessionStart.format());
+//console.log("Attendance time:", attendanceTime.format());
+//console.log("Session starts at:", studentSessionStart.format());
 
 let studentAttendance;
 
