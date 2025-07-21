@@ -1561,12 +1561,13 @@ console.log(`Class ends at: ${classEndDateTime.format()}`);
 console.log(`Now: ${now.format()}`);
 
 // Check if class start time is before now
-if (classEndDateTime.isBefore(now)) {
+if (now.isAfter(classEndDateTime)) {
   await ClassScheduleModel.findOneAndUpdate(
   {_id:new Types.ObjectId(scheduleClass._id)},
    {
       $set: {
-       sessionStatus: "Completed"
+       sessionStatus: "Completed",
+        scheduleStatus: "Completed"
       },
     },
     { new: true }
@@ -1578,7 +1579,8 @@ if (classEndDateTime.isBefore(now)) {
   {_id:new Types.ObjectId(scheduleClass._id)},
    {
       $set: {
-       sessionStatus: "NotCompleted"
+       sessionStatus: "NotCompleted",
+      
       },
     },
     { new: true }
@@ -1596,16 +1598,17 @@ console.log("Attendance Time:", attendanceTime);
 const studentSessionStartTimes = await getSessionTime(scheduleClass.student.studnetSessionStart) ; 
 const teacherSessionStartTime = await getSessionTime(scheduleClass.teacher.teacherSessionStart) ;
 
-
-if(scheduleClass.studentAttendee == ""){
+const studentSessionEndTimes = await getSessionTime(scheduleClass.student.studnetSessionEnd) ; 
+const teacherSessionEndTime = await getSessionTime(scheduleClass.teacher.teacherSessionEnd) ;
+ if(scheduleClass.studentAttendee == ""){
  await studentAttendanceUpdate(attendanceTime,studentSessionStartTimes,scheduleClass);
-};
+ };
 
- if(scheduleClass.teacherAttendee==""){
+  if(scheduleClass.teacherAttendee==""){
  await teacherAttendanceUpdate(attendanceTime,teacherSessionStartTime,scheduleClass);
-};
+ };
 
-const sessionlHours = await getSessionTotalHours(studentSessionStartTimes,teacherSessionStartTime,scheduleClass);
+const sessionlHours = await getSessionTotalHours(studentSessionStartTimes,teacherSessionStartTime,scheduleClass, studentSessionEndTimes,teacherSessionEndTime);
 
 }
 }catch(error) {
@@ -1646,7 +1649,7 @@ console.log("Attendance time:", studentAttendanceTime.format());
 
 let studentAttendance;
 
-if (studentAttendanceTime.isBefore(studentSessionStart) || studentAttendanceTime.isSame(studentSessionStart)) {
+if (studentSessionStart.isBefore(studentAttendanceTime) || studentAttendanceTime.isSame(studentSessionStart)) {
   // Arrived before or exactly at session start time — present
   studentAttendance = await ClassScheduleModel.findOneAndUpdate(
     { _id: new Types.ObjectId(scheduleClass._id) },
@@ -1672,10 +1675,10 @@ const dateStr = moment(scheduleClass.startDate).format("YYYY-MM-DD");
 const teacherSessionStart = dayjs(`${dateStr} ${teacherSessionStartTime}`, "YYYY-MM-DD HH:mm");
 const teacherAttendanceTime: any = dayjs(`${dateStr} ${attendanceTime}`, "YYYY-MM-DD HH:mm");
 
-console.log("Attendance time:", teacherAttendanceTime.format());
-console.log("Session starts at:", teacherSessionStart.format());
+console.log("Attendance time: ", teacherAttendanceTime.format());
+console.log("Session starts at :", teacherSessionStart.format());
   let teacherAttendance;
-  if(teacherAttendanceTime.isBefore(teacherSessionStart) || teacherAttendanceTime.isSame(teacherSessionStart)){
+  if(teacherSessionStart.isBefore(teacherAttendanceTime) || teacherAttendanceTime.isSame(teacherSessionStart)){
  teacherAttendance = await ClassScheduleModel.findOneAndUpdate(
   {_id:new Types.ObjectId(scheduleClass._id)},
    {
@@ -1707,33 +1710,49 @@ return teacherAttendance;
 }
 
 
-async function getSessionTotalHours(studentSessionStartTimes: any, teacherSessionStartTime: any, scheduleClass: any) {
- 
+async function getSessionTotalHours(studentSessionStartTimes: any, teacherSessionStartTime: any, scheduleClass: any, studentSessionEndTimes: any,teacherSessionEndTime: any) {
+ console.log("studentSessionEndTimes>>", studentSessionEndTimes);
+  console.log("teacherSessionEndTime>>", teacherSessionEndTime);
+
   // Convert to minutes
 const [studentHour, studentMinute] = studentSessionStartTimes.split(":").map(Number);
 const [teacherHour, teacherMinute] = teacherSessionStartTime.split(":").map(Number);
 
+const [studentEndHour, studentEndMinute] = studentSessionEndTimes.split(":").map(Number);
+const [teacherEndHour, teacherEndMinute] = teacherSessionEndTime.split(":").map(Number);
+
+const studentEndMinutes = studentEndHour * 60 + studentEndMinute;
+const teacherEndMinutes = teacherEndHour * 60 + teacherEndMinute;
 const studentMinutes = studentHour * 60 + studentMinute;
 const teacherMinutes = teacherHour * 60 + teacherMinute;
 
 const earliestMinutes = Math.min(studentMinutes, teacherMinutes);
-
+const lateMinutes = Math.max(studentEndMinutes, teacherEndMinutes);
 // Convert back to HH:mm
 const earliestHour = Math.floor(earliestMinutes / 60).toString().padStart(2, "0");
 const earliestMinute = (earliestMinutes % 60).toString().padStart(2, "0");
 
+const latestHour = Math.floor(lateMinutes / 60).toString().padStart(2, "0");
+const latestMinute = (lateMinutes % 60).toString().padStart(2, "0");
+
 const earliestTime = `${earliestHour}:${earliestMinute}`;
+const latestTime = `${latestHour}:${latestMinute}`;
+console.log("earliestTime>>", earliestTime);
+console.log("latestTime>>", latestTime);
+
 if(scheduleClass.studentAttendee || scheduleClass.teacherAttendee && scheduleClass.sessionStarttime == ""){
 let sessioStartUpdate = await ClassScheduleModel.findOneAndUpdate(
   {_id:new Types.ObjectId(scheduleClass._id)},
    {
       $set: {
-       sessionStarttime: earliestTime.toString()
+       sessionStarttime: earliestTime.toString(),
+       sessionsEndtime : latestTime.toString()
       },
     },
     { new: true }
 
 ).lean();
+console.log("sessioStartUpdate>>>")
 }
 if(scheduleClass?.teacherAttendee == "present"){
 const teacherSessionStartTime = scheduleClass.teacher.teacherSessionStart;
@@ -1765,6 +1784,22 @@ if(scheduleClass.sessionClassType == "REGULARCLASS"){
 const regularClassAmount = 4.00;
 const classDefaultHours = 60;
 const classTotalEarnings = ( totalMinutes/classDefaultHours) * regularClassAmount;
+
+ await ClassScheduleModel.findOneAndUpdate(
+  {_id:new Types.ObjectId(scheduleClass._id)},
+   {
+      $set: {
+       classhour: totalMinutes.toString(),
+       amount: classTotalEarnings
+      },
+    },
+    { new: true }
+
+).lean();
+}else if (scheduleClass.sessionClassType == "GROUPCLASS") {
+const groupClassAmount = 6.00;
+const classDefaultHours = 60;
+const classTotalEarnings = ( totalMinutes/classDefaultHours) * groupClassAmount;
 
  await ClassScheduleModel.findOneAndUpdate(
   {_id:new Types.ObjectId(scheduleClass._id)},
