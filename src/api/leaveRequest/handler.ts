@@ -26,37 +26,33 @@ const createInputValidation = z.object({
 });
 
 export default {
-  async createLeaveRequestHandler( req: Request, h: ResponseToolkit): Promise<ResponseObject> {
-    try {
-      const result = createInputValidation.safeParse({ payload: req.payload });
-  
-      if (!result.success) {
-        return h.response({ error: result.error.flatten() }).code(400);
-      }
-  
-      const { payload } = result.data;
-  
-      const leaveRequest = await createLeaveRequest(payload);
-  
-      if ('error' in leaveRequest) {
-        return h.response({ error: leaveRequest.error }).code(400);
-      }
-  
-      return h
-        .response({
-          message: 'Leave request created successfully',
-          data: {
-            ...leaveRequest,
-            employeeId: leaveRequest.employeeId,
-          },
-        })
-        .code(201);
-    } catch (error) {
-      return h
-        .response({ error: error instanceof Error ? error.message : error })
-        .code(400);
+async createLeaveRequestHandler(req: Request, h: ResponseToolkit): Promise<ResponseObject> {
+  try {
+    const result = createInputValidation.safeParse({ payload: req.payload });
+
+    if (!result.success) {
+      return h.response({ error: result.error.flatten() }).code(400);
     }
+
+    const { payload } = result.data;
+
+    const leaveRequest = await createLeaveRequest(payload);
+
+    if ('error' in leaveRequest) {
+      return h.response({ error: leaveRequest.error }).code(400);
+    }
+
+    return h.response({
+      message: 'Leave request processed successfully',
+      data: leaveRequest,
+    }).code(201);
+  } catch (error) {
+    return h.response({
+      error: error instanceof Error ? error.message : error,
+    }).code(400);
   }
+}
+
 ,
 
 //summary API for Leave
@@ -64,36 +60,32 @@ export default {
 
 async updateLeaveRequestHandler(req: Request, h: ResponseToolkit) {
   try {
-    const { id } = req.params as { id: string };
-    console.log("Received leave _id:", id);
+    const { id } = req.params as { id: string }; // Now summaryId
+    const payload = req.payload as Partial<ILeaveRequest>;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      console.error("Invalid leave _id format");
-      return h.response({ error: "Invalid leave request ID format" }).code(400);
+      return h.response({ error: "Invalid leave summary ID format" }).code(400);
     }
 
-    const payload = req.payload as Partial<ILeaveRequest>;
-    console.log("Payload received for update:", payload);
-
-    const result = await updateLeaveRequest(id, payload);  // now passing _id
-    console.log("Update result:", result);
+    const result = await updateLeaveRequest(id, payload); // id = summaryId
 
     if (result.error) {
-      console.error("Update failed with error:", result.error);
       return h.response({ error: result.error }).code(400);
     }
 
     return h.response({
-      message: "Leave request updated successfully",
-      data: result,
+      message: "Leave summary and matching request updated successfully",
+      data: result.updatedLeave,
+      totalLeaveCounts: result.totalCounts,
     }).code(200);
   } catch (error) {
-    console.error("Unexpected error during leave request update:", error);
     return h.response({
       error: error instanceof Error ? error.message : error,
     }).code(500);
   }
 }
+
+
 
 ,
 

@@ -4,129 +4,260 @@ import LeaveRequestModel from "../models/leaverequest";
 import User from "../models/users";
 import LeaveSummaryModel from "../models/leavesummary"
 import AppLogger from "../helpers/logging";
-import { leaveStatus } from "../config/messages";
-import leaverequest from "../models/leaverequest";
+import leavesummary from "../models/leavesummary";
+
 
 export const createLeaveRequest = async (
-    payload: Partial<ILeaveRequestCreate> 
-  ): Promise<ILeaveRequest | { error: any }> => {
-    try {
-      // 1. Find employee by name
-      const employee = await User.findOne({ _id: new Types.ObjectId(payload.employeeId) }).exec();
-            console.log(">>>", employee);
+  payload: Partial<ILeaveRequestCreate>
+): Promise<
+  ILeaveRequest & {
+    totalCounts: {
+      sickLeave: number;
+      casualLeave: number;
+      paidLeave: number;
+    };
+  } | { error: any }
+> => {
+  try {
+    const employee = await User.findOne({ _id: new Types.ObjectId(payload.employeeId) }).exec();
+    if (!employee) return { error: "Employee not found with the given ID." };
 
-      if (!employee) {
-        return { error: "Employee not found with the given name." };
+    const admin = await User.findOne({
+      userName: payload.createdBy,
+      role: { $in: ["ADMIN"] },
+    }).exec();
+    if (!admin) return { error: "Admin not found with the given createdBy." };
+
+    const approvedDays = Number(payload.approvedDays) || 0;
+    const deductionDays = Number(payload.deductionDays) || 0;
+
+    const basePayload = {
+      ...payload,
+      name: employee.userName,
+      employeeId: employee._id.toString(),
+      role: Array.isArray(employee.role) ? employee.role[0] : employee.role,
+      approvedId: admin._id.toString(),
+      approvedName: admin.userName,
+    };
+
+    const existingLeaveRequest = await LeaveRequestModel.findOne({
+      employeeId: basePayload.employeeId,
+      leaveType: basePayload.leaveType,
+    }).exec();
+
+    let updatedLeaveRequest;
+
+    if (!existingLeaveRequest) {
+      const newRequest = new LeaveRequestModel({
+        ...basePayload,
+        approvedDays,
+        deductionDays,
+      });
+      updatedLeaveRequest = await newRequest.save();
+    } else {
+      updatedLeaveRequest = await LeaveRequestModel.findByIdAndUpdate(
+        existingLeaveRequest._id,
+        {
+          $inc: {
+            approvedDays,
+            deductionDays,
+          },
+          fromDate: payload.fromDate,
+          toDate: payload.toDate,
+          reason: payload.reason,
+          leaveStatus: payload.leaveStatus,
+          status: payload.status,
+          updatedDate: new Date(),
+        },
+        { new: true }
+      ).exec();
+
+      if (!updatedLeaveRequest) {
+        return { error: "Failed to update existing leave request." };
       }
-
-
-      // 2. Find admin by createdBy
-      const admin = await User.findOne({
-        userName: payload.createdBy,
-        role: { $in: ["ADMIN"] }
-      }).exec();
-      if (!admin) {
-        return { error: "Admin not found with the given createdBy." };
-      }
-  
-      // 3. Build payload
-      const fullPayload: ILeaveRequestCreate = {
-        ...payload,
-        name:employee.userName,
-        employeeId: employee._id.toString(),  // Save employeeId (teacher's _id)
-        role: Array.isArray(employee.role) ? employee.role[0] : employee.role,
-        approvedId: admin._id.toString(),
-        approvedName: admin.userName,
-      } as ILeaveRequestCreate;
-  
-      // Save the leave request
-      const newRequest = new LeaveRequestModel(fullPayload);
-      const savedRequest = await newRequest.save();
-  
-      // Return saved leave request with employeeId included
-      return {
-        ...savedRequest.toObject(),
-        employeeId: employee._id.toString(), // Add employeeId to the response
-      };
-    } catch (error) {
-      return { error };
     }
 
- };
-  
+    // Insert into LeaveSummary
+    const newSummary = new LeaveSummaryModel({
+      employeeId: basePayload.employeeId,
+      name: basePayload.name,
+      role: basePayload.role,
+      leaveType: basePayload.leaveType,
+      fromDate: basePayload.fromDate,
+      toDate: basePayload.toDate,
+      leaveStatus: basePayload.leaveStatus,
+      approvedDays,
+      deductionDays,
+      approvedId: basePayload.approvedId,
+      approvedName: basePayload.approvedName,
+      reason: basePayload.reason,
+      status: basePayload.status,
+      createdBy: basePayload.createdBy,
+      createdDate: new Date(),
+    });
+
+    await newSummary.save();
+
+    // ✅ Count total number of summary records per leave type
+    const leaveCounts = await LeaveSummaryModel.aggregate([
+      {
+        $match: {
+          employeeId: basePayload.employeeId,
+        },
+      },
+      {
+        $group: {
+          _id: "$leaveType",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const counts = {
+      sickLeave: 0,
+      casualLeave: 0,
+      paidLeave: 0,
+    };
+
+    for (const entry of leaveCounts) {
+      if (entry._id === "SICK") counts.sickLeave = entry.count;
+      if (entry._id === "CASUAL") counts.casualLeave = entry.count;
+      if (entry._id === "PAID") counts.paidLeave = entry.count;
+    }
+
+    // ✅ Update all LeaveRequest records for that employee
+    await LeaveRequestModel.updateMany(
+      { employeeId: basePayload.employeeId },
+      {
+        sickLeaveCount: counts.sickLeave,
+        casualLeaveCount: counts.casualLeave,
+        paidLeaveCount: counts.paidLeave,
+      }
+    );
+
+    return {
+      ...(updatedLeaveRequest?.toObject() ?? {}),
+      employeeId: employee._id.toString(),
+      totalCounts: counts,
+    };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : error };
+  }
+};
+
+
 
  
 //Update leave summary
-
-
 export const updateLeaveRequest = async (
-  leaveRequestId: string,
+  summaryId: string,
   updates: Partial<ILeaveRequest>
 ): Promise<{
   updatedLeave?: ILeaveRequest;
+  totalCounts?: {
+    sickLeave: number;
+    casualLeave: number;
+    paidLeave: number;
+  };
   error?: any;
 }> => {
   try {
-    console.log("Searching for leave request by _id:", leaveRequestId);
-    const existingLeave = await LeaveRequestModel.findById(leaveRequestId).exec();
+    // Step 1: Find the LeaveSummary record
+    const existingSummary = await LeaveSummaryModel.findById(summaryId).exec();
+    if (!existingSummary) return { error: "Leave summary not found" };
 
-    if (!existingLeave) {
-      console.warn("Leave request not found for _id:", leaveRequestId);
-      return { error: "Leave request not found" };
-    }
+    const approvedDays = Number(updates.approvedDays) || 0;
+    const deductionDays = Number(updates.deductionDays) || 0;
 
-    if (!updates.fromDate || !updates.toDate || updates.approvedDays == null) {
-      console.warn("Missing required fields in update:", updates);
-      return { error: "Missing required fields: fromDate, toDate, approvedDays" };
-    }
+    // Step 2: Update the LeaveSummary document
+    await LeaveSummaryModel.findByIdAndUpdate(summaryId, {
+      ...updates,
+      approvedDays,
+      deductionDays,
+      updatedBy: updates.approvedName || "Admin",
+      updatedDate: new Date(),
+    });
 
-    console.log("Updating leave request with:", updates);
+    // Step 3: Find matching LeaveRequest by employeeId + leaveType
+    const matchingLeaveRequest = await LeaveRequestModel.findOne({
+      employeeId: existingSummary.employeeId,
+      leaveType: existingSummary.leaveType,
+    }).exec();
+
+    if (!matchingLeaveRequest) return { error: "Matching leave request not found" };
+
+    // Step 4: Update the LeaveRequest document
     const updatedLeave = await LeaveRequestModel.findByIdAndUpdate(
-      leaveRequestId,
-      updates,
+      matchingLeaveRequest._id,
+      {
+        ...updates,
+        approvedDays,
+        deductionDays,
+        updatedDate: new Date(),
+      },
       { new: true }
     ).exec();
 
     if (!updatedLeave) {
-      console.error("Failed to update leave request.");
-      return { error: "Failed to update leave request." };
+      return { error: "Failed to update leave request" };
     }
 
-    console.log("Leave request updated:", updatedLeave);
-    console.log("Upserting LeaveSummaryModel...");
-
-    await LeaveSummaryModel.findOneAndUpdate(
-      { employeeId: updatedLeave.employeeId },
+    // Step 5: Recalculate leave counts from LeaveSummary collection
+    const leaveCounts = await LeaveSummaryModel.aggregate([
       {
-        employeeId: updatedLeave.employeeId,
-        name: updatedLeave.name,
-        role: updatedLeave.role,
-        fromDate: updatedLeave.fromDate,
-        toDate: updatedLeave.toDate,
-        leaveType: updatedLeave.leaveType,
-        leaveStatus: updatedLeave.leaveStatus,
-        approvedDays: updates.approvedDays,
-        deductionDays: updates.deductionDays,
-        approvedId: updatedLeave.approvedId,
-        approvedName: updatedLeave.approvedName,
-        reason: updatedLeave.reason,
-        status: updatedLeave.status,
-        createdBy: updatedLeave.approvedName,
-        updatedBy: updatedLeave.approvedName,
-        updatedDate: new Date(),
-        $setOnInsert: { createdDate: new Date() },
+        $match: {
+          employeeId: existingSummary.employeeId,
+        },
       },
-      { upsert: true, new: true }
+      {
+        $group: {
+          _id: "$leaveType",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const counts = {
+      sickLeave: 0,
+      casualLeave: 0,
+      paidLeave: 0,
+    };
+
+    for (const entry of leaveCounts) {
+      if (entry._id === "SICK") counts.sickLeave = entry.count;
+      if (entry._id === "CASUAL") counts.casualLeave = entry.count;
+      if (entry._id === "PAID") counts.paidLeave = entry.count;
+    }
+
+    // Step 6: Update all LeaveRequest records with new counts
+    await LeaveRequestModel.updateMany(
+      { employeeId: existingSummary.employeeId },
+      {
+        sickLeaveCount: counts.sickLeave,
+        casualLeaveCount: counts.casualLeave,
+        paidLeaveCount: counts.paidLeave,
+      }
     );
 
     return {
       updatedLeave,
+      totalCounts: counts,
     };
   } catch (error) {
-    console.error("Error in updateLeaveRequest:", error);
     return { error: error instanceof Error ? error.message : error };
   }
 };
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -225,12 +356,11 @@ export const dashboardLeaveRequestCounts = async (): Promise<{
   approved: number;
   rejected: number;
 }> => {
-  // Fetch counts in parallel
   const [pending, approved, rejected, totalApplication] = await Promise.all([
-    leaverequest.countDocuments({ leaveStatus: "WAITINGLIST" }).exec(),
-    leaverequest.countDocuments({ leaveStatus: "APPROVED" }).exec(),
-    leaverequest.countDocuments({ leaveStatus: "REJECTED" }).exec(),
-    leaverequest.countDocuments().exec(),
+    leavesummary.countDocuments({ leaveStatus: "WAITINGLIST" }).exec(),
+    leavesummary.countDocuments({ leaveStatus: "APPROVED" }).exec(),
+    leavesummary.countDocuments({ leaveStatus: "REJECTED" }).exec(),
+    leavesummary.countDocuments().exec(),
   ]);
 
   return {
@@ -240,5 +370,6 @@ export const dashboardLeaveRequestCounts = async (): Promise<{
     rejected,
   };
 };
+
 
 

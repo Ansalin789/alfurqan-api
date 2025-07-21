@@ -16,17 +16,19 @@ const register = async (server: Server): Promise<void> => {
         }, 
        },
     },
-    {
-      method: "PUT",
-      path: "/leaverequest/{id}",
-      options: {
-        handler: handler.updateLeaveRequestHandler,
-        description: leaveRequestMessages.LIST,
-        tags: ["api", "LeaveSummary"],
-        auth: {
-          strategies: ["jwt"],
-        }, },
+{
+  method: "PUT",
+  path: "/leavesummary/{id}", // ✅ changed path
+  options: {
+    handler: handler.updateLeaveRequestHandler, // name is fine to keep
+    tags: ["api", "LeaveSummary"],
+    auth: {
+      strategies: ["jwt"],
     },
+  }
+},
+
+
     
        {
             method: "GET",
