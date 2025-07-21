@@ -114,6 +114,21 @@ const register = async (server: Server): Promise<void> => {
       },
     },
 
+     {
+      method: "GET",
+      path: "/dashboard/ac/teachersattendance",
+      options: {
+        handler: handler.getTeacherAttendance,
+        description: dashboardMessages.CARD_COUNT,
+        tags: ["api", "dashboard"],
+        auth: {
+           strategies: ["jwt"],
+         },
+      },
+    },
+
+
+
 
   ];
   server.route(routes);
