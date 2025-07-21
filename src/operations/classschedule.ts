@@ -1638,14 +1638,15 @@ return earliestTime;
 async function studentAttendanceUpdate(
   attendanceTime:any,studentSessionStartTimes:any,scheduleClass:any ) {
 const dateStr = moment(scheduleClass.startDate).format("YYYY-MM-DD");
-const studentSessionStart = dayjs(`${dateStr} ${studentSessionStartTimes}`, "YYYY-MM-DD HH:mm");
+const studentSessionStart: any = dayjs(`${dateStr} ${studentSessionStartTimes}`, "YYYY-MM-DD HH:mm");
+const studentAttendanceTime: any = dayjs(`${dateStr} ${attendanceTime}`, "YYYY-MM-DD HH:mm");
 
-//console.log("Attendance time:", attendanceTime.format());
+console.log("Attendance time:", studentAttendanceTime.format());
 //console.log("Session starts at:", studentSessionStart.format());
 
 let studentAttendance;
 
-if (attendanceTime.isBefore(studentSessionStart) || attendanceTime.isSame(studentSessionStart)) {
+if (studentAttendanceTime.isBefore(studentSessionStart) || studentAttendanceTime.isSame(studentSessionStart)) {
   // Arrived before or exactly at session start time — present
   studentAttendance = await ClassScheduleModel.findOneAndUpdate(
     { _id: new Types.ObjectId(scheduleClass._id) },
@@ -1669,11 +1670,12 @@ async function teacherAttendanceUpdate(attendanceTime: any, teacherSessionStartT
 
 const dateStr = moment(scheduleClass.startDate).format("YYYY-MM-DD");
 const teacherSessionStart = dayjs(`${dateStr} ${teacherSessionStartTime}`, "YYYY-MM-DD HH:mm");
+const teacherAttendanceTime: any = dayjs(`${dateStr} ${attendanceTime}`, "YYYY-MM-DD HH:mm");
 
-console.log("Attendance time:", attendanceTime.format());
+console.log("Attendance time:", teacherAttendanceTime.format());
 console.log("Session starts at:", teacherSessionStart.format());
   let teacherAttendance;
-  if(attendanceTime.isBefore(teacherSessionStart) || attendanceTime.isSame(teacherSessionStart)){
+  if(teacherAttendanceTime.isBefore(teacherSessionStart) || teacherAttendanceTime.isSame(teacherSessionStart)){
  teacherAttendance = await ClassScheduleModel.findOneAndUpdate(
   {_id:new Types.ObjectId(scheduleClass._id)},
    {
