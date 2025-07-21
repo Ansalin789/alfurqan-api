@@ -301,8 +301,8 @@ export const getLeaveRequestRecordByEmployeeId = async (
   const objectId = new Types.ObjectId(employeeId); // Optional: only needed if `_id` filtering is used
 
   const [leaveRecords, counts] = await Promise.all([
-    LeaveRequestModel.find({ employeeId }).lean(), // ✅ return all matching records
-    LeaveRequestModel.aggregate([
+    leavesummary.find({ employeeId }).lean(), // ✅ return all matching records
+    leavesummary.aggregate([
       { $match: { employeeId } },
       {
         $group: {
