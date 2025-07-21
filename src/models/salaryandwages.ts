@@ -1,58 +1,36 @@
 import { model, Schema } from "mongoose";
-import {  z } from "zod";
+import { z } from "zod";
 import { appStatus, commonMessages } from "../config/messages";
 import { ISalarywages } from "../../types/models.types";
-
-// Mongoose Schema
 const salarywagesSchema = new Schema<ISalarywages>(
   {
-    employeeId:{
-      type: String,
-      required: true,
-    },
-    employeeName: {
-      type: String,
-      required: true,
-    },
-    designation:{
-    type:String,
-    required:false,
-    },
-    salaryAmount:{
-    type:String,
-    required:false,
-    },
-    paymentDate	:{
-    type:String,
-    required:false,
-    },
-    paymentStatus:
-    {
-    type:String,
-    required:false,
-    },
+    employeeId: { type: String, required: true },
+    employeeName: { type: String, required: true },
+    employeeMail: { type: String, required: true },
+    phone: { type: Number, required: true },
+    designation: { type: String, required: true },
+
+    salaryAmount: { type: Number, required: true },
+    balanceAmount: { type: Number, required: true },
+    deductionAmount: { type: Number, required: true },
+
+    paymentDate: { type: Date, required: false },
+    paymentStatus: { type: String, required: false },
+    commands: { type: String, required: false },
+    description: { type: String, required: false },
+    paymentMethod: { type: String, required: true },
+
     status: {
       type: String,
       required: true,
       enum: [appStatus.ACTIVE, appStatus.IN_ACTIVE, appStatus.DELETED],
       default: appStatus.ACTIVE,
     },
-    createdDate: {
-      type: String,
-      required :true,
-    },
-    createdBy: {
-      type: String,
-      required: true,
-    },
-    updatedDate: {
-      type: String,
-      required :false,
-    },
-    updatedBy: {
-      type: String,
-      required: false,
-    },
+
+    createdDate: { type: Date, required: true },
+    createdBy: { type: String, required: true },
+    updatedDate: { type: Date, required: false },
+    updatedBy: { type: String, required: false },
   },
   {
     collection: "salarywages",
@@ -60,23 +38,52 @@ const salarywagesSchema = new Schema<ISalarywages>(
   }
 );
 
+
 // Zod Validation Schema
 export const zodsalarywagesSchemaSchema = z.object({
- 
-    employeeID: z.string(),
-    employeeName: z.string(),
-    designation: z.string(),
-    salaryAmount: z.number(),
-    paymentDate :z.string(),
-    paymentStatus :z.string(),
-  status: z.enum([appStatus.ACTIVE, appStatus.IN_ACTIVE, appStatus.DELETED]).default(appStatus.ACTIVE),
-  createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
-    message: commonMessages.INVALID_DATE_FORMAT,
-  }).transform((val) => new Date(val)).optional(),
-  lastUpdatedDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
-    message: commonMessages.INVALID_DATE_FORMAT,
-  }).transform((val) => new Date(val)).optional(),
+  employeeId: z.string(),
+  employeeName: z.string(),
+  employeeMail: z.string(),
+  phone: z.number(),
+  designation: z.string(),
+
+  salaryAmount: z.number(),
+  deductionAmount: z.number(),
+  balanceAmount: z.number(),
+
+  paymentDate: z
+    .string()
+    .refine((val) => !isNaN(Date.parse(val)), {
+      message: commonMessages.INVALID_DATE_FORMAT,
+    })
+    .transform((val) => new Date(val)),
+
+  paymentStatus: z.string(),
+  commands: z.string().optional(),
+  description: z.string().optional(),
+  paymentMethod: z.string(),
+
+  status: z
+    .enum([appStatus.ACTIVE, appStatus.IN_ACTIVE, appStatus.DELETED])
+    .default(appStatus.ACTIVE),
+
+  createdDate: z
+    .string()
+    .refine((val) => !isNaN(Date.parse(val)), {
+      message: commonMessages.INVALID_DATE_FORMAT,
+    })
+    .transform((val) => new Date(val)),
+
+  updatedDate: z
+    .string()
+    .refine((val) => !isNaN(Date.parse(val)), {
+      message: commonMessages.INVALID_DATE_FORMAT,
+    })
+    .transform((val) => new Date(val))
+    .optional(),
+
   createdBy: z.string(),
-  lastUpdatedBy: z.string().optional(),
+  updatedBy: z.string().optional(),
 });
+
 export default model<ISalarywages>("SalaryWages", salarywagesSchema);

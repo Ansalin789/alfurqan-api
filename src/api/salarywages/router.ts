@@ -8,17 +8,17 @@ const register = async (server: Server): Promise<void> => {
     
 
     {
-        method: "GET",
-        path: "/salarywages",
-        options: {
-          handler: handler.getAllSalaryList,
-          // description: userMessages.CREATE,
-          tags: ["api", "expense"],
-          auth: {
-            strategies: ["jwt"],
-          }, },
+      method: "GET",
+      path: "/salarywages",
+      options: {
+        handler: handler.getAllSalaryList,
+        // description: userMessages.CREATE,
+        tags: ["api", "expense"],
+        // auth: {
+        //   strategies: ["jwt"],
+        // }, 
       },
- 
+    },
       {
         method: "GET",
         path: "/salarywagesCardCount",
@@ -29,6 +29,19 @@ const register = async (server: Server): Promise<void> => {
           auth: {
             strategies: ["jwt"],
           }, },
+      },
+
+      {
+        method: "PUT",
+        path: "/salarywages/{employeeId}",
+        options: {
+          handler: handler.updateSalaryWages,
+          // description: userMessages.CREATE,
+          tags: ["api", "expense"],
+          // auth: {
+          //   strategies: ["jwt"],
+          // },
+         },
       },
 
   ];
