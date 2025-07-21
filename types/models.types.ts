@@ -1958,12 +1958,15 @@ export interface ILeaveRequestCreate {
   toDate: Date,
   leaveType: string,
   leaveStatus: string,
-   deductionDays?: string;
-  approvedDays: string;
+   deductionDays?: number;
+  approvedDays: number;
   approvedId: string,
   approvedName: string,
   reason: string,
   updatedLeave?: string,
+    sickLeaveCount:number,
+  casualLeaveCount:number,
+  paidLeaveCount:number,
   status?: string,
   createdDate?: Date,
   createdBy?: string,
@@ -1980,12 +1983,15 @@ export interface ILeaveRequest extends Document {
   toDate: Date,
   leaveType: string,
   leaveStatus: string,
-  deductionDays?: string;
-  approvedDays: string;
+  deductionDays?: number;
+  approvedDays: number;
   approvedId: string,
   approvedName: string,
   reason: string,
   updatedLeave?: string,
+  sickLeaveCount:number,
+  casualLeaveCount:number,
+  paidLeaveCount:number,
   status?: string,
   createdDate?: Date,
   createdBy?: string,
@@ -2012,6 +2018,8 @@ export interface IleaveSummary {
   createdBy?: string,
   updatedDate?: Date,
   updatedBy?: string,
+   approvedDays: number;
+   deductionDays: number;
 }
 
 
@@ -2034,7 +2042,8 @@ export interface IleaveSummary  extends Document {
   createdBy?: string,
   updatedDate?: Date,
   updatedBy?: string,
-
+ approvedDays: number;
+ deductionDays:number;
 }
 
 export interface TeacherTimeSlots {
