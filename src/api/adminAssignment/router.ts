@@ -20,6 +20,18 @@ const register = async (server: Server): Promise<void> => {
   path: "/adminassignment",
   options: {
     handler: handler.getAdminAssignmentsByCourseAndLevel,
+    description: "Get admin assignments by courseId and levelId",
+    tags: ["api", "admin-assignment"],
+    // auth: {
+    //   strategies: ["jwt"]
+    // }
+  }
+},
+ {
+  method: "GET",
+  path: "/adminassignment/assignment",
+  options: {
+    handler: handler.getAdminAssignmentsByCourseNameAndLevelName,
     description: "Get admin assignments by courseName and levelName",
     tags: ["api", "admin-assignment"],
     // auth: {
@@ -28,18 +40,6 @@ const register = async (server: Server): Promise<void> => {
   }
 }
 
-    // {
-    //   method: "GET",
-    //   path: "/adminassignment",
-    //   options: {
-    //     handler: handler.getAllAssignments,
-    //     description: "Get all admin assignments",
-    //     tags: ["api", "adminassignment"],
-    //     auth: {
-    //       strategies: ["jwt"]
-    //     }
-    //   }
-    // }
   ];
 
   server.route(routes);

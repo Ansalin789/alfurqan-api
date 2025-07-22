@@ -70,5 +70,48 @@ export const getAdminAssignmentsByCourseAndLevel = async (
     return { error };
   }
 };
+export const getAdminAssignmentsByCourseNameAndLevelName = async (
+  courseName: string,
+  levelName: string
+): Promise<{ assignments: any[]; totalCount: number } | { error: any }> => {
+  try {
+    const grouped = await adminassignments.aggregate([
+      {
+        $match: {
+          courseName,
+          levelName,
+        },
+      },
+      {
+        $group: {
+          _id: "$assignmentId",
+          assignmentName: { $first: "$assignmentName" },
+          questionCount: { $sum: 1 },
+          assignments: { $push: "$$ROOT" }, 
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          assignmentId: "$_id",
+          assignmentName: 1,
+          questionCount: 1,
+          assignments: 1,
+        },
+      },
+      {
+        $sort: { assignmentName: 1 },
+      },
+    ]);
+
+    return {
+      assignments: grouped,
+      totalCount: grouped.length,
+    };
+  } catch (error) {
+    console.error("❌ Error fetching grouped questions:", error);
+    return { error };
+  }
+};
 
 

@@ -1,119 +1,223 @@
-import { isNil } from "lodash";
 import {
+  ISalarywages,
   ISalarywagesCreate
 } from "../../types/models.types";
 import { GetAllRecordsParams } from "../shared/enum";
 import salaryandwages from "../models/salaryandwages";
-import otheremployee from "../models/otheremployee";
 import classShedule from "../models/classShedule";
+import EmpWagesModel from "../models/empwages";
+import UserModel from "../models/users";
+import AppLogger from "../helpers/logging";
+
+
+
+
+export const runSalaryCron = async () => {
+  console.log("🔄 Starting salary calculation cron job...");
+  const now = new Date();
+  const currentMonthLabel = `${now.toLocaleString('default', { month: 'short' })} ${now.getFullYear()}`;
+
+  try {
+    // Process all eligible users
+    await processAllUsers(now, currentMonthLabel);
+    console.log("✅ Salary processing completed successfully");
+  } catch (error) {
+    console.error("❌ Salary processing failed:", error);
+  }
+};
+
+const processAllUsers = async (now: Date, monthLabel: string) => {
+  // Get all active users with relevant roles
+  const eligibleUsers = await UserModel.find({
+    role: { $in: ["TEACHER", "SUPERVISOR", "ACADEMICCOACH"] },
+    status: "Active"
+  }).lean();
+
+  console.log(`👥 Found ${eligibleUsers.length} eligible users`);
+
+  for (const user of eligibleUsers) {
+    const designation = user.role.find(r => 
+      ["TEACHER", "SUPERVISOR", "ACADEMICCOACH"].includes(r)
+    )?.toUpperCase();
+
+    if (!designation) continue;
+
+    if (!user.userId) {
+      console.warn(`User ${user.userName} is missing userId, skipping salary record creation.`);
+      return;
+    }
+
+    try {
+      // Check if record exists using atomic operation
+      const result = await salaryandwages.findOneAndUpdate(
+        {
+          employeeId: user.userId,
+          designation,
+          status: "Active"
+        },
+        { $setOnInsert: { 
+          employeeName: user.userName,
+          employeeMail: user.email || "",
+          designation,
+          salaryAmount: designation === "TEACHER" ? "0" : await getFixedSalaryAmount(user.userId),
+          deductionAmount: 0,
+          balanceAmount: designation === "TEACHER" ? 0 : await getFixedSalaryAmount(user.userId),
+          paymentMethod: "Bank Transfer",
+          status: "Active",
+          paymentStatus: "Pending",
+          createdDate: new Date().toISOString(),
+          createdBy: "SYSTEM",
+          paymentDate: new Date().toISOString()
+        }},
+        { 
+          upsert: true,
+          new: true,
+          setDefaultsOnInsert: true
+        }
+      );
+
+      if (!result) {
+        console.log(`🆕 Created initial ${designation} record for ${user.userName}`);
+      } else {
+        console.log(`✅ Existing record found for ${designation} ${user.userName}`);
+      }
+
+      // Process based on designation
+      if (designation === "TEACHER" && user.userId) {
+        await processTeacherSalary(user.userId, now);
+      } else if (now.getDate() <= 3 && user.userId) { // Only process fixed salaries on 1st-3rd
+        await processFixedSalaryEmployee(user.userId, designation, monthLabel);
+      }
+    } catch (err) {
+      console.error(`❌ Error processing ${designation} ${user.userName}:`, err);
+    }
+  }
+};
+
+const getFixedSalaryAmount = async (employeeId: string) => {
+  const wageInfo = await EmpWagesModel.findOne({ employeeId }).lean();
+  if (!wageInfo) {
+    console.warn(`⚠️ No wage info found for employee ${employeeId}`);
+    return 0;
+  }
+  return parseFloat(String(wageInfo.classType.rate).replace(/\$|,/g, '') || "0");
+};
+
+const processTeacherSalary = async (teacherId: string, now: Date) => {
+  try {
+    // 1. Find all payable classes (regardless of processing status)
+    const payableClasses = await classShedule.find({
+      "teacher.teacherId": teacherId,
+      amount: { $exists: true, $ne: "$0.00" }
+    }).lean();
+
+    if (!payableClasses.length) {
+      console.log(`⏩ No payable classes found for teacher ${teacherId}`);
+      return;
+    }
+
+    // 2. Calculate total amount (simple sum)
+    let totalAmount = 0;
+    for (const cls of payableClasses) {
+      const amount = parseFloat(String(cls.amount).replace(/\$|,/g, ""));
+      if (!isNaN(amount)) {
+        totalAmount += amount;
+      }
+    }
+
+    if (totalAmount <= 0) {
+      console.log(`⚠️ No valid payable amount for teacher ${teacherId}`);
+      return;
+    }
+
+    // 3. Update salary record with simple increment
+    await salaryandwages.updateOne(
+      {
+        employeeId: teacherId,
+        designation: "TEACHER",
+        status: "Active"
+      },
+      {
+        $inc: {
+          salaryAmount: totalAmount,
+          balanceAmount: totalAmount
+        },
+        $set: {
+          updatedAt: now,
+          paymentDate: now,
+          isSalaryProcessed: true
+        }
+      }
+    );
+
+    console.log(`➕ Added ₹${totalAmount.toFixed(2)} to TEACHER ${teacherId}`);
+  } catch (error) {
+    console.error(`❌ Error processing salary for teacher ${teacherId}:`, error);
+    throw error;
+  }
+};
+
+const processFixedSalaryEmployee = async (employeeId: string, designation: string, monthLabel: string) => {
+  const salaryAmount = await getFixedSalaryAmount(employeeId);
+  
+  if (salaryAmount <= 0) {
+    return;
+  }
+
+  // Update fixed salary (only updates if record exists)
+  await salaryandwages.updateOne(
+    {
+      employeeId,
+      designation,
+      monthLabel,
+      status: "Active"
+    },
+    {
+      $set: {
+        salaryAmount: salaryAmount.toString(),
+        balanceAmount: salaryAmount,
+        updatedAt: new Date(),
+        paymentDate: new Date()
+      }
+    }
+  );
+
+  console.log(`💰 Updated ${designation} ${employeeId} salary to $${salaryAmount}`);
+};
+
+
+
+
 
 export const getAllSalaryList = async (
   params: GetAllRecordsParams
-): Promise<{ totalCount: number; salarywages: ISalarywagesCreate[] }> => {
+): Promise<{ totalCount: number; expenses: ISalarywages[] }> => {
   const { searchText, sortBy, sortOrder, offset, limit, filterValues } = params;
+
+  // Initialize the query object
   const query: any = {};
 
-  if (searchText) {
-    query.$or = [
-      { name: { $regex: searchText, $options: "i" } },
-      { email: { $regex: searchText, $options: "i" } },
-    ];
-  }
-
-  if (filterValues) {
-    if (filterValues.course) query.course = { $in: filterValues.course };
-    if (filterValues.country) query.country = { $in: filterValues.country };
-    if (filterValues.teacher) query.teacher = { $in: filterValues.teacher };
-    if (filterValues.status) query.status = { $in: filterValues.status };
-  }
-
+  // ✅ Sorting options
   const sortOptions: any = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
-  const salaryQuery = salaryandwages.find(query).sort(sortOptions);
 
-  if (!isNil(offset) && !isNil(limit)) {
-    const skip = Math.max(0, ((Number(offset) ?? 1) - 1) * (Number(limit) ?? 10));
-    salaryQuery.skip(skip).limit(Number(limit) ?? 10);
-  }
+  // ✅ Build the query for fetching expenses
+  const Query = salaryandwages.find(query).sort(sortOptions); // Use `Expense` model here
+  
+ 
+  // ✅ Fetch expenses and the total count
+  const [expenses, totalCount] = await Promise.all([
+    Query.exec(),
+    salaryandwages.countDocuments(query).exec(), // Count the documents that match the query
+  ]);
 
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  const currentDateStr = now.toISOString();
+  // Log total count for debugging
+  AppLogger.info({ totalCount });
 
-  // 1. Fetch Supervisor and Academic Coach salaries
-  const otherSalaries = await otheremployee.find({
-    designation: { $in: ["supervisor", "academic_coach"] }
-  });
-
-  const fixedEmployeeSalaries: ISalarywagesCreate[] = otherSalaries.map(emp => ({
-    employeeId: String(emp._id),
-    employeeName: `${emp.firstName} ${emp.lastName}`,
-    designation: emp.designation === "academic_coach" ? "Academic Coach" : "Supervisor",
-    salaryAmount: String(emp.expectedSalary ?? 0),
-    currency: emp.currency ?? "USD",
-    paymentDate: currentDateStr,
-    paymentStatus: "Paid",
-    status: "Active",
-    createdDate: currentDateStr,
-    createdBy: "system",
-    updatedDate: currentDateStr,
-    updatedBy: "system"
-  }));
-
-  // 2. Calculate teacher salary from class schedules
-  const classScheduleThisMonth = await classShedule.find({
-    startDate: { $gte: startOfMonth, $lte: endOfMonth }
-  });
-
-  const teacherMap: Record<string, { name: string; total: number; currency: string }> = {};
-
-  for (const record of classScheduleThisMonth) {
-    const teacherId = record.teacher?.teacherId ?? record.teacher;
-    const teacherName = record.teacher?.teacherName ?? "Unknown";
-    const currency = record.currency ?? "USD";
-
-    if (!teacherMap[teacherId]) {
-      teacherMap[teacherId] = {
-        name: teacherName,
-        total: 0,
-        currency: currency
-      };
-    }
-
-    teacherMap[teacherId].total += Number(record.amount ?? 0);
-  }
-
-  const teacherSalaryRecords: ISalarywagesCreate[] = Object.entries(teacherMap).map(
-    ([teacherId, data]) => ({
-      employeeId: teacherId,
-      employeeName: data.name,
-      designation: "Teacher",
-      salaryAmount: String(data.total),
-      currency: data.currency,
-      paymentDate: currentDateStr,
-      paymentStatus: "Paid",
-      status: "Active",
-      createdDate: currentDateStr,
-      createdBy: "system",
-      updatedDate: currentDateStr,
-      updatedBy: "system"
-    })
-  );
-
-  // 3. Combine all salary records
-  const unifiedSalaryList: ISalarywagesCreate[] = [
-    ...teacherSalaryRecords,
-    ...fixedEmployeeSalaries
-  ];
-
-  // ✅ 4. Save to salaryandwages collection
-  await salaryandwages.insertMany(unifiedSalaryList);
-
-  return {
-    totalCount: unifiedSalaryList.length,
-    salarywages: unifiedSalaryList
-  };
+  // ✅ Return the result
+  return { totalCount, expenses };
 };
+
+
 
 
 export const getAllSalaryCardCounts = async (
@@ -136,7 +240,7 @@ export const getAllSalaryCardCounts = async (
   let totalPendingSalary = 0;
 
   for (const salary of SalaryList) {
-    const amount = parseFloat(salary.salaryAmount);
+    const amount = parseFloat(String(salary.salaryAmount));
     if (isNaN(amount)) continue;
 
     if (salary.paymentStatus === "Paid") {
@@ -156,3 +260,72 @@ export const getAllSalaryCardCounts = async (
     balanceSalary,
   };
 };
+
+
+
+
+export const updateSalaryWages = async ({
+  employeeId,
+  designation,
+  amount,
+  status,
+  deduction,
+  paymentStatus,
+  paymentDate,
+  balanceAmount
+}: {
+  employeeId: string;
+  designation?: string;
+  amount?: number;
+  status?: string;
+  deduction?: number;
+  paymentStatus?: string;
+  paymentDate?: string;
+  balanceAmount?: number;
+}) => {
+  const update: any = {};
+  if (amount !== undefined) update.salaryAmount = String(amount);
+  if (status !== undefined) update.status = status;
+  if (deduction !== undefined) update.deductionAmount = deduction;
+  if (paymentStatus !== undefined) update.paymentStatus = paymentStatus;
+  if (paymentDate !== undefined) update.paymentDate = paymentDate;
+  if (balanceAmount !== undefined) update.balanceAmount = balanceAmount;
+
+  const query: any = { employeeId, status: "Active" };
+  if (designation) query.designation = designation;
+
+  const existing = await salaryandwages.findOne(query);
+  console.log('Matching document:', existing);
+  const result = await salaryandwages.updateOne(query, { $set: update });
+  const updatedRecord = await salaryandwages.findOne(query);
+  console.log('Updated record:', updatedRecord);
+  console.log('Update payload:', update);
+  console.log('Incoming payload:', {
+    employeeId,
+    designation,
+    amount,
+    deduction,
+    paymentStatus,
+    paymentDate,
+    balanceAmount
+  });
+  
+  console.log('Update object to DB:', update);
+  
+  return {
+    success: true,
+    updated: result.modifiedCount,
+    amount: updatedRecord?.salaryAmount,
+    deduction: updatedRecord?.deductionAmount,
+    balance: updatedRecord?.balanceAmount,
+    status: updatedRecord?.status,
+    paymentStatus: updatedRecord?.paymentStatus,
+    paymentDate: updatedRecord?.paymentDate
+  };
+};
+
+
+
+
+
+

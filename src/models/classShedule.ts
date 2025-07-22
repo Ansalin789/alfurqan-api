@@ -200,6 +200,7 @@ const classScheduleSchema = new Schema<IClassSchedule>(
       required: false,
       default: 0,
     },
+    isSalaryProcessed: { type: Boolean, default: false },
 
     sessionClassType: {
       type: String,
@@ -245,6 +246,7 @@ export const zodClassScheduleSchema = z.object({
       value: z.string(),
     })
   ),
+  isSalaryProcessed: z.boolean().optional(),
   sessionClassType: z.string().optional(),
   sessionStarttime: z.string().optional(),
   sessionsEndtime: z.string().optional(),

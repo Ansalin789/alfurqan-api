@@ -672,3 +672,47 @@ export const acUpcomingClassList = async (academicCoachId: string) => {
 
   return upcomingClass
 }
+
+export const getTeacherAttendanceGet = async () => {
+const teachers = await tenantUser.find({ role: "TEACHER", status: "Active" }).lean();
+const maleTeachers = teachers.filter(t => t.gender === "Male");
+const femaleTeachers = teachers.filter(t => t.gender === "Female");
+
+
+const currentDate = new Date();
+const formattedDate = currentDate.toISOString().split("T")[0];
+const startOfDayIST = `${formattedDate}T00:00:00.000+00:00`;
+const endOfDayIST = `${formattedDate}T23:59:59.999+00:00`;
+
+const todaySessions = await classShedule.find({
+  startDate: { $gte: startOfDayIST, $lte: endOfDayIST },
+  sessionStatus: "Completed",
+}).lean();
+
+
+const presentTeacherIds = todaySessions
+  .filter(s => s.teacherAttendee == "present")
+  .map(s => s.teacher.teacherId);
+
+const malePresentCount = maleTeachers.filter(
+  t => t.userId && presentTeacherIds.includes(t.userId)
+).length;
+
+const femalePresentCount = femaleTeachers.filter(
+  t => t.userId && presentTeacherIds.includes(t.userId)
+).length;
+
+const maleAbsentCount = maleTeachers.length - malePresentCount;
+const femaleAbsentCount = femaleTeachers.length - femalePresentCount;
+
+return {
+  totalTeachers: teachers.length,
+  maleTeachers: maleTeachers.length,
+  femaleTeachers: femaleTeachers.length,
+  maleAttendancePresent: malePresentCount,
+  maleAttendanceAbsent: maleAbsentCount,
+  femaleAttendancePresent: femalePresentCount,
+  femaleAttendanceAbsent: femaleAbsentCount,
+};
+
+}

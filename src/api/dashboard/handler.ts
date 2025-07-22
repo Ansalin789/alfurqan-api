@@ -7,6 +7,7 @@ import {
   dashboardWidgetStudentCounts,
   dashboardWidgetSupervisorCounts,
   dashboardWidgetTeacherCounts,
+  getTeacherAttendanceGet,
   totalClassCount,
   totalTrialRequestCount,
 } from "../../operations/dashboard"
@@ -92,4 +93,8 @@ export default {
   async getAcUpcomingClass(req: Request, h: ResponseToolkit) {
     return await acUpcomingClassList(req.query.academicCoachId as string)
   },
+
+  async getTeacherAttendance(req: Request){
+ return await getTeacherAttendanceGet()
+  }
 }

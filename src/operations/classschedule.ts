@@ -1621,10 +1621,10 @@ return "Earnings calculation updated successfully";
 
 function getSessionTime(times: any): any {
 // 1️⃣ Filter out "00:00"
-const validTimes = times.filter((time: string) => time !== "00:00");
+//const validTimes = times.filter((time: string));
 
 // 2️⃣ Convert to minutes since midnight
-const timesInMinutes = validTimes.map((time:any) => {
+const timesInMinutes = times.map((time:any) => {
   const [h, m] = time.split(":").map(Number);
   return h * 60 + m;
 });
@@ -1818,3 +1818,15 @@ const classTotalEarnings = ( totalMinutes/classDefaultHours) * groupClassAmount;
  
 
 }
+
+//  export const getTeacherTotalEarnings = async (
+//   dateRAnge: string, teacherId: string
+// ): Promise<{
+//   totalEarnings: number;
+//   regularClass: number;
+//   groupClass: number;
+//   trialClass: number;
+
+// }> => {
+
+// }
