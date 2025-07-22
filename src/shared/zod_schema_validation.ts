@@ -65,6 +65,22 @@ export const zodAlStudentInvoiceSchemaValidation = z.object({
 });
 
 
+export const zodAlStudentPaymentSchemaValidation = z.object({
+  userId:z.string().optional(),
+  userName: z.string().optional(),
+  paymentStatus: z.string().optional(),
+  paymentAmount: z.string().optional(),
+  paymentDate: z.string().optional(),
+  status: z.string().optional(),
+  sortBy: z.string().default("lastUpdatedDate"),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+  offset: z.string().nullable().default(null),
+  limit: z.string().nullable().default(null),
+  searchText: z.string().default(""),
+});
+
+
+
 export const zodGetAllApplicantsRecordsQuerySchema = z.object({
   searchText: z.string().default(""),
   sortBy: z.string().default("positionApplied"),
