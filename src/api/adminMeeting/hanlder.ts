@@ -1,6 +1,6 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
-import { admincreateMeeting, getAdminMeetingById, getAllAdminMeetingRecords ,getMeetingsByMeetingId, updateAdminMeetingById } from "../../operations/adminmeeting";
-import { IAdminMeetingCreate } from "../../../types/models.types";
+import { admincreateMeeting, getAdminMeetingById, getAllAdminMeetingRecords ,getMeetingsByMeetingId, updateAdminMeetingById, updateMeetingStatus } from "../../operations/adminmeeting";
+import { IAdminMeetingCreate, ITeacher } from "../../../types/models.types";
 import { isNil } from "lodash";
 import { addAminMeetingMessages } from "../../config/messages";
 import { notFound } from "@hapi/boom";
@@ -152,9 +152,43 @@ async updateAdminMeetingRecordById(req: Request, h: ResponseToolkit) {
     console.error("Error during updating meetings:", error);
     return h.response({ message: "Internal Server Error", error }).code(500);
   }
+},
+
+//update
+
+//Update meeting minutes
+async updateAdminMeeting(req: Request, h: ResponseToolkit) {
+  try {
+    console.log("Content-Type:", req.headers["content-type"]);
+    console.log("Raw payload:", req.payload);
+
+    const meetingId = req.params.meetingbyId;
+    const payload = req.payload as {
+      duration: string;
+      meetingStatus: string;
+      teacher: ITeacher[];
+      updatedBy?: string;
+    };
+
+
+    const result = await updateMeetingStatus(
+      meetingId,
+        payload.meetingStatus,
+      payload.duration,
+      payload.teacher,
+      payload.updatedBy
+    );
+
+    if (!result) {
+      return h.response({ message: addAminMeetingMessages.USER_NOT_FOUND }).code(404);
+    }
+
+    return h.response(result).code(200);
+  } catch (error) {
+    console.error("Error updating meeting minutes and attendees:", error);
+    return h.response({ message: "Internal Server Error", error }).code(500);
+  }
 }
-
-
 
 
 

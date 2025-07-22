@@ -78,6 +78,20 @@ const register = async (server: Server): Promise<void> => {
                 auth: {
                   strategies: ["jwt"],
                 }, },
+          },
+
+          {
+            method: "PUT",
+            path: "/allAdminMeeting/{meetingbyId}",
+            options: {
+              handler: handler.updateAdminMeeting,
+              description: addAminMeetingMessages.LIST,
+              tags: ["api", "adminmeeting"],
+              payload: {
+                parse: true,
+                allow: "application/json"
+              }
+            }
           }
 
 

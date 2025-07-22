@@ -1,6 +1,6 @@
 
 import { PipelineStage, Types } from "mongoose";
-import { IAdminMeeting, IAdminMeetingCreate } from "../../types/models.types";
+import { IAdminMeeting, IAdminMeetingCreate, ITeacher } from "../../types/models.types";
 import adminmeeting from "../models/adminmeeting";
 import User from "../models/users";
 import { v4 as uuidv4 } from 'uuid';  // Import the uuid package to generate unique IDs
@@ -17,6 +17,14 @@ export interface IAdminMeetingUpdate{
   updatedBy?:string,
   description:string,
   }
+
+  export interface IMeetingMinutesUpdate {
+  meetingStatus: string;
+  duration: string;
+ 
+  teacher: ITeacher[];  // Fix this from `string` to `ITeacher[]`
+}
+
 
 /**
  * Creates a new meeting.
@@ -202,6 +210,42 @@ export const updateAdminMeetingById = async (
     { $set: payload },
     { new: true }
   ).lean();
+};
+
+
+//updatevideocall
+
+export const updateMeetingStatus = async (
+  id: string,
+  meetingStatus: string,
+  duration: string,
+  teacher: ITeacher[],
+  updatedBy?: string
+): Promise<IMeetingMinutesUpdate | null> => {
+  const updated = await addmeeting.findOneAndUpdate(
+    { _id: new Types.ObjectId(id) },
+    {
+      $set: {
+        meetingStatus,
+        duration,
+        teacher,
+        updatedBy,
+        updatedDate: new Date(),
+      },
+    },
+    {
+      new: true,
+      projection: {
+        meetingStatus: 1, // ✅ also project this to match interface
+        duration: 1,
+        teacher: 1,
+        _id: 0,
+      },
+    }
+  ).lean();
+
+  // ✅ Manually cast the result to match your expected type
+  return updated as IMeetingMinutesUpdate | null;
 };
 
 
