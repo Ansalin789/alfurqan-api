@@ -2,7 +2,7 @@ import { Request, ResponseToolkit } from "@hapi/hapi";
 import { IAdminAssignment, IAdminAssignmentCreate } from "../../../types/models.types";
 import { assignemntMessages } from "../../config/messages";
 import  { zodAdminAssignmentSchema } from "../../models/adminassignment";
-import { getAdminAssignmentsByCourseAndLevel, saveAdminAssignment } from "../../operations/adminassignment";
+import { getAdminAssignmentsByCourseAndLevel, getAdminAssignmentsByCourseNameAndLevelName, saveAdminAssignment } from "../../operations/adminassignment";
 
 
 function base64ToBuffer(base64String: string): Buffer {
@@ -96,6 +96,30 @@ const generatedAssignmentId = `${payload.courseName.replace(/\s+/g, "_").toUpper
     }
 
     const assignments = await getAdminAssignmentsByCourseAndLevel(courseId, levelId);
+
+    return h
+      .response({
+        message: assignemntMessages.FETCH_SUCCESS || "Assignments retrieved successfully",
+        data: assignments,
+      })
+      .code(200);
+
+  } catch (error) {
+    console.error("❌ Error retrieving assignments:", error);
+    return h.response({ error: "Failed to retrieve assignments", details: error }).code(500);
+  }
+},
+ async getAdminAssignmentsByCourseNameAndLevelName  (req: Request, h: ResponseToolkit){
+  try {
+    const { courseName, levelName } = req.query as { courseName: string; levelName: string };
+
+    if (!courseName || !levelName) {
+      return h
+        .response({ error: "Missing courseName or levelName in query params" })
+        .code(400);
+    }
+
+    const assignments = await getAdminAssignmentsByCourseNameAndLevelName(courseName, levelName);
 
     return h
       .response({
