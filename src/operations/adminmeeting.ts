@@ -140,39 +140,21 @@ export const getAllAdminMeetingRecords = async (): Promise<{ totalCount: number;
   try {
     const pipeline: PipelineStage[] = [
       {
-        $sort: { createdDate: -1 }, // Sort by created date, descending
-      },
-      {
-        $group: {
-          _id: "$meetingId", // Group by meetingId
-          meetingName: { $first: "$meetingName" }, // Take the first meeting name
-          selectedDate: { $first: "$selectedDate" }, // Take the first selected date
-          meetingStatus: { $first: "$meetingStatus" }, // Take the first meeting status
-          description: { $first: "$description" }, // Take the first description
-          startTime: {$first: "$startTime"},
-          endTime: {$first: "$endTime"},
-          status: { $first: "$status" }, // Take the first status
-          createdDate: { $first: "$createdDate" }, // Take the first created date
-          createdBy: { $first: "$createdBy" }, // Take the first created by value
-          updatedDate: { $first: "$updatedDate" }, // Take the first updated date
-          updatedBy: { $first: "$updatedBy" }, // Take the first updated by value
-          teachers: { $push: "$teacher" }, // Collect teacher information into an array
-        }
-      },
-      {
-        $sort: { "_id": -1 } // Sort by meetingId (or use any field if you need a different order)
+        $sort: { createdDate: -1 } // Sort by latest created first
       }
     ];
 
-    const meetingsData = await adminmeeting.aggregate(pipeline); // Run aggregation query
-    const totalCount = await adminmeeting.countDocuments(); // Count total number of meetings
+    // Run aggregation without grouping
+    const meetingsData = await adminmeeting.aggregate(pipeline);
+    const totalCount = await adminmeeting.countDocuments();
 
     return { totalCount, meetings: meetingsData };
   } catch (error) {
     console.error("Error fetching meetings: ", error);
-    throw new Error("Error fetching meetings: ");
+    throw new Error("Error fetching meetings");
   }
 };
+
 
 //Get by ID
 
