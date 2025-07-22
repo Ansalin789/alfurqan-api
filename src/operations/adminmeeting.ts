@@ -140,13 +140,28 @@ export const getAllAdminMeetingRecords = async (): Promise<{ totalCount: number;
   try {
     const pipeline: PipelineStage[] = [
       {
-        $sort: { createdDate: -1 } // Sort by latest created first
+        $sort: { createdDate: -1 } // Optional: sort before grouping
+      },
+      {
+        $group: {
+          _id: "$meetingId", // Group by meetingId
+          records: { $push: "$$ROOT" } // Push entire meeting documents into 'records'
+        }
+      },
+      {
+        $project: {
+          meetingId: "$_id",
+          records: 1,
+          _id: 0
+        }
+      },
+      {
+        $sort: { meetingId: -1 } // Optional: sort grouped results
       }
     ];
 
-    // Run aggregation without grouping
     const meetingsData = await adminmeeting.aggregate(pipeline);
-    const totalCount = await adminmeeting.countDocuments();
+    const totalCount = meetingsData.length;
 
     return { totalCount, meetings: meetingsData };
   } catch (error) {
@@ -154,6 +169,7 @@ export const getAllAdminMeetingRecords = async (): Promise<{ totalCount: number;
     throw new Error("Error fetching meetings");
   }
 };
+
 
 
 //Get by ID
