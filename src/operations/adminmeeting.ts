@@ -183,6 +183,14 @@ export const getAdminMeetingById = async (  id: string): Promise<IAdminMeeting |
 };
 
 
+export const getMeetingsByMeetingId = async (
+  meetingId: string
+): Promise<IAdminMeeting[]> => {
+  return addmeeting.find({ meetingId }).lean();
+};
+
+
+
 
 //Update
 export const updateAdminMeetingById = async (

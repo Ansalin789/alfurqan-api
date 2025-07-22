@@ -38,7 +38,7 @@ const register = async (server: Server): Promise<void> => {
 
            {
                 method: "GET",
-                path: "/allAdminMeeting/{meetingId}",
+                path: "/allAdminMeeting/{id}",
                 options: {
                   handler: handler.getAdminMeetingRecordById,
                   description: addAminMeetingMessages.LIST,
@@ -47,6 +47,20 @@ const register = async (server: Server): Promise<void> => {
                     strategies: ["jwt"],
                   }, },
            },
+
+   {
+  method: "GET",
+  path: "/allAdminMeeting/meetingId",
+  options: {
+    handler: handler.getAdminMeetingRecordByMeetingId,
+    description: addAminMeetingMessages.LIST,
+    tags: ["api", "adminmeeting"],
+    auth: {
+      strategies: ["jwt"],
+    },
+  },
+},
+
           
           {
             method: "PUT",

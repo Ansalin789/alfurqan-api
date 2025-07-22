@@ -1,5 +1,5 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
-import { admincreateMeeting, getAdminMeetingById, getAllAdminMeetingRecords, updateAdminMeetingById } from "../../operations/adminmeeting";
+import { admincreateMeeting, getAdminMeetingById, getAllAdminMeetingRecords ,getMeetingsByMeetingId, updateAdminMeetingById } from "../../operations/adminmeeting";
 import { IAdminMeetingCreate } from "../../../types/models.types";
 import { isNil } from "lodash";
 import { addAminMeetingMessages } from "../../config/messages";
@@ -97,6 +97,20 @@ export default {
   
     return result;
       },
+
+        //get by MeetinngId
+async getAdminMeetingRecordByMeetingId(req: Request, h: ResponseToolkit) {
+  const meetingId = String(req.query.meetingId);
+
+  const result = await getMeetingsByMeetingId(meetingId); // Note plural function
+
+  if (isNil(result) || result.length === 0) {
+    return notFound(addAminMeetingMessages.USER_NOT_FOUND);
+  }
+
+  return result;
+},
+
   
 //Update
 
