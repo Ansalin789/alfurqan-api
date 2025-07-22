@@ -33,7 +33,7 @@ const addMeetingSchema = new Schema<IMeeting>(
 
     description: { type: String, required: true },
     meetingStatus: { type: String, required: true },
-    meetingminutes: { type: String, required: true },
+    meetingminutes: { type: String, required: false },
     duration: { type: String, required: false },
     status: {
       type: String,
@@ -89,7 +89,7 @@ export const zodAddMeetingSchema = z.object({
 
   description: z.string().min(5),
   meetingStatus: z.string(),
-  meetingminutes: z.string(),
+  meetingminutes: z.string().optional(),
 
   status: z
     .enum([

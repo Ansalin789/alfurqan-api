@@ -1410,7 +1410,7 @@ export interface IMeetingCreate {
    
   };
   description: string;
-  meetingminutes: string;
+  meetingminutes?: string;
   duration: string;
   status: string;
   meetingStatus: string;
