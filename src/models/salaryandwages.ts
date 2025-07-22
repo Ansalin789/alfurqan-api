@@ -13,6 +13,7 @@ const salarywagesSchema = new Schema<ISalarywages>(
     salaryAmount: { type: Number, required: true },
     balanceAmount: { type: Number, required: true },
     deductionAmount: { type: Number, required: true },
+    isSalaryProcessed: { type: Boolean, default: false },
 
     paymentDate: { type: Date, required: false },
     paymentStatus: { type: String, required: false },
@@ -50,6 +51,7 @@ export const zodsalarywagesSchemaSchema = z.object({
   salaryAmount: z.number(),
   deductionAmount: z.number(),
   balanceAmount: z.number(),
+  isSalaryProcessed: z.boolean().optional(),
 
   paymentDate: z
     .string()

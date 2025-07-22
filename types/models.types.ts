@@ -574,6 +574,7 @@ export interface IClassSchedule extends Document{
   teacherAttendee: string;
   studentAttendee: string;
   earnings?: number;
+  isSalaryProcessed?: boolean;
 
 }
 export type QuestionType = "quiz" | "writing" | "reading" | "image" | "wordmatch";
@@ -1898,6 +1899,7 @@ export interface ISalarywages extends Document {
   createdBy: string;
   updatedDate: Date;
   updatedBy: string;
+  isSalaryProcessed?: boolean;
 }
 
 export interface ISalarywagesCreate {

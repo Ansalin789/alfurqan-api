@@ -11,19 +11,23 @@ import AppLogger from "../helpers/logging";
 
 
 
+
 export const runSalaryCron = async () => {
   console.log("🔄 Starting salary calculation cron job...");
   const now = new Date();
+  const currentMonthLabel = `${now.toLocaleString('default', { month: 'short' })} ${now.getFullYear()}`;
+
   try {
     // Process all eligible users
-    await processAllUsers(now);
+    await processAllUsers(now, currentMonthLabel);
     console.log("✅ Salary processing completed successfully");
   } catch (error) {
     console.error("❌ Salary processing failed:", error);
   }
 };
 
-const processAllUsers = async (now: Date) => {
+const processAllUsers = async (now: Date, monthLabel: string) => {
+  // Get all active users with relevant roles
   const eligibleUsers = await UserModel.find({
     role: { $in: ["TEACHER", "SUPERVISOR", "ACADEMICCOACH"] },
     status: "Active"
@@ -40,10 +44,11 @@ const processAllUsers = async (now: Date) => {
 
     if (!user.userId) {
       console.warn(`User ${user.userName} is missing userId, skipping salary record creation.`);
-      continue;
+      return;
     }
 
     try {
+      // Check if record exists using atomic operation
       const result = await salaryandwages.findOneAndUpdate(
         {
           employeeId: user.userId,
@@ -54,7 +59,7 @@ const processAllUsers = async (now: Date) => {
           employeeName: user.userName,
           employeeMail: user.email || "",
           designation,
-          salaryAmount: designation === "TEACHER" ? "0" : String(await getFixedSalaryAmount(user.userId)),
+          salaryAmount: designation === "TEACHER" ? "0" : await getFixedSalaryAmount(user.userId),
           deductionAmount: 0,
           balanceAmount: designation === "TEACHER" ? 0 : await getFixedSalaryAmount(user.userId),
           paymentMethod: "Bank Transfer",
@@ -81,7 +86,7 @@ const processAllUsers = async (now: Date) => {
       if (designation === "TEACHER" && user.userId) {
         await processTeacherSalary(user.userId, now);
       } else if (now.getDate() <= 3 && user.userId) { // Only process fixed salaries on 1st-3rd
-        await processFixedSalaryEmployee(user.userId, designation);
+        await processFixedSalaryEmployee(user.userId, designation, monthLabel);
       }
     } catch (err) {
       console.error(`❌ Error processing ${designation} ${user.userName}:`, err);
@@ -89,20 +94,18 @@ const processAllUsers = async (now: Date) => {
   }
 };
 
-const getFixedSalaryAmount = async (employeeId: string): Promise<number> => {
+const getFixedSalaryAmount = async (employeeId: string) => {
   const wageInfo = await EmpWagesModel.findOne({ employeeId }).lean();
   if (!wageInfo) {
     console.warn(`⚠️ No wage info found for employee ${employeeId}`);
     return 0;
   }
-  return parseFloat(String(wageInfo.classType.rate).replace(/\$|,/g, "") || "0");
+  return parseFloat(String(wageInfo.classType.rate).replace(/\$|,/g, '') || "0");
 };
-
-
-
 
 const processTeacherSalary = async (teacherId: string, now: Date) => {
   try {
+    // 1. Find all payable classes (regardless of processing status)
     const payableClasses = await classShedule.find({
       "teacher.teacherId": teacherId,
       amount: { $exists: true, $ne: "$0.00" }
@@ -141,7 +144,8 @@ const processTeacherSalary = async (teacherId: string, now: Date) => {
         },
         $set: {
           updatedAt: now,
-          paymentDate: now
+          paymentDate: now,
+          isSalaryProcessed: true
         }
       }
     );
@@ -153,10 +157,7 @@ const processTeacherSalary = async (teacherId: string, now: Date) => {
   }
 };
 
-
-
-
-const processFixedSalaryEmployee = async (employeeId: string, designation: string) => {
+const processFixedSalaryEmployee = async (employeeId: string, designation: string, monthLabel: string) => {
   const salaryAmount = await getFixedSalaryAmount(employeeId);
   
   if (salaryAmount <= 0) {
@@ -164,10 +165,11 @@ const processFixedSalaryEmployee = async (employeeId: string, designation: strin
   }
 
   // Update fixed salary (only updates if record exists)
-  const result = await salaryandwages.updateOne(
+  await salaryandwages.updateOne(
     {
       employeeId,
       designation,
+      monthLabel,
       status: "Active"
     },
     {
@@ -175,16 +177,12 @@ const processFixedSalaryEmployee = async (employeeId: string, designation: strin
         salaryAmount: salaryAmount.toString(),
         balanceAmount: salaryAmount,
         updatedAt: new Date(),
-        paymentDate: new Date().toISOString()
+        paymentDate: new Date()
       }
     }
   );
 
-  if (result.modifiedCount > 0) {
-    console.log(`💰 Updated ${designation} ${employeeId} salary to $${salaryAmount}`);
-  } else {
-    console.log(`✅ ${designation} ${employeeId} salary already updated`);
-  }
+  console.log(`💰 Updated ${designation} ${employeeId} salary to $${salaryAmount}`);
 };
 
 
