@@ -18,6 +18,7 @@ import Evaluation from "./models/evaluation";
 import { removeBookedSlots } from "./redis/handler/teacherSlotHander";
 import { updateEarningsCalculation } from "./operations/classschedule";
 import adminmeeting from "./models/adminmeeting";
+import { runSalaryCron } from "./operations/salarywages";
 
 
 const start = async () => {
@@ -246,17 +247,17 @@ cron.schedule("0 0 * * *", async () => {
 });
 
 // cron  run 5 mins once
-cron.schedule("*/5 * * * *", async () => {
-  try{
-  console.log("🧹 attendance and earnings uupdate schedule");
-    updateEarningsCalculation();
-  }
-  catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error("❌ Unexpected error in earnings update cron:", message);
-  }
+// cron.schedule("*/5 * * * *", async () => {
+//   try{
+//   console.log("🧹 attendance and earnings uupdate schedule");
+//     updateEarningsCalculation();
+//   }
+//   catch (error: unknown) {
+//     const message = error instanceof Error ? error.message : String(error);
+//     console.error("❌ Unexpected error in earnings update cron:", message);
+//   }
 
-});
+
 
 //adminmeeting
 cron.schedule("*/5 * * * *", async () => {
@@ -329,3 +330,13 @@ cron.schedule("*/5 * * * *", async () => {
     console.error(" Unexpected error in meeting status update cron:", message);
   }
 });  
+
+// });
+
+
+// Run every 2 minutes
+cron.schedule("*/2 * * * *", async () => {
+  console.log("🧹 attendance and earnings update schedule");
+  await runSalaryCron();
+});
+
