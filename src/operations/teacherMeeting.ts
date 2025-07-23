@@ -112,16 +112,20 @@ export const getallTeachermeeting = async (
     "teacher.teacherId": teacherId.trim(),
   };
 
-  console.log("Query for all tables:", JSON.stringify(query, null, 2));
+  console.log("🔍 Query used:", query);
 
-  const [teacherMeetings, adminMeetings, studentMeetings] = await Promise.all([
-    teacherMeeting.find(query).exec(),
-    adminmeeting.find(query).exec(),
-    addmeeting.find(query).exec(),
-  ]);
+const [teacherMeetings, adminMeetings, supervisormeeting] = await Promise.all([
+  teacherMeeting.find({ "teacher.teacherId": teacherId.trim() }).exec(),
+  addmeeting.find({ "teacher.teacherId": teacherId.trim() }).exec(),
+  addmeeting.find({ "teacher.teacherId": teacherId.trim() }).exec(),
+]);
 
-  // Combine and sort all meeting records by `createdDate` in descending order
-  const mergedMeetings = [...teacherMeetings, ...adminMeetings, ...studentMeetings].sort(
+
+  console.log("📘 teacherMeetings:", teacherMeetings.length);
+  console.log("📘 adminMeetings:", adminMeetings.length);
+  console.log("📘 studentMeetings:", supervisormeeting.length);
+
+  const mergedMeetings = [...teacherMeetings, ...adminMeetings, ...supervisormeeting].sort(
     (a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()
   );
 
@@ -130,6 +134,7 @@ export const getallTeachermeeting = async (
     meetings: mergedMeetings,
   };
 };
+
 
 
 
