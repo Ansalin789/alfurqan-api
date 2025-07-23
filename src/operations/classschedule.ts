@@ -25,6 +25,12 @@ import {
   subMonths,
   eachMonthOfInterval,
   format,
+  startOfWeek,
+  endOfWeek,
+  startOfDay,
+  subWeeks,
+  endOfDay,
+  subDays,
 } from "date-fns";
 import assignment from "../models/assignments";
 import { sendNotification } from "./notification";
@@ -1797,7 +1803,8 @@ const classTotalEarnings = ( totalMinutes/classDefaultHours) * regularClassAmoun
 
 ).lean();
 }else if (scheduleClass.sessionClassType == "GROUPCLASS") {
-const groupClassAmount = 6.00;
+console.log("GROUPCLASS update")
+  const groupClassAmount = 6.00;
 const classDefaultHours = 60;
 const classTotalEarnings = ( totalMinutes/classDefaultHours) * groupClassAmount;
 
@@ -1819,14 +1826,215 @@ const classTotalEarnings = ( totalMinutes/classDefaultHours) * groupClassAmount;
 
 }
 
-//  export const getTeacherTotalEarnings = async (
-//   dateRAnge: string, teacherId: string
-// ): Promise<{
-//   totalEarnings: number;
-//   regularClass: number;
-//   groupClass: number;
-//   trialClass: number;
+export const getTeacherTotalEarnings = async (
+  teacherId: string,
+  dateRange: "monthly" | "weekly"
+): Promise<{
+  currentPeriod: {
+    totalEarnings: number;
+    regularClass: number;
+    groupClass: number;
+    trialClass: number;
+  },
+  lastPeriod: {
+    totalEarnings: number;
+    regularClass: number;
+    groupClass: number;
+    trialClass: number;
+  }
+}> => {
+  try {
+    let currentStart: Date;
+    let currentEnd: Date;
+    let lastStart: Date;
+    let lastEnd: Date;
 
-// }> => {
+    if (dateRange === "monthly") {
+      currentStart = startOfMonth(new Date());
+      currentEnd = endOfMonth(new Date());
 
-// }
+      const lastMonthDate = subMonths(new Date(), 1);
+      lastStart = startOfMonth(lastMonthDate);
+      lastEnd = endOfMonth(lastMonthDate);
+
+    } else if (dateRange === "weekly") {
+      currentStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+      currentEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
+
+      const lastWeekDate = subWeeks(new Date(), 1);
+      lastStart = startOfWeek(lastWeekDate, { weekStartsOn: 1 });
+      lastEnd = endOfWeek(lastWeekDate, { weekStartsOn: 1 });
+
+    } else if (dateRange === "daily") {
+      currentStart = startOfDay(new Date());
+      currentEnd = endOfDay(new Date());
+
+      const yesterday = subDays(new Date(), 1);
+      lastStart = startOfDay(yesterday);
+      lastEnd = endOfDay(yesterday);
+
+    }
+    else {
+      throw new Error("Invalid dateRange. Use 'weekly' or 'monthly'.");
+    }
+
+    // 1️⃣ Current period
+    const currentResult = await ClassScheduleModel.aggregate([
+      {
+        $match: {
+          "teacher.teacherId": teacherId,
+          startDate: {
+            $gte: currentStart,
+            $lte: currentEnd,
+          },
+        },
+      },
+      {
+        $addFields: {
+          amountNumber: { $toDouble: "$amount" },
+        },
+      },
+      {
+        $group: {
+          _id: "$sessionClassType",
+          total: { $sum: "$amountNumber" },
+        },
+      },
+    ]);
+
+    // 2️⃣ Last period
+    const lastResult = await ClassScheduleModel.aggregate([
+      {
+        $match: {
+          "teacher.teacherId": teacherId,
+          startDate: {
+            $gte: lastStart,
+            $lte: lastEnd,
+          },
+        },
+      },
+      {
+        $addFields: {
+          amountNumber: { $toDouble: "$amount" },
+        },
+      },
+      {
+        $group: {
+          _id: "$sessionClassType",
+          total: { $sum: "$amountNumber" },
+        },
+      },
+    ]);
+
+
+  const result = await Evaluation.aggregate([
+    {
+      $match: {
+        "teacher.teacherId": teacherId,
+        updatedDate: {
+          $gte: currentStart,
+          $lte: currentEnd,
+        },
+      },
+    },
+    {
+      $addFields: {
+        amountNumber: { $toDouble: "$amount" },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        total: { $sum: "$amountNumber" },
+      },
+    },
+  ]);
+
+  const resultLastPeriod = await Evaluation.aggregate([
+    {
+      $match: {
+        "teacher.teacherId": teacherId,
+        updatedDate: {
+          $gte: lastStart,
+          $lte: lastEnd,
+        },
+      },
+    },
+    {
+      $addFields: {
+        amountNumber: { $toDouble: "$amount" },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        total: { $sum: "$amountNumber" },
+      },
+    },
+  ]);
+
+  console.log("result>>>>",result[0]?.total || 0);
+
+    // 🔢 Unpack current
+    const currentPeriod = {
+      totalEarnings: 0,
+      regularClass: 0,
+      groupClass: 0,
+      trialClass: result[0]?.total | 0,
+    };
+
+    for (const item of currentResult) {
+      currentPeriod.totalEarnings += item.total;
+
+      if (item._id === "REGULARCLASS") {
+        currentPeriod.regularClass = item.total;
+      } else if (item._id === "GROUPCLASS") {
+        currentPeriod.groupClass = item.total;
+      } else  {
+        currentPeriod.trialClass = item.total;
+      }
+    }
+
+    // 🔢 Unpack last
+    const lastPeriod = {
+      totalEarnings: 0,
+      regularClass: 0,
+      groupClass: 0,
+      trialClass: resultLastPeriod[0]?.total | 0,
+    };
+
+    for (const item of lastResult) {
+      lastPeriod.totalEarnings += item.total;
+
+      if (item._id === "REGULARCLASS") {
+        lastPeriod.regularClass = item.total;
+      } else if (item._id === "GROUPCLASS") {
+        lastPeriod.groupClass = item.total;
+      } else {
+        lastPeriod.trialClass = item.total;
+      }
+    }
+
+    return {
+      currentPeriod,
+      lastPeriod,
+    };
+
+  } catch (error) {
+    console.log("error>>>>", error);
+    return {
+      currentPeriod: {
+        totalEarnings: 0,
+        regularClass: 0,
+        groupClass: 0,
+        trialClass: 0,
+      },
+      lastPeriod: {
+        totalEarnings: 0,
+        regularClass: 0,
+        groupClass: 0,
+        trialClass: 0,
+      },
+    };
+  }
+};
