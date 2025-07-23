@@ -17,6 +17,8 @@ import teachermeeting from "./models/teachermeeting";
 import Evaluation from "./models/evaluation";
 import { removeBookedSlots } from "./redis/handler/teacherSlotHander";
 import { updateEarningsCalculation } from "./operations/classschedule";
+import adminmeeting from "./models/adminmeeting";
+import { runSalaryCron } from "./operations/salarywages";
 
 
 const start = async () => {
@@ -245,14 +247,97 @@ cron.schedule("0 0 * * *", async () => {
 });
 
 // cron  run 5 mins once
-cron.schedule("*/5 * * * *", async () => {
-  try{
-  console.log("🧹 attendance and earnings uupdate schedule");
-    updateEarningsCalculation();
-  }
-  catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error("❌ Unexpected error in earnings update cron:", message);
-  }
+// cron.schedule("*/5 * * * *", async () => {
+//   try{
+//   console.log("🧹 attendance and earnings uupdate schedule");
+//     updateEarningsCalculation();
+//   }
+//   catch (error: unknown) {
+//     const message = error instanceof Error ? error.message : String(error);
+//     console.error("❌ Unexpected error in earnings update cron:", message);
+//   }
 
+
+
+//adminmeeting
+cron.schedule("*/5 * * * *", async () => {
+  console.log("Runningadmin meeting status update check every 5 minutes...");
+
+  try {
+    const now = new Date();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    try {
+      const resultPast = await adminmeeting.updateMany(
+        {
+          meetingStatus: { $ne: "Completed" },
+          selectedDate: { $lt: today },
+        },
+        {
+          $set: { meetingStatus: "Completed" },
+        }
+      );
+
+      console.log(`${resultPast.modifiedCount} past meetings marked as Completed.`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(" Error updating past meetings:", message);
+    }
+
+    let meetingsToday: any[] = [];
+    try {
+      meetingsToday = await adminmeeting.find({
+        meetingStatus: { $ne: "Completed" },
+        selectedDate: {
+          $gte: today,
+          $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000), 
+        },
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(" Error fetching today's meetings:", message);
+    }
+
+    let updatedTodayCount = 0;
+
+    for (const meeting of meetingsToday) {
+      try {
+        if (!meeting.endTime) continue;
+
+        const [endHour, endMinute] = meeting.endTime.split(":").map(Number);
+        const meetingEnd = new Date(meeting.selectedDate);
+        meetingEnd.setHours(endHour, endMinute, 0, 0);
+
+        if (now >= meetingEnd) {
+          await adminmeeting.updateOne(
+            { _id: meeting._id },
+            { $set: { meetingStatus: "Completed" } }
+          );
+          console.log(` Meeting ${meeting.meetingId} marked as Completed (endTime passed).`);
+          updatedTodayCount++;
+        }
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(` Error updating meeting ${meeting.meetingId}:`, message);
+      }
+    }
+
+    console.log(` ${updatedTodayCount} today's meetings updated as Completed.`);
+
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(" Unexpected error in meeting status update cron:", message);
+  }
+});  
+
+// });
+
+
+// Run every 2 minutes
+cron.schedule("55 23 * * *", async () => {
+  console.log("🧹 attendance and earnings update schedule");
+  await runSalaryCron();
 });
+
+

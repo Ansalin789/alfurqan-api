@@ -1,13 +1,14 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import {zodTeacherMeetingSchema} from "../../models/teachermeeting";
-import { createTeacherMeeting, getallTeachermeeting, getTeachermeetingById, ITeacherMeetingUpdate, updateAllTeacherMeeting } from "../../operations/teacherMeeting"
+import { createTeacherMeeting, getallTeachermeeting, getTeachermeetingById, ITeacherMeetingUpdate, updateAllTeacherMeeting, updateTeacherMeetingAtt } from "../../operations/teacherMeeting"
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { addMeetingMessages, evaluationMessages } from "../../config/messages";
 import { checkTeacherMeetingConflict, getTeacherMeetingById} from "../../shared/utils/meetingUtils";
 import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
 import { teacherStudentMeeting } from "../../kafka/producers/teacherProducer";
+import { ITeacher } from "../../../types/models.types";
 
 const createInputValidation = z.object({
     payload : zodTeacherMeetingSchema.pick({
@@ -112,38 +113,26 @@ export default {
 }
 ,
 
-    async getallTeachermeeting(req: Request, h: ResponseToolkit) {
-        try {
-          // Parse and validate the request query using zod
-          const parsedQuery = getallTeachermeetingInputValidation.parse({
-            payload: {
-              ...req.query,
-              filterValues: (() => {
-                try {
-                  return req.query?.filterValues
-                    ? JSON.parse(req.query.filterValues as string)
-                    : {};
-                } catch {
-                  throw new Error("Invalid filterValues JSON format.");
-                }
-              })(),
-            },
-          });
-    
-          const query = parsedQuery.payload;
-    
-          // Call your service or database function to fetch data
-          const result = await getallTeachermeeting(query);
-    
-          // Return the response
-          return h.response(result).code(200);
-        } catch (error) {
-          // Handle errors (validation or other errors)
-          return h
-            .response({ error })
-            .code(400);
-        }
+async getallTeachermeeting(req: Request, h: ResponseToolkit) {
+  try {
+    const teacherId = req.query.teacherId as string;
+
+    if (!teacherId) {
+      return h.response({ error: "teacherId is required in query params." }).code(400);
     }
+
+    const result = await getallTeachermeeting({ teacherId });
+
+    return h.response(result).code(200);
+  } catch (error) {
+    return h.response({ error}).code(400);
+  }
+}
+
+
+
+
+
     ,
 
     async getTeachermeetingById(req: Request , h: ResponseToolkit) {
@@ -229,9 +218,42 @@ async updateTeacherMeeting(req: Request, h: ResponseToolkit) {
     console.error("💥 Error updating meeting:", error);
     return h.response({ message: "Internal Server Error", error }).code(500);
   }
+},
+
+//update attendees
+
+//Update meeting minutes
+async updateTeacherMeetingAttendee(req: Request, h: ResponseToolkit) {
+  try {
+    console.log("Content-Type:", req.headers["content-type"]);
+    console.log("Raw payload:", req.payload);
+
+    const meetingId = req.params.meetingbyId;
+    const payload = req.payload as {
+      meetingStatus: string;
+      teacher: ITeacher[];
+      updatedBy?: string;
+    };
+
+
+
+    const result = await updateTeacherMeetingAtt(
+      meetingId,
+        payload.meetingStatus,
+      payload.teacher,
+      payload.updatedBy
+    );
+
+    if (!result) {
+      return h.response({ message: addMeetingMessages.USER_NOT_FOUND }).code(404);
+    }
+
+    return h.response(result).code(200);
+  } catch (error) {
+    console.error("Error updating meeting minutes and attendees:", error);
+    return h.response({ message: "Internal Server Error", error }).code(500);
+  }
 }
-
-
     
     
 }

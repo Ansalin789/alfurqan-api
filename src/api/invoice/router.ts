@@ -123,8 +123,22 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "knowledgeBase"],
         auth: {
           strategies: ["jwt"],
-        },  },
-    }
+        },  
+      },
+    },
+
+        {
+      method: "GET",
+      path: "/student/paymenthistory",
+      options: {
+        handler: handler.getStudentPaymentHistory,  
+        tags: ["api", "payment"],
+          auth: {
+          strategies: ["jwt"],
+        },   
+        },
+        
+    },
     
     
 

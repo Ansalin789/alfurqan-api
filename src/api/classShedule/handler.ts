@@ -5,7 +5,7 @@ import { ClassSchedulesMessages } from "../../config/messages";
 import { isNil } from "lodash";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
-import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount, getTotalClassesCount, getClassesStatusCount, getClassesWiseCount, getStudentList, getTeacherAttendanceSummary, teacherStudentCount, getgetAnalyticscardCalculation, requestReschedule, updateClassAttendanceById} from "../../operations/classschedule";
+import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount, getTotalClassesCount, getClassesStatusCount, getClassesWiseCount, getStudentList, getTeacherAttendanceSummary, teacherStudentCount, getgetAnalyticscardCalculation, requestReschedule, updateClassAttendanceById, getTeacherTotalEarnings} from "../../operations/classschedule";
 import { academicAvailableTeachers, academicDashboardTeachersStudentCount, academicStudentReSchedule, academicTeacherStudentList } from "../../kafka/producers/academicProducer";
 import AlStudentModule from "../../models/alstudents"
 import Evaluation from "../../models/evaluation";
@@ -368,7 +368,7 @@ existingEnd.push(rawPayload.student.studnetSessionEnd);
 async getTeacherStudentCount(req: Request, h: ResponseToolkit) {
   try {
     console.log("Query parameters received:", req.query);
-    const teachers = await teacherStudentCount();
+    const teachers = await teacherStudentCount(req.query.teacherId);
     return h.response({
       success: true,
       data: teachers,
@@ -735,13 +735,7 @@ if (!classSchedule) {
     if (rawPayload.teacher?.teacherSessionEnd) {
       teacherEnd.push(rawPayload.teacher.teacherSessionEnd);
     }
-console.log("existingStart: ",existingStart);
-console.log("existingEnd: ",existingEnd);
 
-console.log("teacherStart: ",teacherStart);
-
-console.log("teacherEnd: ",teacherEnd);
-  
     const result = await updateClassAttendanceById(String(req.params.classSheduleId), {
       student: {
        studentId: classSchedule.student.studentId,
@@ -769,6 +763,10 @@ console.log("teacherEnd: ",teacherEnd);
   }catch(e){
     console.log("Error>>", e)
   }
+},
+
+async getTeacherEarnings(req : Request , h :ResponseToolkit){
+   return await getTeacherTotalEarnings( req.query.teacherId, req.query.dateRange );
 }
 
 }

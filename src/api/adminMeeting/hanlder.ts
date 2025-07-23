@@ -1,6 +1,6 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
-import { admincreateMeeting, getAdminMeetingById, getAllAdminMeetingRecords, updateAdminMeetingById } from "../../operations/adminmeeting";
-import { IAdminMeetingCreate } from "../../../types/models.types";
+import { admincreateMeeting, getAdminMeetingById, getAllAdminMeetingRecords ,getMeetingsByMeetingId, updateAdminMeetingById, updateMeetingStatus } from "../../operations/adminmeeting";
+import { IAdminMeetingCreate, ITeacher } from "../../../types/models.types";
 import { isNil } from "lodash";
 import { addAminMeetingMessages } from "../../config/messages";
 import { notFound } from "@hapi/boom";
@@ -97,50 +97,116 @@ export default {
   
     return result;
       },
+
+        //get by MeetinngId
+async getAdminMeetingRecordByMeetingId(req: Request, h: ResponseToolkit) {
+  const meetingId = String(req.query.meetingId);
+
+  const result = await getMeetingsByMeetingId(meetingId); // Note plural function
+
+  if (isNil(result) || result.length === 0) {
+    return notFound(addAminMeetingMessages.USER_NOT_FOUND);
+  }
+
+  return result;
+},
+
   
 //Update
 
 async updateAdminMeetingRecordById(req: Request, h: ResponseToolkit) {
   try {
-    const payload = req.payload as IAdminMeetingUpdate;
+    const payload = req.payload as Partial<IAdminMeetingUpdate>;
 
     if (!payload) {
       return h.response({ message: "Request payload is missing" }).code(400);
     }
 
-    const { selectedDate, startTime, endTime, meetingStatus, updatedBy, updatedDate, meetingName, description } = payload;
+    const {
+      selectedDate,
+      startTime,
+      endTime,
+      meetingStatus,
+      updatedBy,
+      updatedDate,
+      meetingName,
+      description,
+    } = payload;
 
-    // Validate required reschedule fields (only selectedDate, startTime, and endTime)
+    // Validate essential fields
     if (!selectedDate || !startTime || !endTime) {
-      return h.response({ message: "Missing required reschedule fields" }).code(400);
+      return h
+        .response({ message: "Missing required reschedule fields" })
+        .code(400);
     }
 
+    // Build update object
     const updatedPayload: Partial<IAdminMeetingUpdate> = {
       selectedDate: new Date(selectedDate),
       startTime,
       endTime,
-      meetingStatus: meetingStatus ?? "Rescheduled",
-      updatedBy: updatedBy ?? "admin",
-      updatedDate: updatedDate ?? new Date(),
-      meetingName, // Optional field
-      description, // Optional field
+      meetingStatus: meetingStatus || "Rescheduled",
+      updatedBy: updatedBy || "admin",
+      updatedDate: updatedDate || new Date(),
     };
 
+    if (meetingName) updatedPayload.meetingName = meetingName;
+    if (description) updatedPayload.description = description;
+
+    // Update all records sharing the meetingId
     const result = await updateAdminMeetingById(req.params.meetingId, updatedPayload);
 
     if (!result) {
-      return h.response({ message: "Failed to update meetings" }).code(404);
+      return h.response({ message: "No matching meetings found to update" }).code(404);
     }
 
-    return h.response({ message: "Meetings updated successfully", data: result }).code(200);
+    return h
+      .response({ message: "Meetings rescheduled successfully", data: result })
+      .code(200);
 
   } catch (error) {
-    console.error("Error during updating meetings:", error);
+    console.error("Error while updating meetings:", error);
+    return h
+      .response({ message: "Internal Server Error", error })
+      .code(500);
+  }
+},
+
+
+
+//Update meeting minutes
+async updateAdminMeeting(req: Request, h: ResponseToolkit) {
+  try {
+    console.log("Content-Type:", req.headers["content-type"]);
+    console.log("Raw payload:", req.payload);
+
+    const meetingId = req.params.meetingbyId;
+    const payload = req.payload as {
+      duration: string;
+      meetingStatus: string;
+      teacher: ITeacher[];
+      updatedBy?: string;
+    };
+
+
+    const result = await updateMeetingStatus(
+      meetingId,
+      payload.meetingStatus,
+      payload.duration,
+      payload.teacher,
+      payload.updatedBy
+    );
+
+    if (!result) {
+      return h.response({ message: addAminMeetingMessages.USER_NOT_FOUND }).code(404);
+    }
+
+    return h.response(result).code(200);
+  } catch (error) {
+    console.error("Error updating meeting minutes and attendees:", error);
     return h.response({ message: "Internal Server Error", error }).code(500);
   }
 }
-
-
 
 
 

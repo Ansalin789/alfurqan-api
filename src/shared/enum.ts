@@ -140,8 +140,21 @@ export interface GetAllTeachersRecordsParams {
 export interface GetAllAssignmentRecordsParams {
   studentId?: string;
   assignmentId?: string;
+};
 
+export interface GetPaymentDetailsRecordsParams {
 
+  userId?: string,
+  userName?: string,
+  paymentStatus?: string,
+  paymentAmount?: any,
+  paymentDate?: string,
+  status?: string,
+  sortBy?: any,
+  sortOrder?: any,
+  offset?: any,
+  limit?: any,
+  searchText?: string
 }
 
 export default CustomEnumerator;

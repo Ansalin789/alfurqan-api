@@ -7,7 +7,7 @@ const salarywagesSchema = new Schema<ISalarywages>(
     employeeId: { type: String, required: true },
     employeeName: { type: String, required: true },
     employeeMail: { type: String, required: true },
-    phone: { type: Number, required: true },
+    phone: { type: Number, required: false },
     designation: { type: String, required: true },
 
     salaryAmount: { type: Number, required: true },
@@ -45,7 +45,7 @@ export const zodsalarywagesSchemaSchema = z.object({
   employeeId: z.string(),
   employeeName: z.string(),
   employeeMail: z.string(),
-  phone: z.number(),
+  phone: z.number().optional(),
   designation: z.string(),
 
   salaryAmount: z.number(),
@@ -58,7 +58,7 @@ export const zodsalarywagesSchemaSchema = z.object({
     .refine((val) => !isNaN(Date.parse(val)), {
       message: commonMessages.INVALID_DATE_FORMAT,
     })
-    .transform((val) => new Date(val)),
+    .transform((val) => new Date(val)).optional(),
 
   paymentStatus: z.string(),
   commands: z.string().optional(),

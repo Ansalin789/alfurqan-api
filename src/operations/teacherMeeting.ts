@@ -1,11 +1,10 @@
-import {TeacherMeetingCreate, TeacherMeeting} from '../../types/models.types'
+import {TeacherMeetingCreate, TeacherMeeting, IAdminMeeting, IMeeting, ITeacher} from '../../types/models.types'
 import teacherMeeting, { zodTeacherMeetingSchema } from '../models/teachermeeting';
-import { alstudentsMessages,commonMessages } from '../config/messages';
-import AppLogger from '../helpers/logging';
-import {GetAllRecordsParams} from "../shared/enum";
-import { isNil } from 'lodash';
+
 import { Types } from 'mongoose';
 import teachermeeting from '../models/teachermeeting';
+import addmeeting from '../models/addmeeting';
+import adminmeeting from '../models/adminmeeting';
 
 
 export interface ITeacherMeetingUpdate{
@@ -19,6 +18,13 @@ export interface ITeacherMeetingUpdate{
   updatedBy?:string,
   description:string,
   }
+
+
+  export interface IMeetingMinutesUpdate {
+  meetingStatus: string;
+  meetingminutes: string;
+  teacher: ITeacher[];  // Fix this from `string` to `ITeacher[]`
+}
 
   
 export const createTeacherMeeting = async (
@@ -95,64 +101,44 @@ export const createTeacherMeeting = async (
 
 
 export const getallTeachermeeting = async (
-  params: GetAllRecordsParams
-): Promise<{ totalCount: number; students: TeacherMeeting[] }> => {
-  const { studentId, searchText, sortBy, sortOrder, offset, limit, filterValues } = params;
+  params: { teacherId: string }
+): Promise<{
+  totalCount: number;
+  meetings: (TeacherMeeting | IAdminMeeting | IMeeting)[];
+}> => {
+  const { teacherId } = params;
 
-  const query: Record<string, unknown> = {};
+  const query = {
+    "teacher.teacherId": teacherId.trim(),
+  };
 
-  if (searchText) {
-    query.$or = [
-      { name: { $regex: searchText, $options: "i" } },
-      { email: { $regex: searchText, $options: "i" } },
-    ];
-  }
+  console.log("🔍 Query used:", query);
 
-  if (studentId) {
-    query["student.studentId"] = Array.isArray(studentId) ? { $in: studentId } : studentId;
-  }
+const [teacherMeetings, adminMeetings, supervisormeeting] = await Promise.all([
+  teacherMeeting.find({ "teacher.teacherId": teacherId.trim() }).exec(),
+  addmeeting.find({ "teacher.teacherId": teacherId.trim() }).exec(),
+  addmeeting.find({ "teacher.teacherId": teacherId.trim() }).exec(),
+]);
 
-  if (filterValues) {
-    if (filterValues.course) {
-      query.course = { $in: filterValues.course };
-    }
-    if (filterValues.country) {
-      query.country = { $in: filterValues.country };
-    }
-    if (filterValues.teacher) {
-      query.teacher = { $in: filterValues.teacher };
-    }
-    if (filterValues.status) {
-      query.status = { $in: filterValues.status };
-    }
-  }
 
-  console.log("Constructed Query:", JSON.stringify(query, null, 2));
+  console.log("📘 teacherMeetings:", teacherMeetings.length);
+  console.log("📘 adminMeetings:", adminMeetings.length);
+  console.log("📘 studentMeetings:", supervisormeeting.length);
 
-  const sortOptions: Record<string, 1 | -1> = { [sortBy || "createdAt"]: sortOrder === "asc" ? 1 : -1 };
+  const mergedMeetings = [...teacherMeetings, ...adminMeetings, ...supervisormeeting].sort(
+    (a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()
+  );
 
-  const studentQuery = teacherMeeting.find(query).sort(sortOptions);
-
-  if (!isNil(offset) && !isNil(limit)) {
-    const skip = Math.max(
-      0,
-      ((Number(offset) ?? Number(commonMessages.OFFSET)) - 1) *
-      (Number(limit) ?? Number(commonMessages.LIMIT))
-    );
-    studentQuery.skip(skip).limit(Number(limit) ?? Number(commonMessages.LIMIT));
-  }
-
-  const [student, totalCount] = await Promise.all([
-    studentQuery.exec(),
-    teacherMeeting.countDocuments(query).exec(),
-  ]);
-
-  AppLogger.info(alstudentsMessages.GET_ALL_LIST_SUCCESS, {
-    totalCount,
-  });
-
-  return { totalCount, students: student };
+  return {
+    totalCount: mergedMeetings.length,
+    meetings: mergedMeetings,
+  };
 };
+
+
+
+
+
 
 export const getTeachermeetingById = async (
   id: string
@@ -176,7 +162,29 @@ export const updateAllTeacherMeeting = async (
   ).lean();
 }
 
+//updatemeetingAttendee
 
+export const updateTeacherMeetingAtt = async (
+  id: string,
+  meetingStatus: string,
+  teacher: ITeacher[],
+  updatedBy?: string
+): Promise<IMeetingMinutesUpdate | null> => {
+  const updated = await addmeeting.findOneAndUpdate(
+    { _id: new Types.ObjectId(id) },
+    {
+      $set: {
+        meetingStatus,
+        teacher,
+        updatedBy,
+        updatedDate: new Date(), // set server-side
+      },
+    },
+    { new: true, projection: { meetingminutes: 1, teacher: 1, _id: 0 } } // return only relevant fields
+  ).lean();
+
+  return updated;
+};
 
 
 

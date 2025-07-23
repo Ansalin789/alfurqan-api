@@ -236,6 +236,18 @@ const register = async (server: Server): Promise<void> => {
         },
        },  
       },
+        {
+        method: "GET",
+        path: "/teacher/earnings",
+        options: {
+          handler: handler.getTeacherEarnings,
+          description: ClassSchedulesMessages.LIST,
+          tags: ["api", "classShedule"],
+          auth: {
+            strategies: ["jwt"],
+          },
+         },
+      },
     ];
     server.route(routes);
   };
