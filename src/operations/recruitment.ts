@@ -5,7 +5,7 @@ import { IRecruitment, IRecruitmentCreate } from "../../types/models.types";
 import RecruitModel from "../models/recruitment"
 import { GetAllApplicationsRecordsParams, GetAllTeachersRecordsParams } from "../shared/enum";
 import { forEach, isNil } from "lodash";
-import { applicationStatus, commonMessages, recruitmentMessages } from "../config/messages";
+import { applicationStatus } from "../config/messages";
 import AppLogger from "../helpers/logging";
 import { Types } from "mongoose";
 import User from "../models/users";
@@ -16,6 +16,7 @@ import ShiftSchedule from "../models/usershiftschedule"
 import { generateSlotsFromUserSchedule } from "../redis/handler/teacherSlotHander";
 import { academicAvailableTeachers } from "../kafka/producers/academicProducer";
 import SalaryAndWages from "../models/empwages";
+import classShedule from "../models/classShedule"
 
 export interface IRecruitmentUpdate{
   supervisor:{
@@ -149,11 +150,6 @@ const totalCount = applicants.length;
     applicants: applicants as IRecruitment[]
   };
 };
-
-
-
-
-
 
 
 export const getApplicantRecordById = async (
@@ -562,6 +558,102 @@ export const getApplicationStatusData = async (
 
   return finalResult;
 };
+export const getTeacherDetailsOverviewCount = async (
+  teacherId: string
+): Promise<{
+  studentCount: number,
+  absentDays: number;
+  totalClasses: number;
+  totalEarned: number;
+  leave: number;
+  rescheduled: number;
+}> => {
+
+  try{
+const matchStage: any = {
+  "teacher.teacherId": { $ne: null },
+  "teacher.teacherName": { $ne: null },
+  "teacher.teacherEmail": { $ne: null },
+};
+
+if (teacherId) {
+  matchStage["teacher.teacherId"] = teacherId;
+}
+
+const teachers = await classShedule.aggregate([
+  {
+    $match: matchStage,
+  },
+  {
+    $addFields: {
+      amountNumber: { $toDouble: "$amount" },
+    },
+  },
+  {
+    $group: {
+      _id: "$teacher.teacherId",
+      teacherId: { $first: "$teacher.teacherId" },
+      teacherName: { $first: "$teacher.teacherName" },
+      teacherEmail: { $first: "$teacher.teacherEmail" },
+      uniqueStudents: {
+        $addToSet: "$student.studentId",
+      },
+      totalClasses: { $sum: 1 },
+      rescheduleCount: {
+        $sum: {
+          $cond: [{ $eq: ["$scheduleStatus", "Rescheduled"] }, 1, 0],
+        },
+      },
+      totalEarnings: { $sum: "$amountNumber" },
+      absentCount: {
+        $sum: {
+          $cond: [{ $eq: ["$teacherAttendee", "absent"] }, 1, 0],
+        },
+      },
+    },
+  },
+  {
+    $project: {
+      teacherId: 1,
+      teacherName: 1,
+      teacherEmail: 1,
+      studentCount: { $size: "$uniqueStudents" },
+      totalClasses: 1,
+      rescheduleCount: 1,
+      totalEarnings: 1,
+      absentCount: 1,
+    },
+  },
+]);
+
+
+ const data = teachers[0];
+
+    return {
+      studentCount: data?.studentCount || 0,
+      absentDays: data?.absentCount || 0, // map absentCount -> absentDays
+      totalClasses: data?.totalClasses || 0,
+      totalEarned: data?.totalEarnings || 0,
+      leave: 0, // ➜ add real logic if you have it!
+      rescheduled: data?.rescheduleCount || 0,
+    };
+
+  }catch(e){
+    console.log("e>>>>",e );
+      return {
+    studentCount: 0,
+    absentDays: 0,
+    totalClasses: 0,
+    totalEarned: 0,
+    leave: 0,
+    rescheduled: 0,
+  };
+  }
+
+ 
+};
+
+
 
 
 export const getAllTeacherRecords  = async( params: GetAllTeachersRecordsParams

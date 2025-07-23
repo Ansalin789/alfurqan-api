@@ -130,6 +130,20 @@ const register = async (server: Server): Promise<void> => {
             },
             },
         },
+
+        
+   {
+          method: "GET",
+          path: "/teacheroverview",
+          options: {
+            handler: handler.getTeacherDetailsOverview,
+            description: recruitmentMessages.LIST,
+            tags: ["api", "recruitment"],
+            auth: {
+              strategies: ["jwt"],
+            },
+            },
+        },
 ];
 server.route(routes);
 };
