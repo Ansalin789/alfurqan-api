@@ -125,9 +125,10 @@ async getallTeachermeeting(req: Request, h: ResponseToolkit) {
 
     return h.response(result).code(200);
   } catch (error) {
-    return h.response({ error }).code(400);
+    return h.response({ error}).code(400);
   }
 }
+
 
 
 

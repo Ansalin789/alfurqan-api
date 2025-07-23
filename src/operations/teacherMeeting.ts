@@ -104,9 +104,7 @@ export const getallTeachermeeting = async (
   params: { teacherId: string }
 ): Promise<{
   totalCount: number;
-  students: TeacherMeeting[];
-  adminMeetings:IAdminMeeting [];
-  studentMeetings: IMeeting[];
+  meetings: (TeacherMeeting | IAdminMeeting | IMeeting)[];
 }> => {
   const { teacherId } = params;
 
@@ -116,23 +114,23 @@ export const getallTeachermeeting = async (
 
   console.log("Query for all tables:", JSON.stringify(query, null, 2));
 
-  const [teacherMeetings, teacherCount] = await Promise.all([
-    teacherMeeting.find(query).sort({ createdDate: -1 }).exec(),
-    teacherMeeting.countDocuments(query).exec(),
+  const [teacherMeetings, adminMeetings, studentMeetings] = await Promise.all([
+    teacherMeeting.find(query).exec(),
+    adminmeeting.find(query).exec(),
+    addmeeting.find(query).exec(),
   ]);
 
-  const [adminMeetings, studentMeetings] = await Promise.all([
-    adminmeeting.find(query).sort({ createdDate: -1 }).exec(),
-    addmeeting.find(query).sort({ createdDate: -1 }).exec(),
-  ]);
+  // Combine and sort all meeting records by `createdDate` in descending order
+  const mergedMeetings = [...teacherMeetings, ...adminMeetings, ...studentMeetings].sort(
+    (a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()
+  );
 
   return {
-    totalCount: teacherCount,
-    students: teacherMeetings,
-    adminMeetings,
-    studentMeetings,
+    totalCount: mergedMeetings.length,
+    meetings: mergedMeetings,
   };
 };
+
 
 
 
