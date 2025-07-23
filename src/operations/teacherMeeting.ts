@@ -1,11 +1,10 @@
-import {TeacherMeetingCreate, TeacherMeeting} from '../../types/models.types'
+import {TeacherMeetingCreate, TeacherMeeting, IAdminMeeting, IMeeting} from '../../types/models.types'
 import teacherMeeting, { zodTeacherMeetingSchema } from '../models/teachermeeting';
-import { alstudentsMessages,commonMessages } from '../config/messages';
-import AppLogger from '../helpers/logging';
-import {GetAllRecordsParams} from "../shared/enum";
-import { isNil } from 'lodash';
+
 import { Types } from 'mongoose';
 import teachermeeting from '../models/teachermeeting';
+import addmeeting from '../models/addmeeting';
+import adminmeeting from '../models/adminmeeting';
 
 
 export interface ITeacherMeetingUpdate{
@@ -95,64 +94,41 @@ export const createTeacherMeeting = async (
 
 
 export const getallTeachermeeting = async (
-  params: GetAllRecordsParams
-): Promise<{ totalCount: number; students: TeacherMeeting[] }> => {
-  const { studentId, searchText, sortBy, sortOrder, offset, limit, filterValues } = params;
+  params: { teacherId: string }
+): Promise<{
+  totalCount: number;
+  students: TeacherMeeting[];
+  adminMeetings:IAdminMeeting [];
+  studentMeetings: IMeeting[];
+}> => {
+  const { teacherId } = params;
 
-  const query: Record<string, unknown> = {};
+  const query = {
+    "teacher.teacherId": teacherId.trim(),
+  };
 
-  if (searchText) {
-    query.$or = [
-      { name: { $regex: searchText, $options: "i" } },
-      { email: { $regex: searchText, $options: "i" } },
-    ];
-  }
+  console.log("Query for all tables:", JSON.stringify(query, null, 2));
 
-  if (studentId) {
-    query["student.studentId"] = Array.isArray(studentId) ? { $in: studentId } : studentId;
-  }
-
-  if (filterValues) {
-    if (filterValues.course) {
-      query.course = { $in: filterValues.course };
-    }
-    if (filterValues.country) {
-      query.country = { $in: filterValues.country };
-    }
-    if (filterValues.teacher) {
-      query.teacher = { $in: filterValues.teacher };
-    }
-    if (filterValues.status) {
-      query.status = { $in: filterValues.status };
-    }
-  }
-
-  console.log("Constructed Query:", JSON.stringify(query, null, 2));
-
-  const sortOptions: Record<string, 1 | -1> = { [sortBy || "createdAt"]: sortOrder === "asc" ? 1 : -1 };
-
-  const studentQuery = teacherMeeting.find(query).sort(sortOptions);
-
-  if (!isNil(offset) && !isNil(limit)) {
-    const skip = Math.max(
-      0,
-      ((Number(offset) ?? Number(commonMessages.OFFSET)) - 1) *
-      (Number(limit) ?? Number(commonMessages.LIMIT))
-    );
-    studentQuery.skip(skip).limit(Number(limit) ?? Number(commonMessages.LIMIT));
-  }
-
-  const [student, totalCount] = await Promise.all([
-    studentQuery.exec(),
+  const [teacherMeetings, teacherCount] = await Promise.all([
+    teacherMeeting.find(query).sort({ createdDate: -1 }).exec(),
     teacherMeeting.countDocuments(query).exec(),
   ]);
 
-  AppLogger.info(alstudentsMessages.GET_ALL_LIST_SUCCESS, {
-    totalCount,
-  });
+  const [adminMeetings, studentMeetings] = await Promise.all([
+    adminmeeting.find(query).sort({ createdDate: -1 }).exec(),
+    addmeeting.find(query).sort({ createdDate: -1 }).exec(),
+  ]);
 
-  return { totalCount, students: student };
+  return {
+    totalCount: teacherCount,
+    students: teacherMeetings,
+    adminMeetings,
+    studentMeetings,
+  };
 };
+
+
+
 
 export const getTeachermeetingById = async (
   id: string

@@ -29,18 +29,20 @@ const register = async (server:Server): Promise <void> => {
         },
     },
 
-    {
-        method: "GET",
-        path: "/teacherMeetinglist",
-        options: {
-          handler: handler.getallTeachermeeting,
-          description: evaluationMessages.LIST,
-          tags: ["api", "teacherMeetinglist"],
-          auth: {
-            strategies: ["jwt"],
-          },  
-        },
-      },
+
+{
+  method: "GET",
+  path: "/teacherMeetinglist", // ✅ NO {teacherId} here
+  options: {
+    handler: handler.getallTeachermeeting,
+    description: evaluationMessages.LIST,
+    tags: ["api", "teacherMeetinglist"],
+    auth: {
+      strategies: ["jwt"],
+    },
+  },
+},
+
   
     {   
         method: 'PUT',

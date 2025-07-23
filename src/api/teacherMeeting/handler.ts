@@ -112,38 +112,25 @@ export default {
 }
 ,
 
-    async getallTeachermeeting(req: Request, h: ResponseToolkit) {
-        try {
-          // Parse and validate the request query using zod
-          const parsedQuery = getallTeachermeetingInputValidation.parse({
-            payload: {
-              ...req.query,
-              filterValues: (() => {
-                try {
-                  return req.query?.filterValues
-                    ? JSON.parse(req.query.filterValues as string)
-                    : {};
-                } catch {
-                  throw new Error("Invalid filterValues JSON format.");
-                }
-              })(),
-            },
-          });
-    
-          const query = parsedQuery.payload;
-    
-          // Call your service or database function to fetch data
-          const result = await getallTeachermeeting(query);
-    
-          // Return the response
-          return h.response(result).code(200);
-        } catch (error) {
-          // Handle errors (validation or other errors)
-          return h
-            .response({ error })
-            .code(400);
-        }
+async getallTeachermeeting(req: Request, h: ResponseToolkit) {
+  try {
+    const teacherId = req.query.teacherId as string;
+
+    if (!teacherId) {
+      return h.response({ error: "teacherId is required in query params." }).code(400);
     }
+
+    const result = await getallTeachermeeting({ teacherId });
+
+    return h.response(result).code(200);
+  } catch (error) {
+    return h.response({ error }).code(400);
+  }
+}
+
+
+
+
     ,
 
     async getTeachermeetingById(req: Request , h: ResponseToolkit) {
