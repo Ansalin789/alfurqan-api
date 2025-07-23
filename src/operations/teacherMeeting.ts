@@ -1,4 +1,4 @@
-import {TeacherMeetingCreate, TeacherMeeting, IAdminMeeting, IMeeting} from '../../types/models.types'
+import {TeacherMeetingCreate, TeacherMeeting, IAdminMeeting, IMeeting, ITeacher} from '../../types/models.types'
 import teacherMeeting, { zodTeacherMeetingSchema } from '../models/teachermeeting';
 
 import { Types } from 'mongoose';
@@ -18,6 +18,13 @@ export interface ITeacherMeetingUpdate{
   updatedBy?:string,
   description:string,
   }
+
+
+  export interface IMeetingMinutesUpdate {
+  meetingStatus: string;
+  meetingminutes: string;
+  teacher: ITeacher[];  // Fix this from `string` to `ITeacher[]`
+}
 
   
 export const createTeacherMeeting = async (
@@ -152,7 +159,29 @@ export const updateAllTeacherMeeting = async (
   ).lean();
 }
 
+//updatemeetingAttendee
 
+export const updateTeacherMeetingAtt = async (
+  id: string,
+  meetingStatus: string,
+  teacher: ITeacher[],
+  updatedBy?: string
+): Promise<IMeetingMinutesUpdate | null> => {
+  const updated = await addmeeting.findOneAndUpdate(
+    { _id: new Types.ObjectId(id) },
+    {
+      $set: {
+        meetingStatus,
+        teacher,
+        updatedBy,
+        updatedDate: new Date(), // set server-side
+      },
+    },
+    { new: true, projection: { meetingminutes: 1, teacher: 1, _id: 0 } } // return only relevant fields
+  ).lean();
+
+  return updated;
+};
 
 
 

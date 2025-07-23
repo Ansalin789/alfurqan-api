@@ -32,7 +32,7 @@ const register = async (server:Server): Promise <void> => {
 
 {
   method: "GET",
-  path: "/teacherMeetinglist", // ✅ NO {teacherId} here
+  path: "/teacherMeetinglist", 
   options: {
     handler: handler.getallTeachermeeting,
     description: evaluationMessages.LIST,
@@ -56,9 +56,30 @@ const register = async (server:Server): Promise <void> => {
       },
         },
     },
+
+
+{
+  method: "PUT",
+  path: "/meetingattendence/{meetingbyId}",
+  options: {
+    handler: handler.updateTeacherMeetingAttendee,
+    description: addMeetingMessages.LIST,
+    tags: ["api", "teacherMeeting"],
+    payload: {
+      parse: true,
+      allow: "application/json"
+    }
+  }
+}
+
+
     ];
     server.route(routes);
-};  
+}; 
+
+
+
+
 
 export = {
     name: "api-teacherMeeting",

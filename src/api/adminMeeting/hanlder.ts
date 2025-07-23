@@ -191,7 +191,7 @@ async updateAdminMeeting(req: Request, h: ResponseToolkit) {
 
     const result = await updateMeetingStatus(
       meetingId,
-        payload.meetingStatus,
+      payload.meetingStatus,
       payload.duration,
       payload.teacher,
       payload.updatedBy
