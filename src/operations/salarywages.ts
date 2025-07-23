@@ -8,6 +8,7 @@ import classShedule from "../models/classShedule";
 import EmpWagesModel from "../models/empwages";
 import UserModel from "../models/users";
 import AppLogger from "../helpers/logging";
+import moment from "moment";
 
 
 
@@ -19,7 +20,8 @@ export const runSalaryCron = async () => {
 
   try {
     // Process all eligible users
-    await processAllUsers(now, currentMonthLabel);
+    // await processAllUsers(now, currentMonthLabel);
+    await runSalaryCalculationForDate("2025-07-23");
     console.log("✅ Salary processing completed successfully");
   } catch (error) {
     console.error("❌ Salary processing failed:", error);
@@ -324,7 +326,137 @@ export const updateSalaryWages = async ({
   };
 };
 
+export const runSalaryCalculationForDate = async (dateStr: string) => {
+  console.log("⏰ Running salary calculation for:", dateStr);
 
+  try {
+    const testDate = moment(dateStr, "YYYY-MM-DD");
+    const todayStart = testDate.startOf("day").toDate();
+    const todayEnd = testDate.endOf("day").toDate();
+    const todayDate = testDate.format("YYYY-MM-DD");
+
+    console.log("📆 Date range:", todayStart, "➡️", todayEnd);
+
+    let eligibleUsers = [];
+    try {
+      eligibleUsers = await UserModel.find({
+        role: { $in: ["TEACHER"] },
+        status: "Active",
+      }).lean();
+      console.log("👨‍🏫 Teachers:", eligibleUsers.map(u => u.email).join(", "));
+    } catch (err) {
+      console.error("❌ Error fetching eligible users:", err);
+      return;
+    }
+
+    for (const user of eligibleUsers) {
+      const teacherId = user.userId;
+      const teacherEmail = user.email;
+      console.log(`🔍 Teacher: ${teacherEmail} (${teacherId})`);
+
+      const query = {
+        "teacher.teacherId": teacherId,
+        scheduleStatus: "Completed",
+        sessionStatus: "Completed",
+        startDate: { $gte: todayStart, $lte: todayEnd },
+      };
+      console.log("🔎 Query:", query);
+
+      let todayClasses = [];
+      try {
+        todayClasses = await classShedule.find(query).lean();
+        console.log(`📚 Class count: ${todayClasses.length}`);
+      } catch (err) {
+        console.error(`❌ Error fetching classes for ${teacherEmail}:`, err);
+        continue;
+      }
+
+      if (!todayClasses.length) continue;
+
+      let regularTotal = 0;
+      let groupTotal = 0;
+
+      const seenRegular = new Set<string>();
+      const seenGroup = new Set<string>();
+
+      for (const cls of todayClasses) {
+        const amt = parseFloat(cls.amount || "0");
+
+        if (cls.sessionClassType === "REGULARCLASS") {
+          if (!seenRegular.has(cls.classLink)) {
+            seenRegular.add(cls.classLink);
+            regularTotal += amt;
+            console.log(`🟢 REGULARCLASS +${amt} | ${cls.classLink}`);
+          }
+        } else if (cls.sessionClassType === "GROUPCLASS") {
+          const groupKey = `${cls.classLink}_${teacherId}_${todayDate}`;
+          if (!seenGroup.has(groupKey)) {
+            seenGroup.add(groupKey);
+            groupTotal += amt;
+            console.log(`🔵 GROUPCLASS +${amt} | ${cls.classLink}`);
+          }
+        }
+      }
+
+      const totalEarnings = +(regularTotal + groupTotal).toFixed(2);
+      console.log(`💰 Earnings for ${teacherEmail}: ${totalEarnings}`);
+
+      if (totalEarnings === 0) continue;
+
+      try {
+  const pendingSalary = await salaryandwages.findOne({
+    employeeId: teacherId,
+    paymentStatus: "Pending",
+    $or: [{ paymentDate: "" }],
+  });
+
+  if (pendingSalary) {
+    const oldAmount = pendingSalary.salaryAmount || 0;
+    pendingSalary.salaryAmount = +(oldAmount + totalEarnings);
+    await pendingSalary.save();
+    console.log(`✅ Updated salary for ${teacherEmail} ➕${totalEarnings}`);
+  } else {
+    const paidSalary = await salaryandwages
+      .findOne({
+        employeeId: teacherId,
+        paymentStatus: "Paid",
+      })
+      .sort({ createdDate: 1 });
+
+    if (paidSalary) {
+      console.log(`📄 Found earliest paid salary record for ${teacherEmail} on ${paidSalary.createdDate}`);
+
+      // 🔁 Re-check if a new Pending was created meanwhile
+      const newPendingSalary = await salaryandwages.findOne({
+        employeeId: teacherId,
+        paymentStatus: "Pending",
+        $or: [{ paymentDate: "" }],
+      });
+
+      if (newPendingSalary) {
+        const oldAmount = newPendingSalary.salaryAmount || 0;
+        newPendingSalary.salaryAmount = +(oldAmount + totalEarnings);
+        await newPendingSalary.save();
+        console.log(`✅ Updated NEW pending salary for ${teacherEmail} ➕${totalEarnings}`);
+      } else {
+        console.warn(`⚠️ Still no pending salary found after checking Paid for ${teacherEmail}`);
+      }
+
+    } else {
+      console.warn(`⚠️ No pending or paid salary found for ${teacherEmail}`);
+    }
+  }
+} catch (err) {
+  console.error(`❌ Error updating salary for ${teacherEmail}:`, err);
+}
+
+    }
+
+    console.log("✅🎉 Salary calculation finished for", dateStr);
+  } catch (error) {
+    console.error("🔥 Fatal error during salary calculation:", error);
+  }
+};
 
 
 
