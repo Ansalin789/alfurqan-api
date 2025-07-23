@@ -204,13 +204,20 @@ export const getMeetingsByMeetingId = async (
 export const updateAdminMeetingById = async (
   meetingId: string,
   payload: Partial<IAdminMeetingUpdate>
-): Promise<IAdminMeeting | null> => {
-  return addmeeting.updateMany(
-    { meetingId },  // Match by meetingId
-    { $set: payload },
-    { new: true }
-  ).lean();
+): Promise<IAdminMeeting[] | null> => {
+  const updateResult = await addmeeting.updateMany(
+    { meetingId },          // Match by meetingId
+    { $set: payload }
+  );
+
+  if (updateResult.modifiedCount === 0) {
+    return null; // No documents updated
+  }
+
+  // Return updated documents
+  return await addmeeting.find({ meetingId }).lean();
 };
+
 
 
 //updatevideocall
@@ -223,7 +230,7 @@ export const updateMeetingStatus = async (
   updatedBy?: string
 ): Promise<IMeetingMinutesUpdate | null> => {
   const updated = await addmeeting.findOneAndUpdate(
-    { _id: new Types.ObjectId(id) },
+ { meetingId: id },
     {
       $set: {
         meetingStatus,

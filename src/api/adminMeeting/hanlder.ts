@@ -116,45 +116,63 @@ async getAdminMeetingRecordByMeetingId(req: Request, h: ResponseToolkit) {
 
 async updateAdminMeetingRecordById(req: Request, h: ResponseToolkit) {
   try {
-    const payload = req.payload as IAdminMeetingUpdate;
+    const payload = req.payload as Partial<IAdminMeetingUpdate>;
 
     if (!payload) {
       return h.response({ message: "Request payload is missing" }).code(400);
     }
 
-    const { selectedDate, startTime, endTime, meetingStatus, updatedBy, updatedDate, meetingName, description } = payload;
+    const {
+      selectedDate,
+      startTime,
+      endTime,
+      meetingStatus,
+      updatedBy,
+      updatedDate,
+      meetingName,
+      description,
+    } = payload;
 
-    // Validate required reschedule fields (only selectedDate, startTime, and endTime)
+    // Validate essential fields
     if (!selectedDate || !startTime || !endTime) {
-      return h.response({ message: "Missing required reschedule fields" }).code(400);
+      return h
+        .response({ message: "Missing required reschedule fields" })
+        .code(400);
     }
 
+    // Build update object
     const updatedPayload: Partial<IAdminMeetingUpdate> = {
       selectedDate: new Date(selectedDate),
       startTime,
       endTime,
-      meetingStatus: meetingStatus ?? "Rescheduled",
-      updatedBy: updatedBy ?? "admin",
-      updatedDate: updatedDate ?? new Date(),
-      meetingName, // Optional field
-      description, // Optional field
+      meetingStatus: meetingStatus || "Rescheduled",
+      updatedBy: updatedBy || "admin",
+      updatedDate: updatedDate || new Date(),
     };
 
+    if (meetingName) updatedPayload.meetingName = meetingName;
+    if (description) updatedPayload.description = description;
+
+    // Update all records sharing the meetingId
     const result = await updateAdminMeetingById(req.params.meetingId, updatedPayload);
 
     if (!result) {
-      return h.response({ message: "Failed to update meetings" }).code(404);
+      return h.response({ message: "No matching meetings found to update" }).code(404);
     }
 
-    return h.response({ message: "Meetings updated successfully", data: result }).code(200);
+    return h
+      .response({ message: "Meetings rescheduled successfully", data: result })
+      .code(200);
 
   } catch (error) {
-    console.error("Error during updating meetings:", error);
-    return h.response({ message: "Internal Server Error", error }).code(500);
+    console.error("Error while updating meetings:", error);
+    return h
+      .response({ message: "Internal Server Error", error })
+      .code(500);
   }
 },
 
-//update
+
 
 //Update meeting minutes
 async updateAdminMeeting(req: Request, h: ResponseToolkit) {

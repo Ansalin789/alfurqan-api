@@ -38,7 +38,7 @@ const register = async (server: Server): Promise<void> => {
 
            {
                 method: "GET",
-                path: "/allAdminMeeting/{id}",
+                path: "/allAdminMeeting/{meetingId}",
                 options: {
                   handler: handler.getAdminMeetingRecordById,
                   description: addAminMeetingMessages.LIST,
