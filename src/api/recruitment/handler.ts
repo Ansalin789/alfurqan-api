@@ -111,10 +111,10 @@ export default{
 
     const result = await createRecruitment({
       supervisor: {
-        supervisorId: payload.supervisor?.supervisorId || " ",
-        supervisorName: payload.supervisor?.supervisorName || " ",
-        supervisorEmail: payload.supervisor?.supervisorEmail || " ",
-        supervisorRole: payload.supervisor?.supervisorRole || " ",
+        supervisorId: "67a467bcc346aaaea402f760",
+        supervisorName: "Arthi",
+        supervisorEmail:  "arthi.blackstoneinfomatics@gmail.com",
+        supervisorRole:  "SUPERVISOR",
       },
       candidateFirstName: payload.candidateFirstName,
       candidateLastName: payload.candidateLastName,
