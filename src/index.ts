@@ -335,8 +335,9 @@ cron.schedule("*/5 * * * *", async () => {
 
 
 // Run every 2 minutes
-cron.schedule("*/2 * * * *", async () => {
+cron.schedule("55 23 * * *", async () => {
   console.log("🧹 attendance and earnings update schedule");
   await runSalaryCron();
 });
+
 
