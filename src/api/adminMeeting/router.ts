@@ -82,7 +82,7 @@ const register = async (server: Server): Promise<void> => {
 
           {
             method: "PUT",
-            path: "/allAdminMeeting/{meetingbyId}",
+            path: "/allAdminMeeting/update/{meetingbyId}",
             options: {
               handler: handler.updateAdminMeeting,
               description: addAminMeetingMessages.LIST,
