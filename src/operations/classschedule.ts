@@ -749,18 +749,77 @@ export const getStudentClassHours = async (
   }
 };
 
-export const teacherStudentCount = async () => {
+// export const teacherStudentCount = async () => {
+//   const teachers = await classShedule.aggregate([
+//     {
+//       $match: {
+//         "teacher.teacherId": { $ne: null },
+//         "teacher.teacherName": { $ne: null },
+//         "teacher.teacherEmail": { $ne: null },
+//       },
+//     },
+//     {
+//       $group: {
+//         _id: "$teacher.teacherId", // Group by teacherId
+//         teacherId: { $first: "$teacher.teacherId" },
+//         teacherName: { $first: "$teacher.teacherName" },
+//         teacherEmail: { $first: "$teacher.teacherEmail" },
+//         uniqueStudents: {
+//           $addToSet: {
+//             studentId: "$student.studentId",
+//             gender: "$student.gender",
+//           },
+//         },
+//       },
+//     },
+//     {
+//       $project: {
+//         teacherId: 1,
+//         teacherName: 1,
+//         teacherEmail: 1,
+//         studentCount: { $size: "$uniqueStudents" },
+//         maleCount: {
+//           $size: {
+//             $filter: {
+//               input: "$uniqueStudents",
+//               as: "student",
+//               cond: { $eq: ["$$student.gender", "Male"] },
+//             },
+//           },
+//         },
+//         femaleCount: {
+//           $size: {
+//             $filter: {
+//               input: "$uniqueStudents",
+//               as: "student",
+//               cond: { $eq: ["$$student.gender", "Female"] },
+//             },
+//           },
+//         },
+//       },
+//     },
+//   ]);
+//   return teachers;
+// };
+
+export const teacherStudentCount = async (teacherId?: string) => {
+  const matchStage: any = {
+    "teacher.teacherId": { $ne: null },
+    "teacher.teacherName": { $ne: null },
+    "teacher.teacherEmail": { $ne: null },
+  };
+
+  if (teacherId) {
+    matchStage["teacher.teacherId"] = teacherId;
+  }
+
   const teachers = await classShedule.aggregate([
     {
-      $match: {
-        "teacher.teacherId": { $ne: null },
-        "teacher.teacherName": { $ne: null },
-        "teacher.teacherEmail": { $ne: null },
-      },
+      $match: matchStage,
     },
     {
       $group: {
-        _id: "$teacher.teacherId", // Group by teacherId
+        _id: "$teacher.teacherId",
         teacherId: { $first: "$teacher.teacherId" },
         teacherName: { $first: "$teacher.teacherName" },
         teacherEmail: { $first: "$teacher.teacherEmail" },
@@ -783,7 +842,7 @@ export const teacherStudentCount = async () => {
             $filter: {
               input: "$uniqueStudents",
               as: "student",
-              cond: { $eq: ["$$student.gender", "MALE"] },
+              cond: { $eq: ["$$student.gender", "Male"] },
             },
           },
         },
@@ -792,16 +851,16 @@ export const teacherStudentCount = async () => {
             $filter: {
               input: "$uniqueStudents",
               as: "student",
-              cond: { $eq: ["$$student.gender", "FEMALE"] },
+              cond: { $eq: ["$$student.gender", "Female"] },
             },
           },
         },
       },
     },
   ]);
+
   return teachers;
 };
-
 
 export const teachingActivity = async (
   studentId: string
@@ -2038,3 +2097,5 @@ export const getTeacherTotalEarnings = async (
     };
   }
 };
+
+

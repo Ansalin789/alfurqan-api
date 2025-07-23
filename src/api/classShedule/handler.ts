@@ -368,7 +368,7 @@ existingEnd.push(rawPayload.student.studnetSessionEnd);
 async getTeacherStudentCount(req: Request, h: ResponseToolkit) {
   try {
     console.log("Query parameters received:", req.query);
-    const teachers = await teacherStudentCount();
+    const teachers = await teacherStudentCount(req.query.teacherId);
     return h.response({
       success: true,
       data: teachers,
