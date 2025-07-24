@@ -1,7 +1,7 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import {zodTeacherMeetingSchema} from "../../models/teachermeeting";
-import { createTeacherMeeting, getallTeachermeeting, getTeachermeetingById, ITeacherMeetingUpdate, updateAllTeacherMeeting, updateTeacherMeetingAtt } from "../../operations/teacherMeeting"
+import { createTeacherMeeting, getallTeachermeeting, getByStudentId, getTeachermeetingById, ITeacherMeetingUpdate, updateAllTeacherMeeting, updateTeacherMeetingAtt } from "../../operations/teacherMeeting"
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { addMeetingMessages, evaluationMessages } from "../../config/messages";
 import { checkTeacherMeetingConflict, getTeacherMeetingById} from "../../shared/utils/meetingUtils";
@@ -127,9 +127,25 @@ async getallTeachermeeting(req: Request, h: ResponseToolkit) {
   } catch (error) {
     return h.response({ error}).code(400);
   }
+},
+
+//get meeting against the stu7dent
+
+async getStudentIdMeeting(req: Request, h: ResponseToolkit) {
+  try {
+    const studentId = req.query.studentId as string;
+
+    if (!studentId) {
+      return h.response({ error: "studentId is required in query params." }).code(400);
+    }
+
+    const result = await getByStudentId({ studentId });
+
+    return h.response(result).code(200);
+  } catch (error) {
+    return h.response({ error}).code(400);
+  }
 }
-
-
 
 
 

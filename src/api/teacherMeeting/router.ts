@@ -43,6 +43,19 @@ const register = async (server:Server): Promise <void> => {
   },
 },
 
+{
+  method: "GET",
+  path: "/StudentMeetinglist", 
+  options: {
+    handler: handler.getStudentIdMeeting,
+    description: evaluationMessages.LIST,
+    tags: ["api", "teacherMeetinglist"],
+    auth: {
+      strategies: ["jwt"],
+    },
+  },
+},
+
   
     {   
         method: 'PUT',

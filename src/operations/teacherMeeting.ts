@@ -135,8 +135,28 @@ const [teacherMeetings, adminMeetings, supervisormeeting] = await Promise.all([
   };
 };
 
+//studentId aGAINST mEETING
+export const getByStudentId = async (
+  params: { studentId: string }
+): Promise<{
+  totalCount: number;
+  records: TeacherMeeting[];
+}> => {
+  const { studentId } = params;
 
+  const query = {
+    "participants.studentId": studentId, // ✅ Correctly query inside participants array of objects
+  };
 
+  console.log("🔍 TeacherMeeting Query:", query);
+
+  const records = await teachermeeting.find(query).exec();
+
+  return {
+    totalCount: records.length,
+    records,
+  };
+};
 
 
 
