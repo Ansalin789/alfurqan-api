@@ -159,7 +159,7 @@ export const getByStudentId = async (
 };
 
 
-<<<<<<< Updated upstream
+
 
 export const getMeetingsByMeetingId = async (
   meetingId: string
@@ -182,7 +182,7 @@ export const getMeetingsByMeetingId = async (
 };
 
 
-=======
+
 export const getTeachermeetingById = async (
   id: string
 ): Promise<TeacherMeeting | null> => {
@@ -190,7 +190,7 @@ export const getTeachermeetingById = async (
     _id: id,
   }).lean();
   };
->>>>>>> Stashed changes
+
 
 
 export const updateAllTeacherMeeting = async (

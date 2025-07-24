@@ -163,7 +163,7 @@ async getTeacherMeetingsByMeetingId(req: Request, h: ResponseToolkit) {
 
   return h.response({ total: result.length, meetings: result }).code(200);
 },
-    
+
 
 
 
