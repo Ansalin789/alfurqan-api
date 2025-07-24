@@ -4,9 +4,9 @@ import Meeting from "../models/addmeeting";
 import User from "../models/users";
 import cron from "node-cron";
 import { GetAllRecordsParams } from "../shared/enum";
-import { Types } from "mongoose";
+import mongoose, { Types } from "mongoose";
 import { v4 as uuidv4 } from 'uuid';
-
+import adminmeeting from "../models/adminmeeting"
 
 const addmeeting = Meeting;
 
@@ -43,90 +43,53 @@ export interface IMeetingMinutesUpdate {
  * Retrieves all meeting records with optional filters.
  */
 
+
 export const getAllMeetingRecords = async (
   params: GetAllRecordsParams
 ): Promise<{ totalCount: number; meetings: IMeeting[] }> => {
   try {
-    const { searchText, filterValues = {}, offset, limit } = params;
-    const query: any = {};
+    const { offset, limit, supervisorId } = params;
 
-    // --- Search Text Handling ---
-    if (searchText?.trim()) {
-      const escapedSearch = searchText.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-      const searchRegex = new RegExp(escapedSearch, 'i');
-      const isDate = !isNaN(Date.parse(searchText));
-      const orConditions: any[] = [
-        { "student.studentFirstName": searchRegex },
-        { "student.studentLastName": searchRegex },
-        { "student.studentEmail": searchRegex },
-        { "teacher.teacherName": searchRegex },
-        { "teacher.teacherEmail": searchRegex },
-        { "course.courseName": searchRegex },
-        { "classDay": searchRegex },
-        { "meetingStatus": searchRegex },
-      ];
+    console.log("✅ supervisorId received:", supervisorId);
 
-      if (!isNaN(Number(searchText))) {
-        orConditions.push({ candidatePhoneNumber: Number(searchText) });
-      }
+    // Check adminmeeting matches
+    const adminMeetings = await adminmeeting.find({
+      "teacher.teacherId": supervisorId,
+    }).lean();
+    console.log("✅ adminMeetings found:", adminMeetings.length);
 
-      if (isDate) {
-        const date = new Date(searchText);
-        const nextDay = new Date(date);
-        nextDay.setDate(date.getDate() + 1);
-        orConditions.push({ applicationDate: { $gte: date, $lt: nextDay } });
-      }
+    // Check addmeeting matches
+    const addMeetings = await Meeting.find({
+      "supervisor.supervisorId": supervisorId,
+    }).lean();
+    console.log("✅ addMeetings found:", addMeetings.length);
 
-      query.$or = orConditions;
-    }
+    const combinedMeetings = [...adminMeetings, ...addMeetings].sort(
+      (a, b) =>
+        new Date(b.createdDate).getTime() -
+        new Date(a.createdDate).getTime()
+    );
 
-    // --- meetingStatus filter ---
-    if (filterValues.meetingStatus) {
-      const values = Array.isArray(filterValues.meetingStatus)
-        ? filterValues.meetingStatus
-        : [filterValues.meetingStatus];
-      const cleaned = values.filter(v => typeof v === "string" && v.trim().length > 0);
-      if (cleaned.length > 0) {
-        query["meetingStatus"] = { $in: cleaned.map(v => new RegExp(`^${v}$`, "i")) };
-      }
-    }
+    const start = offset ? parseInt(offset) : 0;
+    const end = limit ? start + parseInt(limit) : combinedMeetings.length;
+    const paginated = combinedMeetings.slice(start, end);
 
-    // --- startTime filter ---
-    if (filterValues.startTime) {
-      const values = Array.isArray(filterValues.startTime)
-        ? filterValues.startTime
-        : [filterValues.startTime];
-      const cleaned = values.filter(v => typeof v === "string" && v.trim().length > 0);
-      if (cleaned.length > 0) {
-        query["startTime"] = { $in: cleaned.map(v => new RegExp(`^${v}$`, "i")) };
-      }
-    }
+    console.log("✅ total combinedMeetings:", combinedMeetings.length);
+    console.log("✅ paginated meetings returned:", paginated.length);
 
-    // --- Date Range filter (use startDate) ---
-    if (
-      filterValues.dateRange?.from &&
-      filterValues.dateRange?.to &&
-      !isNaN(Date.parse(filterValues.dateRange.from)) &&
-      !isNaN(Date.parse(filterValues.dateRange.to))
-    ) {
-      const fromDate = new Date(filterValues.dateRange.from);
-      const toDate = new Date(filterValues.dateRange.to);
-      toDate.setHours(23, 59, 59, 999);
-      query.selectedDate={
-        $gte: fromDate,
-        $lte: toDate
-      };
-    }
-
-    // --- MongoDB Query Execution with Pagination ---
-     const meetings = await Meeting.find(query).sort({ createdDate: -1 });
-    const totalCount = await Meeting.countDocuments(query);
-
-    return { totalCount, meetings };
+    return {
+      totalCount: combinedMeetings.length,
+      meetings: paginated as IMeeting[],
+    };
   } catch (error) {
+    console.error("❌ Error fetching meetings:", error);
     throw new Error("Error fetching meetings: " + error);
   }
 };
+
+
+
+
 
 
 

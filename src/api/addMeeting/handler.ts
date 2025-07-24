@@ -112,56 +112,23 @@ async createMeeting(req: Request, h: ResponseToolkit) {
 
 
 async getAllMeetings(req: Request, h: ResponseToolkit) {
-  let filterValues: any = {};
+  const { supervisorId, offset, limit, sortBy } = req.query;
 
-  if (typeof req.query.filterValues === "string") {
-    try {
-      filterValues = JSON.parse(req.query.filterValues);
-    } catch {
-      filterValues = {};
-    }
-  } else {
-    if (req.query.meetingStatus) {
-      filterValues.meetingStatus = Array.isArray(req.query.meetingStatus)
-        ? req.query.meetingStatus
-        : [req.query.meetingStatus];
-    }
-    if (req.query.startTime) {
-      filterValues.startTime = Array.isArray(req.query.startTime)
-        ? req.query.startTime
-        : [req.query.startTime];
-    }
-    if (req.query["dateRange.from"] && req.query["dateRange.to"]) {
-      filterValues.dateRange = {
-        from: req.query["dateRange.from"],
-        to: req.query["dateRange.to"]
-      };
-    }
+  if (!supervisorId) {
+    return h.response({ message: "supervisorId is required" }).code(400);
   }
 
-  const queryObj = {
-    ...req.query,
-    filterValues,
-  };
-
-  // ✅ Remove payload wrapper
-  const payload = updateMeetingInputValidation.parse(queryObj);
-
   const queryForService = {
-    ...payload,
-    offset:
-      payload.offset !== null && payload.offset !== undefined
-        ? String(payload.offset)
-        : null,
-    limit:
-      payload.limit !== null && payload.limit !== undefined
-        ? String(payload.limit)
-        : null,
-    sortBy: payload.sortBy ?? "createdDate",
+    supervisorId,
+    offset: offset ? String(offset) : null,
+    limit: limit ? String(limit) : null,
+    sortBy: sortBy ?? "createdDate",
   };
 
   return getAllMeetingRecords(queryForService);
 }
+
+
 
 
 
