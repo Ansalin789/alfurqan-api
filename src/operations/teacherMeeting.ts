@@ -5,6 +5,7 @@ import { Types } from 'mongoose';
 import teachermeeting from '../models/teachermeeting';
 import addmeeting from '../models/addmeeting';
 import adminmeeting from '../models/adminmeeting';
+import { v4 as uuidv4 } from 'uuid';
 
 
 export interface ITeacherMeetingUpdate{
@@ -71,7 +72,7 @@ export const createTeacherMeeting = async (
       return { error: "Meeting date cannot be in the past. Please select a future date." };
     }
 
-    const meetingId = `participants-${teacher.teacherId || "unknown"}`;
+   const meetingId = `teacher-${uuidv4()}`;
 
     const newMeeting = new teacherMeeting({
       meetingId,
