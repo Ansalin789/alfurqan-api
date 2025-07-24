@@ -117,7 +117,7 @@ export const getallTeachermeeting = async (
 const [teacherMeetings, adminMeetings, supervisormeeting] = await Promise.all([
   teacherMeeting.find({ "teacher.teacherId": teacherId.trim() }).exec(),
   addmeeting.find({ "teacher.teacherId": teacherId.trim() }).exec(),
-  addmeeting.find({ "teacher.teacherId": teacherId.trim() }).exec(),
+  adminmeeting.find({ "teacher.teacherId": teacherId.trim() }).exec(),
 ]);
 
 
