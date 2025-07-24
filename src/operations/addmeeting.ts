@@ -5,6 +5,9 @@ import User from "../models/users";
 import cron from "node-cron";
 import { GetAllRecordsParams } from "../shared/enum";
 import { Types } from "mongoose";
+import { v4 as uuidv4 } from 'uuid';
+
+
 const addmeeting = Meeting;
 
 export interface IMeetingUpdate{
@@ -157,7 +160,7 @@ export const createMeeting = async ( payload: IMeetingCreate): Promise<IMeeting 
     }
 
     // Generate meetingId
-    const meetingId = `teacher-${supervisor.supervisorId || "unknown"}`;
+const meetingId = `meet-${uuidv4()}`;
 
     // Check for past date
     if (meetingDate < new Date()) {
