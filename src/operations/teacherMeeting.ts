@@ -178,13 +178,27 @@ export const getByStudentId = async (
 
 
 
-export const getTeachermeetingById = async (
-  id: string
-): Promise<TeacherMeeting | null> => {
-  return teacherMeeting.findOne({
-    _id: id,
-  }).lean();
-  };
+export const getMeetingsByMeetingId = async (
+  meetingId: string
+): Promise<
+  { source: 'teacher' | 'supervisor' | 'admin'; data: any }[]
+> => {
+  const trimmedId = meetingId.trim();
+
+  const [teacherMatches, supervisorMatches, adminMatches] = await Promise.all([
+    teacherMeeting.find({ meetingId: trimmedId }).lean(),
+    addmeeting.find({ meetingId: trimmedId }).lean(),
+    adminmeeting.find({ meetingId: trimmedId }).lean(),
+  ]);
+
+  return [
+    ...teacherMatches.map((data) => ({ source: 'teacher' as const, data })),
+    ...supervisorMatches.map((data) => ({ source: 'supervisor' as const, data })),
+    ...adminMatches.map((data) => ({ source: 'admin' as const, data })),
+  ];
+};
+
+
 
 
 export const updateAllTeacherMeeting = async (

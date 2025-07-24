@@ -16,18 +16,19 @@ const register = async (server:Server): Promise <void> => {
       },
             },
         },
-        {
-            method: 'GET',
-            path:'/teacherMeeting/{meetingId}',
-            options: {
-                handler: handler.getTeachermeetingById,
-                description:addMeetingMessages.CREATE,
-                tags: ['api', 'teacherMeeting'],
-                 auth: {
-        strategies: ["jwt"],
-      },
-        },
+{
+  method: 'GET',
+  path: '/teacherMeeting',
+  options: {
+    handler: handler.getTeacherMeetingsByMeetingId,
+    description: 'Get meetings by meetingId',
+    tags: ['api', 'teacherMeeting'],
+    auth: {
+      strategies: ['jwt'],
     },
+  },
+},
+
 
 
 {
