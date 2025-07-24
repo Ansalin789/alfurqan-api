@@ -6,7 +6,7 @@ import { getRedisClient } from "../../shared/redisClient";
 const redis = getRedisClient();
 
 export async function restoreCacheFromDb(){
-    const allSlots =await teacheravaliableslots.find({isStatus : true});
+    const allSlots =await teacheravaliableslots.find();
 
     const reconstructed : Record<string,any> = {};
     for(const slot of allSlots){
