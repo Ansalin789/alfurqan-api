@@ -1,10 +1,10 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import addmeeting, { zodAddMeetingSchema } from "../../models/addmeeting";
-import { createMeeting, getAllMeetingRecords, getMeetingRecordById, updateMeetingById, updateMeetingMinutesAndAttendees } from "../../operations/addmeeting";
+import { createMeeting, getAllMeetingRecords, getMeetingRecordById, meetingByIdRecord, updateMeetingById, updateMeetingMinutesAndAttendees } from "../../operations/addmeeting";
 import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
-import { addMeetingMessages } from "../../config/messages";
+import { addMeetingMessages, ClassSchedulesMessages } from "../../config/messages";
 import { checkMeetingConflict, getMeetingById, mergeMeetingPayload } from "../../shared/utils/meetingUtils";
 import { supervisorAddMeeting } from "../../kafka/producers/supervisorProducer";
 import { ITeacher } from "../../../types/models.types";
@@ -112,52 +112,17 @@ async createMeeting(req: Request, h: ResponseToolkit) {
 
 
 async getAllMeetings(req: Request, h: ResponseToolkit) {
-  let filterValues: any = {};
+  const { supervisorId, offset, limit, sortBy } = req.query;
 
-  if (typeof req.query.filterValues === "string") {
-    try {
-      filterValues = JSON.parse(req.query.filterValues);
-    } catch {
-      filterValues = {};
-    }
-  } else {
-    if (req.query.meetingStatus) {
-      filterValues.meetingStatus = Array.isArray(req.query.meetingStatus)
-        ? req.query.meetingStatus
-        : [req.query.meetingStatus];
-    }
-    if (req.query.startTime) {
-      filterValues.startTime = Array.isArray(req.query.startTime)
-        ? req.query.startTime
-        : [req.query.startTime];
-    }
-    if (req.query["dateRange.from"] && req.query["dateRange.to"]) {
-      filterValues.dateRange = {
-        from: req.query["dateRange.from"],
-        to: req.query["dateRange.to"]
-      };
-    }
+  if (!supervisorId) {
+    return h.response({ message: "supervisorId is required" }).code(400);
   }
 
-  const queryObj = {
-    ...req.query,
-    filterValues,
-  };
-
-  // ✅ Remove payload wrapper
-  const payload = updateMeetingInputValidation.parse(queryObj);
-
   const queryForService = {
-    ...payload,
-    offset:
-      payload.offset !== null && payload.offset !== undefined
-        ? String(payload.offset)
-        : null,
-    limit:
-      payload.limit !== null && payload.limit !== undefined
-        ? String(payload.limit)
-        : null,
-    sortBy: payload.sortBy ?? "createdDate",
+    supervisorId,
+    offset: offset ? String(offset) : null,
+    limit: limit ? String(limit) : null,
+    sortBy: sortBy ?? "createdDate",
   };
 
   return getAllMeetingRecords(queryForService);
@@ -165,17 +130,28 @@ async getAllMeetings(req: Request, h: ResponseToolkit) {
 
 
 
+
+
 ,
 
   //get by ID
-      async getMeetingRecordById(req: Request, h: ResponseToolkit){
-        const result = await getMeetingRecordById(String(req.params.meetingId));
-  
-        if (isNil(result)) {
-             return notFound(addMeetingMessages.USER_NOT_FOUND);
-             }
-  
-    return result;
+
+
+
+      async  getMeetingById(req: Request, h: ResponseToolkit) {
+        const { meetingId } = req.query;
+      
+        if (!meetingId) {
+          return h.response({ error: 'meetingId is required in query params' }).code(400);
+        }
+      
+        const result = await getMeetingRecordById(meetingId as string);
+      
+        if (!result.length) {
+          return h.response({ message: 'No meetings found' }).code(404);
+        }
+      
+        return h.response({ total: result.length, meetings: result }).code(200);
       },
 
 //Update Meeting 
@@ -309,9 +285,31 @@ async updateMeetingMinutesRecordById(req: Request, h: ResponseToolkit) {
     console.error("Error updating meeting minutes and attendees:", error);
     return h.response({ message: "Internal Server Error", error }).code(500);
   }
+},
+
+async getMeetingByIdRecord (req: Request, h: ResponseToolkit) {
+
+    try {
+        // Fetch the student by ID
+        const result = await meetingByIdRecord(String(req.params.id));
+  
+        // Handle not found case
+        if (isNil(result)) {
+          return h
+            .response({ message: ClassSchedulesMessages.NOT_FOUND })
+            .code(404);
+        }
+  
+       
+        return h.response(result).code(200);
+      } catch (error) {
+        // Handle errors (unexpected or other)
+        return h
+          .response({ error })
+          .code(500);
+      }
+
 }
-
-
   
 
 

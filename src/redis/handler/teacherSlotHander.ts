@@ -4,6 +4,7 @@ import teacheravaliableslots from "../../models/teacheravaliableslots";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import { weekdaysShort } from "moment";
 
 
 const redis = getRedisClient();
@@ -328,6 +329,9 @@ export async function removeBookedSlots(startDate: string, WeeklySlots: WeeklySl
     const start = dayjs(startDate).startOf('day');
     const end = start.add(27, 'day');
     const redisData = await getAllSlots();
+    const slotData: WeeklySlotMap = WeeklySlots instanceof Map
+     ? Object.fromEntries(WeeklySlots.entries())
+    : WeeklySlots;
 
     for (
       let current = start.clone();
@@ -336,17 +340,27 @@ export async function removeBookedSlots(startDate: string, WeeklySlots: WeeklySl
     ) {
       const dateStr = current.format('YYYY-MM-DD');
       const dayName = current.format('dddd');
-      const daySlots = WeeklySlots[dayName];
-      if (!daySlots || daySlots.length === 0 || !teacherId) continue;
+      const daySlots = slotData[dayName];
+
+
+     if (!daySlots || daySlots.length === 0 || !teacherId) {
+      console.log("⚠️ Skipping: No day slots or teacherId");
+      continue;
+     }
 
       for (const { from, to } of daySlots) {
-         const slots = redisData?.[dateStr]?.[teacherId];
-        if (!slots) continue;
-        redisData[dateStr][teacherId] = slots.map((slot: TeacherTimeSlots) =>
-          slot.from === from && slot.to === to
-            ? { ...slot, isStatus: true, name: slot.name }
-            : slot
-        );
+        const slots = redisData?.[dateStr]?.[teacherId];
+        if (!slots) {
+          console.log("❌ No slots found for this date and teacher.");
+          continue;
+        }
+        redisData[dateStr][teacherId] = slots.map((slot: TeacherTimeSlots) => {
+        const isTarget = slot.from === from && slot.to === to;
+         if (isTarget) {
+       return { ...slot, isStatus: true, name: slot.name };
+       }
+       return slot;
+     });
         await teacheravaliableslots.findOneAndUpdate(
           { date: dateStr, teacherId, from, to },
           { $set: { isStatus: true } }
@@ -354,11 +368,13 @@ export async function removeBookedSlots(startDate: string, WeeklySlots: WeeklySl
       }
     }
     await redis.set(REDIS_KEY, JSON.stringify(redisData));
-    console.log("✅ Booked slots have been reset (isStatus: true)");
+    console.log("\n✅ Booked slots have been reset (isStatus: true)");
+
   } catch (error) {
     console.error("❌ Error in removeBookedSlots:", error);
   }
 }
+
 
 export async function getAllSlotByDate(date: string) {
   try {

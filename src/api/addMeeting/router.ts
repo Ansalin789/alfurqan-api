@@ -36,20 +36,20 @@ const register = async (server: Server): Promise<void> => {
           },
         },
 
-        {
-          method: "GET",
-          path: "/allMeetings/{meetingId}",
-          options: {
-            handler: handler.getMeetingRecordById,
-            description: addMeetingMessages.LIST,
-            tags: ["api", "recruitment"],
-            // auth: {
-            //   strategies: ["jwt"],
-            // },
-          },
-        },
-        
+{
+  method: 'GET',
+  path: '/allmeeting',
+  options: {
+    handler: handler.getMeetingById,
+    description: 'Get meetings by meetingId',
+    tags: ['api', 'teacherMeeting'],
+    auth: {
+      strategies: ['jwt'],
+    },
+  },
+},
 
+      
         {
           method: "PUT",
           path: "/meeting/{meetingId}",
@@ -80,12 +80,22 @@ const register = async (server: Server): Promise<void> => {
       allow: "application/json"
     }
   }
-}
+},
 
-
+{
+  method: 'GET',
+  path: '/allmeeting/{id}',
+  options: {
+    handler: handler.getMeetingByIdRecord,
+    description: 'Get meetings by meetingId',
+    tags: ['api', 'teacherMeeting'],
+    auth: {
+      strategies: ['jwt'],
+    },
+  },
+},
 
        
-
   ];
   server.route(routes);
 };

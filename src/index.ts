@@ -239,23 +239,24 @@ cron.schedule("0 0 * * *", async () => {
     joiningDate: { $gte: startOfDayIST, $lte: endOfDayIST }
   });
   for(const evaluation of getPaymentDetails){
+    console.log("evaluation",evaluation);
   if( evaluation.classType == "REGULARCLASS"&& evaluation.weeklySlots && (!evaluation.paymentStatus||evaluation.paymentStatus == "Pending" || evaluation.paymentStatus == "" )){
     console.log("deleting booked");
-     await removeBookedSlots(evaluation.joiningDate.toString(), evaluation.weeklySlots, evaluation.teacher.teacherId);
+   await removeBookedSlots(evaluation.joiningDate.toString(), evaluation.weeklySlots, evaluation.teacher.teacherId);
   } 
 }
 });
 
 // cron  run 5 mins once
-// cron.schedule("*/5 * * * *", async () => {
-//   try{
-//   console.log("🧹 attendance and earnings uupdate schedule");
-//     updateEarningsCalculation();
-//   }
-//   catch (error: unknown) {
-//     const message = error instanceof Error ? error.message : String(error);
-//     console.error("❌ Unexpected error in earnings update cron:", message);
-//   }
+cron.schedule("*/5 * * * *", async () => {
+  try{
+  console.log("🧹 attendance and earnings uupdate schedule");
+    updateEarningsCalculation();
+  }
+  catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("❌ Unexpected error in earnings update cron:", message);
+  }
 
 
 

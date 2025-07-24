@@ -5,6 +5,7 @@ import { Types } from 'mongoose';
 import teachermeeting from '../models/teachermeeting';
 import addmeeting from '../models/addmeeting';
 import adminmeeting from '../models/adminmeeting';
+import { v4 as uuidv4 } from 'uuid';
 
 
 export interface ITeacherMeetingUpdate{
@@ -71,7 +72,7 @@ export const createTeacherMeeting = async (
       return { error: "Meeting date cannot be in the past. Please select a future date." };
     }
 
-    const meetingId = `participants-${teacher.teacherId || "unknown"}`;
+   const meetingId = `teacher-${uuidv4()}`;
 
     const newMeeting = new teacherMeeting({
       meetingId,
@@ -117,7 +118,7 @@ export const getallTeachermeeting = async (
 const [teacherMeetings, adminMeetings, supervisormeeting] = await Promise.all([
   teacherMeeting.find({ "teacher.teacherId": teacherId.trim() }).exec(),
   addmeeting.find({ "teacher.teacherId": teacherId.trim() }).exec(),
-  addmeeting.find({ "teacher.teacherId": teacherId.trim() }).exec(),
+  adminmeeting.find({ "teacher.teacherId": teacherId.trim() }).exec(),
 ]);
 
 
@@ -135,8 +136,51 @@ const [teacherMeetings, adminMeetings, supervisormeeting] = await Promise.all([
   };
 };
 
+//studentId aGAINST mEETING
+export const getByStudentId = async (
+  params: { studentId: string }
+): Promise<{
+  totalCount: number;
+  records: TeacherMeeting[];
+}> => {
+  const { studentId } = params;
+
+  const query = {
+    "participants.studentId": studentId, // ✅ Correctly query inside participants array of objects
+  };
+
+  console.log("🔍 TeacherMeeting Query:", query);
+
+  const records = await teachermeeting.find(query).exec();
+
+  return {
+    totalCount: records.length,
+    records,
+  };
+};
 
 
+
+
+export const getMeetingsByMeetingId = async (
+  meetingId: string
+): Promise<
+  { source: 'teacher' | 'supervisor' | 'admin'; data: any }[]
+> => {
+  const trimmedId = meetingId.trim();
+
+  const [teacherMatches, supervisorMatches, adminMatches] = await Promise.all([
+    teacherMeeting.find({ meetingId: trimmedId }).lean(),
+    addmeeting.find({ meetingId: trimmedId }).lean(),
+    adminmeeting.find({ meetingId: trimmedId }).lean(),
+  ]);
+
+  return [
+    ...teacherMatches.map((data) => ({ source: 'teacher' as const, data })),
+    ...supervisorMatches.map((data) => ({ source: 'supervisor' as const, data })),
+    ...adminMatches.map((data) => ({ source: 'admin' as const, data })),
+  ];
+};
 
 
 
@@ -147,6 +191,7 @@ export const getTeachermeetingById = async (
     _id: id,
   }).lean();
   };
+
 
 
 export const updateAllTeacherMeeting = async (
