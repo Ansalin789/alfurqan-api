@@ -104,29 +104,46 @@ export const getallTeachermeeting = async (
   params: { teacherId: string }
 ): Promise<{
   totalCount: number;
-  meetings: (TeacherMeeting | IAdminMeeting | IMeeting)[];
+  meetings: {
+    source: "teacher" | "admin" | "supervisor";
+    data: TeacherMeeting | IAdminMeeting | IMeeting;
+  }[];
 }> => {
   const { teacherId } = params;
+  const trimmedId = teacherId.trim();
 
-  const query = {
-    "teacher.teacherId": teacherId.trim(),
-  };
+  const teacherQuery = { "teacher.teacherId": trimmedId };
+  const arrayQuery = { teacher: { $elemMatch: { teacherId: trimmedId } } };
 
-  console.log("🔍 Query used:", query);
+  const [teacherMeetings, adminMeetings, supervisorMeetings] = await Promise.all([
+    teacherMeeting.find(teacherQuery).exec(),
+    adminmeeting.find(arrayQuery).exec(),
+    addmeeting.find(arrayQuery).exec(),
+  ]);
 
-const [teacherMeetings, adminMeetings, supervisormeeting] = await Promise.all([
-  teacherMeeting.find({ "teacher.teacherId": teacherId.trim() }).exec(),
-  addmeeting.find({ "teacher.teacherId": teacherId.trim() }).exec(),
-  addmeeting.find({ "teacher.teacherId": teacherId.trim() }).exec(),
-]);
+  // Tag each with source
+  const formattedTeacherMeetings = teacherMeetings.map((meeting) => ({
+    source: "teacher" as const,
+    data: meeting,
+  }));
 
+  const formattedAdminMeetings = adminMeetings.map((meeting) => ({
+    source: "admin" as const,
+    data: meeting,
+  }));
 
-  console.log("📘 teacherMeetings:", teacherMeetings.length);
-  console.log("📘 adminMeetings:", adminMeetings.length);
-  console.log("📘 studentMeetings:", supervisormeeting.length);
+  const formattedSupervisorMeetings = supervisorMeetings.map((meeting) => ({
+    source: "supervisor" as const,
+    data: meeting,
+  }));
 
-  const mergedMeetings = [...teacherMeetings, ...adminMeetings, ...supervisormeeting].sort(
-    (a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()
+  const mergedMeetings = [
+    ...formattedTeacherMeetings,
+    ...formattedAdminMeetings,
+    ...formattedSupervisorMeetings,
+  ].sort(
+    (a, b) =>
+      new Date(b.data.createdDate).getTime() - new Date(a.data.createdDate).getTime()
   );
 
   return {
@@ -134,6 +151,7 @@ const [teacherMeetings, adminMeetings, supervisormeeting] = await Promise.all([
     meetings: mergedMeetings,
   };
 };
+
 
 //studentId aGAINST mEETING
 export const getByStudentId = async (
