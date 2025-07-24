@@ -1,10 +1,10 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import addmeeting, { zodAddMeetingSchema } from "../../models/addmeeting";
-import { createMeeting, getAllMeetingRecords, getMeetingRecordById, updateMeetingById, updateMeetingMinutesAndAttendees } from "../../operations/addmeeting";
+import { createMeeting, getAllMeetingRecords, getMeetingRecordById, meetingByIdRecord, updateMeetingById, updateMeetingMinutesAndAttendees } from "../../operations/addmeeting";
 import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
-import { addMeetingMessages } from "../../config/messages";
+import { addMeetingMessages, ClassSchedulesMessages } from "../../config/messages";
 import { checkMeetingConflict, getMeetingById, mergeMeetingPayload } from "../../shared/utils/meetingUtils";
 import { supervisorAddMeeting } from "../../kafka/producers/supervisorProducer";
 import { ITeacher } from "../../../types/models.types";
@@ -285,9 +285,31 @@ async updateMeetingMinutesRecordById(req: Request, h: ResponseToolkit) {
     console.error("Error updating meeting minutes and attendees:", error);
     return h.response({ message: "Internal Server Error", error }).code(500);
   }
+},
+
+async getMeetingByIdRecord (req: Request, h: ResponseToolkit) {
+
+    try {
+        // Fetch the student by ID
+        const result = await meetingByIdRecord(String(req.params.id));
+  
+        // Handle not found case
+        if (isNil(result)) {
+          return h
+            .response({ message: ClassSchedulesMessages.NOT_FOUND })
+            .code(404);
+        }
+  
+       
+        return h.response(result).code(200);
+      } catch (error) {
+        // Handle errors (unexpected or other)
+        return h
+          .response({ error })
+          .code(500);
+      }
+
 }
-
-
   
 
 

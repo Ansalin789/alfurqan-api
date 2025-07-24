@@ -309,3 +309,12 @@ export const updateMeetingMinutesAndAttendees = async (
 
   return updated;
 };
+
+
+export const meetingByIdRecord = async (
+  _id: string
+): Promise<IMeeting | null> => {
+  return addmeeting.findOne({
+    _id: new Types.ObjectId(_id),
+  }).lean();
+};
