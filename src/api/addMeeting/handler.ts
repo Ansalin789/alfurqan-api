@@ -135,14 +135,23 @@ async getAllMeetings(req: Request, h: ResponseToolkit) {
 ,
 
   //get by ID
-      async getMeetingRecordById(req: Request, h: ResponseToolkit){
-        const result = await getMeetingRecordById(String(req.params.meetingId));
-  
-        if (isNil(result)) {
-             return notFound(addMeetingMessages.USER_NOT_FOUND);
-             }
-  
-    return result;
+
+
+
+      async  getMeetingById(req: Request, h: ResponseToolkit) {
+        const { meetingId } = req.query;
+      
+        if (!meetingId) {
+          return h.response({ error: 'meetingId is required in query params' }).code(400);
+        }
+      
+        const result = await getMeetingRecordById(meetingId as string);
+      
+        if (!result.length) {
+          return h.response({ message: 'No meetings found' }).code(404);
+        }
+      
+        return h.response({ total: result.length, meetings: result }).code(200);
       },
 
 //Update Meeting 

@@ -250,11 +250,21 @@ cron.schedule("55 23 * * *", async () => {
 //Get by ID
 
 export const getMeetingRecordById = async (
-  id: string
-): Promise<IMeeting | null> => {
-  return addmeeting.findOne({
-    _id: new Types.ObjectId(id),
-  }).lean();
+  meetingId: string
+): Promise<
+  { source:  'supervisor' | 'admin'; data: any }[]
+> => {
+  const trimmedId = meetingId.trim();
+
+  const [ supervisorMatches, adminMatches] = await Promise.all([
+    addmeeting.find({ meetingId: trimmedId }).lean(),
+    adminmeeting.find({ meetingId: trimmedId }).lean(),
+  ]);
+
+  return [
+    ...supervisorMatches.map((data) => ({ source: 'supervisor' as const, data })),
+    ...adminMatches.map((data) => ({ source: 'admin' as const, data })),
+  ];
 };
 
 

@@ -36,18 +36,18 @@ const register = async (server: Server): Promise<void> => {
           },
         },
 
-        {
-          method: "GET",
-          path: "/allMeetings/{meetingId}",
-          options: {
-            handler: handler.getMeetingRecordById,
-            description: addMeetingMessages.LIST,
-            tags: ["api", "recruitment"],
-            // auth: {
-            //   strategies: ["jwt"],
-            // },
-          },
-        },
+{
+  method: 'GET',
+  path: '/allmeeting',
+  options: {
+    handler: handler.getMeetingById,
+    description: 'Get meetings by meetingId',
+    tags: ['api', 'teacherMeeting'],
+    auth: {
+      strategies: ['jwt'],
+    },
+  },
+},
         
 
         {
