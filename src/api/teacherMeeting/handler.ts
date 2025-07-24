@@ -148,7 +148,7 @@ async getStudentIdMeeting(req: Request, h: ResponseToolkit) {
 }  ,
 
 
-async getTeacherMeetingsByMeetingId(req: Request, h: ResponseToolkit) {
+async  getTeacherMeetingsByMeetingId(req: Request, h: ResponseToolkit) {
   const { meetingId } = req.query;
 
   if (!meetingId) {
