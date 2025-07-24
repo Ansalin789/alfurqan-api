@@ -16,6 +16,8 @@ const register = async (server:Server): Promise <void> => {
       },
             },
         },
+
+        
 {
   method: 'GET',
   path: '/teacherMeeting',

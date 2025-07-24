@@ -147,6 +147,7 @@ async getStudentIdMeeting(req: Request, h: ResponseToolkit) {
   }
 }  ,
 
+
 async getTeacherMeetingsByMeetingId(req: Request, h: ResponseToolkit) {
   const { meetingId } = req.query;
 
@@ -162,7 +163,6 @@ async getTeacherMeetingsByMeetingId(req: Request, h: ResponseToolkit) {
 
   return h.response({ total: result.length, meetings: result }).code(200);
 },
-
     
 
 
