@@ -104,46 +104,29 @@ export const getallTeachermeeting = async (
   params: { teacherId: string }
 ): Promise<{
   totalCount: number;
-  meetings: {
-    source: "teacher" | "admin" | "supervisor";
-    data: TeacherMeeting | IAdminMeeting | IMeeting;
-  }[];
+  meetings: (TeacherMeeting | IAdminMeeting | IMeeting)[];
 }> => {
   const { teacherId } = params;
-  const trimmedId = teacherId.trim();
 
-  const teacherQuery = { "teacher.teacherId": trimmedId };
-  const arrayQuery = { teacher: { $elemMatch: { teacherId: trimmedId } } };
+  const query = {
+    "teacher.teacherId": teacherId.trim(),
+  };
 
-  const [teacherMeetings, adminMeetings, supervisorMeetings] = await Promise.all([
-    teacherMeeting.find(teacherQuery).exec(),
-    adminmeeting.find(arrayQuery).exec(),
-    addmeeting.find(arrayQuery).exec(),
-  ]);
+  console.log("🔍 Query used:", query);
 
-  // Tag each with source
-  const formattedTeacherMeetings = teacherMeetings.map((meeting) => ({
-    source: "teacher" as const,
-    data: meeting,
-  }));
+const [teacherMeetings, adminMeetings, supervisormeeting] = await Promise.all([
+  teacherMeeting.find({ "teacher.teacherId": teacherId.trim() }).exec(),
+  addmeeting.find({ "teacher.teacherId": teacherId.trim() }).exec(),
+  addmeeting.find({ "teacher.teacherId": teacherId.trim() }).exec(),
+]);
 
-  const formattedAdminMeetings = adminMeetings.map((meeting) => ({
-    source: "admin" as const,
-    data: meeting,
-  }));
 
-  const formattedSupervisorMeetings = supervisorMeetings.map((meeting) => ({
-    source: "supervisor" as const,
-    data: meeting,
-  }));
+  console.log("📘 teacherMeetings:", teacherMeetings.length);
+  console.log("📘 adminMeetings:", adminMeetings.length);
+  console.log("📘 studentMeetings:", supervisormeeting.length);
 
-  const mergedMeetings = [
-    ...formattedTeacherMeetings,
-    ...formattedAdminMeetings,
-    ...formattedSupervisorMeetings,
-  ].sort(
-    (a, b) =>
-      new Date(b.data.createdDate).getTime() - new Date(a.data.createdDate).getTime()
+  const mergedMeetings = [...teacherMeetings, ...adminMeetings, ...supervisormeeting].sort(
+    (a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()
   );
 
   return {
@@ -151,7 +134,6 @@ export const getallTeachermeeting = async (
     meetings: mergedMeetings,
   };
 };
-
 
 //studentId aGAINST mEETING
 export const getByStudentId = async (
@@ -177,6 +159,7 @@ export const getByStudentId = async (
 };
 
 
+<<<<<<< Updated upstream
 
 export const getMeetingsByMeetingId = async (
   meetingId: string
@@ -199,6 +182,15 @@ export const getMeetingsByMeetingId = async (
 };
 
 
+=======
+export const getTeachermeetingById = async (
+  id: string
+): Promise<TeacherMeeting | null> => {
+  return teacherMeeting.findOne({
+    _id: id,
+  }).lean();
+  };
+>>>>>>> Stashed changes
 
 
 export const updateAllTeacherMeeting = async (
