@@ -1,7 +1,8 @@
 import { Request, ResponseToolkit } from '@hapi/hapi';
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { z } from "zod";
-import { getAllSalaryCardCounts, getAllSalaryList, updateSalaryWages } from '../../operations/salarywages';
+import { getAllSalaryCardCounts, getAllSalaryList, getRecordByTeacherId, updateSalaryWages } from '../../operations/salarywages';
+import salaryandwages from '../../models/salaryandwages';
 
 const getSalaryInputValidation = z.object({
     query: zodGetAllRecordsQuerySchema.pick({
@@ -42,6 +43,27 @@ export default {
     });
     return getAllSalaryCardCounts(query);
   },
+
+  //get by employeeId
+
+
+async getByEmployeeId(req: Request, h: ResponseToolkit) {
+  try {
+    const employeeId = req.query.employeeId as string;
+
+    if (!employeeId) {
+      return h.response({ error: "employeeId is required in query params." }).code(400);
+    }
+
+    const result = await getRecordByTeacherId({ employeeId });
+
+    return h.response(result).code(200);
+  } catch (error) {
+    console.error("Error fetching salary/wages:", error);
+    return h.response({ error: "Failed to fetch salary/wages data." }).code(500);
+  }
+},
+
 
   // Update salarywages record (employeeId from path params, no designation in body)
   async updateSalaryWages(req: Request, h: ResponseToolkit) {

@@ -30,6 +30,16 @@ const register = async (server: Server): Promise<void> => {
             strategies: ["jwt"],
           }, },
       },
+        {
+          method: "GET",
+          path: "/salarywagesById",
+          options: {
+            handler: handler.getByEmployeeId,
+            tags: ["api", "expense"],
+          },
+        },
+
+
 
       {
         method: "PUT",

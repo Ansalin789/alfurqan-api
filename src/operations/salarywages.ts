@@ -530,6 +530,25 @@ const processFixedSalaryEmployee = async (employeeId: string, designation: strin
   }
 };
 
+//get by employeeId
+export const getRecordByTeacherId = async (
+  params: { employeeId: string }
+): Promise<{
+  totalCount: number;
+  records: ISalarywages[];
+}> => {
+  const { employeeId } = params;
 
+  const query = {
+    employeeId: employeeId.trim(), // querying SalaryandWages table/collection
+  };
 
+  console.log("🔍 Salary/Wages Query:", query);
 
+  const records = await salaryandwages.find(query).exec(); // use find() for MongoDB/Mongoose
+
+  return {
+    totalCount: records.length,
+    records,
+  };
+};
