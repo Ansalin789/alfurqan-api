@@ -114,9 +114,9 @@ async createMeeting(req: Request, h: ResponseToolkit) {
 async getAllMeetings(req: Request, h: ResponseToolkit) {
   const { supervisorId, offset, limit, sortBy } = req.query;
 
-  if (!supervisorId) {
-    return h.response({ message: "supervisorId is required" }).code(400);
-  }
+  // if (!supervisorId) {
+  //   return h.response({ message: "supervisorId is required" }).code(400);
+  // }
 
   const queryForService = {
     supervisorId,

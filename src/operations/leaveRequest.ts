@@ -298,10 +298,8 @@ export const getAllLeaveSummaryList = async (): Promise<{ totalCount: number; le
 export const getLeaveRequestRecordByEmployeeId = async (
   employeeId: string
 ): Promise<any> => {
-  const objectId = new Types.ObjectId(employeeId); // Optional: only needed if `_id` filtering is used
-
-  const [leaveRecords, counts] = await Promise.all([
-    leavesummary.find({ employeeId }).lean(), // ✅ return all matching records
+  const [leaveRecords, statusCounts, typeCounts] = await Promise.all([
+    leavesummary.find({ employeeId }).lean(),
     leavesummary.aggregate([
       { $match: { employeeId } },
       {
@@ -311,29 +309,55 @@ export const getLeaveRequestRecordByEmployeeId = async (
         },
       },
     ]),
+    leavesummary.aggregate([
+      { $match: { employeeId } },
+      {
+        $group: {
+          _id: "$leaveType",
+          count: { $sum: 1 },
+        },
+      },
+    ])
   ]);
 
+  // Status counts
   const countMap = {
     totalApplied: 0,
     totalApproved: 0,
     totalDeclined: 0,
   };
 
-  counts.forEach((item) => {
+  statusCounts.forEach((item) => {
     if (item._id === "WAITINGLIST") {
       countMap.totalApplied = item.count;
     } else if (item._id === "APPROVED") {
       countMap.totalApproved = item.count;
-    } else if (item._id === "DECLINED") {
-      countMap.totalDeclined = item.count;
+    } else if (item._id === "DECLINED" || item._id === "REJECTED") {
+      countMap.totalDeclined += item.count;
     }
   });
 
+  // Leave type counts
+  let sickLeave = 0;
+  let casualLeave = 0;
+  let paidLeave = 0;
+
+  typeCounts.forEach((item) => {
+    if (item._id === "SICK") sickLeave = item.count;
+    if (item._id === "CASUAL") casualLeave = item.count;
+    if (item._id === "PAID") paidLeave = item.count;
+  });
+
   return {
-    records: leaveRecords, // ✅ list of leave records
-    ...countMap,           // ✅ summary counts
+    records: leaveRecords,
+    ...countMap,
+    sickLeave,
+    casualLeave,
+    paidLeave,
+    deductionDays: countMap.totalApproved,
   };
 };
+
 
 
 
