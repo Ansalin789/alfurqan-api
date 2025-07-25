@@ -251,8 +251,8 @@ const otherEmployeeSchema = new Schema<IOtherEmployee>(
             (val) => (typeof val === "string" ? parseInt(val, 10) : val), 
             z.number()
           ),
-        preferedShiftFrom: z.string().regex(/^(0[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$/, "Time must be in format HH:MM AM/PM"),
-        preferedShiftTo: z.string().regex(/^(0[1-9]|1[0-2]):[0-5][0-9] (AM|PM)$/, "Time must be in format HH:MM AM/PM"),
+        preferedShiftFrom: z.string().regex(/^([01][0-9]|2[0-3]):[0-5][0-9]$/, "Time must be in 24-hour format HH:MM"),
+        preferedShiftTo: z.string().regex(/^([01][0-9]|2[0-3]):[0-5][0-9]$/, "Time must be in 24-hour format HH:MM"),
         comments: z.string(),
         profileImage: z.string().optional(),
         applicationDate:  z.string().refine((val) => !isNaN(Date.parse(val)), {
