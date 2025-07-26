@@ -20,6 +20,7 @@ import {
 } from "date-fns";
 import stinvoice from "../models/stinvoice";
 import { Request, ResponseToolkit } from "@hapi/hapi";
+import alstudents from "../models/alstudents";
 
 /**
  * Retrieves a list of all evaluation records with filters, sorting, and pagination.
@@ -59,30 +60,47 @@ export const getAllStudetnInVoiceList = async (
     return { totalCount, invoice };
   };
 
+
 export const getStudentInvoicesByStudentId = async (
-  studentId: string
+  studentId: string // this is _id from alstudents collection
 ): Promise<IStudentInvoice[]> => {
-  return StudentInvoiceModel.aggregate([
-    {
-      $match: {
-        "student.studentId": studentId,
-      },
-    },
-    {
-      $sort: {
-        lastUpdatedDate: -1, // Sort by date descending
-      },
-    },
-    {
-      $group: {
-        _id: "$lastUpdatedDate",      // Group by lastUpdatedDate
-        doc: { $first: "$$ROOT" },     // Pick first doc in group
-      },
-    },
-    {
-      $replaceRoot: { newRoot: "$doc" }, // Replace root with grouped doc
-    },
-  ]);
+  try {
+    console.log("🔍 Received studentId from query:", studentId);
+
+    // Convert to ObjectId
+    const objectId = new Types.ObjectId(studentId);
+
+    // Find student in alstudents collection
+    const alStudent = await alstudents.findById(objectId);
+
+    if (!alStudent || !alStudent.student?.studentId) {
+      console.log("❌ No student found in alstudents with given _id");
+      return [];
+    }
+
+    const studentRefId = alStudent.student.studentId;
+    console.log("✅ Matched student.studentId from alstudents:", studentRefId);
+
+    // Find invoices based on studentRefId
+    const invoices = await StudentInvoiceModel.find({
+      "student.studentId": studentRefId,
+    }).sort({ lastUpdatedDate: -1 });
+
+    console.log(`🧾 Total invoices found: ${invoices.length}`);
+
+    // Filter pending invoices
+    const pendingInvoices = invoices.filter(
+      (invoice) => invoice.paymentStatus === "Pending"
+    );
+
+    console.log(`📌 Pending invoice count: ${pendingInvoices.length}`);
+    console.log("💬 Pending invoice details:", pendingInvoices);
+
+    return pendingInvoices;
+  } catch (error) {
+    console.error("🚨 Error in getStudentInvoicesByStudentId:", error);
+    return [];
+  }
 };
 
 
