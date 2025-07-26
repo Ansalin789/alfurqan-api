@@ -843,7 +843,6 @@ export interface IAssignment extends Document {
   updatedDate: Date;
   updatedBy: string;
   level?: string;
-  courses?: string;
   assignedDate: Date;
   dueDate: Date;
   answer: string;
