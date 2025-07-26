@@ -427,6 +427,7 @@ async function StudentPortalMail(studentPortal: any) {
       const subject = "Welcome To Alfurqan Team";
       const htmlPart = emailTemplate.templateContent
         .replace("<password>", studentPortal.password)
+        .replace("<username>", studentPortal.username)
         .replace("<username>", studentPortal.username);
       console.log("emailTemplate>>>>", emailTemplate);
       sendEmailClient(emailTo, subject, htmlPart);

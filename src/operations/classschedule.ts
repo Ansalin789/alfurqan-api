@@ -2099,3 +2099,126 @@ export const getTeacherTotalEarnings = async (
 };
 
 
+export const classesCountForTeacher = async (
+  teacherId: string,
+): Promise<{
+  scheduled: number;
+  completed: number;
+  rescheduled: number;
+  absent: number;
+}> => {
+  const result = await classShedule.aggregate([
+    {
+      $match: {
+        status: "Active",
+        "teacher.teacherId": teacherId,
+      },
+    },
+    {
+      $group: {
+        _id: "$scheduleStatus",
+        count: { $sum: 1 },
+        absentCount: {
+          $sum: {
+            $cond: [{ $eq: ["$teacherAttendee", "absent"] }, 1, 0],
+          },
+        },
+      },
+    },
+  ]);
+
+  console.log("Aggregation Result:", result);
+
+  const finalResult = {
+    scheduled: 0,
+    completed: 0,
+    rescheduled: 0,
+    absent: 0,
+  };
+
+  result.forEach(({ _id, count, absentCount }) => {
+    if (_id === "Scheduled") finalResult.scheduled += count;
+    if (_id === "Completed") finalResult.completed += count;
+    if (_id === "Rescheduled") finalResult.rescheduled += count;
+    finalResult.absent += absentCount;
+  });
+
+  console.log("Final Result:", finalResult);
+  return finalResult;
+};
+
+export const teacherClassLevelGrowth  = async (
+  teacherId: string, dateRange: string
+) => {
+
+
+}
+ 
+  // export const getStudentAllRevenue = async (
+  //   dateRange: string,
+  //   year: string // year as ISO string like "2023-01-01"
+  // ): Promise<{ date: string; label: string; revenue: number }[]> => {
+  //   let startDate: Date;
+  //   let endDate: Date;
+  //   let intervalFn: (interval: { start: Date; end: Date }) => Date[];
+  //   let outputFormat: string;
+  
+  //   // Parse the provided year string
+  //   const parsedDate = parseISO(year);
+  //   const parsedYear = parsedDate.getFullYear();
+  
+  //   const now = new Date();
+  
+  //   switch (dateRange.toLowerCase()) {
+  //     case "yearly":
+  //       startDate = new Date(Date.UTC(parsedYear, 0, 1));
+  //       endDate = new Date(Date.UTC(parsedYear, 11, 31, 23, 59, 59, 999));
+  //       intervalFn = eachMonthOfInterval;
+  //       outputFormat = "MMM-yyyy";
+  //       break;
+  //     case "monthly":
+  //       startDate = startOfMonth(now);
+  //       endDate = endOfMonth(now);
+  //       intervalFn = eachDayOfInterval;
+  //       outputFormat = "yyyy-MM-dd";
+  //       break;
+  //     case "weekly":
+  //       startDate = startOfWeek(now, { weekStartsOn: 1 });
+  //       endDate = endOfWeek(now, { weekStartsOn: 1 });
+  //       intervalFn = eachDayOfInterval;
+  //       outputFormat = "yyyy-MM-dd";
+  //       break;
+  //     default:
+  //       throw new Error("Invalid dateRange value. Use 'weekly', 'monthly', or 'yearly'.");
+  //   }
+  
+  //   const invoices: IStudentInvoice[] = await StudentInvoiceModel.find({
+  //     invoiceStatus: { $in: ["Paid"] },
+  //   }).exec();
+  
+  //   const revenueMap: Record<string, number> = {};
+  
+  //   invoices.forEach((invoice) => {
+  //     if (!invoice.createdDate) return; // ✅ Skip if date is undefined
+  
+  //     const invoiceDate = new Date(invoice.createdDate);
+  //     const formattedDate = format(invoiceDate, outputFormat);
+  
+  //     if (revenueMap[formattedDate]) {
+  //       revenueMap[formattedDate] += invoice.amount;
+  //     } else {
+  //       revenueMap[formattedDate] = invoice.amount;
+  //     }
+  //   });
+  
+  //   const result = intervalFn({ start: startDate, end: endDate }).map((date) => {
+  //     const label = format(date, outputFormat);
+  //     return {
+  //       date: label,
+  //       label,
+  //       revenue: revenueMap[label] || 0,
+  //     };
+  //   });
+  
+  //   return result;
+  // };
