@@ -148,6 +148,26 @@ export const updateStudentClassSchedule = async (
     );
 
     for (const classDate of classDates) {
+
+        if (payload.sessionClassType === "GROUPCLASS") {
+    const duplicate = await ClassScheduleModel.findOne({
+      "student.studentId": alfurqanStudent?._id.toString(),
+      startDate: classDate,
+      endDate: classDate,
+      classDay: day,
+      package: payload.package,
+      startTime: start,
+      endTime: end,
+      sessionClassType: "GROUPCLASS",
+      status: "Active"
+    }).exec();
+
+    if (duplicate) {
+      console.log(`Duplicate found for ${day} ${classDate} — skipping.`);
+      continue; // Skip creating this duplicate
+    }
+  }
+
       const newClassSchedule = new ClassScheduleModel({
         student: {
           studentId: alfurqanStudent?._id.toString(),
