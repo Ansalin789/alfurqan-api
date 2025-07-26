@@ -46,7 +46,7 @@ export const createPaymentIntent = async (
     });
     if (paymentIntentResponse) {
       const savePaymentDetails = PaymentDetailsModel.create({
-        userId: evaluationDetails?._id,
+        userId: evaluationDetails?.student.studentId,
         userName: evaluationDetails?.student.studentFirstName,
         paymentStatus: paymentIntentResponse
           ? paymentIntentResponse.status
@@ -74,7 +74,7 @@ export const createPaymentIntent = async (
         courseName: evaluationDetails?.student?.learningInterest,
         amount: evaluationDetails?.planTotalPrice || 0,
         invoiceStatus: evaluationDetails?.invoiceStatus || "",
-        paymentStatus:evaluationDetails?.paymentStatus || "",
+        paymentStatus:(await savePaymentDetails).paymentStatus|| "",
         status: "Active",
         createdBy: "System",
         lastUpdatedBy: evaluationDetails?.updatedBy || "System",
