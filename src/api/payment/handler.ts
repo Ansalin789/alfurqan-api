@@ -60,6 +60,7 @@ export const createPaymentIntent = async (
       });
       (await savePaymentDetails).save();
 
+      const studentpaymentstatus =   paymentIntentResponse.status == "succeeded" ? "PAID" : "FAILED";
       const invoicePayload = InvoiceModel.create({
         student: {
           studentId: evaluationDetails?.student?.studentId || "",
@@ -73,8 +74,8 @@ export const createPaymentIntent = async (
         },
         courseName: evaluationDetails?.student?.learningInterest,
         amount: evaluationDetails?.planTotalPrice || 0,
-        invoiceStatus: evaluationDetails?.invoiceStatus || "",
-        paymentStatus:(await savePaymentDetails).paymentStatus|| "",
+        invoiceStatus: studentpaymentstatus || "",
+        paymentStatus:studentpaymentstatus|| "",
         status: "Active",
         createdBy: "System",
         lastUpdatedBy: evaluationDetails?.updatedBy || "System",
