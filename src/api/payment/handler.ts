@@ -74,6 +74,7 @@ export const createPaymentIntent = async (
         courseName: evaluationDetails?.student?.learningInterest,
         amount: evaluationDetails?.planTotalPrice || 0,
         invoiceStatus: evaluationDetails?.invoiceStatus || "",
+        paymentStatus:evaluationDetails?.paymentStatus || "",
         status: "Active",
         createdBy: "System",
         lastUpdatedBy: evaluationDetails?.updatedBy || "System",
@@ -426,6 +427,7 @@ async function StudentPortalMail(studentPortal: any) {
       const subject = "Welcome To Alfurqan Team";
       const htmlPart = emailTemplate.templateContent
         .replace("<password>", studentPortal.password)
+        .replace("<username>", studentPortal.username)
         .replace("<username>", studentPortal.username);
       console.log("emailTemplate>>>>", emailTemplate);
       sendEmailClient(emailTo, subject, htmlPart);
