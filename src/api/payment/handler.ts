@@ -74,6 +74,7 @@ export const createPaymentIntent = async (
         courseName: evaluationDetails?.student?.learningInterest,
         amount: evaluationDetails?.planTotalPrice || 0,
         invoiceStatus: evaluationDetails?.invoiceStatus || "",
+        paymentStatus:evaluationDetails?.paymentStatus || "",
         status: "Active",
         createdBy: "System",
         lastUpdatedBy: evaluationDetails?.updatedBy || "System",
