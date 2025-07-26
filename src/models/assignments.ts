@@ -58,7 +58,7 @@ const assignmentSchema = new Schema<IAssignment>(
     updatedDate: { type: Date, required: true },
     updatedBy: { type: String, required: true, trim: true },
     level: { type: String, required: false, trim: true },
-    courses: { type: String, required: false, trim: true },
+    course: { type: String, required: false, trim: true },
     assignedDate: { type: Date, required: true },
     dueDate: { type: Date, required: true },
     answer: { type: String, required: false },
@@ -148,7 +148,7 @@ export const assignmentValidationSchema = z.object({
   updatedBy: z.string(),
 
   level: z.string().optional(),
-  courses: z.string().optional(),
+  course: z.string().optional(),
 
   assignedDate: z
     .string()
