@@ -256,6 +256,7 @@ cron.schedule("*/5 * * * *", async () => {
     const message = error instanceof Error ? error.message : String(error);
     console.error("❌ Unexpected error in earnings update cron:", message);
   }
+});
 
 
 
@@ -331,7 +332,6 @@ cron.schedule("*/5 * * * *", async () => {
   }
 });  
 
-});
 
 
 // Run every 2 minutes
