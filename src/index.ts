@@ -253,7 +253,7 @@ cron.schedule("*/5 * * * *", async () => {
     updateEarningsCalculation();
   }
   catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = error ;
     console.error("❌ Unexpected error in earnings update cron:", message);
   }
 });
