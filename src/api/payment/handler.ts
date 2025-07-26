@@ -46,7 +46,7 @@ export const createPaymentIntent = async (
     });
     if (paymentIntentResponse) {
       const savePaymentDetails = PaymentDetailsModel.create({
-        userId: evaluationDetails?._id,
+        userId: evaluationDetails?.student.studentId,
         userName: evaluationDetails?.student.studentFirstName,
         paymentStatus: paymentIntentResponse
           ? paymentIntentResponse.status
@@ -60,6 +60,7 @@ export const createPaymentIntent = async (
       });
       (await savePaymentDetails).save();
 
+      const studentpaymentstatus =   paymentIntentResponse.status == "succeeded" ? "PAID" : "FAILED";
       const invoicePayload = InvoiceModel.create({
         student: {
           studentId: evaluationDetails?.student?.studentId || "",
@@ -73,8 +74,8 @@ export const createPaymentIntent = async (
         },
         courseName: evaluationDetails?.student?.learningInterest,
         amount: evaluationDetails?.planTotalPrice || 0,
-        invoiceStatus: evaluationDetails?.invoiceStatus || "",
-        paymentStatus:evaluationDetails?.paymentStatus || "",
+        invoiceStatus: studentpaymentstatus || "",
+        paymentStatus:studentpaymentstatus|| "",
         status: "Active",
         createdBy: "System",
         lastUpdatedBy: evaluationDetails?.updatedBy || "System",
@@ -427,6 +428,7 @@ async function StudentPortalMail(studentPortal: any) {
       const subject = "Welcome To Alfurqan Team";
       const htmlPart = emailTemplate.templateContent
         .replace("<password>", studentPortal.password)
+        .replace("<username>", studentPortal.username)
         .replace("<username>", studentPortal.username);
       console.log("emailTemplate>>>>", emailTemplate);
       sendEmailClient(emailTo, subject, htmlPart);

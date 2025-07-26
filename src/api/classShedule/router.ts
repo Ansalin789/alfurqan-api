@@ -248,6 +248,33 @@ const register = async (server: Server): Promise<void> => {
           },
          },
       },
+
+         {
+        method: "GET",
+        path: "/classShedule/teacher/count",
+        options: {
+          handler: handler.getClassesCountForTeacher,
+          description: ClassSchedulesMessages.LIST,
+          tags: ["api", "classShedule"],
+          auth: {
+            strategies: ["jwt"],
+          },
+         },
+      },
+
+      //         {
+      //   method: "GET",
+      //   path: "/classShedule/teacher/levelgrowth",
+      //   options: {
+      //     handler: handler.geteacherclassLevelGrowth,
+      //     description: ClassSchedulesMessages.LIST,
+      //     tags: ["api", "classShedule"],
+      //     // auth: {
+      //     //   strategies: ["jwt"],
+      //     // },
+      //    },
+      // },
+
     ];
     server.route(routes);
   };

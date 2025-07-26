@@ -54,6 +54,11 @@ const studentInvoiceSchema = new Schema<IStudentInvoice>(
       required: false,
       default: "Pending",
     },
+        paymentStatus: {
+      type: String,
+      required: false,
+      default: "Pending",
+    },
     packageType:{
     type:String,
     required:false,
@@ -148,6 +153,7 @@ export const zodAlStudentInvoiceSchema = z.object({
   })
   .transform((val) => new Date(val))
   .optional(),
+  paymentStatus: z.string().optional().default("Pending"),
 
   invoiceStatus: z.string().optional().default("Pending"),
   status: z.enum([appStatus.ACTIVE, appStatus.IN_ACTIVE, appStatus.DELETED]).default(appStatus.ACTIVE),

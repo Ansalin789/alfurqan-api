@@ -958,6 +958,8 @@ export interface IStudentInvoice extends Document {
   attachFile?:Buffer;
   dueDate?:string;
   invoiceStatus: string;
+    paymentStatus: string;
+
   status: string;
   createdDate?: string;
   createdBy: string;
