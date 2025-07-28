@@ -19,6 +19,14 @@ import { removeBookedSlots } from "./redis/handler/teacherSlotHander";
 import { updateEarningsCalculation } from "./operations/classschedule";
 import adminmeeting from "./models/adminmeeting";
 import { runSalaryCron } from "./operations/salarywages";
+import moment from "moment";
+import { IClassSchedule } from "../types/models.types";
+import ClassScheduleModel from "./models/classShedule";
+import { liveClassAutoEnd } from "./kafka/producers/adminProducer";
+import { sendNotification } from "./operations/notification";
+import { Types } from "mongoose";
+import AlStudenModel from "./models/alstudents";
+import UserModel from "./models/users";
 
 const start = async () => {
   // Create the server with server settings
@@ -247,16 +255,16 @@ cron.schedule("0 0 * * *", async () => {
 });
 
 // cron  run 5 mins once
-cron.schedule("*/5 * * * *", async () => {
-  try{
-  console.log("🧹 attendance and earnings uupdate schedule");
-    updateEarningsCalculation();
-  }
-  catch (error: unknown) {
-    const message = error ;
-    console.error("❌ Unexpected error in earnings update cron:", message);
-  }
-});
+// cron.schedule("*/5 * * * *", async () => {
+//   try{
+//   console.log("🧹 attendance and earnings uupdate schedule");
+//     updateEarningsCalculation();
+//   }
+//   catch (error: unknown) {
+//     const message = error ;
+//     console.error("❌ Unexpected error in earnings update cron:", message);
+//   }
+// });
 
 
 
@@ -411,5 +419,269 @@ cron.schedule("*/5 * * * *", async () => {
     const message = error instanceof Error ? error.message : String(error);
     console.error("❌ Unexpected error in meeting status update cron:", message);
   }
-});  
+}); 
+
+cron.schedule("*/5 * * * *", async () => {
+  const todayStart = moment().startOf("day").toDate();
+  const todayEnd = moment().endOf("day").toDate();
+
+  const rateMap = {
+    REGULARCLASS: 4.0,
+    GROUPCLASS: 6.0
+  } as const;
+
+  const classSchedules = await ClassScheduleModel.find({
+    startDate: { $gte: todayStart, $lte: todayEnd },
+    scheduleStatus: { $nin: ["Completed", "StudentAbsent", "TeacherAbsent", "BothAbsent"] }
+  });
+
+  console.log(`🔄 Checking ${classSchedules.length} classes at ${moment().format("HH:mm:ss")}`);
+
+  for (const cls of classSchedules) {
+    const classId = cls._id.toString();
+    const startTime = moment(cls.startTime?.[0], "HH:mm");
+    const endTime = moment(cls.endTime?.[0], "HH:mm");
+    const nowMoment = moment();
+
+    const graceDeadline = startTime.clone().add(15, "minutes");
+
+    if (nowMoment.isBefore(graceDeadline)) {
+      console.log(`⏳ Class ${classId}: Grace period not over yet`);
+      continue;
+    }
+
+    const studentJoined = Array.isArray(cls.student.studnetSessionStart) && cls.student.studnetSessionStart.length > 0;
+    const teacherJoined = Array.isArray(cls.teacher.teacherSessionStart) && cls.teacher.teacherSessionStart.length > 0;
+
+    console.log(`🔍 Class ${classId}: studentJoined=${studentJoined}, teacherJoined=${teacherJoined}`);
+
+    // ✅ Case 1: Both present
+    if (studentJoined && teacherJoined) {
+  const nowHHMM = moment().format("HH:mm");
+  const endHHMM = moment(cls.endTime[0], "HH:mm").format("HH:mm");
+
+  // Clone original session times
+  let teacherStartTime  = cls.teacher.teacherSessionStart?.[0] ?? null;
+  let teacherEndTimeList = [...(cls.teacher.teacherSessionEnd || [])];
+  let studentEndTimeList = [...(cls.student.studnetSessionEnd || [])];
+
+  // ✅ If current time === endTime, push end time to teacher/student if not already set
+  if (nowHHMM === endHHMM) {
+    if (teacherEndTimeList.length === 0 || teacherEndTimeList[teacherEndTimeList.length - 1] !== endHHMM) {
+      teacherEndTimeList.push(endHHMM);
+    }
+
+    if (studentEndTimeList.length === 0 || studentEndTimeList[studentEndTimeList.length - 1] !== endHHMM) {
+      studentEndTimeList.push(endHHMM);
+    }
+  }
+
+  const teacherEndTime = teacherEndTimeList[teacherEndTimeList.length - 1];
+
+  if (teacherStartTime && teacherEndTime) {
+    const start = moment(teacherStartTime, "HH:mm");
+    const end = moment(teacherEndTime, "HH:mm");
+    const totalMinutes = moment.duration(end.diff(start)).asMinutes();
+
+    if (totalMinutes <= 0) {
+      console.log(`⚠️ Class ${cls._id}: Invalid duration`);
+      return;
+    }
+
+    const classType = cls.sessionClassType as keyof typeof rateMap;
+    const perClassAmount = rateMap[classType] || 0;
+    const calculatedEarnings = parseFloat(((totalMinutes / 60) * perClassAmount).toFixed(2));
+    const existingEarnings = cls.earnings || 0;
+    const deltaEarning = parseFloat((calculatedEarnings - existingEarnings).toFixed(2));
+    const updatedEarnings = parseFloat((existingEarnings + deltaEarning).toFixed(2));
+
+    const updateData: any = {
+      amount: updatedEarnings,
+      studentAttendee: "Present",
+      teacherAttendee: "Present",
+      "teacher.teacherSessionEnd": teacherEndTimeList,
+      "student.studnetSessionEnd": studentEndTimeList,
+      sessionStarttime:teacherStartTime,
+      sessionEndtime:teacherEndTime,
+    };
+
+    if (nowHHMM === endHHMM) {
+      updateData.sessionStatus = "Completed";
+      updateData.scheduleStatus = "Completed";
+      updateData.classhour = totalMinutes;
+      await liveClassAutoEnd({ data : cls.classLink });
+    }
+
+    await ClassScheduleModel.findByIdAndUpdate(cls._id, updateData);
+
+    console.log(`✅ Class ${cls._id}: ₹${deltaEarning} added (Total: ₹${updatedEarnings}) — ${totalMinutes} mins`);
+  }
+}
+
+
+    // ❌ Case 2: Student absent
+    else if (!studentJoined && teacherJoined) {
+      const totalMinutes = moment.duration(endTime.diff(startTime)).asMinutes();
+      const classType = cls.sessionClassType as keyof typeof rateMap;
+      const perClassAmount = rateMap[classType] || 0;
+      const earning = parseFloat(((totalMinutes / 60) * perClassAmount).toFixed(2));
+
+      await ClassScheduleModel.findByIdAndUpdate(cls._id, {
+        sessionStatus: "Completed",
+        scheduleStatus: "StudentAbsent",
+        studentAttendee: "Absent",
+        teacherAttendee: "Present",
+        sessionStarttime:cls.startTime[0],
+        sessionEndtime:cls.endTime[0],
+        amount: earning,
+      });
+      await liveClassAutoEnd({ data : cls.classLink });
+      
+  const student = cls.student;
+  const teacher = cls.teacher;
+  const message = `Student ${student?.studentFirstName} was absent for the class on ${cls.startDate} at ${cls.startTime[0]}. The session has been marked accordingly.`;
+const classSchedule = await ClassScheduleModel.findOne({
+      _id: new Types.ObjectId(cls._id),
+    });
+    const alfstudent = await AlStudenModel.findOne({
+      _id: new Types.ObjectId(classSchedule?.student.studentId),
+    });
+    const evaluation = await Evaluation.findOne({
+  "student.studentId": alfstudent?.student.studentId,
+    });
+    const academicCoachId = evaluation?.academicCoachId;
+    const academicCoach = await UserModel.findOne({_id : new Types.ObjectId(academicCoachId)});
+  if (teacher?.teacherId) {
+      await sendNotification({
+      messages: message,
+      senderId: "system123",
+      senderName: "System",
+      senderEmail: "system@gmail.com", 
+      isRead: false,
+      receiverId: [teacher.teacherId.toString(),academicCoach?._id.toString()],
+      receiverName: [teacher.teacherName ,academicCoach?.userName],
+      receiverEmail: [teacher.teacherEmail || 'some@gmail.com',academicCoach?.email],
+      notificationType: "STUDENT_ABSENT_ALERT",
+      notificationStatus: "Unseen",
+      status: "active",
+      createdBy: "system",
+      updatedBy: "system",
+    });
+  }
+      console.log(`❌ Class ${classId}: Student Absent — Teacher earned ₹${earning}`);
+    }
+
+    // ❌ Case 3: Teacher absent
+    else if (studentJoined && !teacherJoined) {
+      await ClassScheduleModel.findByIdAndUpdate(cls._id, {
+        sessionStatus: "Completed",
+        scheduleStatus: "TeacherAbsent",
+        studentAttendee: "Present",
+        teacherAttendee: "Absent",
+        sessionStarttime:"",
+        sessionEndtime:"",
+        amount: 0
+      });
+      await liveClassAutoEnd({ data : cls.classLink });
+      const student = cls.student;
+  const teacher = cls.teacher;
+
+  const message = `Teacher ${teacher?.teacherName} was absent for the class on ${cls.startDate} at ${cls.startTime[0]}. The session has been marked accordingly.`;
+
+  const classSchedule = await ClassScheduleModel.findOne({
+    _id: new Types.ObjectId(cls._id),
+  });
+
+  const alfstudent = await AlStudenModel.findOne({
+    _id: new Types.ObjectId(classSchedule?.student.studentId),
+  });
+
+  const evaluation = await Evaluation.findOne({
+    "student.studentId": alfstudent?.student.studentId,
+  });
+
+  const academicCoachId = evaluation?.academicCoachId;
+  const academicCoach = await UserModel.findOne({
+    _id: new Types.ObjectId(academicCoachId),
+  });
+
+  if (student?.studentId) {
+    await sendNotification({
+      messages: message,
+      senderId: "system123",
+      senderName: "System",
+      senderEmail: "system@gmail.com",
+      isRead: false,
+      receiverId: [student.studentId.toString(), academicCoach?._id.toString()],
+      receiverName: [student.studentFirstName, academicCoach?.userName],
+      receiverEmail: [student.studentEmail || "unknown@student.com", academicCoach?.email],
+      notificationType: "TEACHER_ABSENT_ALERT",
+      notificationStatus: "Unseen",
+      status: "active",
+      createdBy: "system",
+      updatedBy: "system",
+    });
+  }
+      console.log(`❌ Class ${classId}: Teacher Absent — No earning`);
+    }
+
+    // ❌ Case 4: Both absent
+    else {
+      await ClassScheduleModel.findByIdAndUpdate(cls._id, {
+        sessionStatus: "Completed",
+        scheduleStatus: "BothAbsent",
+        studentAttendee: "Absent",
+        teacherAttendee: "Absent",
+        sessionStarttime:"",
+        sessionEndtime:"",
+        amount: 0
+      });
+      const student = cls.student;
+  const teacher = cls.teacher;
+
+  const message = `Both the student (${student?.studentFirstName}) and the teacher (${teacher?.teacherName}) were absent for the class on ${cls.startDate} at ${cls.startTime[0]}. The session has been marked accordingly.`;
+
+  const classSchedule = await ClassScheduleModel.findOne({
+    _id: new Types.ObjectId(cls._id),
+  });
+
+  const alfstudent = await AlStudenModel.findOne({
+    _id: new Types.ObjectId(classSchedule?.student.studentId),
+  });
+
+  const evaluation = await Evaluation.findOne({
+    "student.studentId": alfstudent?.student.studentId,
+  });
+
+  const academicCoachId = evaluation?.academicCoachId;
+  const academicCoach = await UserModel.findOne({
+    _id: new Types.ObjectId(academicCoachId),
+  });
+
+  if (academicCoach?._id) {
+    await sendNotification({
+      messages: message,
+      senderId: "system123",
+      senderName: "System",
+      senderEmail: "system@gmail.com",
+      isRead: false,
+      receiverId: [academicCoach._id.toString()],
+      receiverName: [academicCoach.userName],
+      receiverEmail: [academicCoach.email || "coach@default.com"],
+      notificationType: "BOTH_ABSENT_ALERT",
+      notificationStatus: "Unseen",
+      status: "active",
+      createdBy: "system",
+      updatedBy: "system",
+    });
+
+    console.log(`📩 Notification sent to academic coach about both absent.`);
+  }
+
+      console.log(`❌ Class ${classId}: Both Absent — No earning`);
+    }
+  }
+});
+
+
 

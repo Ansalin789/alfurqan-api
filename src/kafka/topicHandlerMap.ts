@@ -230,6 +230,11 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
     }catch(error){
       console.error('❌ Failed to save log:', error);
     }
+  },
+
+  'liveClassAutoEnd' : async ( data : any) =>{
+    console.log('liveClassAutoEnd');
+    emitEventToClient("liveClassAutoEnd",data);
   }
 
 };
