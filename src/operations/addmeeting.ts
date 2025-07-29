@@ -46,28 +46,31 @@ export interface IMeetingMinutesUpdate {
 
 export const getAllMeetingRecords = async (
   params: GetAllRecordsParams
-): Promise<{ totalCount: number; meetings: IMeeting[] }> => {
+): Promise<{
+  totalCount: number;
+  meetings: IMeeting[];
+  groupedAutoMeetings: { meetingId: string; meetingName: string; participants: any[] }[];
+}> => {
   try {
     const { offset, limit, supervisorId } = params;
 
     console.log("✅ supervisorId received:", supervisorId);
 
-    // Check adminmeeting matches
+    // Fetch auto-scheduled meetings
     const adminMeetings = await adminmeeting.find({
       "teacher.teacherId": supervisorId,
     }).lean();
     console.log("✅ adminMeetings found:", adminMeetings.length);
 
-    // Check addmeeting matches
+    // Fetch manually added meetings
     const addMeetings = await Meeting.find({
       "supervisor.supervisorId": supervisorId,
     }).lean();
     console.log("✅ addMeetings found:", addMeetings.length);
 
+    // Combine and paginate
     const combinedMeetings = [...adminMeetings, ...addMeetings].sort(
-      (a, b) =>
-        new Date(b.createdDate).getTime() -
-        new Date(a.createdDate).getTime()
+      (a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()
     );
 
     const start = offset ? parseInt(offset) : 0;
@@ -77,15 +80,53 @@ export const getAllMeetingRecords = async (
     console.log("✅ total combinedMeetings:", combinedMeetings.length);
     console.log("✅ paginated meetings returned:", paginated.length);
 
+    // Group ONLY auto-scheduled meetings by meetingId
+// ✅ Group ONLY auto-scheduled meetings from the addMeeting (Meeting) collection
+const groupedMap = new Map<
+  string,
+  { meetingId: string; meetingName: string; participants: any[] }
+>();
+
+for (const meeting of addMeetings) {
+  // ✅ Only group if meetingId starts with "auto-"
+  if (!meeting.meetingId?.startsWith("auto-")) continue;
+
+  const id = meeting.meetingId;
+  const name = meeting.meetingName;
+
+  if (!groupedMap.has(id)) {
+    groupedMap.set(id, {
+      meetingId: id,
+      meetingName: name,
+      participants: [],
+    });
+  }
+
+  // Add participant (use appropriate field from your schema)
+  // Assuming meeting has a participant/teacher/student field — adjust accordingly
+  if (Array.isArray(meeting.teacher) && meeting.teacher.length > 0) {
+    groupedMap.get(id)!.participants.push(...meeting.teacher);
+  } else if (meeting.teacher) {
+    groupedMap.get(id)!.participants.push(meeting.teacher); // fallback if `participants` field not present
+  }
+}
+
+const groupedAutoMeetings = Array.from(groupedMap.values());
+
+
     return {
       totalCount: combinedMeetings.length,
       meetings: paginated as IMeeting[],
+      groupedAutoMeetings,
     };
   } catch (error) {
     console.error("❌ Error fetching meetings:", error);
     throw new Error("Error fetching meetings: " + error);
   }
 };
+
+
+
 
 
 
@@ -188,49 +229,54 @@ const autoScheduleMeeting = async () => {
       return;
     }
 
-    for (const date of meetingDates) {
-      for (const teacher of teachers) {
-        const existingMeeting = await Meeting.findOne({
-          selectedDate: date,
-          "supervisor.supervisorId": supervisor._id.toString(),
-          "teacher.teacherId": teacher._id.toString(),
-        });
+ for (const date of meetingDates) {
+  // ✅ Generate a unique meetingId per date
+  const formattedDate = date.toISOString().split("T")[0]; // e.g., "2025-07-29"
+  const baseMeetingId = `auto-${supervisor._id}-${formattedDate}`;
 
-        if (existingMeeting) {
-          console.log(`⚠️ Meeting already scheduled for ${teacher.userName} on ${date.toDateString()}`);
-          continue;
-        }
+  for (const teacher of teachers) {
+    const existingMeeting = await Meeting.findOne({
+      selectedDate: date,
+      "supervisor.supervisorId": supervisor._id.toString(),
+      "teacher.teacherId": teacher._id.toString(),
+    });
 
-        const newMeeting = new Meeting({
-          meetingId: `auto-${supervisor._id}-${teacher._id}-${date.toISOString().split("T")[0]}`,
-          meetingName: `Auto-Scheduled Meeting for ${teacher.userName} on ${date.toDateString()}`,
-          description: "This is an automatically scheduled meeting.",
-          createdDate: new Date(),
-          selectedDate: date,
-          startTime: startTime,
-          endTime: endTime,
-          createdBy: supervisor.userName,
-          teacher: [
-            {
-              teacherId: teacher._id.toString(),
-              teacherName: teacher.userName,
-              teacherEmail: teacher.email,
-            }
-          ],
-          supervisor: {
-            supervisorId: supervisor._id.toString(),
-            supervisorName: supervisor.userName,
-            supervisorEmail: supervisor.email,
-            supervisorRole: Array.isArray(supervisor.role) ? supervisor.role[0] : supervisor.role,
-          },
-          meetingStatus: "Scheduled",
-          status: "Active",
-        });
-
-        await newMeeting.save();
-        console.log(`✅ Scheduled meeting for ${teacher.userName} on ${date.toDateString()}`);
-      }
+    if (existingMeeting) {
+      console.log(`⚠️ Meeting already scheduled for ${teacher.userName} on ${date.toDateString()}`);
+      continue;
     }
+
+    const newMeeting = new Meeting({
+      meetingId: baseMeetingId, // 🔁 Use the same meetingId for all teachers on the same date
+      meetingName: `Auto-Scheduled Meeting on ${date.toDateString()}`,
+      description: "This is an automatically scheduled meeting.",
+      createdDate: new Date(),
+      selectedDate: date,
+      startTime: startTime,
+      endTime: endTime,
+      createdBy: supervisor.userName,
+      teacher: [
+        {
+          teacherId: teacher._id.toString(),
+          teacherName: teacher.userName,
+          teacherEmail: teacher.email,
+        }
+      ],
+      supervisor: {
+        supervisorId: supervisor._id.toString(),
+        supervisorName: supervisor.userName,
+        supervisorEmail: supervisor.email,
+        supervisorRole: Array.isArray(supervisor.role) ? supervisor.role[0] : supervisor.role,
+      },
+      meetingStatus: "Scheduled",
+      status: "Active",
+    });
+
+    await newMeeting.save();
+    console.log(`✅ Scheduled meeting for ${teacher.userName} on ${date.toDateString()}`);
+  }
+}
+
   } catch (error) {
     console.error("❌ Error auto-scheduling meetings:", error);
   }
