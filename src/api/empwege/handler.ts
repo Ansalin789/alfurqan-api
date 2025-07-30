@@ -1,7 +1,7 @@
 import { Request, ResponseToolkit } from "@hapi/hapi";
 import { z } from "zod";
 import { zodEmpWagesSchema } from "../../models/empwages";
-import { createEmpWages, getEmpWagesById } from "../../operations/empwages";
+import { createEmpWages, getEmpWagesById, updateEmpWageLogic } from "../../operations/empwages";
 
 
 const createInputValidation = z.object({
@@ -40,11 +40,44 @@ export default {
     },
 
     // Retrieve all the Evaluation list
-         async getAllEmployeeWages(req: Request, h: ResponseToolkit){
-                const result = await getEmpWagesById(String(req.params.id));
-          
-            return result;
-              },
-      
+async getAllEmployeeWages(req: Request, h: ResponseToolkit) {
+  const employeeId = String(req.query.employeeId);
+  if (!employeeId) {
+    return h.response({ message: "employeeId query parameter is required" }).code(400);
+  }
+
+  const result = await getEmpWagesById(employeeId);
+  return result;
+},
+
+async updateEmpWageById(req: Request, h: ResponseToolkit) {
+  const id = req.params.id;
+  const payload = req.payload as {
+    rate?: number;
+    duration?: number; // will convert to string if provided
+  };
+
+  // Convert duration to string format if present (e.g., 30 -> "30 min")
+  const formattedPayload = {
+    rate: payload.rate,
+    duration: payload.duration !== undefined ? `${payload.duration} min` : undefined,
+  };
+
+  try {
+    const result = await updateEmpWageLogic(id, formattedPayload);
+    if (!result) {
+      return h.response({ message: "Wage record not found" }).code(404);
+    }
+
+    return { message: "Wage record updated", data: result };
+  } catch (err: any) {
+    return h.response({ message: err.message || "Update failed" }).code(400);
+  }
 }
+
+
+
+
+}
+
 
