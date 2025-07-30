@@ -35,6 +35,7 @@ const assignmentSchema = new Schema<IAssignment>(
     assignedTeacher: { type: String, required: false },
     assignedTeacherId: { type: String, required: false },
     assignmentId: { type: String, required: false },
+    groupId: { type: String, required: false },
 
     assignmentType: {
       type: assignmentTypeSchema,
@@ -83,6 +84,7 @@ export const assignmentValidationSchema = z.object({
   assignedTeacher: z.string().optional(),
   assignedTeacherId: z.string().optional(),
   assignmentId: z.string().optional(),
+  groupId: z.string().optional(),
 
   assignmentType: z.object({
     type: z.enum([

@@ -817,7 +817,8 @@ export interface IAssignment extends Document {
   questionType: string;
   typeofQuestion: string;
   title: string;   
-  course?: string;                      
+  course?: string;  
+  groupId?: string;                    
   assignmentName: string;
   assignedTeacher: string;
   assignedTeacherId: string;
@@ -856,7 +857,7 @@ export interface IallAssignment {
   studentId: string;
   studentName :string;
   title:string;
-
+groupId?: string;
     sessionClassType?:string;
     questionName:string;
     questionType:string;
@@ -903,6 +904,7 @@ export interface IAssignmentCreate {
     questionType:string;
      typeofQuestion:string;
      title:string;
+     groupId?: string;
   assignmentName: string;
   assignedTeacher?: string;
  assignmentType: {
