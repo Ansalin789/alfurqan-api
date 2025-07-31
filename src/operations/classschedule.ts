@@ -19,6 +19,7 @@ import { badRequest } from "@hapi/boom";
 import Evaluation from "../models/evaluation";
 import AlStudenModel from "../models/alstudents";
 import Course from "../models/course";
+import Calendar from "../models/calendar";
 import {
   endOfMonth,
   startOfMonth,
@@ -37,6 +38,7 @@ import { sendNotification } from "./notification";
 import { getIO } from "../shared/socket";
 import realtimemessage from "../models/realtimemessage";
 import dayjs from "dayjs";
+import { calendar } from "googleapis/build/src/apis/calendar";
 
 type AssignmentItem = {
   assignmentId: string;
@@ -644,7 +646,7 @@ export const getClassesForStudent = async (
 
 export const getClassesForTeacher = async (
   params: GetAllRecordsParams
-): Promise<{ totalCount: number; classSchedule: IClassSchedule[] }> => {
+): Promise<{ totalCount: number; classSchedule: any[] }> => {
   const {
     teacherId,
     sortBy = "_id",
@@ -656,19 +658,14 @@ export const getClassesForTeacher = async (
   if (!teacherId) {
     throw new Error("Teacher ID is required");
   }
-  // Query filtering for studentId
-  const query: any = { "teacher.teacherId": teacherId };
-  console.log(">>", query);
 
-  // Sorting options
+  const query: any = { "teacher.teacherId": teacherId };
   const sortOptions: any = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
 
   try {
-    // Pagination calculations
     const skip = Math.max(0, (Number(offset) - 1) * Number(limit));
 
-    // Execute queries
-    const [classSchedule, totalCount] = await Promise.all([
+    const [classScheduleList, totalCount] = await Promise.all([
       ClassScheduleModel.find(query)
         .sort(sortOptions)
         .skip(skip)
@@ -677,12 +674,35 @@ export const getClassesForTeacher = async (
       ClassScheduleModel.countDocuments(query).exec(),
     ]);
 
-    return { totalCount, classSchedule };
+    // Enrich class schedule with student and evaluation data
+    const enrichedSchedules = await Promise.all(
+      classScheduleList.map(async (cls) => {
+        const studentId = cls?.student?.studentId;
+        const alfstudent = await AlStudenModel.findOne({
+          _id: new Types.ObjectId(studentId),
+        });
+console.log("alfstudent", alfstudent);
+        const evaluation = await Evaluation.findOne({
+          "student.studentId": alfstudent?.student?.studentId,
+        });
+
+         const trialclass = await Calendar.findOne({
+          trialId: evaluation?._id,
+        });
+        return {
+          ...cls.toObject(),
+          alfstudent,
+          trialclass,
+        };
+      })
+    );
+
+    return { totalCount, classSchedule: enrichedSchedules };
   } catch (error) {
     console.error("Error fetching classes for student:", error);
     throw new Error("Failed to fetch classes for the student");
   }
-};
+};  
 
 export const getStudentClassHours = async (
   studentId: string
