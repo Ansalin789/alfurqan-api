@@ -813,9 +813,9 @@ export interface IAssignment extends Document {
   studentId: string;
   studentName: string;
   sessionClassType?: string;
-  questionName: string;
-  questionType: string;
-  typeofQuestion: string;
+  questionName?: string;
+  questionType?: string;
+  typeofQuestion?: string;
   title: string;   
   course?: string;  
   groupId?: string;                    
@@ -828,7 +828,7 @@ export interface IAssignment extends Document {
   };
   chooseType?: boolean;
   trueorfalseType?: boolean;
-  question: string;
+  question?: string;
   hasOptions?: boolean;
   options?: {
     optionOne?: string;
@@ -859,9 +859,9 @@ export interface IallAssignment {
   title:string;
 groupId?: string;
     sessionClassType?:string;
-    questionName:string;
-    questionType:string;
-     typeofQuestion:string;
+    questionName?:string;
+    questionType?:string;
+     typeofQuestion?:string;
   assignmentName: string;
   assignedTeacher: string;
   assignedTeacherId: string;
@@ -871,7 +871,7 @@ assignmentType: {
   };
   chooseType: boolean;
   trueorfalseType: boolean;
-  question: string;
+  question?: string;
   hasOptions: boolean;
   options: {
     optionOne?: string;
@@ -900,9 +900,9 @@ export interface IAssignmentCreate {
   studentId?: string;
   studentName :string;
     sessionClassType:string;
-    questionName:string;
-    questionType:string;
-     typeofQuestion:string;
+    questionName?:string;
+    questionType?:string;
+     typeofQuestion?:string;
      title:string;
      groupId?: string;
   assignmentName: string;
@@ -913,7 +913,7 @@ export interface IAssignmentCreate {
   };
   chooseType: boolean;
   trueorfalseType: boolean;
-  question: string;
+  question?: string;
   hasOptions: boolean;
   options: {
     optionOne?: string;

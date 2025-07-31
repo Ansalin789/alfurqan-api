@@ -792,9 +792,9 @@ export const getTeacherStudentsAssignmentCount = async ({
 interface IAssignmentData {
   _id: any;
   assignmentId: string;
-  assignmentName: string;
-  assignmentType: any;
-  questionName: string;
+  assignmentName?: string;
+  assignmentType?: any;
+  questionName?: string;
   assignedDate: Date;
   dueDate: Date;
   assignmentStatus: string;

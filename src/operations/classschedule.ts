@@ -52,7 +52,7 @@ type AssignmentItem = {
   dueDate: Date;
   questionName: string;
   questionType: string;
-  typeofQuestion: string;
+  typeofQuestion?: string;
   assignmentStatus:
     | "Assigned"
     | "Not Assigned"
@@ -1331,7 +1331,7 @@ export const getStudentList = async (
       dueDate: Date;
       questionName: string;
       questionType: string;
-      typeofQuestion: string;
+      typeofQuestion?: string;
       assignmentStatus: AssignmentStatus;
     }[];
   }[]

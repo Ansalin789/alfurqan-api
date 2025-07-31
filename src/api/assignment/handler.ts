@@ -174,15 +174,13 @@ export default {
         sessionClassType,
         assignedTeacherId,
         assignedTeacher,
-        
       });
       // ✅ Generate assignmentId here (for this one group of questions)
-      const studentPrefix = studentName?.slice(0, 3).toUpperCase() || "STU";
       const currentDate = new Date();
       const datePart = `${currentDate.getDate()}${
         currentDate.getMonth() + 1
       }${currentDate.getFullYear()}`;
-      const assignmentId = `${nextIdNumber}-${studentPrefix}-${datePart}`;
+      const sharedAssignmentId = `GRP-${Date.now()}-${datePart}`;
 
       if (!studentId || !mongoose.Types.ObjectId.isValid(studentId)) {
         return h.response({ error: "Invalid studentId" }).code(400);
@@ -353,7 +351,7 @@ export default {
       const finalAssignments = preparedAssignments.map((item) => ({
         ...item,
         studentId,
-        assignmentId, // ✅ same for all
+        assignmentId: sharedAssignmentId, // ✅ same ID for all
         studentName: studentName || "",
         sessionClassType: sessionClassType || "",
         assignedTeacherId: assignedTeacherId || "",
@@ -382,6 +380,10 @@ export default {
 
       const payload = req.payload as any;
       console.log("📥 Raw payload received:", payload);
+
+      const groupAssignmentId = payload.groupAssignmentId || `GRP-${Date.now()}-${new Date().getDate()}${new Date().getMonth()+1}${new Date().getFullYear()}`;
+      
+
       // ✅ Parse and validate students list BEFORE reconstructing
       let studentsList: { studentId: string; studentName: string }[] = [];
       try {
@@ -583,20 +585,12 @@ export default {
           continue;
         }
 
-        const assignmentCount = await assignments.countDocuments({ studentId });
-        const nextIdNumber = assignmentCount + 1;
-        const studentPrefix = studentName?.slice(0, 3).toUpperCase() || "STU";
-        const currentDate = new Date();
-        const datePart = `${currentDate.getDate()}${
-          currentDate.getMonth() + 1
-        }${currentDate.getFullYear()}`;
-        const assignmentId = `${nextIdNumber}-${studentPrefix}-${datePart}`;
 
         const studentAssignments = preparedAssignments.map((item) => ({
           ...item,
           studentId,
           studentName,
-          assignmentId,
+          assignmentId: groupAssignmentId,
           groupId,
           sessionClassType: sessionClassType || "",
           assignedTeacherId: assignedTeacherId || "",
