@@ -54,13 +54,13 @@ async updateEmpWageById(req: Request, h: ResponseToolkit) {
   const id = req.params.id;
   const payload = req.payload as {
     rate?: number;
-    duration?: number; // will convert to string if provided
+    hoursMins?: number; // will convert to string if provided
   };
 
   // Convert duration to string format if present (e.g., 30 -> "30 min")
   const formattedPayload = {
     rate: payload.rate,
-    duration: payload.duration !== undefined ? `${payload.duration} min` : undefined,
+    hoursMins: payload.hoursMins !== undefined ? `${payload.hoursMins} min` : undefined,
   };
 
   try {

@@ -432,11 +432,20 @@ cron.schedule("*/5 * * * *", async () => {
 
   const classSchedules = await ClassScheduleModel.find({
     startDate: { $gte: todayStart, $lte: todayEnd },
-    scheduleStatus: { $nin: ["Completed", "StudentAbsent", "TeacherAbsent", "BothAbsent"] }
+    scheduleStatus: { $nin: ["Completed", "StudentAbsent", "TeacherAbsent", "BothAbsent"] },
+    sessionClassType : "REGULARCLASS"
   });
 
   console.log(`🔄 Checking ${classSchedules.length} classes at ${moment().format("HH:mm:ss")}`);
-
+   
+  const groupClassSchedule = await ClassScheduleModel.find({
+    startDate :{ $gte : todayStart , $lte : todayEnd },
+    scheduleStatus: { $nin: ["Completed", "StudentAbsent", "TeacherAbsent", "BothAbsent"] },
+    sessionClassType : "GROUPCLASS"
+  });
+  
+  console.log(`🔄 Checking ${groupClassSchedule.length} classes at ${moment().format("HH:mm:ss")}`); 
+ 
   for (const cls of classSchedules) {
     const classId = cls._id.toString();
     const startTime = moment(cls.startTime?.[0], "HH:mm");
@@ -681,7 +690,206 @@ const classSchedule = await ClassScheduleModel.findOne({
       console.log(`❌ Class ${classId}: Both Absent — No earning`);
     }
   }
+  const groupedByClassLink: Record<string, any[]> = {};
+
+for (const cls of groupClassSchedule) {
+  const link = cls.classLink;
+  if (!groupedByClassLink[link]) groupedByClassLink[link] = [];
+  groupedByClassLink[link].push(cls);
+}
+
+  for (const [classLink, sessions] of Object.entries(groupedByClassLink)) {
+  const anyClass = sessions[0];
+  const startTime = moment(anyClass.startTime?.[0], "HH:mm");
+  const endTime = moment(anyClass.endTime?.[0], "HH:mm");
+  const nowMoment = moment();
+  const nowHHMM = nowMoment.format("HH:mm");
+  const endHHMM = endTime.format("HH:mm");
+  const graceDeadline = startTime.clone().add(15, "minutes");
+
+  if (nowMoment.isBefore(graceDeadline)) {
+    console.log(`⏳ Group class ${classLink}: Grace period not over yet`);
+    continue;
+  }
+
+  const teacherJoined = Array.isArray(anyClass.teacher.teacherSessionStart) &&
+                        anyClass.teacher.teacherSessionStart.length > 0;
+
+  const teacherStartTime = anyClass.teacher.teacherSessionStart?.[0] || "";
+  let teacherEndList = [...(anyClass.teacher.teacherSessionEnd || [])];
+  if (nowHHMM === endHHMM) {
+    if (teacherEndList.length === 0 || teacherEndList.at(-1) !== endHHMM) {
+      teacherEndList.push(endHHMM);
+    }
+  }
+
+  const teacherEndTime = teacherEndList.at(-1) || "";
+
+ const bulkOps: any[] = [];
+
+for (const cls of sessions) {
+  const studentJoined = Array.isArray(cls.student.studnetSessionStart) &&
+                        cls.student.studnetSessionStart.length > 0;
+
+  const updatePayload: any = {
+    sessionStatus: nowHHMM === endHHMM ? "Completed" : cls.sessionStatus,
+    "teacher.teacherSessionEnd": teacherEndList,
+  };
+
+  if (teacherJoined) {
+     const duration = moment.duration(moment(teacherEndTime, "HH:mm").diff(moment(teacherStartTime, "HH:mm"))).asMinutes();
+      const rate = rateMap["GROUPCLASS"] || 0;
+      const amount = parseFloat(((duration / 60) * rate).toFixed(2));
+
+    if (studentJoined) {
+      Object.assign(updatePayload, {
+        scheduleStatus: nowHHMM === endHHMM ? "Completed" : cls.scheduleStatus,
+        studentAttendee: "Present",
+        teacherAttendee: "Present",
+        sessionStarttime: teacherStartTime,
+        sessionEndtime: teacherEndTime,
+        classhour: duration,
+        amount: amount,
+      });
+    } else {
+      Object.assign(updatePayload, {
+        scheduleStatus: "StudentAbsent",
+        studentAttendee: "Absent",
+        teacherAttendee: "Present",
+        sessionStarttime: teacherStartTime,
+        sessionEndtime: teacherEndTime,
+        classhour: duration,
+        amount: amount,
+      });
+
+      // 🔁 Queue async notification (below)
+      cls.__notify = {
+        type: "STUDENT_ABSENT_ALERT",
+        message: `Student ${cls.student?.studentFirstName} was absent for the group class on ${anyClass.startDate} at ${anyClass.startTime[0]}.`
+      };
+    }
+  } else {
+    const isStudentPresent = studentJoined;
+
+    Object.assign(updatePayload, {
+      scheduleStatus: isStudentPresent ? "TeacherAbsent" : "BothAbsent",
+      sessionStatus: nowHHMM === endHHMM ? "Completed" : cls.sessionStatus,
+      studentAttendee: isStudentPresent ? "Present" : "Absent",
+      teacherAttendee: "Absent",
+      classhour: 0,
+      amount: 0,
+      sessionStarttime: "",
+      sessionEndtime: ""
+    });
+
+    // 🔁 Queue async notification (below)
+    cls.__notify = {
+      type: "TEACHER_ABSENT_ALERT",
+      message: `Teacher ${cls.teacher?.teacherName} was absent for the group class on ${anyClass.startDate} at ${anyClass.startTime[0]}.`
+    };
+  }
+
+  bulkOps.push({
+    updateOne: {
+      filter: { _id: cls._id },
+      update: { $set: updatePayload },
+    }
+  });
+}
+
+// ✅ Do bulk update
+await ClassScheduleModel.bulkWrite(bulkOps);
+
+// ✅ Trigger notifications only AFTER update
+for (const cls of sessions) {
+  if (cls.__notify) {
+    await sendGroupAbsentNotification(cls.__notify.type, cls.teacher, cls.student, cls.__notify.message ,cls._id);
+  }
+}
+
+// ✅ Auto end logic
+if (nowHHMM === endHHMM) {
+  await liveClassAutoEnd({ data: classLink });
+}
+  console.log(`✅ Group Class ${classLink}: ${teacherJoined ? "Teacher Present" : "Teacher Absent"} — Updated ${sessions.length} sessions`);
+}
+
+
 });
+async function sendGroupAbsentNotification(type: any, user1: any, user2: any, message: any ,clsId : any) {
+  console.log("🔔 Notification Type:", type);
+  console.log("🧪 User1:", user1);
+  console.log("🧪 User2:", user2);
+  console.log("📩 Message:", message);
+
+  // 🔍 Identify student and teacher
+  const student = user1?.studentId ? user1 : user2;
+  const teacher = user1?.teacherId ? user1 : user2;
+
+  console.log("👨‍🎓 Identified Student:", student?.studentFirstName || student?.userName);
+  console.log("👨‍🏫 Identified Teacher:", teacher?.teacherName || teacher?.userName);
+   const classSchedule = await ClassScheduleModel.findOne({
+    _id: new Types.ObjectId(clsId),
+  });
+
+  const alfstudent = await AlStudenModel.findOne({
+    _id: new Types.ObjectId(classSchedule?.student.studentId),
+  });
+   const evaluation = await Evaluation.findOne({
+    "student.studentId": alfstudent?.student.studentId,
+  });
+
+  const academicCoachId = evaluation?.academicCoachId;
+  const academicCoach = await UserModel.findOne({
+    _id: new Types.ObjectId(academicCoachId),
+  });
+
+  console.log("👩‍🏫 Academic Coach:", academicCoach?.userName);
+
+  // 📦 Prepare Notification Targets
+  const receivers = [
+    ...(teacher?.teacherId ? [teacher.teacherId.toString()] : []),
+    ...(student?.studentId ? [student.studentId.toString()] : []),
+    ...(academicCoach?._id ? [academicCoach._id.toString()] : [])
+  ];
+
+  const receiverNames = [
+    teacher?.teacherName,
+    student?.studentFirstName,
+    academicCoach?.userName
+  ].filter(Boolean);
+
+  const receiverEmails = [
+    teacher?.teacherEmail || "some@gmail.com",
+    student?.studentEmail || "some@gmail.com",
+    academicCoach?.email || "some@gmail.com"
+  ].filter(Boolean);
+
+  console.log("📬 Final Receivers:", receivers);
+  console.log("📬 Names:", receiverNames);
+  console.log("📬 Emails:", receiverEmails);
+
+  // ✅ Send the actual notification
+  await sendNotification({
+    messages: message,
+    senderId: "system123",
+    senderName: "System",
+    senderEmail: "system@gmail.com",
+    isRead: false,
+    receiverId: receivers,
+    receiverName: receiverNames,
+    receiverEmail: receiverEmails,
+    notificationType: type,
+    notificationStatus: "Unseen",
+    status: "active",
+    createdBy: "system",
+    updatedBy: "system"
+  });
+
+  console.log("✅ Notification sent successfully");
+}
+
+
 
 
 

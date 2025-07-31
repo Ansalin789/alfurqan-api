@@ -67,7 +67,7 @@ export const getEmpWagesById = async (id: string) => {
 
 export const updateEmpWageLogic = async (
   id: string,
-  payload: { rate?: number | string; duration?: string }
+  payload: { rate?: number | string; hoursMins?: string }
 ) => {
   const record = await EmpWagesModel.findById(id);
   if (!record) return null;
@@ -80,7 +80,7 @@ export const updateEmpWageLogic = async (
   }
 
   // Duration logic
-  if (payload.duration !== undefined) {
+  if (payload.hoursMins !== undefined) {
     if (classType === "TRAILCLASS") {
       // Duration must remain fixed
       throw new Error("TRAILCLASS duration is fixed and cannot be updated.");
@@ -88,8 +88,8 @@ export const updateEmpWageLogic = async (
 
     if (classType === "REGULARCLASS" || classType === "GROUPCLASS") {
       const validDurations = ["30 min", "60 min"];
-      if (validDurations.includes(payload.duration)) {
-        record.classType.hoursMins = payload.duration;
+      if (validDurations.includes(payload.hoursMins)) {
+        record.classType.hoursMins = payload.hoursMins;
       } else {
         throw new Error("Duration must be '30 min' or '60 min' for REGULARCLASS and GROUPCLASS.");
       }
