@@ -19,6 +19,7 @@ import { badRequest } from "@hapi/boom";
 import Evaluation from "../models/evaluation";
 import AlStudenModel from "../models/alstudents";
 import Course from "../models/course";
+import Calendar from "../models/calendar";
 import {
   endOfMonth,
   startOfMonth,
@@ -37,6 +38,7 @@ import { sendNotification } from "./notification";
 import { getIO } from "../shared/socket";
 import realtimemessage from "../models/realtimemessage";
 import dayjs from "dayjs";
+import { calendar } from "googleapis/build/src/apis/calendar";
 
 type AssignmentItem = {
   assignmentId: string;
@@ -644,7 +646,7 @@ export const getClassesForStudent = async (
 
 export const getClassesForTeacher = async (
   params: GetAllRecordsParams
-): Promise<{ totalCount: number; classSchedule: IClassSchedule[] }> => {
+): Promise<{ totalCount: number; classSchedule: any[] }> => {
   const {
     teacherId,
     sortBy = "_id",
@@ -656,19 +658,14 @@ export const getClassesForTeacher = async (
   if (!teacherId) {
     throw new Error("Teacher ID is required");
   }
-  // Query filtering for studentId
-  const query: any = { "teacher.teacherId": teacherId };
-  console.log(">>", query);
 
-  // Sorting options
+  const query: any = { "teacher.teacherId": teacherId };
   const sortOptions: any = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
 
   try {
-    // Pagination calculations
     const skip = Math.max(0, (Number(offset) - 1) * Number(limit));
 
-    // Execute queries
-    const [classSchedule, totalCount] = await Promise.all([
+    const [classScheduleList, totalCount] = await Promise.all([
       ClassScheduleModel.find(query)
         .sort(sortOptions)
         .skip(skip)
@@ -677,12 +674,35 @@ export const getClassesForTeacher = async (
       ClassScheduleModel.countDocuments(query).exec(),
     ]);
 
-    return { totalCount, classSchedule };
+    // Enrich class schedule with student and evaluation data
+    const enrichedSchedules = await Promise.all(
+      classScheduleList.map(async (cls) => {
+        const studentId = cls?.student?.studentId;
+        const alfstudent = await AlStudenModel.findOne({
+          _id: new Types.ObjectId(studentId),
+        });
+console.log("alfstudent", alfstudent);
+        const evaluation = await Evaluation.findOne({
+          "student.studentId": alfstudent?.student?.studentId,
+        });
+
+         const trialclass = await Calendar.findOne({
+          trialId: evaluation?._id,
+        });
+        return {
+          ...cls.toObject(),
+          alfstudent,
+          trialclass,
+        };
+      })
+    );
+
+    return { totalCount, classSchedule: enrichedSchedules };
   } catch (error) {
     console.error("Error fetching classes for student:", error);
     throw new Error("Failed to fetch classes for the student");
   }
-};
+};  
 
 export const getStudentClassHours = async (
   studentId: string
@@ -2173,72 +2193,62 @@ export const teacherClassLevelGrowth  = async (
 
 
 }
- 
-  // export const getStudentAllRevenue = async (
-  //   dateRange: string,
-  //   year: string // year as ISO string like "2023-01-01"
-  // ): Promise<{ date: string; label: string; revenue: number }[]> => {
-  //   let startDate: Date;
-  //   let endDate: Date;
-  //   let intervalFn: (interval: { start: Date; end: Date }) => Date[];
-  //   let outputFormat: string;
+
+export const bulkupdateClassAttendanceByClassLink = async (
+  classLink: string,
+  payload: Partial<IClassScheduleUpdate>
+): Promise<any> => {
+  try{
+ const currentDate = new Date()
+    const formattedDate = currentDate.toISOString().split("T")[0]
+    const startOfDayIST = `${formattedDate}T00:00:00.000+00:00`
+    const endOfDayIST = `${formattedDate}T23:59:59.999+00:00`
+    const currentTime = moment().format("HH:mm");
+    const teacherStart = payload.teacher?.teacherSessionStart || null;
+const teacherEnd = payload.teacher?.teacherSessionEnd || null;
+  console.log("currentTime>>>",currentTime);
+  // return await ClassScheduleModel.updateMany(
+  //   { classLink }, // Find all classes with same link
+  //   {
+  //     $set: {
+  //       teacher: payload.teacher,
+  //         startDate: {
+  //   $gte:startOfDayIST,
+  //   $lte:endOfDayIST,
+  // },
+  // startTime: { $lte: currentTime },  // class already started
+  // endTime: { $gte: currentTime }, 
+  //     },
+  //   },
+  //     {
+  //   $push: {
+  //     ...(teacherStart && { "teacher.teacherSessionStart": teacherStart }),
+  //     ...(teacherEnd && { "teacher.teacherSessionEnd": teacherEnd }),
+  //   },
+  // }
+  // );
   
-  //   // Parse the provided year string
-  //   const parsedDate = parseISO(year);
-  //   const parsedYear = parsedDate.getFullYear();
-  
-  //   const now = new Date();
-  
-  //   switch (dateRange.toLowerCase()) {
-  //     case "yearly":
-  //       startDate = new Date(Date.UTC(parsedYear, 0, 1));
-  //       endDate = new Date(Date.UTC(parsedYear, 11, 31, 23, 59, 59, 999));
-  //       intervalFn = eachMonthOfInterval;
-  //       outputFormat = "MMM-yyyy";
-  //       break;
-  //     case "monthly":
-  //       startDate = startOfMonth(now);
-  //       endDate = endOfMonth(now);
-  //       intervalFn = eachDayOfInterval;
-  //       outputFormat = "yyyy-MM-dd";
-  //       break;
-  //     case "weekly":
-  //       startDate = startOfWeek(now, { weekStartsOn: 1 });
-  //       endDate = endOfWeek(now, { weekStartsOn: 1 });
-  //       intervalFn = eachDayOfInterval;
-  //       outputFormat = "yyyy-MM-dd";
-  //       break;
-  //     default:
-  //       throw new Error("Invalid dateRange value. Use 'weekly', 'monthly', or 'yearly'.");
-  //   }
-  
-  //   const invoices: IStudentInvoice[] = await StudentInvoiceModel.find({
-  //     invoiceStatus: { $in: ["Paid"] },
-  //   }).exec();
-  
-  //   const revenueMap: Record<string, number> = {};
-  
-  //   invoices.forEach((invoice) => {
-  //     if (!invoice.createdDate) return; // ✅ Skip if date is undefined
-  
-  //     const invoiceDate = new Date(invoice.createdDate);
-  //     const formattedDate = format(invoiceDate, outputFormat);
-  
-  //     if (revenueMap[formattedDate]) {
-  //       revenueMap[formattedDate] += invoice.amount;
-  //     } else {
-  //       revenueMap[formattedDate] = invoice.amount;
-  //     }
-  //   });
-  
-  //   const result = intervalFn({ start: startDate, end: endDate }).map((date) => {
-  //     const label = format(date, outputFormat);
-  //     return {
-  //       date: label,
-  //       label,
-  //       revenue: revenueMap[label] || 0,
-  //     };
-  //   });
-  
-  //   return result;
-  // };
+return await ClassScheduleModel.updateMany(
+  {
+    classLink,
+    startDate: {
+      $gte: new Date(startOfDayIST),
+      $lte: new Date(endOfDayIST),
+    },
+    startTime: { $lte: currentTime },
+    endTime: { $gte: currentTime },
+  },
+  {
+    $push: {
+   "teacher.teacherSessionStart": teacherStart ,
+     "teacher.teacherSessionEnd": teacherEnd,
+    },
+  }
+);
+
+}
+  catch(e){
+    console.log(">>>>", e);
+  }
+       
+};

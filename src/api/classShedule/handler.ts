@@ -5,7 +5,7 @@ import { ClassSchedulesMessages } from "../../config/messages";
 import { isNil } from "lodash";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
-import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount, getTotalClassesCount, getClassesStatusCount, getClassesWiseCount, getStudentList, getTeacherAttendanceSummary, teacherStudentCount, getgetAnalyticscardCalculation, requestReschedule, updateClassAttendanceById, getTeacherTotalEarnings, classesCountForTeacher, teacherClassLevelGrowth} from "../../operations/classschedule";
+import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount, getTotalClassesCount, getClassesStatusCount, getClassesWiseCount, getStudentList, getTeacherAttendanceSummary, teacherStudentCount, getgetAnalyticscardCalculation, requestReschedule, updateClassAttendanceById, getTeacherTotalEarnings, classesCountForTeacher, teacherClassLevelGrowth, IClassScheduleUpdate, bulkupdateClassAttendanceByClassLink} from "../../operations/classschedule";
 import { academicAvailableTeachers, academicDashboardTeachersStudentCount, academicStudentReSchedule, academicTeacherStudentList } from "../../kafka/producers/academicProducer";
 import AlStudentModule from "../../models/alstudents"
 import Evaluation from "../../models/evaluation";
@@ -14,6 +14,7 @@ import { evaluationTeacherSlotBook } from "../../redis/handler/teacherSlotHander
 import { teacherDashboardCardCount } from "../../kafka/producers/teacherProducer";
 import alstudents from "../../models/alstudents";
 import ClassScheduleModel from "../../models/classShedule"
+import moment from "moment";
 
 const createInputValidation = z.object({
     payload: zodClassScheduleSchema.pick({
@@ -773,10 +774,70 @@ async getClassesCountForTeacher(req : Request , h :ResponseToolkit){
 return await classesCountForTeacher( req.query.teacherId );
 },
 
-// async geteacherclassLevelGrowth (req : Request , h :ResponseToolkit){
-// return await teacherClassLevelGrowth( req.query.teacherId );
+async bulkUpdateandSchedule(req: Request, h: ResponseToolkit) {
+  try {
+    const currentDate = new Date();
+    const formattedDate = currentDate.toISOString().split("T")[0];
+    const startOfDayIST = `${formattedDate}T00:00:00.000+00:00`;
+    const endOfDayIST = `${formattedDate}T23:59:59.999+00:00`;
+    const currentTime = moment().format("HH:mm");
 
-// }
+    console.log("currentTime:", currentTime);
+
+    // Step 1: Get class schedules matching the classLink and time filters
+    const classScheduleList = await ClassScheduleModel.find({
+      classLink: req.params.classId,
+      startDate: {
+        $gte: new Date(startOfDayIST),
+        $lte: new Date(endOfDayIST),
+      },
+      startTime: { $lte: currentTime },
+      endTime: { $gte: currentTime },
+    }).lean();
+
+    if (!classScheduleList || classScheduleList.length === 0) {
+      return h.response({ message: "No active class at this time" }).code(404);
+    }
+
+    const rawPayload = req.payload as any;
+
+    // Step 2: Take first matching schedule to extract base teacher info
+    const baseSchedule = classScheduleList[0];
+
+let teacherStart: string[] = (baseSchedule.teacher?.teacherSessionStart || []).flat();
+let teacherEnd: string[] = (baseSchedule.teacher?.teacherSessionEnd || []).flat();
+
+// Push new entries (ensure they are strings)
+if (rawPayload.teacher?.teacherSessionStart) {
+  teacherStart.push(String(rawPayload.teacher.teacherSessionStart));
+}
+if (rawPayload.teacher?.teacherSessionEnd) {
+  teacherEnd.push(String(rawPayload.teacher.teacherSessionEnd));
+}
+teacherStart = [...new Set(teacherStart)];
+teacherEnd = [...new Set(teacherEnd)];
+    // Step 3: Create final update payload
+    const updatePayload: Partial<IClassScheduleUpdate> = {
+      teacher: {
+        teacherId: baseSchedule.teacher.teacherId,
+        teacherName: baseSchedule.teacher.teacherName,
+        teacherEmail: baseSchedule.teacher.teacherEmail,
+        teacherSessionStart: teacherStart,
+        teacherSessionEnd: teacherEnd,
+      },
+    };
+
+    // Step 4: Only one update needed
+    const result = await bulkupdateClassAttendanceByClassLink(baseSchedule.classLink, updatePayload);
+
+    return result;
+  } catch (e) {
+    console.error("Error in bulkUpdateandSchedule >>", e);
+    return h.response({ error: "Internal Server Error" }).code(500);
+  }
+}
+
+
 }
 
 
