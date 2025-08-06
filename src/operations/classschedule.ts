@@ -2173,72 +2173,62 @@ export const teacherClassLevelGrowth  = async (
 
 
 }
- 
-  // export const getStudentAllRevenue = async (
-  //   dateRange: string,
-  //   year: string // year as ISO string like "2023-01-01"
-  // ): Promise<{ date: string; label: string; revenue: number }[]> => {
-  //   let startDate: Date;
-  //   let endDate: Date;
-  //   let intervalFn: (interval: { start: Date; end: Date }) => Date[];
-  //   let outputFormat: string;
+
+export const bulkupdateClassAttendanceByClassLink = async (
+  classLink: string,
+  payload: Partial<IClassScheduleUpdate>
+): Promise<any> => {
+  try{
+ const currentDate = new Date()
+    const formattedDate = currentDate.toISOString().split("T")[0]
+    const startOfDayIST = `${formattedDate}T00:00:00.000+00:00`
+    const endOfDayIST = `${formattedDate}T23:59:59.999+00:00`
+    const currentTime = moment().format("HH:mm");
+    const teacherStart = payload.teacher?.teacherSessionStart || null;
+const teacherEnd = payload.teacher?.teacherSessionEnd || null;
+  console.log("currentTime>>>",currentTime);
+  // return await ClassScheduleModel.updateMany(
+  //   { classLink }, // Find all classes with same link
+  //   {
+  //     $set: {
+  //       teacher: payload.teacher,
+  //         startDate: {
+  //   $gte:startOfDayIST,
+  //   $lte:endOfDayIST,
+  // },
+  // startTime: { $lte: currentTime },  // class already started
+  // endTime: { $gte: currentTime }, 
+  //     },
+  //   },
+  //     {
+  //   $push: {
+  //     ...(teacherStart && { "teacher.teacherSessionStart": teacherStart }),
+  //     ...(teacherEnd && { "teacher.teacherSessionEnd": teacherEnd }),
+  //   },
+  // }
+  // );
   
-  //   // Parse the provided year string
-  //   const parsedDate = parseISO(year);
-  //   const parsedYear = parsedDate.getFullYear();
-  
-  //   const now = new Date();
-  
-  //   switch (dateRange.toLowerCase()) {
-  //     case "yearly":
-  //       startDate = new Date(Date.UTC(parsedYear, 0, 1));
-  //       endDate = new Date(Date.UTC(parsedYear, 11, 31, 23, 59, 59, 999));
-  //       intervalFn = eachMonthOfInterval;
-  //       outputFormat = "MMM-yyyy";
-  //       break;
-  //     case "monthly":
-  //       startDate = startOfMonth(now);
-  //       endDate = endOfMonth(now);
-  //       intervalFn = eachDayOfInterval;
-  //       outputFormat = "yyyy-MM-dd";
-  //       break;
-  //     case "weekly":
-  //       startDate = startOfWeek(now, { weekStartsOn: 1 });
-  //       endDate = endOfWeek(now, { weekStartsOn: 1 });
-  //       intervalFn = eachDayOfInterval;
-  //       outputFormat = "yyyy-MM-dd";
-  //       break;
-  //     default:
-  //       throw new Error("Invalid dateRange value. Use 'weekly', 'monthly', or 'yearly'.");
-  //   }
-  
-  //   const invoices: IStudentInvoice[] = await StudentInvoiceModel.find({
-  //     invoiceStatus: { $in: ["Paid"] },
-  //   }).exec();
-  
-  //   const revenueMap: Record<string, number> = {};
-  
-  //   invoices.forEach((invoice) => {
-  //     if (!invoice.createdDate) return; // ✅ Skip if date is undefined
-  
-  //     const invoiceDate = new Date(invoice.createdDate);
-  //     const formattedDate = format(invoiceDate, outputFormat);
-  
-  //     if (revenueMap[formattedDate]) {
-  //       revenueMap[formattedDate] += invoice.amount;
-  //     } else {
-  //       revenueMap[formattedDate] = invoice.amount;
-  //     }
-  //   });
-  
-  //   const result = intervalFn({ start: startDate, end: endDate }).map((date) => {
-  //     const label = format(date, outputFormat);
-  //     return {
-  //       date: label,
-  //       label,
-  //       revenue: revenueMap[label] || 0,
-  //     };
-  //   });
-  
-  //   return result;
-  // };
+return await ClassScheduleModel.updateMany(
+  {
+    classLink,
+    startDate: {
+      $gte: new Date(startOfDayIST),
+      $lte: new Date(endOfDayIST),
+    },
+    startTime: { $lte: currentTime },
+    endTime: { $gte: currentTime },
+  },
+  {
+    $push: {
+   "teacher.teacherSessionStart": teacherStart ,
+     "teacher.teacherSessionEnd": teacherEnd,
+    },
+  }
+);
+
+}
+  catch(e){
+    console.log(">>>>", e);
+  }
+       
+};
