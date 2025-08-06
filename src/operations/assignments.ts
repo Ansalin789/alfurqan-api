@@ -5,6 +5,8 @@ import { Types } from "mongoose";
 import Stream from "stream";
 import assignments from "../models/assignments";
 import { GetAllAssignmentRecordsParams } from "../shared/enum";
+import classShedule from "../models/classShedule";
+import { group } from "console";
 
 interface AssignmentQuery {
   assignmentId?: string;
@@ -234,6 +236,167 @@ export const createAssignment = async (
 //   }
 // };
 
+export const createAssignmentforGroup = async (
+  payload: Partial<IAssignment>[]
+): Promise<
+  { totalCount: number; assignments: IAssignment[] } | { error: any }
+> => {
+  try {
+    console.log("🚀 createAssignment triggered");
+    console.log("📥 Raw payload received:", payload);
+
+    if (!payload || payload.length === 0) {
+      console.error("❌ Payload is empty");
+      return { error: "Payload is empty" };
+    }
+
+    const assignmentRecords: Partial<IAssignment>[] = [];
+    const allowedTypes = [
+      "quiz",
+      "writing",
+      "reading",
+      "image identification",
+      "word match",
+    ];
+    console.log("✅ Allowed types:", allowedTypes);
+
+    for (const [index, item] of payload.entries()) {
+      console.log(`\n🔄 Processing assignment index: ${index}`);
+      console.log("📦 Full item:", item);
+
+      if (!item.studentId) {
+        console.warn("⚠️ Skipping record due to missing studentId");
+        continue;
+      }
+
+      console.log("🔍 Finding student by ID:", item.studentId);
+      const studentDetails = await alstudents.findById(item.studentId).exec();
+      if (!studentDetails) {
+        console.warn("⚠️ Invalid studentId:", item.studentId);
+        continue;
+      }
+
+      const studentId = studentDetails._id.toString();
+      const studentName = studentDetails.username || "";
+      const sessionClassType = studentDetails.sessionClassType || "";
+      const level = studentDetails.level || "";
+      const course = studentDetails.student?.course || "";
+      // ✅ Fetch the groupId from classschedule
+      console.log(
+        "🔍 Finding class schedule to extract groupId for:",
+        studentId,
+        sessionClassType
+      );
+      const schedule = await classShedule.findOne({
+        "student.studentId": studentId,
+        sessionClassType,
+      });
+
+      const groupId = schedule?.classLink || "";
+      console.log("📛 Found groupId (classLink):", groupId);
+      console.log("✅ Student found:", {
+        studentId,
+        studentName,
+        sessionClassType,
+        level,
+        course,
+        groupId,
+      });
+
+      console.log("🔍 Finding student by ID:", item.studentId);
+
+      const assignedTeacher = item.assignedTeacher;
+      const assignedTeacherId = item.assignedTeacherId;
+
+      console.log("👩‍🏫 Assigned Teacher:", {
+        assignedTeacher,
+        assignedTeacherId,
+      });
+
+      const assignmentType = item.assignmentType;
+      console.log("🧩 assignmentType object:", assignmentType);
+      console.log("🔍 assignmentType.type:", assignmentType?.type);
+
+      if (!assignmentType || !allowedTypes.includes(assignmentType.type)) {
+        console.warn(
+          `⚠️ Invalid assignmentType at index ${index}:`,
+          assignmentType
+        );
+        continue;
+      }
+
+      const parsedOptions: AssignmentOptions = {
+        optionOne: item.options?.optionOne || "",
+        optionTwo: item.options?.optionTwo || "",
+        optionThree: item.options?.optionThree || "",
+        optionFour: item.options?.optionFour || "",
+      };
+      console.log("📝 Parsed options:", parsedOptions);
+
+      const newAssignment: Partial<IAssignment> = {
+        studentId,
+        studentName,
+        sessionClassType,
+        course,
+        level,
+        groupId,
+        assignmentId: item.assignmentId,
+        title: item.title || "",
+        assignmentName: item.assignmentName || "",
+        questionName: item.questionName || "",
+        questionType: item.questionType || "",
+        typeofQuestion: item.typeofQuestion || "",
+        assignedTeacher,
+        assignedTeacherId, // ✅ Now this is just a string
+        assignmentType,
+        chooseType: item.chooseType === true,
+        trueorfalseType: item.trueorfalseType === true,
+        question: item.question || "",
+        hasOptions: item.hasOptions || false,
+        options: parsedOptions,
+        audioFile: item.audioFile,
+        uploadFile: item.uploadFile,
+        status: item.status,
+        createdDate: new Date(),
+        createdBy: item.createdBy || "System",
+        updatedDate: new Date(),
+        updatedBy: item.updatedBy || "",
+        assignedDate: item.assignedDate || new Date(),
+        dueDate: item.dueDate || new Date(),
+        answer: "",
+        answerValidation: item.answerValidation || "",
+        assignmentStatus: item.assignmentStatus,
+        score: 0,
+        rating: "",
+      };
+
+      console.log("📌 New assignment record prepared:", newAssignment);
+      assignmentRecords.push(newAssignment);
+    }
+
+    console.log(
+      "🧾 Total valid assignments prepared:",
+      assignmentRecords.length
+    );
+    if (assignmentRecords.length === 0) {
+      console.error("❌ No valid assignments to insert");
+      return { error: "No valid assignments to insert" };
+    }
+
+    console.log("📤 Inserting assignments into DB...");
+    const insertedAssignments = await assignment.insertMany(assignmentRecords);
+    console.log("✅ Assignments inserted:", insertedAssignments.length);
+
+    const totalCount = await assignment.countDocuments();
+    console.log("📊 Total assignment count in DB:", totalCount);
+
+    return { totalCount, assignments: insertedAssignments as IAssignment[] };
+  } catch (error) {
+    console.error("❌ Error in createAssignment:", error);
+    return { error };
+  }
+};
+
 export const getAssignments = async ({
   assignmentId,
   _id,
@@ -309,7 +472,9 @@ export const getStudentCardCount = async ({
 }> => {
   const trimmedId = studentId.trim();
 
-  const allAssignments = await assignments.find({ studentId: trimmedId }).lean();
+  const allAssignments = await assignments
+    .find({ studentId: trimmedId })
+    .lean();
 
   let totalCompleted = 0;
   let totalPending = 0;
@@ -342,7 +507,6 @@ export const getStudentCardCount = async ({
     totalPending: 0,
   };
 
-
   for (const assignment of allAssignments) {
     if (assignment.assignmentStatus === "Completed") {
       totalCompleted++;
@@ -357,15 +521,9 @@ export const getStudentCardCount = async ({
   return {
     totalAssignments: allAssignments.length,
     totalCompleted,
-    totalPending
+    totalPending,
   };
 };
-
-
-
-
-
-
 
 //getByObjectId
 
@@ -631,15 +789,15 @@ export const getTeacherStudentsAssignmentCount = async ({
     students: studentsWithStats,
   };
 };
-interface IAssignmentData{
-  _id: any,
-  assignmentId: string,
-  assignmentName: string,
-  assignmentType : any,
-  questionName : string,
-  assignedDate : Date,
-  dueDate: Date,
-  assignmentStatus: string
+interface IAssignmentData {
+  _id: any;
+  assignmentId: string;
+  assignmentName?: string;
+  assignmentType?: any;
+  questionName?: string;
+  assignedDate: Date;
+  dueDate: Date;
+  assignmentStatus: string;
 }
 
 export const getAssignmentRecords = async (
@@ -649,37 +807,36 @@ export const getAssignmentRecords = async (
 
   // Construct query based on role if provided
   const query: any = {};
-  
-  
-  console.log(">>>>",query);
 
-   if (studentId) {
+  console.log(">>>>", query);
+
+  if (studentId) {
     query.studentId = studentId;
   }
-    if (assignmentId) {
+  if (assignmentId) {
     query.assignmentId = assignmentId;
   }
 
-  console.log(">>>>>>",query.studentId, query.assignmentId)
+  console.log(">>>>>>", query.studentId, query.assignmentId);
   // Fetch all users matching the query and return plain JavaScript objects using .lean()
   let assignmentRawtData;
   let totalCount;
 
-    assignmentRawtData  = await assignment.find(query).exec();
-    totalCount = await assignment.countDocuments(query);
+  assignmentRawtData = await assignment.find(query).exec();
+  totalCount = await assignment.countDocuments(query);
 
   // Get the total count of users matching the query
-  const assignmentData =  assignmentRawtData.map(item => ({
+  const assignmentData = assignmentRawtData.map((item) => ({
     _id: item._id,
     assignmentId: item.assignmentId,
     assignmentName: item.assignmentName,
     assignmentType: {
-      type: item.assignmentType?.type || ""
+      type: item.assignmentType?.type || "",
     },
     questionName: item.questionName,
     assignedDate: item.assignedDate,
     dueDate: item.dueDate,
-    assignmentStatus: item.assignmentStatus
+    assignmentStatus: item.assignmentStatus,
   }));
-  return { assignmentData , totalCount }; // Return both users and totalCount
+  return { assignmentData, totalCount }; // Return both users and totalCount
 };

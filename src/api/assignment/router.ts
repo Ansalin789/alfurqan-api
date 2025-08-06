@@ -97,6 +97,29 @@ const register = async (server: Server): Promise<void> => {
   },
 },
 
+
+   {
+      method: "POST",
+      path: "/groupAssignments",
+      options: {
+        handler: handler.createGroupAssignment,
+        description: "Create an assignment",
+        tags: ["api", "student"],
+        payload: {
+          output: "stream",
+          parse: true,
+          maxBytes: 50 * 1024 * 1024,
+          multipart: true,
+          allow: "multipart/form-data",
+        },
+        // auth: {
+        //   strategies: ["jwt"],
+        // },
+       },
+    },
+
+
+
 //jo
 {
   method: "PUT",
