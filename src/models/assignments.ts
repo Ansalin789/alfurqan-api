@@ -28,13 +28,14 @@ const assignmentSchema = new Schema<IAssignment>(
     studentName: { type: String, required: true },
     sessionClassType: { type: String, required: false },
     assignmentName: { type: String, required: true },
-    questionName: { type: String, required: true },
-    questionType: { type: String, required: true },
-    typeofQuestion: { type: String, required: true },
+    questionName: { type: String, required: false },
+    questionType: { type: String, required: false },
+    typeofQuestion: { type: String, required: false },
     title: { type: String, required: true },
     assignedTeacher: { type: String, required: false },
     assignedTeacherId: { type: String, required: false },
     assignmentId: { type: String, required: false },
+    groupId: { type: String, required: false },
 
     assignmentType: {
       type: assignmentTypeSchema,
@@ -77,12 +78,13 @@ export const assignmentValidationSchema = z.object({
   sessionClassType: z.string().optional(),
   title: z.string(),
   assignmentName: z.string(),
-  questionName: z.string(),
-  questionType: z.string(),
-  typeofQuestion: z.string(),
+  questionName: z.string().optional(),
+  questionType: z.string().optional(),
+  typeofQuestion: z.string().optional(),
   assignedTeacher: z.string().optional(),
   assignedTeacherId: z.string().optional(),
   assignmentId: z.string().optional(),
+  groupId: z.string().optional(),
 
   assignmentType: z.object({
     type: z.enum([

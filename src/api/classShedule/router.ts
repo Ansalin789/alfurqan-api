@@ -262,6 +262,16 @@ const register = async (server: Server): Promise<void> => {
          },
       },
 
+         {
+        method: "PUT",
+        path: "/groupclassschedule/bulkupdate/{classId}",
+        options: {
+         handler: handler.bulkUpdateandSchedule,
+         description: evaluationMessages.UPDATE,
+         tags: ["api", "evaluation"],
+      },
+      },
+
       //         {
       //   method: "GET",
       //   path: "/classShedule/teacher/levelgrowth",

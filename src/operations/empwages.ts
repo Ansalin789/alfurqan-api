@@ -27,12 +27,11 @@ export const getEmpWagesById = async (id: string) => {
   const shift = await usershiftschedule.findOne({ employeeId: id }).lean();
   const workhrs = shift ? Number(shift.workhrs || 0) : 0;
 
-  // Step 3: Get rate from the wage record's classType
+  // Step 3: Get rate from the first record's classType
   const rate = Number(wageRecords[0]?.classType?.rate || 0);
 
-  // Step 4: Calculate total
+  // Step 4: Calculate totals
   let totalhours = 0;
-  let totalearnings = 0;
   const monthlyMap = new Map<string, { year: number; month: number; totalhours: number }>();
 
   wageRecords.forEach((record) => {
@@ -54,14 +53,54 @@ export const getEmpWagesById = async (id: string) => {
     }
   });
 
-  totalearnings = totalhours * rate;
+  const totalearnings = totalhours * rate;
 
-  // Step 5: Add to existing structure
-  const base = wageRecords[0]; // assuming 1 record contains the structure you want
+  // Step 5: Return full structure
   return {
-    ...base,
+    employeeId: id,
     totalhours,
     totalearnings,
     monthlyData: Array.from(monthlyMap.values()),
+    wageRecords, // full list of wage records
   };
 };
+
+export const updateEmpWageLogic = async (
+  id: string,
+  payload: { rate?: number | string; hoursMins?: string }
+) => {
+  const record = await EmpWagesModel.findById(id);
+  if (!record) return null;
+
+  const classType = record.classType?.className;
+
+  // Update rate (allowed for all)
+  if (payload.rate !== undefined) {
+    record.classType.rate = String(payload.rate);
+  }
+
+  // Duration logic
+  if (payload.hoursMins !== undefined) {
+    if (classType === "TRAILCLASS") {
+      // Duration must remain fixed
+      throw new Error("TRAILCLASS duration is fixed and cannot be updated.");
+    }
+
+    if (classType === "REGULARCLASS" || classType === "GROUPCLASS") {
+      const validDurations = ["30 min", "60 min"];
+      if (validDurations.includes(payload.hoursMins)) {
+        record.classType.hoursMins = payload.hoursMins;
+      } else {
+        throw new Error("Duration must be '30 min' or '60 min' for REGULARCLASS and GROUPCLASS.");
+      }
+    }
+  }
+
+  await record.save();
+  return record;
+};
+
+
+
+
+
