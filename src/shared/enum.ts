@@ -145,10 +145,18 @@ export interface GetAllAssignmentRecordsParams {
 export interface GetPaymentDetailsRecordsParams {
 
   userId?: string,
+  studentId?: string,
+  _id?: string,
   userName?: string,
   paymentStatus?: string,
   paymentAmount?: any,
   paymentDate?: string,
+  filterValues?: {
+    status?: string;
+    paymentType?: string;
+    startDate?: string;
+    endDate?: string;
+  };
   status?: string,
   sortBy?: any,
   sortOrder?: any,

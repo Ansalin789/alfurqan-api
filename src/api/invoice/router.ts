@@ -127,18 +127,19 @@ const register = async (server: Server): Promise<void> => {
       },
     },
 
-        {
+    {
       method: "GET",
-      path: "/student/paymenthistory",
+      path: "/student/paymenthistory", 
       options: {
-        handler: handler.getStudentPaymentHistory,  
+        handler: handler.getStudentPaymentHistory,
         tags: ["api", "payment"],
-          auth: {
+        auth: {
           strategies: ["jwt"],
-        },   
         },
-        
-    },
+      },
+    }
+    
+    
     
     
 
