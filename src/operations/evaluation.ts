@@ -794,26 +794,32 @@ export const getTrialClassCount = async (
       const endOfDayIST = `${formattedDate}T23:59:59.999+00:00`;
    const trialClass = await MeetingSchedule.find({
       ['teacher.teacherId']:teacherId ,
-      scheduledStartDate:  {
-          $gte: startOfDayIST,
-          $lte: endOfDayIST
-        }
+      // scheduledStartDate:  {
+      //     $gte: startOfDayIST,
+      //     $lte: endOfDayIST
+      //   }
     }).sort({ scheduledFrom: 1 });
+  //  console.log("trialClass>>>>", trialClass)
     let getTrialsClassstatus;
     for (const trialClassUpdateDetails of trialClass){
-     getTrialsClassstatus  = await EvaluationModel.findOne({_id: new Types.ObjectId(trialClassUpdateDetails.trialId)});
-    }
+     getTrialsClassstatus  = await EvaluationModel.findOne({_id: new Types.ObjectId(trialClassUpdateDetails.trialId)}).exec();
+          //console.log("trialClass>>>>", trialClass)
+          console.log("getTrialsClassstatus>>>>", getTrialsClassstatus);
+
+          
 if(getTrialsClassstatus && getTrialsClassstatus.trialClassStatus == ""){
      const trialClass = await MeetingSchedule.find({
      trialId: getTrialsClassstatus._id.toString() ,
-      scheduledStartDate:  {
-          $gte: startOfDayIST,
-          $lte: endOfDayIST
-        }
+      // scheduledStartDate:  {
+      //     $gte: startOfDayIST,
+      //     $lte: endOfDayIST
+      //   }
     }).sort({ scheduledFrom: 1 });
+        console.log("trialClass list>>>>", trialClass)
+
     return trialClass || "";
-}else{
-return {result: "No data found"};
+
+    }
 }
   };
 
