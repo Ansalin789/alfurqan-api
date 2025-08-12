@@ -7,6 +7,8 @@ import { notFound } from "@hapi/boom";
 import { evaluationMessages } from "../../config/messages";
 import { zodAlStudentInvoiceSchema } from "../../models/stinvoice";
 import { getPaymentHistory } from "../../operations/payment_history";
+import paymentDetails from "../../models/paymentDetails";
+import { PaymentCryptographyData } from "aws-sdk";
 
 const createInvoiceValidation = z.object({
   payload: z.object({
@@ -264,17 +266,28 @@ export default {
     });
   },
 
- async getStudentPaymentHistory(req: Request, h: ResponseToolkit){
-    const { query } = geStudentPaymentHistoryValidation.parse({
-      query: {
-        ...req.query,
-        filterValues: req.query?.filterValues ? JSON.parse(req.query.filterValues) : {},
-      },
-    });
-    return getPaymentHistory(query);
- }
 
+  async getStudentPaymentHistory(req: Request, h: ResponseToolkit) {
+    try {
+      const userId = req.query.userId as string;
 
+      if (!userId) {
+        return h.response({ message: "userId is required in query params" }).code(400);
+      }
+
+      const result = await getPaymentHistory({ userId });
+
+      return h.response(result).code(200);
+    } catch (error) {
+      console.error("❌ Error fetching payment history:", error);
+      return h.response({ message: "Server error" }).code(500);
+    }
+  }
 }
+  
+  
+
+
+
 
 

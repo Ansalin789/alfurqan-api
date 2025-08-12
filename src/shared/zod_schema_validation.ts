@@ -67,6 +67,8 @@ export const zodAlStudentInvoiceSchemaValidation = z.object({
 
 export const zodAlStudentPaymentSchemaValidation = z.object({
   userId:z.string().optional(),
+  studentId:z.string().optional(),
+  _id:z.string().optional(),
   userName: z.string().optional(),
   paymentStatus: z.string().optional(),
   paymentAmount: z.string().optional(),
