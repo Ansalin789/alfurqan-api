@@ -471,19 +471,34 @@ cron.schedule("*/5 * * * *", async () => {
 
   // Clone original session times
   let teacherStartTime  = cls.teacher.teacherSessionStart?.[0] ?? null;
+  let teacherStartTimeList  = [...(cls.teacher.teacherSessionStart || [])];
   let teacherEndTimeList = [...(cls.teacher.teacherSessionEnd || [])];
   let studentEndTimeList = [...(cls.student.studnetSessionEnd || [])];
+  let studentStartTimeList  = [...(cls.student.studnetSessionStart || [])];
 
   // ✅ If current time === endTime, push end time to teacher/student if not already set
   if (nowHHMM === endHHMM) {
-    if (teacherEndTimeList.length === 0 || teacherEndTimeList[teacherEndTimeList.length - 1] !== endHHMM) {
-      teacherEndTimeList.push(endHHMM);
-    }
+  const lastTeacherStart = teacherStartTimeList.at(-1);
+  const lastTeacherEnd   = teacherEndTimeList.at(-1);
+  const lastStudentStart = studentStartTimeList.at(-1);
+  const lastStudentEnd   = studentEndTimeList.at(-1);
 
-    if (studentEndTimeList.length === 0 || studentEndTimeList[studentEndTimeList.length - 1] !== endHHMM) {
-      studentEndTimeList.push(endHHMM);
-    }
+  // ✅ Teacher rule
+  if (
+    teacherEndTimeList.length === 0 ||
+    (lastTeacherStart > lastTeacherEnd && lastTeacherEnd !== endHHMM)
+  ) {
+    teacherEndTimeList.push(endHHMM);
   }
+
+  // ✅ Student rule
+  if (
+    studentEndTimeList.length === 0 ||
+    (lastStudentStart > lastStudentEnd && lastStudentEnd !== endHHMM)
+  ) {
+    studentEndTimeList.push(endHHMM);
+  }
+}
 
   const teacherEndTime = teacherEndTimeList[teacherEndTimeList.length - 1];
 
@@ -540,8 +555,8 @@ cron.schedule("*/5 * * * *", async () => {
         scheduleStatus: "StudentAbsent",
         studentAttendee: "Absent",
         teacherAttendee: "Present",
-        sessionStarttime:cls.startTime[0],
-        sessionEndtime:cls.endTime[0],
+        sessionStarttime:startTime,
+        sessionEndtime:endTime,
         amount: earning,
       });
       await liveClassAutoEnd({ data : cls.classLink });
@@ -716,12 +731,19 @@ for (const cls of groupClassSchedule) {
                         anyClass.teacher.teacherSessionStart.length > 0;
 
   const teacherStartTime = anyClass.teacher.teacherSessionStart?.[0] || "";
+  const teacherStartTimeList = [...(anyClass.teacher.teacherSessionStart || [])];
   let teacherEndList = [...(anyClass.teacher.teacherSessionEnd || [])];
   if (nowHHMM === endHHMM) {
-    if (teacherEndList.length === 0 || teacherEndList.at(-1) !== endHHMM) {
-      teacherEndList.push(endHHMM);
-    }
+  const lastTeacherStart = teacherStartTimeList.at(-1);
+  const lastTeacherEnd   = teacherEndList.at(-1);
+
+  if (
+    teacherEndList.length === 0 ||
+    (lastTeacherStart > lastTeacherEnd && lastTeacherEnd !== endHHMM)
+  ) {
+    teacherEndList.push(endHHMM);
   }
+}
 
   const teacherEndTime = teacherEndList.at(-1) || "";
 
