@@ -1,7 +1,7 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodAlStudentInvoiceSchemaValidation, zodAlStudentPaymentSchemaValidation } from "../../shared/zod_schema_validation";
-import getstudentInvoiceList, { getAllStudetnInVoiceList, getAllTotalInvoice, getInvoiceCounts, getInvoiceDueDateBuckets, getStudentAllRevenue, getStudentInvoicesByStudentId, getTotalAmountByCountry, getTotalAmountByCourse, sendInvoiceOperation } from "../../operations/invoice";
+import getstudentInvoiceList, { getAllStudetnInVoiceList, getAllTotalInvoice, getInvoiceCounts, getInvoiceDueDateBuckets, getStudentAllRevenue, getStudentInvoicesById, getTotalAmountByCountry, getTotalAmountByCourse, sendInvoiceOperation } from "../../operations/invoice";
 import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
 import { evaluationMessages } from "../../config/messages";
@@ -78,7 +78,7 @@ export default {
       return h.response({ error: "studentId query param is required" }).code(400);
     }
 
-    const invoices = await getStudentInvoicesByStudentId(studentId as string);
+    const invoices = await getStudentInvoicesById(studentId as string);
 
     return h.response({
       count: invoices.length,
