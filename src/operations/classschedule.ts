@@ -38,7 +38,6 @@ import { sendNotification } from "./notification";
 import { getIO } from "../shared/socket";
 import realtimemessage from "../models/realtimemessage";
 import dayjs from "dayjs";
-import { calendar } from "googleapis/build/src/apis/calendar";
 
 type AssignmentItem = {
   assignmentId: string;
@@ -646,7 +645,7 @@ export const getClassesForStudent = async (
 
 export const getClassesForTeacher = async (
   params: GetAllRecordsParams
-): Promise<{ totalCount: number; classSchedule: any[] }> => {
+) => {
   const {
     teacherId,
     sortBy = "_id",
@@ -673,7 +672,7 @@ export const getClassesForTeacher = async (
         .exec(),
       ClassScheduleModel.countDocuments(query).exec(),
     ]);
-
+      let evaluation:any;
     // Enrich class schedule with student and evaluation data
     const enrichedSchedules = await Promise.all(
       classScheduleList.map(async (cls) => {
@@ -682,7 +681,7 @@ export const getClassesForTeacher = async (
           _id: new Types.ObjectId(studentId),
         });
 console.log("alfstudent", alfstudent);
-        const evaluation = await Evaluation.findOne({
+         evaluation = await Evaluation.findOne({
           "student.studentId": alfstudent?.student?.studentId,
         });
 
@@ -692,17 +691,22 @@ console.log("alfstudent", alfstudent);
         return {
           ...cls.toObject(),
           alfstudent,
-          trialclass,
+          
         };
       })
     );
+    
+     const trialclass = await Calendar.find({
+          "teacher.teacherId":teacherId,
+        }).exec();
+        console.log("trialclass", trialclass);
 
-    return { totalCount, classSchedule: enrichedSchedules };
+    return { totalCount, classSchedule: enrichedSchedules, trialclasses: trialclass?? [] };
   } catch (error) {
     console.error("Error fetching classes for student:", error);
     throw new Error("Failed to fetch classes for the student");
   }
-};  
+};
 
 export const getStudentClassHours = async (
   studentId: string
