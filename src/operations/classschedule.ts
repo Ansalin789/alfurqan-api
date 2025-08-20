@@ -1565,6 +1565,88 @@ export const getTeacherAttendanceSummary = async (
   }
 };
 
+//student perfomance summary
+
+export const getStudentAttendanceSummary = async (
+  studentId: string
+): Promise<{
+  totalAttendance: number;
+  performance: number;
+  package: string;
+}> => {
+  if (!studentId) {
+    throw new Error("Student ID is required");
+  }
+
+  const DEFAULT_SESSION_DURATION_MINUTES = 30;
+
+  try {
+    // 🔹 Find all schedules where student.studentId matches alstudents._id
+    const classSchedules = await ClassScheduleModel.find(
+      { "student.studentId": studentId },
+      {
+        startTime: 1,
+        endTime: 1,
+        sessionStarttime: 1,
+        sessionsEndtime: 1,
+        scheduleStatus: 1,
+        package: 1,  // root-level package
+        student: 1,
+      }
+    ).lean();
+
+    let totalWorkingMinutes = 0;
+    let totalAttendance = 0;
+    let studentPackage: string | undefined;
+
+    for (const cls of classSchedules) {
+      if (!studentPackage && cls.package) {
+        studentPackage = cls.package;
+      }
+
+      if (cls.scheduleStatus?.toLowerCase() === "completed") {
+        totalAttendance++;
+
+        let sessionDuration = DEFAULT_SESSION_DURATION_MINUTES;
+
+        const start = cls.sessionStarttime || cls.startTime?.[0];
+        const end = cls.sessionsEndtime || cls.endTime?.[0];
+
+        if (start && end) {
+          const [startH, startM] = start.replace(/[^0-9:]/g, "").split(":").map(Number);
+          const [endH, endM] = end.replace(/[^0-9:]/g, "").split(":").map(Number);
+
+          if (!isNaN(startH) && !isNaN(startM) && !isNaN(endH) && !isNaN(endM)) {
+            const startMinutes = startH * 60 + startM;
+            const endMinutes = endH * 60 + endM;
+            const calculated = Math.max(0, endMinutes - startMinutes);
+            sessionDuration = calculated > 0 ? calculated : DEFAULT_SESSION_DURATION_MINUTES;
+          }
+        }
+
+        totalWorkingMinutes += sessionDuration;
+      }
+    }
+
+    const totalWorkingHours = parseFloat((totalWorkingMinutes / 60).toFixed(2));
+    const performance = parseFloat(
+      ((totalAttendance + totalWorkingHours) / 2).toFixed(2)
+    );
+
+    return {
+      totalAttendance,
+      performance,
+      package: studentPackage ?? "N/A",
+    };
+  } catch (error) {
+    console.error("Error generating student summary:", error);
+    throw new Error("Failed to generate student attendance summary");
+  }
+};
+
+
+
+
 //Analytics cardcount with calculation
 export const getgetAnalyticscardCalculation = async (
   teacherId: string

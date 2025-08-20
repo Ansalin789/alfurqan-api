@@ -201,6 +201,20 @@ const register = async (server: Server): Promise<void> => {
           }, },
       },
 
+      {
+  method: "GET",
+  path: "/studentattendanceperformance",
+  options: {
+    handler: handler.getStudentAttendancePerformance,
+    description: "Get student attendance & performance summary",
+    tags: ["api", "classShedule"],
+    auth: {
+      strategies: ["jwt"],
+    },
+  },
+},
+
+
         {
         method: "GET",
         path: "/analyticscardcount",
