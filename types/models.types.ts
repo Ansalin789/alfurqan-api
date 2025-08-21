@@ -2062,6 +2062,7 @@ export interface TeacherAvaliableSlots extends Document {
    date: string,
    teacherId : string,
    name : string,
+   position : string,
    from : string,
    to : string,
    isStatus : boolean,

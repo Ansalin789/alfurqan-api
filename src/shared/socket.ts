@@ -32,7 +32,7 @@ export const initializeSocket = (httpServer: HttpServer): void => {
     });
     socket.on("availableTeachersListRequest", async(data)=>{
        try{
-            if(!data.startDate || !data.WeeklySlots || !data.requestId) {
+            if(!data.startDate || !data.WeeklySlots || !data.requestId ||!data.position) {
             AppLogger.error("Invalid request for available teachers list", data);
            return;
         }
@@ -43,7 +43,7 @@ export const initializeSocket = (httpServer: HttpServer): void => {
     });
     socket.on('academicTrailClassTeacherListRequest',async(data)=>{
       try{
-            if(!data.startDate || !data.from || !data.to) {
+            if(!data.startDate || !data.from || !data.to || !data.position) {
             AppLogger.error("Invalid request for available teachers list", data);
            return;
          }
