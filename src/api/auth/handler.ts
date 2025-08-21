@@ -21,6 +21,7 @@ import { getActiveUserRecord, updateUser } from "../../operations/users";
 import UserModel from "../../models/users";
 import AlStudentsModel from "../../models/alstudents";
 import { getActiveStudentRecord } from "../../operations/alstudents";
+import ActiveSessionModel from "../../models/active_session";
 
 // Input validation for user signin
 const signInInputValidation = z.object({
@@ -69,6 +70,19 @@ export default {
 
     // Determine which record to use
     const activeRecord = user;
+  // 🔎 Step 1: Find latest session for this user (by loginDate)
+  const latestSession = await ActiveSessionModel.findOne({ userId: String(activeRecord._id) })
+    .sort({ loginDate: -1 }) // most recent first
+    .exec();
+
+  if (latestSession) {
+    console.log("Latest session:", latestSession.loginDate);
+
+    // Step 2: If latest session is still active, block login
+    if (latestSession.isActive) {
+      return unauthorized("User already logged in on another device/session");
+    }
+  }
 
     const jwtPayload = {
       userName: activeRecord.userName ,
@@ -122,7 +136,19 @@ export default {
 
     // Determine which record to use
     const activeRecord = users;
+    // 🔎 Step 1: Find latest session for this user (by loginDate)
+  const latestSession = await ActiveSessionModel.findOne({ userId: String(activeRecord._id) })
+    .sort({ loginDate: -1 }) // most recent first
+    .exec();
 
+  if (latestSession) {
+    console.log("Latest session:", latestSession.loginDate);
+
+    // Step 2: If latest session is still active, block login
+    if (latestSession.isActive) {
+      return unauthorized("User already logged in on another device/session");
+    }
+  }
     const jwtPayload = {
       userName:  activeRecord.username,
       sub: String(activeRecord._id),
@@ -148,41 +174,60 @@ export default {
   },
 
 
-  async signOut(req: Request, h: ResponseToolkit) {
+ async signOut(req: Request, h: ResponseToolkit) {
+  try {
     const { authorization } = req.headers;
+    console.log("🔑 Authorization header:", authorization);
 
-    // Check if Authorization header is present and starts with 'Bearer '
     if (!authorization || !authorization.startsWith("Bearer ")) {
+      console.log("❌ No Bearer token provided");
       return badRequest(authMessages.NO_TOKEN_PROVIDED);
     }
 
-    const token = authorization.replace("Bearer ", "");
+    const token = authorization.replace("Bearer ", "").trim();
+    console.log("📌 Extracted Token:", token);
 
-    const decodedToken: any = jwt.decode(token);
+    // ✅ Verify token properly
+    let decodedToken: any;
+    try {
+      decodedToken = jwt.verify(token, process.env.JWT_SECRET!);
+      console.log("✅ Decoded & Verified Token:", decodedToken);
+    } catch (err: any) {
+  console.error("❌ JWT verification failed:", err.message);
+  return unauthorized(authMessages.INVALID_TOKEN);
+}
 
-    if (!decodedToken) {
-      return unauthorized(authMessages.INVALID_TOKEN);
-    }
+
+    // 🔎 Check if token exists in DB
     const checkAuthToken: any = await getActiveSessionRecord({
       accessToken: token,
       isActive: true,
       userId: decodedToken.sub,
     });
+    console.log("🔍 Session lookup result:", checkAuthToken);
 
-    // Check the provided token exists in the database
     if (isNil(checkAuthToken)) {
+      console.log("❌ No active session found for token");
       return unauthorized(authMessages.TOKEN_NO_LONGER_VALID);
     }
 
     const result = await updateActiveSessionRecord(String(checkAuthToken._id), { isActive: false });
+    console.log("📝 Update session result:", result);
 
     if (isNil(result)) {
+      console.log("❌ Failed to update session");
       return badRequest(authMessages.SIGNOUT_UNSUCCESS);
     }
 
-    return h
-      .response({ message: authMessages.SIGNOUT_SUCCESS });
-  },
+    console.log("✅ Signout successful for user:", decodedToken.sub);
+    return h.response({ message: authMessages.SIGNOUT_SUCCESS });
+
+  } catch (err: any) {
+    console.error("🔥 Unexpected error in signOut:", err);
+    return badRequest("Something went wrong during signout");
+  }
+},
+
 
   // User's Change Password
   async changePassword(req: Request, h: ResponseToolkit) {
