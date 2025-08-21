@@ -633,21 +633,16 @@ export const totalClassCount = async (dateRange: string) => {
 };
 
 export const acUpcomingClassList = async (academicCoachId: string) => {
-  const currentDate = new Date()
-  const formattedDate = currentDate.toISOString().split("T")[0]
-
-  const startOfDayIST = `${formattedDate}T00:00:00.000+00:00`
-  const endOfDayIST = `${formattedDate}T23:59:59.999+00:00`
+  // All upcoming classes from the start of today (inclusive) and beyond
+  const startOfTodayUTC = new Date()
+  startOfTodayUTC.setUTCHours(0, 0, 0, 0)
 
   const getUpcomingClass = await meetingschedule
     .find({
       ["academicCoach.academicCoachId"]: academicCoachId,
-      scheduledStartDate: {
-        $gte: startOfDayIST,
-        $lte: endOfDayIST,
-      },
+      scheduledStartDate: { $gte: startOfTodayUTC },
     })
-    .sort({ scheduledFrom: 1 })
+    .sort({ scheduledStartDate: 1, scheduledFrom: 1 })
 
   const upcomingClass: EvaluationDetails[] = getUpcomingClass.map((item: any) => ({
     academicCoach: {

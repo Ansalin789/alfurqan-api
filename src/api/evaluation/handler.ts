@@ -266,7 +266,7 @@ if(result){
   await academicDashboardCard({academicCoachId});
   await academicStudentList({event : "update", data : result , sender : result.academicCoachId});
 }
-
+ return result;
 },
 
 // Retrieve all the Evaluation list
