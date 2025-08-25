@@ -2061,8 +2061,8 @@ export interface TeacherTimeSlots {
 export interface TeacherAvaliableSlots extends Document {
    date: string,
    teacherId : string,
-   name : string,
    position : string,
+   name : string,
    from : string,
    to : string,
    isStatus : boolean,

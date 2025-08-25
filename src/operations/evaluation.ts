@@ -214,31 +214,28 @@ export const updateStudentEvaluation = async (
   id: string,
   payload: Partial<IEvaluationCreate>
 ): Promise<IEvaluation | null> => {
-  // Case: Trial class completed → set amount
-  if (payload.trialClassStatus === "COMPLETED") {
-    payload.amount = "2.00";
-  }
-
-  // Update evaluation
-  let updateEvaluations = await EvaluationModel.findOneAndUpdate(
-    { _id: new Types.ObjectId(id) },
-    { $set: payload },
-    { new: true }
-  ).lean();
-
-  console.log("updateEvaluations>>>", updateEvaluations);
-
-  const evaluation = await EvaluationModel.findOne({
-    _id: new Types.ObjectId(id),
-  }).exec();
-
-  const updatedEvaluation = updateEvaluations as IEvaluation;
-
-  // ✅ FLOW 1: COMPLETED + JOINED → Invoice Email
+  // ✅ CASE 1: Invoice Mail (COMPLETED + JOINED)
+  console.log("payload in update service>>>", payload);
   if (
     payload.trialClassStatus === "COMPLETED" &&
     payload.studentStatus === "JOINED"
   ) {
+    console.log("💡 Running Invoice Mail Flow...");
+
+    if (payload.trialClassStatus === "COMPLETED") {
+      payload.amount = "2.00";
+    }
+
+    // 👉 Update evaluation only here
+    const updateEvaluations = await EvaluationModel.findOneAndUpdate(
+      { _id: new Types.ObjectId(id) },
+      { $set: payload },
+      { new: true }
+    ).lean();
+
+    const evaluation = await EvaluationModel.findById(id).exec();
+    const updatedEvaluation = updateEvaluations as IEvaluation;
+
     const emailTemplate = await EmailTemplate.findOne({
       templateKey: "Invoice",
     }).exec();
@@ -250,8 +247,8 @@ export const updateStudentEvaluation = async (
       evaluation
     ) {
       const emailTo = [{ email: payload.student.studentEmail }];
-
       const subject = "Invoice";
+
       const htmlPart = emailTemplate.templateContent
         .replace(
           "<studentname>",
@@ -270,28 +267,45 @@ export const updateStudentEvaluation = async (
         .replace("<total>", evaluation.planTotalPrice.toString())
         .replace("<paymentLink>", updatedEvaluation.paymentLink);
 
-      const email = await sendEmailClient(emailTo, subject, htmlPart);
-      console.log(">>>>>>>>>>>> Invoice Email sent", email);
+      await sendEmailClient(emailTo, subject, htmlPart);
+      console.log("✅ Invoice Email sent");
     }
-  }
 
-  // ✅ FLOW 2: PENDING + Teacher/Date/Time Changed → Zoom Meeting + Email
-  if (
-    payload.trialClassStatus === "PENDING" &&
-    payload.assignedTeacher &&
-    payload.preferredTrialFromTime &&
-    payload.preferredTrialToTime &&
-    payload.preferredTrialDate
+    return updatedEvaluation ;
+  } else if (
+    payload.teacher ||
+    payload.preferredTrialDate ||
+    payload.preferredTrialFromTime ||
+    payload.preferredTrialToTime
   ) {
-    console.log("Trial class is pending and teacher has changed.");
+    console.log("💡 Running Meeting Schedule Update (reuse Zoom link) Flow...");
 
-    // 👉 Create Zoom meeting
-    const meetingDetails = await zoomMeetingInvite(
-      updatedEvaluation,
-      payload.preferredTrialFromTime as string
-    );
+    // 👉 Get existing meeting schedule (to reuse link)
+    const existingMeeting = await MeetingSchedule.findOne({ trialId: id });
 
-    // 👉 Fetch Zoom email template
+    // 👉 Update meeting schedule with new details but keep existing meetingLink
+   const updatedMeetingDetails = await MeetingSchedule.findOneAndUpdate(
+  { trialId: id },
+  {
+    $set: {
+      teacher: {
+        teacherId: payload.teacher?.teacherId || existingMeeting?.teacher?.teacherId,
+        name: payload.teacher?.teacherId || existingMeeting?.teacher?.name,
+        email: payload.teacher?.teacherId || existingMeeting?.teacher?.email,
+      },
+      scheduledFrom: payload.preferredTrialFromTime,
+      scheduledTo: payload.preferredTrialToTime,
+      scheduledStartDate: payload.preferredTrialDate,
+      scheduledEndDate: payload.preferredTrialDate,
+      lastUpdatedDate: new Date(),
+      lastUpdatedBy: "Admin",
+    },
+  },
+  { new: true }
+);
+    console.log("✅ Updated Meeting Schedule:", updatedMeetingDetails);
+
+    // 👉 Send Zoom email (with existing link + updated date/time)
     const zoomMailTemplate = await EmailTemplate.findOne({
       templateKey: "trailmanagement",
     }).exec();
@@ -304,128 +318,27 @@ export const updateStudentEvaluation = async (
           moment(String(payload.preferredTrialDate)).format("DD-MM-YYYY")
         )
         .replace("<meetingTime>", payload.preferredTrialFromTime as string)
-        .replace("<zoomlink>", meetingDetails.join_url);
+        .replace("<zoomlink>", updatedMeetingDetails?.meetingLink ?? "");
 
-      // 👉 Send email to teacher + student
       const emailTo = [
-        { email: (payload.teacher as any).email },
-        { email: updatedEvaluation.student.studentEmail },
+        { email: (payload.teacher as any)?.email || existingMeeting?.teacher?.email },
+        { email: existingMeeting?.student?.email },
       ];
 
       await sendEmailClient(emailTo, subject, htmlPart);
-      console.log("Zoom email sent to student and teacher");
+      console.log("✅ Zoom email sent (with reused meeting link)");
     }
 
-    // 👉 Create Meeting Schedule record
-    const course = await Course.findOne({
-      courseName: updatedEvaluation.student.learningInterest,
-    });
-
-    const startOfDayIST = `${
-      payload.preferredTrialDate as Date
-    }T00:00:00.000+00:00`;
-
-    const CreatemeetingDetails = await MeetingSchedule.create({
-      academicCoach: {
-        academicCoachId: null,
-        name: null,
-        role: null,
-        email: null,
-      },
-      teacher: {
-        teacherId: payload.teacher
-          ? (payload.teacher as any).userId || payload.teacher.teacherId
-          : undefined,
-        name: payload.teacher ? (payload.teacher as any).userName : undefined,
-        email: payload.teacher ? (payload.teacher as any).email : undefined,
-      },
-      student: {
-        studentId: updatedEvaluation.student.studentId,
-        name:
-          updatedEvaluation.student.studentFirstName +
-          " " +
-          updatedEvaluation.student.studentLastName,
-        email: updatedEvaluation.student.studentEmail,
-        city: updatedEvaluation.student.studentCity,
-        country: updatedEvaluation.student.studentCountry,
-        phonenumber: updatedEvaluation.student.studentPhone,
-      },
-      trialId: id,
-      subject: "Student First class",
-      meetingLocation: "Zoom",
-      course: {
-        courseId: course?._id,
-        courseName: course?.courseName,
-      },
-      classType: "Trial class",
-      meetingType: "Online",
-      meetingLink: meetingDetails.join_url,
-      isScheduledMeeting: true,
-      scheduledStartDate: startOfDayIST,
-      scheduledEndDate: startOfDayIST,
-      scheduledFrom: payload.preferredTrialFromTime as string,
-      scheduledTo: payload.preferredTrialToTime as string,
-      timeZone: updatedEvaluation.student.timeZone,
-      description: "Test Description",
-      meetingStatus: "Scheduled",
-      studentResponse: "PENDING",
-      status: "Active",
-      createdDate: new Date(),
-      createdBy: updatedEvaluation.createdBy,
-      lastUpdatedDate: new Date(),
-      lastUpdatedBy: "Admin",
-    });
-
-    await CreatemeetingDetails.save();
-
-    // 👉 Update evaluation with new teacher/date/time
-    await EvaluationModel.updateOne(
-      { _id: new Types.ObjectId(id) },
-      {
-        $set: {
-          teacher: payload.teacher,
-          changeDate: payload.preferredTrialDate,
-          changeFromTime: payload.preferredTrialFromTime,
-          changeToTime: payload.preferredTrialToTime,
-          trialClassStatus: "PENDING",
-        },
-      }
-    );
-
-    // 👉 Notify teacher
-    if ((payload.teacher as any).userId) {
-      await sendNotification({
-        messages: `${updatedEvaluation.student.studentFirstName} ${updatedEvaluation.student.studentLastName} has been assigned to you for a trial class.`,
-        senderId: updatedEvaluation.academicCoachId?.toString() ?? "system",
-        senderName: updatedEvaluation.academicCoachId ?? "system",
-        senderEmail: updatedEvaluation.createdBy,
-        isRead: false,
-        receiverId: [(payload.teacher as any).userId],
-        receiverName: [(payload.teacher as any).userName],
-        receiverEmail: [(payload.teacher as any).email],
-        notificationType: "TEACHER_NOTIFICATION",
-        notificationStatus: "Unseen",
-        status: "active",
-        createdBy: "system",
-        updatedBy: "system",
-      });
-    }
-
-    // 👉 Update teacher availability
-    if (CreatemeetingDetails) {
-      const teacherId = CreatemeetingDetails.teacher.teacherId;
-      const from = CreatemeetingDetails.scheduledFrom;
-      const to = CreatemeetingDetails.scheduledTo;
-      const date = CreatemeetingDetails.scheduledStartDate;
-      await academicAvailableTeachers({
-        event: "update",
-        data: { date, teacherId, from, to },
-      });
-    }
+    return null; // 👉 Evaluation not updated in this case
   }
 
-  return updatedEvaluation;
+  console.log("ℹ️ No special email flow triggered");
+  return null;
 };
+
+
+
+
 
 async function trialClassAssigned(
   createEvaluation: any,
