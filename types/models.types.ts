@@ -450,6 +450,8 @@ export interface IEvaluationCreate{
 classType: string;
 teacher:{
   teacherId: string;
+  teacherName: string;
+  teacherEmail: string;
 },
 joiningDate?: Date;
 classDay?: string[];

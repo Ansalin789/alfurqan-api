@@ -133,7 +133,9 @@ export default {
             },
             classType: payload.classType,
             teacher:{
-              teacherId: payload.teacher?.teacherId  ?? "Not Assigned"
+              teacherId: payload.teacher?.teacherId  ?? "Not Assigned",
+              teacherName: payload.teacher?.teacherName ?? "Not Assigned",
+              teacherEmail: payload.teacher?.teacherEmail ?? "Not Assigned",
             },
             joiningDate: payload.joiningDate ?? new Date() ,
             weeklySlots:payload.classType == "REGULARCLASS"? payload.weeklySlots : undefined,
@@ -227,6 +229,11 @@ export default {
       status: payload.student?.status ?? "defaultStatus",
       createdDate: new Date(),
       createdBy: payload.student?.createdBy ?? "",
+  },
+  teacher:{
+    teacherId: payload.teacher?.teacherId  ?? "Not Assigned",
+    teacherName: payload.teacher?.teacherName ?? "Not Assigned",
+    teacherEmail: payload.teacher?.teacherEmail ?? "Not Assigned",
   },
   preferredTrialDate : payload.preferredTrialDate,
   preferredTrialFromTime : payload.preferredTrialFromTime,  

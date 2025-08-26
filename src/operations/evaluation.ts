@@ -283,26 +283,38 @@ export const updateStudentEvaluation = async (
     // 👉 Get existing meeting schedule (to reuse link)
     const existingMeeting = await MeetingSchedule.findOne({ trialId: id });
 
+    // 👉 If teacherId is present but name/email missing or 'Not Assigned', fetch from User model
+    let teacherName = payload.teacher?.teacherName;
+    let teacherEmail = payload.teacher?.teacherEmail;
+    if (
+      payload.teacher?.teacherId && 
+      (!teacherName || teacherName === "Not Assigned" || !teacherEmail || teacherEmail === "Not Assigned")
+    ) {
+      const teacherUser = await User.findOne({ userId: payload.teacher.teacherId, role: "TEACHER" }).exec();
+      teacherName = teacherUser?.userName || "";
+      teacherEmail = teacherUser?.email || "";
+    }
+
     // 👉 Update meeting schedule with new details but keep existing meetingLink
-   const updatedMeetingDetails = await MeetingSchedule.findOneAndUpdate(
-  { trialId: id },
-  {
-    $set: {
-      teacher: {
-        teacherId: payload.teacher?.teacherId || existingMeeting?.teacher?.teacherId,
-        name: payload.teacher?.teacherId || existingMeeting?.teacher?.name,
-        email: payload.teacher?.teacherId || existingMeeting?.teacher?.email,
+    const updatedMeetingDetails = await MeetingSchedule.findOneAndUpdate(
+      { trialId: id },
+      {
+        $set: {
+          teacher: {
+            teacherId: payload.teacher?.teacherId,
+            name: teacherName,
+            email: teacherEmail,
+          },
+          scheduledFrom: payload.preferredTrialFromTime,
+          scheduledTo: payload.preferredTrialToTime,
+          scheduledStartDate: payload.preferredTrialDate,
+          scheduledEndDate: payload.preferredTrialDate,
+          lastUpdatedDate: new Date(),
+          lastUpdatedBy: "Admin",
+        },
       },
-      scheduledFrom: payload.preferredTrialFromTime,
-      scheduledTo: payload.preferredTrialToTime,
-      scheduledStartDate: payload.preferredTrialDate,
-      scheduledEndDate: payload.preferredTrialDate,
-      lastUpdatedDate: new Date(),
-      lastUpdatedBy: "Admin",
-    },
-  },
-  { new: true }
-);
+      { new: true }
+    );
     console.log("✅ Updated Meeting Schedule:", updatedMeetingDetails);
 
     // 👉 Send Zoom email (with existing link + updated date/time)
@@ -320,13 +332,23 @@ export const updateStudentEvaluation = async (
         .replace("<meetingTime>", payload.preferredTrialFromTime as string)
         .replace("<zoomlink>", updatedMeetingDetails?.meetingLink ?? "");
 
-      const emailTo = [
-        { email: (payload.teacher as any)?.email || existingMeeting?.teacher?.email },
-        { email: existingMeeting?.student?.email },
-      ];
+      // Only send to valid teacher email
+      const emailTo = [];
+      if (teacherEmail && teacherEmail !== "Not Assigned") {
+        emailTo.push({ email: teacherEmail });
+      } else if (existingMeeting?.teacher?.email && existingMeeting.teacher.email !== "Not Assigned") {
+        emailTo.push({ email: existingMeeting.teacher.email });
+      }
+      if (existingMeeting?.student?.email) {
+        emailTo.push({ email: existingMeeting.student.email });
+      }
 
-      await sendEmailClient(emailTo, subject, htmlPart);
-      console.log("✅ Zoom email sent (with reused meeting link)");
+      if (emailTo.length > 0) {
+        await sendEmailClient(emailTo, subject, htmlPart);
+        console.log("✅ Zoom email sent (with reused meeting link)");
+      } else {
+        console.log("⚠️ No valid teacher email found, email not sent to teacher.");
+      }
     }
 
     return null; // 👉 Evaluation not updated in this case
