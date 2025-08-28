@@ -14,6 +14,7 @@ import AppLogger from "../helpers/logging";
 import { Types } from "mongoose";
 import { sendNotification } from "./notification";
 import UserModel from "../models/users";
+import { generateRollNo } from "./rollcounter";
 
 
 
@@ -45,45 +46,15 @@ export const createStudent = async (
             error: badRequest('Evaluation class is not allowed to current date. Select another date'),
         };
     }
-    // const shiftScheduleRecord = await UserShiftSchedule.find({
-    //   role: "ACADEMICCOACH",
-    // });
-    // console.log(shiftScheduleRecord);
-    // let academicCoachDetails: any = null;
-
-    // if (shiftScheduleRecord.length > 0) {
-        
-    //     for (const shiftSchedule of shiftScheduleRecord) { // Use for...of instead of forEach
-    //         if (payload.startDate >= shiftSchedule.startdate && payload.startDate <= shiftSchedule.enddate) {
-    //             await validateHours(shiftSchedule.startdate, shiftSchedule.enddate, shiftSchedule.fromtime, shiftSchedule.totime, payload);
-    //          const meetingAvailability = await MeetingSchedule.findOne({
-    //             academicCoachId: shiftSchedule.academicCoachId,
-    //             startDate: shiftSchedule.startdate,
-    //             endDate: shiftSchedule.enddate, 
-    //             fromtime: shiftSchedule.fromtime,
-    //             totime: shiftSchedule.totime,
-    //          }) 
-    //          if(!meetingAvailability){
-    //           academicCoachDetails = {
-    //             academicCoachId: shiftSchedule.academicCoachId,
-    //             name: shiftSchedule.name,
-    //             role: shiftSchedule.role,
-    //             email: shiftSchedule.email
-    //         };
-    //          }
-                
-    //             break; // Exit the loop once a valid academic coach is found
-    //         }
-    //     }
-    // } else{
-    //     return {error: badRequest('Academic coach not available')};
-    // }
+ //rollNo
+     const rollNo = await generateRollNo('ALFST', 3);
 
     const academicCoach = await UserModel.findOne({
       userId : payload.academicCoach.academicCoachId 
     });
 
       console.log("academicCoach>>>>", academicCoach);
+      newUser.studentId = rollNo;
     newUser.academicCoach = {
         academicCoachId: academicCoach?._id.toString() || " ", // Provide a default value if undefined
         name: academicCoach?.userName || " ",                       // Provide a default value if undefined
@@ -187,39 +158,6 @@ export const createStudent = async (
     await CreatemeetingDetails.save();
     return userObject;
 };
-
-
-async function validateHours(shiftstartdate: Date, shiftenddate: Date, fromtime: string, totime: string, payload: IStudentCreate): Promise<any> {
-        const result = calculateHours(payload);
-        if(result>1){
-            throw new Error('Evaluation class duration is more than 1 hour');
-        }
-        if((payload.preferredFromTime>= fromtime && payload.preferredFromTime<=totime) && (payload.preferredToTime>= fromtime && payload.preferredToTime<=totime)){
-            return true;
-        }
-        return false;
-}
-function calculateHours(payload: IStudentCreate) {
-  // Function to convert time string to Date objec
-  const fromTime = parseTimeToDate(payload.preferredFromTime);
-  const toTime = parseTimeToDate(payload.preferredToTime);
-  
-  // Check if the dates are valid
-  if (isNaN(fromTime.getTime()) || isNaN(toTime.getTime())) {
-      throw new Error('Invalid date format for preferredFromTime or preferredToTime');
-  }
-
-  const hours = (toTime.getTime() - fromTime.getTime()) / 3600000; // Convert milliseconds to hours
-  return hours;
-}
-function parseTimeToDate(timeString: string): Date {
-  const [hours, minutes] = timeString.split(':').map(Number);
-
-  const date = new Date();
-  date.setHours(hours, minutes, 0, 0); // Set hours, minutes, seconds, milliseconds
-  return date;
-}
-
 
 
 async function zoomMeetingInvite(savedUser: import("mongoose").Document<unknown, {}, IStudents> & IStudents & { _id: import("mongoose").Types.ObjectId; }) {

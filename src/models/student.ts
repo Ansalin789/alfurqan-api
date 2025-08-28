@@ -8,6 +8,10 @@ import { appStatus,appRegexPatterns, commonMessages, evaluationStatus, learningI
 
 const studentSchema = new Schema<IStudents>(
   {
+    studentId: {
+      type: String,
+      required: true,
+    },
     firstName: {
       type: String,
       required: true,

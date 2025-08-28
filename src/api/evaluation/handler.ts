@@ -110,6 +110,7 @@ export default {
 
             student: { // Ensure studentId is included
                 studentId: payload.student?.studentId ?? "", 
+                studentRegisterId: payload?.student?.studentRegisterId??"",
                 studentFirstName: payload.student?.studentFirstName ?? "",
                 studentLastName: payload.student?.studentLastName ?? "",
                 studentEmail: payload.student?.studentEmail ?? "",
