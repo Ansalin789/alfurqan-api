@@ -16,7 +16,7 @@ import {
 } from "../../config/messages";
 import jwt from "jsonwebtoken";
 import { zodAuthenticationSchema } from "../../shared/zod_schema_validation";
-import { createActiveSessionRecord, getActiveSessionRecord, updateActiveSessionRecord } from "../../operations/active_session";
+import { createActiveSessionRecord, getActiveSessionRecord, getLatestSessionRecord, updateActiveSessionRecord } from "../../operations/active_session";
 import { getActiveUserRecord, updateUser } from "../../operations/users";
 import UserModel from "../../models/users";
 import AlStudentsModel from "../../models/alstudents";
@@ -193,25 +193,34 @@ export default {
       decodedToken = jwt.verify(token, process.env.JWT_SECRET!);
       console.log("✅ Decoded & Verified Token:", decodedToken);
     } catch (err: any) {
-  console.error("❌ JWT verification failed:", err.message);
-  return unauthorized(authMessages.INVALID_TOKEN);
-}
+      console.error("❌ JWT verification failed:", err.message);
+      return unauthorized(authMessages.INVALID_TOKEN);
+    }
 
-
-    // 🔎 Check if token exists in DB
-    const checkAuthToken: any = await getActiveSessionRecord({
-      accessToken: token,
-      isActive: true,
+    // 🔎 Fetch the latest session for this user
+    const latestSession: any = await getLatestSessionRecord({
       userId: decodedToken.sub,
-    });
-    console.log("🔍 Session lookup result:", checkAuthToken);
+    }); 
+    // 👉 `getLatestSessionRecord` should internally sort by `signedInAt` desc or `createdAt` desc and pick one
 
-    if (isNil(checkAuthToken)) {
-      console.log("❌ No active session found for token");
+    console.log("🔍 Latest session lookup:", latestSession);
+
+    if (isNil(latestSession)) {
+      console.log("❌ No session found for user");
       return unauthorized(authMessages.TOKEN_NO_LONGER_VALID);
     }
 
-    const result = await updateActiveSessionRecord(String(checkAuthToken._id), { isActive: false });
+    // 🔒 Ensure token matches the latest session
+    if (latestSession.accessToken !== token || !latestSession.isActive) {
+      console.log("❌ Token is not the latest active session");
+      return unauthorized(authMessages.TOKEN_NO_LONGER_VALID);
+    }
+
+    // 📝 Update session: set inactive + signedOutAt
+    const result = await updateActiveSessionRecord(String(latestSession._id), {
+      isActive: false,
+      signedOutAt: new Date(),
+    });
     console.log("📝 Update session result:", result);
 
     if (isNil(result)) {
@@ -219,14 +228,18 @@ export default {
       return badRequest(authMessages.SIGNOUT_UNSUCCESS);
     }
 
-    console.log("✅ Signout successful for user:", decodedToken.sub);
-    return h.response({ message: authMessages.SIGNOUT_SUCCESS });
+    console.log("✅ Signout successful for user:", decodedToken.sub, "at", new Date().toISOString());
+    return h.response({
+      message: authMessages.SIGNOUT_SUCCESS,
+      signedOutAt: new Date().toISOString(),
+    });
 
   } catch (err: any) {
     console.error("🔥 Unexpected error in signOut:", err);
     return badRequest("Something went wrong during signout");
   }
 },
+
 
 
   // User's Change Password
