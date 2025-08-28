@@ -195,13 +195,13 @@ export const topicHandler: Record<string, (data: any) => Promise<void>> = {
 
   'academicAvailableTeachersList' : async ( data : any) =>{
     console.log('academicAvailableTeachersList');
-    const teacherLsit = await getUniqueTeacherList(data.startDate , data.WeeklySlots);
+    const teacherLsit = await getUniqueTeacherList(data.startDate ,data.position, data.WeeklySlots);
     emitEventToClient("availableTeachersListResponse", teacherLsit ,data.requestId);
   },
 
   'academicTrailClassTeacher' : async ( data : any) => {
    console.log("academicTrailClassTeacher");
-   const teacherList = await trailClassTeacherList(data.startDate , data.from , data.to);
+   const teacherList = await trailClassTeacherList(data.startDate ,data.position, data.from , data.to);
    emitEventToClient("academicTrailClassTeacherListResponse", teacherList ,data.requestId);
   },
 

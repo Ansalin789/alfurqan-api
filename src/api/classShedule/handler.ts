@@ -5,7 +5,7 @@ import { ClassSchedulesMessages } from "../../config/messages";
 import { isNil } from "lodash";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
-import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount, getTotalClassesCount, getClassesStatusCount, getClassesWiseCount, getStudentList, getTeacherAttendanceSummary, teacherStudentCount, getgetAnalyticscardCalculation, requestReschedule, updateClassAttendanceById, getTeacherTotalEarnings, classesCountForTeacher, teacherClassLevelGrowth, IClassScheduleUpdate, bulkupdateClassAttendanceByClassLink} from "../../operations/classschedule";
+import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount, getTotalClassesCount, getClassesStatusCount, getClassesWiseCount, getStudentList, getTeacherAttendanceSummary, teacherStudentCount, getgetAnalyticscardCalculation, requestReschedule, updateClassAttendanceById, getTeacherTotalEarnings, classesCountForTeacher, teacherClassLevelGrowth, IClassScheduleUpdate, bulkupdateClassAttendanceByClassLink, getStudentAttendanceSummary} from "../../operations/classschedule";
 import { academicAvailableTeachers, academicDashboardTeachersStudentCount, academicStudentReSchedule, academicTeacherStudentList } from "../../kafka/producers/academicProducer";
 import AlStudentModule from "../../models/alstudents"
 import Evaluation from "../../models/evaluation";
@@ -547,6 +547,28 @@ async getStudentsAttendanceCounts(req: Request, h: ResponseToolkit) {
     return h.response({ message: "Internal Server Error" }).code(500);
   }
 },
+
+//student class level growth
+
+async getStudentAttendancePerformance(req: Request, h: ResponseToolkit) {
+  try {
+    // 🔹 Expecting alstudent._id as studentId in query
+    const studentId = req.query.studentId as string;
+    console.log("alstudent._id received:", studentId);
+
+    if (!studentId) {
+      return h.response({ message: "Missing studentId in query" }).code(400);
+    }
+
+    const data = await getStudentAttendanceSummary(studentId);
+    return h.response(data).code(200);
+  } catch (error) {
+    console.error("Error in getStudentAttendancePerformance handler:", error);
+    return h.response({ message: "Internal Server Error" }).code(500);
+  }
+},
+
+
 //analytics card count
 
 async getAnalyticscardcount(req: Request, h: ResponseToolkit) {

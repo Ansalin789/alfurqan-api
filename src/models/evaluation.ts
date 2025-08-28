@@ -443,7 +443,12 @@ export const zodEvaluationSchema = z.object({
     amount: z.string().optional(),
     currency: z.string().optional(),
     status: z.string().optional(),
-    createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    preferredTrialFromTime: z.string().regex(/^([01][0-9]|2[0-3]):[0-5][0-9]$/, "Time must be in 24-hour format HH:MM").optional(),
+    preferredTrialToTime: z.string().regex(/^([01][0-9]|2[0-3]):[0-5][0-9]$/, "Time must be in 24-hour format HH:MM").optional(),
+    preferredTrialDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+        message: commonMessages.INVALID_DATE_FORMAT,
+      }).transform((val) => new Date(val)).optional().optional(),
+          createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
         message: commonMessages.INVALID_DATE_FORMAT,
       }).transform((val) => new Date(val)).optional(),
     createdBy: z.string().optional(),

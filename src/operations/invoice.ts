@@ -61,49 +61,43 @@ export const getAllStudetnInVoiceList = async (
   };
 
 
-export const getStudentInvoicesByStudentId = async (
-  studentId: string // this is _id from alstudents collection
-): Promise<IStudentInvoice[]> => {
-  try {
-    console.log("🔍 Received studentId from query:", studentId);
-
-    // Convert to ObjectId
-    const objectId = new Types.ObjectId(studentId);
-
-    // Find student in alstudents collection
-    const alStudent = await alstudents.findById(objectId);
-
-    if (!alStudent || !alStudent.student?.studentId) {
-      console.log("❌ No student found in alstudents with given _id");
+  export const getStudentInvoicesById = async (studentId: string): Promise<IStudentInvoice[]> => { // Accept studentId as a parameter
+    try {
+      const objectId = new Types.ObjectId(studentId); // Convert the passed studentId to ObjectId
+  
+      // Find student in alstudents collection using _id
+      const alStudent = await alstudents.findById(objectId);
+  
+      if (!alStudent) {
+        console.log("❌ No student found in alstudents with given _id");
+        return [];
+      }
+  
+      console.log("✅ Found student:", alStudent);
+  
+      // Find invoices based on the student's _id
+      const invoices = await StudentInvoiceModel.find({
+        "student.studentId": studentId, // match studentId as a string
+        paymentStatus: "Pending"        // filter directly in the DB query
+      }).sort({ lastUpdatedDate: -1 });
+      
+  
+      console.log(`🧾 Total invoices found: ${invoices.length}`);
+  
+      // Filter pending invoices
+      const pendingInvoices = invoices.filter(
+        (invoice) => invoice.paymentStatus === "Pending"
+      );
+  
+      console.log(`📌 Pending invoice count: ${pendingInvoices.length}`);
+      console.log("💬 Pending invoice details:", pendingInvoices);
+  
+      return pendingInvoices;
+    } catch (error) {
+      console.error("🚨 Error in getStudentInvoicesById:", error);
       return [];
     }
-
-    const studentRefId = alStudent.student.studentId;
-    console.log("✅ Matched student.studentId from alstudents:", studentRefId);
-
-    // Find invoices based on studentRefId
-    const invoices = await StudentInvoiceModel.find({
-      "student.studentId": studentRefId,
-    }).sort({ lastUpdatedDate: -1 });
-
-    console.log(`🧾 Total invoices found: ${invoices.length}`);
-
-    // Filter pending invoices
-    const pendingInvoices = invoices.filter(
-      (invoice) => invoice.paymentStatus === "Pending"
-    );
-
-    console.log(`📌 Pending invoice count: ${pendingInvoices.length}`);
-    console.log("💬 Pending invoice details:", pendingInvoices);
-
-    return pendingInvoices;
-  } catch (error) {
-    console.error("🚨 Error in getStudentInvoicesByStudentId:", error);
-    return [];
-  }
-};
-
-
+  };
 
  
   export const getStudentAllRevenue = async (

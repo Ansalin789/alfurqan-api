@@ -56,6 +56,9 @@ const createInputValidation = z.object({
     paymentStatus: true,
     teacherStatus: true,
     status:true,
+    preferredTrialDate : true,
+    preferredTrialFromTime : true,
+    preferredTrialToTime : true,
     createdBy:true,
     createdDate:true,  
     updatedBy:true
@@ -130,7 +133,9 @@ export default {
             },
             classType: payload.classType,
             teacher:{
-              teacherId: payload.teacher?.teacherId  ?? "Not Assigned"
+              teacherId: payload.teacher?.teacherId  ?? "Not Assigned",
+              teacherName: payload.teacher?.teacherName ?? "Not Assigned",
+              teacherEmail: payload.teacher?.teacherEmail ?? "Not Assigned",
             },
             joiningDate: payload.joiningDate ?? new Date() ,
             weeklySlots:payload.classType == "REGULARCLASS"? payload.weeklySlots : undefined,
@@ -225,6 +230,14 @@ export default {
       createdDate: new Date(),
       createdBy: payload.student?.createdBy ?? "",
   },
+  teacher:{
+    teacherId: payload.teacher?.teacherId  ?? "Not Assigned",
+    teacherName: payload.teacher?.teacherName ?? "Not Assigned",
+    teacherEmail: payload.teacher?.teacherEmail ?? "Not Assigned",
+  },
+  preferredTrialDate : payload.preferredTrialDate,
+  preferredTrialFromTime : payload.preferredTrialFromTime,  
+  preferredTrialToTime : payload.preferredTrialToTime,
   isLanguageLevel: payload.isLanguageLevel ?? false,
   languageLevel: payload.languageLevel ?? "",
   isReadingLevel: payload.isReadingLevel ?? false,
@@ -266,7 +279,7 @@ if(result){
   await academicDashboardCard({academicCoachId});
   await academicStudentList({event : "update", data : result , sender : result.academicCoachId});
 }
-
+ return result;
 },
 
 // Retrieve all the Evaluation list

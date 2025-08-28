@@ -450,6 +450,8 @@ export interface IEvaluationCreate{
 classType: string;
 teacher:{
   teacherId: string;
+  teacherName: string;
+  teacherEmail: string;
 },
 joiningDate?: Date;
 classDay?: string[];
@@ -2061,6 +2063,7 @@ export interface TeacherTimeSlots {
 export interface TeacherAvaliableSlots extends Document {
    date: string,
    teacherId : string,
+   position : string,
    name : string,
    from : string,
    to : string,
