@@ -72,7 +72,7 @@ export const createEvaluationRecord = async (
 
   if (loginUser) {
     newStudent.academicCoach = {
-      academicCoachId: loginUser.userId || " ", // Provide a default value if undefined
+      academicCoachId: payload.academicCoachId || " ", // Provide a default value if undefined
       name: loginUser?.userName, // Provide a default value if undefined
       role: "ACADEMICCOACH", // Provide a default value if undefined
       email: loginUser?.email, // Provide a default value if undefined
