@@ -46,3 +46,12 @@ export const updateActiveSessionRecord = async (sessionId: string, payload: any)
     )
     .exec();
 };
+
+export const getLatestSessionRecord = async (
+  query: { userId: string }
+): Promise<IActiveSession | null> => {
+  return ActiveSessionModel
+    .findOne({ userId: query.userId })
+    .sort({ createdAt: -1 })
+    .exec();
+};
