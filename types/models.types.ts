@@ -78,6 +78,7 @@ export interface IUserCreate {
 
 
 export interface IStudents extends Document {
+  studentId: string;
   firstName: string;
   lastName: string;
   academicCoach: {
@@ -331,6 +332,7 @@ export interface IEvaluation extends Document {
   academicCoachId: string;
 student: {
   studentId: string;
+  studentRegisterId: string;
   studentFirstName: string;
   studentLastName: string;
   studentEmail: string;
@@ -426,6 +428,7 @@ export interface IEvaluationCreate{
   academicCoachId: string;
   student: {
   studentId?: string;
+  studentRegisterId?: string;
   studentFirstName: string;
   studentLastName: string;
   studentEmail: string;
@@ -2136,3 +2139,7 @@ export interface LogDocument extends Document {
   createdDate: Date;
 }
 
+export interface IRollCounter extends Document {
+   prefix: String;
+    sequence: String;
+}

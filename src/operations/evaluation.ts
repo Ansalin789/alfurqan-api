@@ -33,6 +33,7 @@ import { types } from "joi";
 import { sendNotification } from "./notification";
 import { evaluationTeacherSlotBook } from "../redis/handler/teacherSlotHander";
 import moment from "moment";
+import { generateRollNo } from "./rollcounter";
 
 export interface EvaluationFilter {
   id(id: any): string;
@@ -70,6 +71,8 @@ export const createEvaluationRecord = async (
     role: "TEACHER",
   }).exec();
 
+  //rollNo
+     const rollNo = await generateRollNo('ALFST', 3);
   if (loginUser) {
     newStudent.academicCoach = {
       academicCoachId: payload.academicCoachId || " ", // Provide a default value if undefined
@@ -78,6 +81,8 @@ export const createEvaluationRecord = async (
       email: loginUser?.email, // Provide a default value if undefined
     };
   }
+  console.log("roll no:", rollNo);
+  newStudent.studentId = rollNo;
   newStudent.firstName = payload.student.studentFirstName;
   newStudent.lastName = payload.student.studentLastName;
   newStudent.email = payload.student.studentEmail;
@@ -99,11 +104,11 @@ export const createEvaluationRecord = async (
   newStudent.createdDate = new Date();
   newStudent.createdBy = payload.student.studentEmail ?? "Admin";
   let createStudent;
-  if (!payload.student.studentId) {
+  if (!payload.student.studentRegisterId) {
     createStudent = await newStudent.save();
-  } else if (payload.student.studentId) {
+  } else if (payload.student.studentRegisterId) {
     const updateInvoice = await StudentModel.findOneAndUpdate(
-      { _id: new Types.ObjectId(payload.student.studentId) },
+      { _id: new Types.ObjectId(payload.student.studentRegisterId) },
       { $set: payload.student },
       { new: true }
     ).lean();
@@ -118,7 +123,8 @@ export const createEvaluationRecord = async (
   const newEvaluation = new EvaluationModel(payload);
   if (createStudent) {
     (newEvaluation.student = {
-      studentId: createStudent.id.toString(),
+      studentRegisterId: createStudent.id.toString(),
+      studentId: createStudent.studentId,
       studentFirstName: createStudent.firstName,
       studentLastName: createStudent.lastName,
       studentEmail: createStudent.email,

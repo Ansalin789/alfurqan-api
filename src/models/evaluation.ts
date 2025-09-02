@@ -18,6 +18,10 @@ academicCoachId: {
     required: true,
   },
   student: {
+     studentRegisterId: {
+       type: String,
+       required: true,
+    },
     studentId: {
        type: String,
        required: true,
@@ -347,6 +351,7 @@ const WeeklySlotMapSchema = z.record(z.string(), z.array(ZodTimeSlotSchema));
 export const zodEvaluationSchema = z.object({
     academicCoachId: z.string(),
     student: z.object({
+        studentRegisterId: z.string().optional(),
         studentId: z.string().optional(),
         studentFirstName: z.string(),
         studentLastName: z.string(),
