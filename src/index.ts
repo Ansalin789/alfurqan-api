@@ -10,7 +10,7 @@ import { shutdownKafkaConsumer, startInvoiceConsumer } from './kafka/consumer';
 import { connectProducer, disconnectProducer } from "./kafka/producer";
 import Meeting from "../src/models/addmeeting";
 import cron from "node-cron";
-import { cleanupOldDates } from "./redis/manage/autoClearSlots";
+import { addAditionalSlots, cleanupOldDates } from "./redis/manage/autoClearSlots";
 import { restoreCacheFromDb } from "./redis/manage/restoreCache";
 import { loggerPlugin } from "./plugins/auditlog";
 import teachermeeting from "./models/teachermeeting";
@@ -254,19 +254,6 @@ cron.schedule("0 0 * * *", async () => {
 }
 });
 
-// cron  run 5 mins once
-// cron.schedule("*/5 * * * *", async () => {
-//   try{
-//   console.log("🧹 attendance and earnings uupdate schedule");
-//     updateEarningsCalculation();
-//   }
-//   catch (error: unknown) {
-//     const message = error ;
-//     console.error("❌ Unexpected error in earnings update cron:", message);
-//   }
-// });
-
-
 
 //adminmeeting
 cron.schedule("*/5 * * * *", async () => {
@@ -342,7 +329,7 @@ cron.schedule("*/5 * * * *", async () => {
 
 
 
-// Run every 2 minutes
+// Run every day nit
 cron.schedule("55 23 * * *", async () => {
   console.log("🧹 attendance and earnings update schedule");
   await runSalaryCron();
@@ -912,6 +899,7 @@ async function sendGroupAbsentNotification(type: any, user1: any, user2: any, me
 }
 
 
-
-
-
+cron.schedule("0 0 * * 0", async () => {
+  console.log("cron runs weekly once for add slots");
+  addAditionalSlots();
+});
