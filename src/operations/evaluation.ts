@@ -241,6 +241,7 @@ export const updateStudentEvaluation = async (
 
     const evaluation = await EvaluationModel.findById(id).exec();
     const updatedEvaluation = updateEvaluations as IEvaluation;
+    console.log("updatedEvaluation>>", updatedEvaluation);
 
     const emailTemplate = await EmailTemplate.findOne({
       templateKey: "Invoice",

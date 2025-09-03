@@ -171,7 +171,7 @@ export const updateStudentClassSchedule = async (
 
       const newClassSchedule = new ClassScheduleModel({
         student: {
-          studentId: alfurqanStudent?._id.toString(),
+          studentId: alfurqanStudent?.student.studentId,
           studentFirstName: alfurqanStudent?.username,
           studentLastName: alfurqanStudent?.username,
           studentEmail: alfurqanStudent?.student.studentEmail,
