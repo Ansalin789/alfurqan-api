@@ -232,6 +232,7 @@ for (const [day, slots] of Object.entries(weeklySlots)) {
       for (const classDate of classDates) {
         const newClassSchedule = new ClassScheduleModel({
           student: {
+            id: studentDetails._id,
             studentId: studentDetails.student.studentId,
             studentFirstName: studentDetails.username,
             studentLastName: studentDetails.username,

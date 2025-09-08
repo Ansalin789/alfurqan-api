@@ -103,7 +103,7 @@ export const updateStudentClassSchedule = async (
   } = payload;
 
   const alfurqanStudent = await AlStudenModel.findOne({
-    _id: new Types.ObjectId(student?.studentId),
+    _id: new Types.ObjectId(student?.id),
   }).exec(); // 🧠 Extract reference values from the first student
   const courseDetails = await Course.findOne({});
   if (!student) {
@@ -152,7 +152,7 @@ export const updateStudentClassSchedule = async (
 
         if (payload.sessionClassType === "GROUPCLASS") {
     const duplicate = await ClassScheduleModel.findOne({
-      "student.studentId": alfurqanStudent?._id.toString(),
+      "student.id": alfurqanStudent?._id.toString(),
       startDate: classDate,
       endDate: classDate,
       classDay: day,
@@ -347,7 +347,7 @@ export const requestReschedule = async (payload: any) => {
       _id: new Types.ObjectId(payload._id),
     });
     const alfstudent = await AlStudenModel.findOne({
-      _id: new Types.ObjectId(classSchedule?.student.studentId),
+      _id: new Types.ObjectId(classSchedule?.student.id),
     });
     const evaluation = await Evaluation.findOne({
   "student.studentId": alfstudent?.student.studentId,
@@ -419,6 +419,7 @@ export const requestReschedule = async (payload: any) => {
 
 export interface IClassScheduleUpdate{
   student: {
+    id: string;
     studentId: string;
     studentFirstName: string;
     studentLastName: string;
@@ -616,7 +617,7 @@ export const getClassesForStudent = async (
     };
   }
   // Query filtering for studentId
-  const query: any = { "student.studentId": studentId };
+  const query: any = { "student.id": studentId };
   console.log(">>", query);
 
   // Sorting options
@@ -676,7 +677,7 @@ export const getClassesForTeacher = async (
     // Enrich class schedule with student and evaluation data
     const enrichedSchedules = await Promise.all(
       classScheduleList.map(async (cls) => {
-        const studentId = cls?.student?.studentId;
+        const studentId = cls?.student?.id;
         const alfstudent = await AlStudenModel.findOne({
           _id: new Types.ObjectId(studentId),
         });
@@ -923,7 +924,7 @@ export const teachingActivity = async (
   try {
     // Fetch all class schedules for the student
     const classSchedule = await ClassScheduleModel.find({
-      "student.studentId": studentId,
+      "student.id": studentId,
     }).exec();
 
     if (!classSchedule || classSchedule.length === 0) {
@@ -1101,7 +1102,7 @@ export const getStudentClassCount = async (studentId: string) => {
       {
         $match: {
           status: "Active",
-          "student.studentId": studentId,
+          "student.id": studentId,
         },
       },
       {
@@ -1116,7 +1117,7 @@ export const getStudentClassCount = async (studentId: string) => {
       {
         $match: {
           status: "Active",
-          "student.studentId": studentId,
+          "student.id": studentId,
         },
       },
       {
@@ -1131,7 +1132,7 @@ export const getStudentClassCount = async (studentId: string) => {
       {
         $match: {
           status: "Active",
-          "student.studentId": studentId,
+          "student.id": studentId,
         },
       },
       {
@@ -1149,7 +1150,7 @@ export const getStudentClassCount = async (studentId: string) => {
       {
         $match: {
           status: "Active",
-          "student.studentId": studentId,
+          "student.id": studentId,
         },
       },
       {
@@ -1376,9 +1377,9 @@ export const getStudentList = async (
       const student = cls.student;
       const classType = cls.sessionClassType;
       const groupClassId = cls.classLink;
-      if (student?.studentId && !uniqueStudentsMap.has(student.studentId)) {
+      if (student?.id && !uniqueStudentsMap.has(student.id)) {
         const alstudent = await AlStudenModel.findOne({
-          _id: cls.student.studentId,
+          _id: cls.student.id,
         }).exec();
         let evaluation;
         if (alstudent) {
@@ -1421,8 +1422,8 @@ export const getStudentList = async (
             })
           );
         }
-        uniqueStudentsMap.set(student.studentId, {
-          studentId: student.studentId,
+        uniqueStudentsMap.set(student.id, {
+          studentId: student.id,
           name: student.studentFirstName,
                     level: alstudent?.level || "", // ✅ Add level here
 
@@ -1583,7 +1584,7 @@ export const getStudentAttendanceSummary = async (
   try {
     // 🔹 Find all schedules where student.studentId matches alstudents._id
     const classSchedules = await ClassScheduleModel.find(
-      { "student.studentId": studentId },
+      { "student.id": studentId },
       {
         startTime: 1,
         endTime: 1,
@@ -1683,9 +1684,9 @@ export const getgetAnalyticscardCalculation = async (
       const student = cls.student;
 
       if (student?.studentId) {
-        if (!studentMap.has(student.studentId)) {
-          studentMap.set(student.studentId, {
-            studentId: student.studentId,
+        if (!studentMap.has(student.id)) {
+          studentMap.set(student.id, {
+            studentId: student.id,
             studentFirstname: student.studentFirstName,
             studentLastName: student.studentLastName,
           });

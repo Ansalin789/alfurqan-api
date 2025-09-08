@@ -527,6 +527,7 @@ export interface ISubscritions extends Document{
 
 export interface IClassSchedule extends Document{
   student: {
+    id: string;
     studentId: string;
     studentFirstName: string;
     studentLastName: string;
@@ -628,6 +629,7 @@ export interface IAdminAssignment extends Document{
 } 
 export interface IClassScheduleCreate{
   student: {
+    id: string;
     studentId?: string;
     studentFirstName: string;
     studentLastName: string;

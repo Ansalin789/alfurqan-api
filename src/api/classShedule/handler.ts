@@ -40,6 +40,7 @@ const createInputValidation = z.object({
 
 const getAllClassSheduleInput = z.object({
   query: zodGetAllRecordsQuerySchema.pick({
+    id: true,
     studentId:true,
     teacherId:true,
     searchText: true,
@@ -318,6 +319,7 @@ existingEnd.push(rawPayload.student.studnetSessionEnd);
     
     const result = await updateClassscheduleById(String(req.params.classSheduleId), {
       student: {
+        id: payload.student?.id?? "",
         studentId: payload.student?.studentId ?? "",
         studentFirstName: payload.student?.studentFirstName ?? "",
         studentLastName: payload.student?.studentLastName ?? "",
@@ -399,14 +401,14 @@ async totalhours(req: Request, h: ResponseToolkit) {
       },
     });
 
-    const { studentId } = parsedQuery.query;
+    const { id } = parsedQuery.query;
 
-    if (!studentId) {
+    if (!id) {
       throw new Error("Student ID is required.");
     }
 
     // Fetch student class schedule and calculate percentages
-    const result = await getStudentClassHours(studentId);
+    const result = await getStudentClassHours(id);
 
     // Return the response
     return h.response(result).code(200);
@@ -437,14 +439,14 @@ async teachingActivity(req: Request, h: ResponseToolkit) {
       },
     });
 
-    const { studentId } = parsedQuery.query;
+    const { id } = parsedQuery.query;
 
-    if (!studentId) {
+    if (!id) {
       throw new Error("Student ID is required.");
     }
 
     // Fetch student class schedule and calculate percentages
-    const result = await teachingActivity(studentId);
+    const result = await teachingActivity(id);
 
     // Return the response
     return h.response(result).code(200);
@@ -761,6 +763,7 @@ if (!classSchedule) {
 
     const result = await updateClassAttendanceById(String(req.params.classSheduleId), {
       student: {
+        id: classSchedule.student.id,
        studentId: classSchedule.student.studentId,
        studentFirstName: classSchedule.student.studentFirstName,
        studentLastName: classSchedule.student.studentLastName,

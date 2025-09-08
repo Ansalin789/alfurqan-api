@@ -74,12 +74,12 @@ export const getAllalstudentsList = async (
 const studentsWithClassScheduleCount = await Promise.all(
   students.map(async (student) => {
     const classScheduleCount = await ClassScheduleModel.countDocuments({
-      'student.studentId': student._id.toString() // ✅ Correct based on how you store it
+      'student.id': student._id.toString() // ✅ Correct based on how you store it
     }).exec();
 
     // Fetch teacher and sessionClassType using same logic
     const classSchedule = await ClassScheduleModel.findOne(
-      { 'student.studentId': student._id.toString() },  // ✅ must match same way as countDocuments
+      { 'student.id': student._id.toString() },  // ✅ must match same way as countDocuments
       { 'teacher.teacherName': 1, 'sessionClassType': 1 }
     ).sort({ _id: -1 }).lean();
 
