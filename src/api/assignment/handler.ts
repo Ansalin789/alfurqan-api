@@ -176,11 +176,8 @@ export default {
         assignedTeacher,
       });
       // ✅ Generate assignmentId here (for this one group of questions)
-      const currentDate = new Date();
-      const datePart = `${currentDate.getDate()}${
-        currentDate.getMonth() + 1
-      }${currentDate.getFullYear()}`;
-      const sharedAssignmentId = `GRP-${Date.now()}-${datePart}`;
+     
+      const sharedAssignmentId = `REG-ASS-${String(Math.floor(1 + Math.random() * 99)).padStart(2, '0')}`;
 
       if (!studentId || !mongoose.Types.ObjectId.isValid(studentId)) {
         return h.response({ error: "Invalid studentId" }).code(400);
@@ -381,7 +378,8 @@ export default {
       const payload = req.payload as any;
       console.log("📥 Raw payload received:", payload);
 
-      const groupAssignmentId = payload.groupAssignmentId || `GRP-${Date.now()}-${new Date().getDate()}${new Date().getMonth()+1}${new Date().getFullYear()}`;
+      // Group assignment ID in format GRP-ASS-01
+      const groupAssignmentId = payload.groupAssignmentId || `GRP-ASS-${String(Math.floor(1 + Math.random() * 99)).padStart(2, '0')}`;
       
 
       // ✅ Parse and validate students list BEFORE reconstructing
