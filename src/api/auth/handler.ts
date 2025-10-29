@@ -362,6 +362,7 @@ console.log(">>>>email", payload.email);
         id:users._id,
         username1:activeRecord.userName,
         accessToken,
+        role:user.role[0]
       };// 200 - OK
     } catch (error) {
       return h.response({

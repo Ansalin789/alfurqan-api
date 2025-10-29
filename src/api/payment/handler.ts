@@ -159,7 +159,7 @@ async function createStudentPortal(updatedEvaluation: any) {
         country: updatedEvaluation.student.studentCountry,
         gender: updatedEvaluation.student.studentGender,
       },
-      username: updatedEvaluation.student.studentFirstName,
+      username: `${updatedEvaluation.student.studentFirstName} ${updatedEvaluation.student.studentLastName}`,
       sessionClassType: updatedEvaluation.classType,
       level: "1",
       password: password,
