@@ -18,7 +18,8 @@ import {
 import { Types } from "mongoose"
 import meetingschedule from "../models/calendar"
 import { PipelineStage } from "mongoose";
-import evaluation from "../models/evaluation"
+import evaluation from "../models/evaluation";
+import StudentModel from "../models/student";
 
 export interface EvaluationDetails {
   academicCoach: {
@@ -65,16 +66,16 @@ export const dashboardWidgetCounts = async (
     },
   ])
 
-  const totalclasspending = await EvaluationModel.aggregate([
+  const totalclasspending = await StudentModel.aggregate([
     {
       $match: {
-        academicCoachId: academicId,
-        classStatus: "Pending",
+       "academicCoach.academicCoachId": academicId,
+        "evaluationStatus": "PENDING",
       },
     },
     {
       $group: {
-        _id: { classStatus: "$classStatus" },
+        _id: { evaluationStatus: "$evaluationStatus" },
         count: { $sum: 1 },
       },
     },
@@ -98,15 +99,15 @@ export const dashboardWidgetCounts = async (
       "student.evaluationStatus": "COMPLETED", // Changed to uppercase if that's how it's stored in DB
     }).exec(),
 
-    EvaluationModel.countDocuments({
-      academicCoachId: academicId,
-      "student.evaluationStatus": "PENDING", // Changed to uppercase if that's how it's stored in DB
+    StudentModel.countDocuments({
+      "academicCoach.academicCoachId": academicId,
+      "evaluationStatus": "PENDING", // Changed to uppercase if that's how it's stored in DB
     }).exec(),
 
     // Count active candidates
     totalPendingClasses,
   ])
-
+console.log("evaluationPendingCount>>>", evaluationPendingCount);
   return {
     trialAssigned: trialclassAssigned,
     evaluationCompleted: evaluationCompletedCount,
