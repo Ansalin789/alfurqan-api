@@ -82,7 +82,7 @@ let getAssignmentInputValidation = z.object({
 async function streamToBuffer(stream: Stream.Readable): Promise<Buffer> {
   const chunks: Buffer[] = [];
   return new Promise((resolve, reject) => {
-    stream.on("data", (chunk) => chunks.push(chunk));
+    stream.on("data", (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
     stream.on("end", () => resolve(Buffer.concat(chunks)));
     stream.on("error", (err) => reject(err));
   });
@@ -332,10 +332,8 @@ export default {
           answer: "",
           answerValidation: rawPayload.answerValidation || "",
           assignmentStatus: rawPayload.assignmentStatus || "",
-          audioFile: audioFileBuffer ? Buffer.from(audioFileBuffer) : undefined,
-          uploadFile: uploadFileBufferNew
-            ? Buffer.from(uploadFileBufferNew)
-            : undefined,
+          audioFile: audioFileBuffer || undefined,
+uploadFile: uploadFileBufferNew || undefined,
           score: 0,
           rating: "",
         };
@@ -561,10 +559,8 @@ export default {
           answer: "",
           answerValidation: rawPayload.answerValidation || "",
           assignmentStatus: rawPayload.assignmentStatus || "",
-          audioFile: audioFileBuffer ? Buffer.from(audioFileBuffer) : undefined,
-          uploadFile: uploadFileBufferNew
-            ? Buffer.from(uploadFileBufferNew)
-            : undefined,
+          audioFile: audioFileBuffer || undefined,
+          uploadFile: uploadFileBufferNew || undefined,
           score: 0,
           rating: "",
         };
