@@ -24,7 +24,7 @@ export interface IMeetingUpdate{
 
 export interface IMeetingMinutesUpdate {
   meetingStatus: string;
-  duration: string;
+  duration?: string;
   meetingminutes: string;
   teacher: ITeacher[];  // Fix this from `string` to `ITeacher[]`
 }
@@ -337,7 +337,7 @@ export const updateMeetingMinutesAndAttendees = async (
   duration: string,
   teacher: ITeacher[],
   updatedBy?: string
-): Promise<IMeetingMinutesUpdate | null> => {
+): Promise<Partial<IMeetingMinutesUpdate> | null> => {
   const updated = await addmeeting.findOneAndUpdate(
     { _id: new Types.ObjectId(id) },
     {
@@ -350,10 +350,10 @@ export const updateMeetingMinutesAndAttendees = async (
         updatedDate: new Date(), // set server-side
       },
     },
-    { new: true, projection: { meetingminutes: 1, teacher: 1, _id: 0 } } // return only relevant fields
+    { new: true, projection: { meetingminutes: 1, teacher: 1, duration: 1, meetingStatus: 1, _id: 0 } } // return only relevant fields
   ).lean();
 
-  return updated;
+  return updated as unknown as Partial<IMeetingMinutesUpdate> | null;
 };
 
 

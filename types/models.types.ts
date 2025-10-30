@@ -1400,10 +1400,30 @@ export interface IRecruitmentCreate{
 }
 
 export interface ITeacher {
-  teacherId: string;
-  teacherName: string;
-  teacherEmail: string;
-  attendee: string;
+  teacherId?: string;
+  teacherName?: string;
+  teacherEmail?: string;
+  attendee?: string;
+}
+export interface IStudentMeeting {
+  studentId?: string;
+  studentName?: string;
+  studentEmail?: string;
+  attendee?: string;
+}
+export interface IAdminMeet {
+  adminId?: string;
+ adminName?: string;
+  adminEmail?: string;
+  attendee?: string;
+}
+// ✅ New unified participant interface
+export interface IParticipant {
+  participantId?: string;
+  participantName?: string;
+  participantEmail?: string;
+  role: "teacher" | "student" | "admin" | "supervisor"|"academiccoach";
+  attendee?: string;
 }
 
 export interface IMeetingCreate {
@@ -1412,46 +1432,41 @@ export interface IMeetingCreate {
   selectedDate: Date;
   startTime: string;
   endTime: string;
-  teacher: ITeacher[];
-   supervisor:{
+  supervisor?: {
     supervisorId?: string;
     supervisorName?: string;
     supervisorEmail?: string;
-   
   };
+  participants?: IParticipant[];
   description: string;
   meetingminutes?: string;
-  duration: string;
+  duration?: string;
   status: string;
   meetingStatus: string;
   createdDate: Date;
   createdBy: string;
   updatedDate?: Date;
   updatedBy?: string;
-
-  
 }
 
-
-export interface IMeeting extends Document{
-  
+export interface IMeeting extends Document {
   meetingName: string;
   meetingId: string;
-   supervisor:{
+  teacher: ITeacher[];
+  supervisor?: {
     supervisorId?: string;
     supervisorName?: string;
     supervisorEmail?: string;
-    supervisorRole?: string;
   };
   selectedDate: Date;
-  startTime: any;
-  endTime: any;
-  teacher: ITeacher[];  // Array of teacher objects
+  startTime: string;
+  endTime: string;
+  participants?: IParticipant[];
   description: string;
   status: string;
   meetingStatus: string;
-  meetingminutes: string;
-  duration: string;
+  meetingminutes?: string;
+  duration?: string;
   createdDate: Date;
   createdBy: string;
   updatedDate?: Date;

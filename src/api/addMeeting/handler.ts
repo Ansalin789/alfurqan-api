@@ -7,26 +7,28 @@ import { notFound } from "@hapi/boom";
 import { addMeetingMessages, ClassSchedulesMessages } from "../../config/messages";
 import { checkMeetingConflict, getMeetingById, mergeMeetingPayload } from "../../shared/utils/meetingUtils";
 import { supervisorAddMeeting } from "../../kafka/producers/supervisorProducer";
-import { ITeacher } from "../../../types/models.types";
+import { ITeacher, IParticipant } from "../../../types/models.types";
 import { academicAvailableTeachers } from "../../kafka/producers/academicProducer";
 
 
 const createInputValidation = z.object({
   payload: zodAddMeetingSchema.pick({
     meetingName: true,
+    meetingId: true,
     selectedDate: true,
     startTime: true,
     endTime: true,
-    teacher: true,
     supervisor: true,
     description: true,
     status: true,
+    teacher: true,
     meetingStatus: true,
     meetingminutes: true,
     createdDate: true,
     createdBy: true,
-    duartion:true,
+    duration:true,
     updatedDate: true,
+    participants: true,
   }),
 });
 
@@ -55,62 +57,94 @@ const updateMeetingInputValidation = zodAddMeetingSchema.pick({
 
 
 export default {
-async createMeeting(req: Request, h: ResponseToolkit) {
-  try {
-    const { payload } = createInputValidation.parse({ payload: req.payload });
-
-    let supervisor: { supervisorId?: string; supervisorName?: string; supervisorEmail?: string } = {};
-
-    if (typeof payload.supervisor === "string") {
-      try {
-        const parsed = JSON.parse(payload.supervisor);
-        supervisor = {
-          supervisorId: parsed.supervisorId,
-          supervisorName: parsed.supervisorName,
-          supervisorEmail: parsed.supervisorEmail
-        };
-      } catch (err) {
-        console.error("Failed to parse supervisor string:", err);
+  async createMeeting(req: Request, h: ResponseToolkit) {
+    try {
+      const { payload } = createInputValidation.parse({ payload: req.payload });
+  
+      // ✅ Parse supervisor safely (can be stringified or object)
+      let supervisor: {
+        supervisorId?: string;
+        supervisorName?: string;
+        supervisorEmail?: string;
+      } = {};
+  
+      if (typeof payload.supervisor === "string") {
+        try {
+          supervisor = JSON.parse(payload.supervisor);
+        } catch (err) {
+          console.error("Failed to parse supervisor string:", err);
+        }
+      } else if (typeof payload.supervisor === "object" && payload.supervisor !== null) {
+        supervisor = payload.supervisor;
       }
-    } else if (typeof payload.supervisor === "object" && payload.supervisor !== null) {
-      supervisor = {
-        supervisorId: payload.supervisor.supervisorId,
-        supervisorName: payload.supervisor.supervisorName,
-        supervisorEmail: payload.supervisor.supervisorEmail
-      };
+  
+      // ✅ Parse participants array safely
+      const participants = Array.isArray(payload.participants)
+      ? payload.participants.map((p: IParticipant) => ({
+          participantId: p.participantId,
+          participantName: p.participantName,
+          participantEmail: p.participantEmail,
+          role: p.role,
+          attendee: p.attendee || p.role,
+        }))
+      : [];
+    
+  
+      // ✅ Generate meeting ID if not provided
+      const meetingId = payload.meetingId || `meet-${crypto.randomUUID()}`;
+  
+      // ✅ Create meeting
+      const meeting = await createMeeting({
+        meetingName: payload.meetingName,
+        meetingId,
+        selectedDate: payload.selectedDate,
+        startTime: payload.startTime,
+        endTime: payload.endTime,
+        description: payload.description,
+        participants: payload.participants,
+        supervisor,
+        meetingStatus: payload.meetingStatus,
+        status: payload.status,
+        createdDate: payload.createdDate,
+        createdBy: payload.createdBy,
+        updatedDate: payload.updatedDate, // ✅ unified list only
+      });
+  
+      // ✅ Optional: handle side effects (if needed)
+      if (meeting) {
+        await supervisorAddMeeting({ data: meeting });
+  
+        // optional: update teacher availability if teachers exist
+        const teacherIds = participants
+          .filter((p) => p.role === "teacher")
+          .map((p) => p.participantId || "");
+  
+        if (teacherIds.length > 0) {
+          await academicAvailableTeachers({
+            event: "update",
+            data: {
+              date: payload.selectedDate,
+              teacherId: teacherIds,
+              from: payload.startTime,
+              to: payload.endTime,
+            },
+          });
+        }
+      }
+  
+      return h
+        .response({
+          message: "✅ Meeting created successfully",
+          data: meeting,
+        })
+        .code(201);
+    } catch (error) {
+      console.error("❌ Error creating meeting:", error);
+      return h.response({ error: (error as Error).message }).code(400);
     }
-
-    const meeting = await createMeeting({
-      meetingName: payload.meetingName,
-      selectedDate: new Date(payload.selectedDate),
-      startTime: payload.startTime,
-      endTime: payload.endTime,
-      teacher: Array.isArray(payload.teacher) ? payload.teacher : [],
-      supervisor, 
-      description: payload.description,
-      status: payload.status,
-      meetingStatus: payload.meetingStatus ?? "Scheduled",
-      meetingminutes: payload.meetingminutes,
-      createdDate: payload.createdDate || new Date(),
-      createdBy: payload.createdBy,
-      updatedDate: payload.updatedDate || new Date(),
-      meetingId: "",
-      duration: payload.duartion || "",
-
-    });
-
-    if (meeting) {
-     await supervisorAddMeeting({data: meeting });
-     await academicAvailableTeachers({event : 'update' , data : {date : payload.selectedDate , teacherId : payload.teacher ,from : payload.startTime ,to :payload.endTime }} );
-    }
-
-    return h.response({ message: "Meeting created successfully", data: meeting }).code(201);
-  } catch (error) {
-    return h.response({ error }).code(400);
   }
-},
-
-
+  
+,
 async getAllMeetings(req: Request, h: ResponseToolkit) {
   const { supervisorId, offset, limit, sortBy } = req.query;
 
