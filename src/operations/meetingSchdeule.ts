@@ -60,3 +60,6 @@ export const getAcademicCoachId = async (
   }).lean();
 };
 
+export const getAllMeetings = async () => {
+  return await MeetingSchedules.find();
+};

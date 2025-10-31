@@ -20,10 +20,14 @@ const addMeetingSchema = new Schema<IMeeting>(
     meetingName: { type: String, required: true },
     meetingId: { type: String, required: false },
 
-    supervisor: {
-      supervisorId: { type: String, required: false },
-      supervisorName: { type: String, required: false },
-      supervisorEmail: { type: String, required: false },
+  
+
+    // ✅ Organizer details (one of admin/teacher/supervisor/student/academiccoach)
+    organizer: {
+      organizerId: { type: String, required: false },
+      organizerName: { type: String, required: false },
+      organizerEmail: { type: String, required: false },
+      role: { type: String, enum: ["teacher", "student", "admin", "supervisor", "academiccoach"], required: false },
       _id: false,
     },
 
@@ -76,11 +80,15 @@ export const zodAddMeetingSchema = z.object({
     teacherEmail: z.string().optional(),
     attendee: z.string().optional(),
   })).optional(),
-  supervisor: z
+
+
+  // ✅ Organizer validation
+  organizer: z
     .object({
-      supervisorId: z.string().optional(),
-      supervisorName: z.string().optional(),
-      supervisorEmail: z.string().optional(),
+      organizerId: z.string().optional(),
+      organizerName: z.string().optional(),
+      organizerEmail: z.string().optional(),
+      role: z.enum(["teacher", "student", "admin", "supervisor", "academiccoach"]).optional(),
     })
     .optional()
     .nullable(),

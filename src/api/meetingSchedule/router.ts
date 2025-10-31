@@ -28,6 +28,17 @@ const register = async (server: Server): Promise<void> => {
           strategies: ["jwt"],
         }, },
     },
+    {
+      method: "GET",
+      path: "/meetinglist",
+      options: {
+        handler: handler.allMeeting,
+        description: meetingSchedulesMessages.LIST,
+        // auth: {
+        //   strategies: ["jwt"],
+        // },  
+       },
+    },
     
   ];
   server.route(routes);
