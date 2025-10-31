@@ -352,6 +352,9 @@ export const requestReschedule = async (payload: any) => {
     const evaluation = await Evaluation.findOne({
   "student.studentId": alfstudent?.student.studentId,
     });
+     const oldresult = await ClassScheduleModel.findOne({
+      _id: new Types.ObjectId(payload._id),
+     }).exec();
     const rescheduleResult = await ClassScheduleModel.findOneAndUpdate(
       { _id: new Types.ObjectId(payload._id) },
       { $set: { scheduleStatus: "RequestReschedule" } },
@@ -363,9 +366,12 @@ export const requestReschedule = async (payload: any) => {
     const requestUserId = payload.requestedBy === "student" ? classSchedule?.student.studentId : classSchedule?.teacher.teacherId;
     const requestEmail = payload.requestedBy === "student" ? classSchedule?.student.studentEmail : classSchedule?.teacher.teacherEmail;
     const message = `${requestName} (${payload.requestedBy}) has requested to reschedule class on ${classSchedule?.startDate} at ${classSchedule?.startTime[0]}.`;
+    // Arrange message content for better readability:
     const messageContent = 
-     `Requesting to reschedule class on ${classSchedule?.startDate} at ${classSchedule?.startTime[0]} from ${classSchedule?.endTime[0]} to ${payload.requestDate} at ${payload.fromTime} - ${payload.toTime}.\n` +
-     `Comment: ${payload.comment}`;
+      `Requesting to reschedule class:\n` +
+      `- From: ${oldresult?.startDate} ${oldresult?.startTime[0]} to ${classSchedule?.startDate} at ${classSchedule?.startTime[0]}\n` +
+      `- Time Change: from ${classSchedule?.endTime[0]} to ${payload.requestDate} at ${payload.fromTime} - ${payload.toTime}\n` +
+      `Comment: ${payload.comment}`;
     if(rescheduleResult){
     await sendNotification({
                  messages: message,
@@ -376,7 +382,7 @@ export const requestReschedule = async (payload: any) => {
                  receiverId: [academicCoach?._id.toString()],
                  receiverName: [academicCoach?.userName],
                  receiverEmail: [academicCoach?.email],
-                 notificationType: " REQUEST_RESCHEDULE",
+                 notificationType: `REQUEST_RESCHEDULE_${payload.requestedBy.toUpperCase()}`,                 
                  notificationStatus: "Unseen",
                  status: "active",
                  createdBy: "system",
