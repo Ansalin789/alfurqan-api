@@ -12,7 +12,10 @@ const TimeSlotSchema = new Schema(
 );
 
 const evaluationSchema = new Schema<IEvaluation>({
-
+trialId : {
+      type: String,
+    required: false,
+},
 academicCoachId: {
     type: String,
     required: true,

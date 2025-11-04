@@ -104,8 +104,10 @@ export default {
         const classDayValues = payload.classDay?.map((day: { value: string; label: string }) => day.value);
         const startTimeValues = payload.startTime?.map((time: { value: string; label: string }) => time.value);
         const endTimeValues = payload.endTime?.map((time: { value: string; label: string }) => time.value);
-
+   
+        const generateTrialId = trialIdGenerator("AFT");
         const result = await createEvaluationRecord({
+          trialId: generateTrialId,
           academicCoachId: payload.academicCoachId ?? "",
 
             student: { // Ensure studentId is included
@@ -368,4 +370,16 @@ if(result){
   }
 
 
+  const useNumber  = 0;
+function trialIdGenerator(trialprefix: string) {
+
+// auto reset 
+if(useNumber > 99999){
+    throw new Error("All 5-digit trial IDs have been used!");
+
+}
+  const formattedNum = useNumber.toString().padStart(5, "0");
+  return `${trialprefix}${formattedNum}`;
+
+}
 

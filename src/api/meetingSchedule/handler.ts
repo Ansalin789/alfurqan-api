@@ -2,7 +2,7 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation"; // Assuming this is your schema
-import { getAcademicCoachId, getAllAcademicCoach} from "../../operations/meetingSchdeule";
+import { getAcademicCoachId, getAllAcademicCoach, getAllMeetings} from "../../operations/meetingSchdeule";
 import { meetingSchedulesMessages } from "../../config/messages";
 import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
@@ -43,6 +43,16 @@ const handler = {
     }
   },
   
+  async allMeeting(req:Request, h: ResponseToolkit) {
+    try {
+      const result = await getAllMeetings(); // ✅ Correct await syntax
+      return h.response(result).code(200);
+    } catch (error) {
+      console.error("Error fetching meetings:", error);
+      return h.response({ error: "Invalid query parameters" }).code(400);
+    }
+  },
+
   async getAcademicCoachId(req: Request, h: ResponseToolkit) {
     console.log("id>>",req.params.academicCoachId);
     const result = await getAcademicCoachId(String(req.params.academicCoachId));

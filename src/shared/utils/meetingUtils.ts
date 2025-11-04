@@ -52,7 +52,7 @@ export function mergeMeetingPayload(payload: any, existingMeeting: any) {
  */
 export async function checkMeetingConflict(
   teacherId?: string,
-  supervisorId?: string,
+  organizerId?: string,
   studentId?:string,
   selectedDate?: string,
   startTime?: string,
@@ -65,7 +65,7 @@ export async function checkMeetingConflict(
       {
         $or: [
           { "teacher.teacherId": teacherId }, // Check teacher conflict
-          { "supervisor.supervisorId": supervisorId },
+          { "supervisor.supervisorId": organizerId },
           {'participants.studentId':studentId}, // Check supervisor conflict
         ],
       },

@@ -329,7 +329,8 @@ export interface ICourseCreate {
 
 
 export interface IEvaluation extends Document {
-  academicCoachId: string;
+trialId?: string;
+academicCoachId: string;
 student: {
   studentId: string;
   studentRegisterId: string;
@@ -425,6 +426,7 @@ updatedBy?: string;
 
 
 export interface IEvaluationCreate{
+  trialId?: string;
   academicCoachId: string;
   student: {
   studentId?: string;
@@ -1417,6 +1419,12 @@ export interface IAdminMeet {
   adminEmail?: string;
   attendee?: string;
 }
+export interface IOrganizer {
+  organizerId?: string;
+  organizerName?: string;
+  organizerEmail?: string;
+  role?: "teacher" | "student" | "admin" | "supervisor" | "academiccoach";
+}
 // ✅ New unified participant interface
 export interface IParticipant {
   participantId?: string;
@@ -1432,11 +1440,7 @@ export interface IMeetingCreate {
   selectedDate: Date;
   startTime: string;
   endTime: string;
-  supervisor?: {
-    supervisorId?: string;
-    supervisorName?: string;
-    supervisorEmail?: string;
-  };
+  organizer?: IOrganizer;
   participants?: IParticipant[];
   description: string;
   meetingminutes?: string;
@@ -1453,11 +1457,7 @@ export interface IMeeting extends Document {
   meetingName: string;
   meetingId: string;
   teacher: ITeacher[];
-  supervisor?: {
-    supervisorId?: string;
-    supervisorName?: string;
-    supervisorEmail?: string;
-  };
+  organizer?: IOrganizer;
   selectedDate: Date;
   startTime: string;
   endTime: string;
