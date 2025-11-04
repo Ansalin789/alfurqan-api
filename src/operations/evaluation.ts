@@ -81,7 +81,6 @@ export const createEvaluationRecord = async (
       email: loginUser?.email, // Provide a default value if undefined
     };
   }
-  console.log("roll no:", rollNo);
   newStudent.studentId = rollNo;
   newStudent.firstName = payload.student.studentFirstName;
   newStudent.lastName = payload.student.studentLastName;
@@ -456,7 +455,7 @@ async function trialClassAssigned(
       country: createEvaluation.student.studentCountry,
       phonenumber: createEvaluation.student.studentPhone,
     },
-    trialId: createEvaluation._id,
+    trialId: createEvaluation.trialId,
     subject: "Student First class",
     meetingLocation: "Zoom",
     course: {
