@@ -87,6 +87,7 @@ export interface IStudents extends Document {
     role: string;
     email: string;
 };
+
   email: string;
   gender: string;
   phoneNumber: number;
@@ -116,6 +117,8 @@ export interface IStudentCreate {
   academicCoach: {
     academicCoachId: string;
   };
+  profilepic?: Buffer;
+
   email: string;
   gender: string;
   phoneNumber: number;
@@ -760,6 +763,8 @@ export interface IAlStudents extends Document{
     city:string;
     country: string;
   };
+profilepic?: Buffer;
+
 
   level?: string;
   username: string,
@@ -783,6 +788,8 @@ export interface IAlStudentCreate{
     studentPhone: number;
     gender: string;
   };
+profilepic?: Buffer;
+
   level?: string;
   username: string,
   role: string;
