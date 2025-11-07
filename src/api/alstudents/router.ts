@@ -77,7 +77,21 @@ const register = async (server: Server): Promise<void> => {
             // },
           },
         },
-
+        {
+          method: "PUT",
+          path: "/studentProfile/{id}",
+          options: {
+            payload: {
+              maxBytes: 10 * 1024 * 1024, // 10 MB max
+              output: "stream",            // 'stream' is better for files
+              parse: true,
+              multipart: true,             // enables multipart parsing
+              allow: "multipart/form-data"
+            },
+            handler: handler.updateStudentProfile,
+            tags: ["api", "student"],
+           },
+        },
 
   ];
   server.route(routes);
