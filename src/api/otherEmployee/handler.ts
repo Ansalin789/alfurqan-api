@@ -6,6 +6,7 @@ import * as Stream from "stream";
 import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
 import { recruitmentMessages } from "../../config/messages";
+import { Readable } from "stream";
 
 
 
@@ -99,7 +100,7 @@ export default {
             expectedSalary: payload.expectedSalary,
             applicationStatus: payload.applicationStatus,
             preferedWorkingDays: payload.preferedWorkingDays,
-            resume: uploadFileBuffer ? Buffer.from(uploadFileBuffer) : undefined ,
+            resume: uploadFileBuffer ? uploadFileBuffer : undefined ,
             status: payload.status
           }) 
      },
@@ -118,12 +119,15 @@ export default {
         },
  
 }
-async function streamToBuffer(stream: Stream.Readable): Promise<Buffer> {
-  const chunks: Buffer[] = [];
+async function streamToBuffer(stream: Readable): Promise<Buffer> {
+  const chunks: any[] = [];
+
   return new Promise((resolve, reject) => {
-    stream.on("data", (chunk: Buffer) => chunks.push(chunk));
-    stream.on("end", () => resolve(Buffer.concat(chunks)));
+    stream.on("data", (chunk: any) =>
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+    );
     stream.on("error", (err: any) => reject(err));
+    stream.on("end", () => resolve(Buffer.concat(chunks)));
   });
-};
+}
 

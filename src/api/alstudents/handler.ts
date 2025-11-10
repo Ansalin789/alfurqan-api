@@ -43,13 +43,18 @@ const createInputValidation = z.object({
 
 // Convert a Readable stream into a Buffer
 async function streamToBuffer(stream: Readable): Promise<Buffer> {
-  const chunks: Buffer[] = [];
+  const chunks: any[] = [];
+
   return new Promise((resolve, reject) => {
-    stream.on("data", (chunk: any) => chunks.push(Buffer.from(chunk)));
+    stream.on("data", (chunk: any) =>
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+    );
     stream.on("error", (err: any) => reject(err));
     stream.on("end", () => resolve(Buffer.concat(chunks)));
   });
 }
+
+
 // Handler object
 const handler = {
   // Handler for getting all students
@@ -159,6 +164,8 @@ const handler = {
 
     return getStudentlevel(studentId);
   },
+
+
   async updateStudentProfile(req: Request, h: ResponseToolkit) {
     try {
       const studentId = req.params.id; // get _id from URL
@@ -166,36 +173,63 @@ const handler = {
         return h.response({ error: "_id is required in URL" }).code(400);
       }
 
-      const payload = zodAlStudentSchema.parse(req.payload);
+      const payload = req.payload as any;
+      console.log('Received payload keys:', Object.keys(payload));
 
-      let studentData = payload.student;
-      if (typeof studentData === "string") {
-        studentData = JSON.parse(studentData);
+      // Handle student data from form fields with brackets notation
+      let studentData: any = {};
+      
+      // Map form fields to student object
+      Object.keys(payload).forEach(key => {
+        // Match pattern like student[fieldName]
+        const match = key.match(/^student\[(.*?)\]$/);
+        if (match) {
+          const fieldName = match[1];
+          studentData[fieldName] = payload[key];
+        }
+      });
+
+      // If no nested fields found, try parsing as JSON string
+      if (Object.keys(studentData).length === 0 && payload.student) {
+        if (typeof payload.student === "string") {
+          try {
+            studentData = JSON.parse(payload.student);
+          } catch (error) {
+            return h.response({ error: "Invalid student data format" }).code(400);
+          }
+        } else {
+          studentData = payload.student;
+        }
       }
+
+      // Handle profile picture
       let uploadFileBuffer: Buffer | undefined;
       if (payload.profilepic) {
-        if (Buffer.isBuffer(payload.profilepic)) {
+        if (payload.profilepic._data) {
+          // Handle stream data from multipart
+          uploadFileBuffer = await streamToBuffer(payload.profilepic);
+        } else if (Buffer.isBuffer(payload.profilepic)) {
           uploadFileBuffer = payload.profilepic;
-        } else if (
-          typeof payload.profilepic === "object" &&
-          "_data" in payload.profilepic
-        ) {
-          uploadFileBuffer = payload.profilepic._data;
         } else if (typeof payload.profilepic === "string") {
-          uploadFileBuffer = Buffer.from(payload.profilepic, "base64");
+          try {
+            uploadFileBuffer = Buffer.from(payload.profilepic, "base64");
+          } catch (error) {
+            return h.response({ error: "Invalid profile picture format" }).code(400);
+          }
         }
       }
       // 🔹 Update student
       const result = await updateStudent({
+        _id: studentId,
         student: {
-          studentId: payload.student?.studentId || "",
-          studentEmail: payload.student?.studentEmail || "",
-          studentPhone: payload.student?.studentPhone || 0,
-          course: payload.student?.course || "",
-          package: payload.student?.package || "",
-          city: payload.student?.city || "",
-          country: payload.student?.country || "",
-          gender: payload.student?.gender || "",
+          studentId: studentData.studentId || "",
+          studentEmail: studentData.studentEmail || "",
+          studentPhone: studentData.studentPhone || 0,
+          course: studentData.course || "",
+          package: studentData.package || "",
+          city: studentData.city || "",
+          country: studentData.country || "",
+          gender: studentData.gender || "",
         },
         username: payload.username || " ",
         role: payload.role || " ",

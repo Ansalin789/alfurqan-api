@@ -26,6 +26,7 @@ import {
   GetAllAssignmentRecordsParams,
   GetAlluserRecordsParams,
 } from "../../shared/enum";
+import { Readable } from "stream";
 
 // Input Validations for student list
 const getAssignmnentListInputValidation = z.object({
@@ -79,12 +80,15 @@ let getAssignmentInputValidation = z.object({
 });
 
 // Helper function to convert a readable stream to a buffer
-async function streamToBuffer(stream: Stream.Readable): Promise<Buffer> {
-  const chunks: Buffer[] = [];
+async function streamToBuffer(stream: Readable): Promise<Buffer> {
+  const chunks: any[] = [];
+
   return new Promise((resolve, reject) => {
-    stream.on("data", (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+    stream.on("data", (chunk: any) =>
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+    );
+    stream.on("error", (err: any) => reject(err));
     stream.on("end", () => resolve(Buffer.concat(chunks)));
-    stream.on("error", (err) => reject(err));
   });
 }
 

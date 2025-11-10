@@ -12,6 +12,7 @@ import { isNil, result } from "lodash";
 import { supervisorCardCount, supervisorRecruitmentList, supervisorTeacherList } from "../../kafka/producers/supervisorProducer";
 import { sendNotification } from "../../operations/notification";
 
+
 const createInputValidation = z.object({
   payload: zodRecruitmentSchema.pick({
     supervisor: true,
@@ -129,7 +130,7 @@ export default{
       expectedSalary: payload.expectedSalary,
       preferedWorkingHours: payload.preferedWorkingHours,
       uploadResume: uploadFileBuffer
-        ? Buffer.from(uploadFileBuffer)
+        ? uploadFileBuffer
         : undefined,
       comments: payload.comments || "",
       applicationStatus: payload.applicationStatus,
@@ -343,14 +344,18 @@ try{
 
 
 
-async function streamToBuffer(stream: Stream.Readable): Promise<Buffer> {
-  const chunks: Buffer[] = [];
+async function streamToBuffer(stream: Readable): Promise<Buffer> {
+  const chunks: any[] = [];
+
   return new Promise((resolve, reject) => {
-    stream.on("data", (chunk) => chunks.push(chunk));
+    stream.on("data", (chunk: any) =>
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+    );
+    stream.on("error", (err: any) => reject(err));
     stream.on("end", () => resolve(Buffer.concat(chunks)));
-    stream.on("error", (err) => reject(err));
   });
-};
+}
+
 
 
 const extractResumeDetails = async (fileStream: any) => {
