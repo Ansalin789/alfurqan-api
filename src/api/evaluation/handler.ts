@@ -301,7 +301,7 @@ if(result){
 
     // Retrieve student details by studentId
   async getEvaluationRecordById(req: Request, h: ResponseToolkit) {
-    const result = await getEvaluationRecordById(String(req.params.evaluationId));
+    const result = await getEvaluationRecordById(req.params.evaluationId);
   
     if (isNil(result)) {
       return notFound(evaluationMessages.EVALUATIONS_NOT_FOUND);
@@ -359,8 +359,9 @@ if(result){
     },
 
    async getTrialClassByTeacher(req: Request, h: ResponseToolkit){
+      console.log("Id>>>>>", req.query.teacherId);
     const result = await getTrialClassRecordById(req.query.teacherId);
-  
+
     if (isNil(result)) {
       return notFound(evaluationMessages.EVALUATIONS_NOT_FOUND);
     }

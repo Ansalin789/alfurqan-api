@@ -650,7 +650,7 @@ export const getEvaluationRecordById = async (
   id: string
 ): Promise<IEvaluation | null> => {
   return EvaluationModel.findOne({
-    _id: new Types.ObjectId(id),
+    trialId: id,
   }).lean();
 };
 
@@ -990,24 +990,19 @@ export const getTrialClassRecordById = async (teacherId: string) => {
     //     $lte: endOfDayIST
     //   }
   }).sort({ scheduledFrom: 1 });
-  //  console.log("trialClass>>>>", trialClass)
   let getTrialsClassstatus;
   for (const trialClassUpdateDetails of trialClass) {
     getTrialsClassstatus = await EvaluationModel.findOne({
-      _id: new Types.ObjectId(trialClassUpdateDetails.trialId),
+      trialId: trialClassUpdateDetails.trialId
     }).exec();
-    //console.log("trialClass>>>>", trialClass)
-    console.log("getTrialsClassstatus>>>>", getTrialsClassstatus);
-
-    if (getTrialsClassstatus && getTrialsClassstatus.trialClassStatus == "") {
+    if (getTrialsClassstatus && (getTrialsClassstatus.trialClassStatus == "" || getTrialsClassstatus.trialClassStatus =="PENDING")) {
       const trialClass = await MeetingSchedule.find({
-        trialId: getTrialsClassstatus._id.toString(),
+        trialId: getTrialsClassstatus.trialId,
         // scheduledStartDate:  {
         //     $gte: startOfDayIST,
         //     $lte: endOfDayIST
         //   }
       }).sort({ scheduledFrom: 1 });
-      console.log("trialClass list>>>>", trialClass);
 
       return trialClass || "";
     }
