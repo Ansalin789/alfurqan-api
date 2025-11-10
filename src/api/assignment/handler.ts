@@ -214,6 +214,7 @@ export default {
               "reading",
               "image identification",
               "word match",
+              "reading comprehension",
             ].includes(parsedType.type)
           ) {
             console.error(
@@ -333,7 +334,7 @@ export default {
           answerValidation: rawPayload.answerValidation || "",
           assignmentStatus: rawPayload.assignmentStatus || "",
           audioFile: audioFileBuffer || undefined,
-uploadFile: uploadFileBufferNew || undefined,
+          uploadFile: uploadFileBufferNew || undefined,
           score: 0,
           rating: "",
         };
@@ -467,6 +468,7 @@ uploadFile: uploadFileBufferNew || undefined,
               "reading",
               "image identification",
               "word match",
+              "reading comprehension",
             ].includes(parsedType.type)
           ) {
             return h.response({ error: "Invalid assignmentType" }).code(400);

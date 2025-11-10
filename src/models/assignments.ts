@@ -14,6 +14,7 @@ const assignmentTypeSchema = new Schema(
         assigmentType.READING,
         assigmentType.IMAGE_IDENTIFICATION,
         assigmentType.WORD_MATCHING,
+        assigmentType.READING_COMPREHENSION,
       ],
       required: true,
     },
@@ -63,7 +64,7 @@ const assignmentSchema = new Schema<IAssignment>(
     assignedDate: { type: Date, required: true },
     dueDate: { type: Date, required: true },
     answer: { type: String, required: false },
-    answerValidation: { type: String, required: true },
+    answerValidation: { type: String, required: false },
     assignmentStatus: { type: String, required: true },
     commends: { type: String, required: false },
     score: { type: Number, required: false }, // New field for score
@@ -93,6 +94,7 @@ export const assignmentValidationSchema = z.object({
       assigmentType.READING,
       assigmentType.IMAGE_IDENTIFICATION,
       assigmentType.WORD_MATCHING,
+      assigmentType.READING_COMPREHENSION,
     ]),
     name: z.string(), // optional in schema
   }),
@@ -167,7 +169,7 @@ export const assignmentValidationSchema = z.object({
     .transform((val) => new Date(val)),
 
   answer: z.string().optional(),
-  answerValidation: z.string(),
+  answerValidation: z.string().optional(),
   assignmentStatus: z.enum([
     AssignmentStatus.ASSIGNED,
     AssignmentStatus.PENDING,
