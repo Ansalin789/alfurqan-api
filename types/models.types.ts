@@ -839,7 +839,7 @@ export interface IAssignment extends Document {
   assignedTeacher: string;
   assignedTeacherId: string;
   assignmentType: {
-    type: "quiz" | "writing" | "reading" | "image identification" | "word match";
+    type: "quiz" | "writing" | "reading" | "image identification" | "word match" | "reading comprehension";
     name?: string;
   };
   chooseType?: boolean;
@@ -863,7 +863,7 @@ export interface IAssignment extends Document {
   assignedDate: Date;
   dueDate: Date;
   answer: string;
-  answerValidation: string;
+  answerValidation?: string;
   assignmentStatus: AssignmentStatus;
   commends?: string;
   score: number; 
@@ -882,7 +882,7 @@ groupId?: string;
   assignedTeacher: string;
   assignedTeacherId: string;
 assignmentType: {
-    type: "quiz" | "writing" | "reading" | "image identification" | "word match";
+    type: "quiz" | "writing" | "reading" | "image identification" | "word match" | "reading comprehension";
     name?: string;
   };
   chooseType: boolean;
@@ -949,7 +949,7 @@ export interface IAssignmentCreate {
   assignedDate?: Date;
   dueDate?: Date;
   answer: string;
-  answerValidation: string;
+  answerValidation?: string;
   assignmentStatus: string;
     commends?: string;
   score: number; 

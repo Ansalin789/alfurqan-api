@@ -47,7 +47,8 @@ type AssignmentItem = {
     | "writing"
     | "reading"
     | "image identification"
-    | "word match";
+    | "word match"
+    | "reading comprehension";
   title: string;
   assignedDate: Date;
   dueDate: Date;
