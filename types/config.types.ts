@@ -1,3 +1,5 @@
+import { RegisterOptions as SwaggerOptions } from 'hapi-swagger';
+
 export interface Config {
     server: {
         host: string;
@@ -10,6 +12,9 @@ export interface Config {
     //     dsn: string,
     //     env: string
     // },
+
+      // Swagger options
+    swaggerOptions: SwaggerOptions;
     encryption: {
         iv: string
     },
