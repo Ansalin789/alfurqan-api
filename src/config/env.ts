@@ -18,6 +18,17 @@ export const config: Config = {
   //   dsn: process.env.SENTRY_DSN ?? "",
   //   env: process.env.SENTRY_ENVIRONMENT!,
   // },
+
+    // Swagger options
+ swaggerOptions: {
+    info: {
+      title: 'My API Documentation',
+      version: '1.0.0',
+    },
+    grouping: 'tags',   // optional: group routes by tags
+    jsonPath: '/swagger.json',
+    documentationPath: '/docs',
+  },
   encryption: {
     iv: process.env.ENCRYPTION_IV!,
   },
