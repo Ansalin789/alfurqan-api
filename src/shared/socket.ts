@@ -2,6 +2,7 @@ import { Server as SocketIOServer, Socket } from "socket.io";
 import { Server as HttpServer } from "http";
 import AppLogger from "../helpers/logging";
 import { academicAvailableTeachersList, academicTeacherWeeklySlots, academicTrailClassTeacher } from "../kafka/producers/academicProducer";
+import message from "../models/message";
 
 // Map to track sockets connected per userId
 const userSocketsMap = new Map<string, Set<string>>();
@@ -64,24 +65,24 @@ export const initializeSocket = (httpServer: HttpServer): void => {
       }
     });
 
-   socket.on('userActiveStatusCheck', (data) => {
+   socket.on('userActiveStatusCheck', async(data) => {
   try {
-    const { userId } = data;
+    const { userId , senderId } = data;
     if (!userId) {
-      return socket.emit('userActiveStatusResponse', {
-        success: false,
+      return emitEventToClient('userActiveStatusResponse', {
+        success: "inactive",
         message: 'User ID is required',
-      });
+      }, senderId);
     }
-
+  console.log("userId",userId);
     // Check if user is active
     const isActive = userSocketsMap.has(userId) && userSocketsMap.get(userId)!.size > 0;
-
+     console.log("isActive",isActive);
     // Send back result to the requester
-    socket.emit('userActiveStatusResponse', {
-      userId,
-      isActive,
-    });
+    emitEventToClient('userActiveStatusResponse', {
+      success: isActive ? "active" : "inactive",
+       message: isActive ? 'User is active' : 'User is inactive',
+    },senderId);
   } catch (error) {
     AppLogger.error('Error checking user active status', error);
   }
