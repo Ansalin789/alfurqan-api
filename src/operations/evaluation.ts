@@ -34,6 +34,7 @@ import { sendNotification } from "./notification";
 import { evaluationTeacherSlotBook } from "../redis/handler/teacherSlotHander";
 import moment from "moment";
 import { generateRollNo } from "./rollcounter";
+import users from "../models/users";
 
 export interface EvaluationFilter {
   id(id: any): string;
@@ -481,18 +482,18 @@ async function trialClassAssigned(
     lastUpdatedBy: "Admin",
   });
   await CreatemeetingDetails.save();
-
+const academicCoach = await users.findById(createEvaluation.academicCoachId);
   if (teacherDetails.userId) {
     await sendNotification({
       messages: `${createEvaluation.student.studentFirstName} ${createEvaluation.student.studentLastName} has been assigned to you for a trial class.`,
       senderId: createEvaluation.academicCoachId?.toString() ?? "system",
-      senderName: createEvaluation.academicCoachName ?? "system",
-      senderEmail: createEvaluation.createdBy,
+      senderName: academicCoach?.userName ?? "system",
+      senderEmail: academicCoach?.email ?? "system",
       isRead: false,
       receiverId: [teacherDetails.userId],
       receiverName: [teacherDetails.userName],
       receiverEmail: [teacherDetails.email],
-      notificationType: "TEACHER_NOTIFICATION",
+      notificationType: "TEACHER_TRAILCLASS_NOTIFICATION",
       notificationStatus: "Unseen",
       status: "active",
       createdBy: "system",

@@ -358,7 +358,7 @@ export const requestReschedule = async (payload: any) => {
      }).exec();
     const rescheduleResult = await ClassScheduleModel.findOneAndUpdate(
       { _id: new Types.ObjectId(payload._id) },
-      { $set: { scheduleStatus: "RequestReschedule" } },
+      { $set: { scheduleStatus: "Reschedulerequested" } },
       { new: true }
     );
     const academicCoachId = evaluation?.academicCoachId;

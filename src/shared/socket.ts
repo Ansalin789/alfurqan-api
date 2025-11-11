@@ -63,6 +63,29 @@ export const initializeSocket = (httpServer: HttpServer): void => {
          AppLogger.error(`Error fetching available teachers list`, error);
       }
     });
+
+   socket.on('userActiveStatusCheck', (data) => {
+  try {
+    const { userId } = data;
+    if (!userId) {
+      return socket.emit('userActiveStatusResponse', {
+        success: false,
+        message: 'User ID is required',
+      });
+    }
+
+    // Check if user is active
+    const isActive = userSocketsMap.has(userId) && userSocketsMap.get(userId)!.size > 0;
+
+    // Send back result to the requester
+    socket.emit('userActiveStatusResponse', {
+      userId,
+      isActive,
+    });
+  } catch (error) {
+    AppLogger.error('Error checking user active status', error);
+  }
+});
     socket.on("disconnect", () => {
       // Remove socket from all user mappings
       for (const [userId, socketSet] of userSocketsMap.entries()) {
