@@ -61,6 +61,8 @@ const createInputValidation = z.object({
     overallRating: true,
     status:true,
     updatedDate: true,
+    preferedWorkingHours: true,
+    expectedSalary: true,
   }),
  })
 
@@ -240,7 +242,8 @@ export default{
       const { payload } = updateInputValidation.parse({
         payload: req.payload
       });
-   
+     console.log("🟢 VALIDATED PAYLOAD AFTER ZOD:", payload);
+
       const result = await updateApplicantById(String(req.params.applicantId), payload);
       if (isNil(result)) {
         return notFound(recruitmentMessages.USER_NOT_FOUND);

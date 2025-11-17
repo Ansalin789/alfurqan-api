@@ -1347,7 +1347,7 @@ export interface IRecruitment extends Document{
   englishSpeaking?: string;
   preferedWorkingDays?: string;
   overallRating?: number;
- professionalExperience:{
+ professionalExperience?:{
     jobRole?: string;
     organizationName?: string;
     jobLocation?: string;

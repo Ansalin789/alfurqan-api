@@ -18,22 +18,39 @@ import { academicAvailableTeachers } from "../kafka/producers/academicProducer";
 import SalaryAndWages from "../models/empwages";
 import classShedule from "../models/classShedule"
 
-export interface IRecruitmentUpdate{
-  supervisor:{
+export interface IRecruitmentUpdate {
+  supervisor?: {
     supervisorId?: string;
+    supervisorName?: string;
+    supervisorEmail?: string;
+    supervisorRole?: string;
   };
-comments?: string,
-applicationStatus: any,
-level?: string,
-quranReading?: string,
-tajweed?: string,
-arabicWriting?: string,
-arabicSpeaking?: string,
-englishSpeaking?: string,
-preferedWorkingDays?: string,
-overallRating?: number,
-status: string,
-updatedDate?: Date,
+  candidateFirstName?: string;
+  candidateLastName?: string;
+  gender?: string;
+  applicationDate?: Date;
+  candidateEmail?: string;
+  candidatePhoneNumber?: number;
+  candidateCountry?: string;
+  candidateCity?: string;
+  positionApplied?: string;
+  currency?: string;
+  expectedSalary?: number; // ✅ ADD THIS
+  preferedWorkingHours?: string; // ✅ ADD THIS
+  comments?: string;
+  applicationStatus?: string;
+  level?: string;
+  quranReading?: string;
+  tajweed?: string;
+  arabicWriting?: string;
+  arabicSpeaking?: string;
+  englishSpeaking?: string;
+  preferedWorkingDays?: string;
+  overallRating?: number;
+  skills?: string;
+  status?: string;
+  updatedDate?: Date;
+  updatedBy?: string;
 }
 
 
@@ -172,13 +189,28 @@ export const updateApplicantById = async (
   payload: Partial<IRecruitmentUpdate>
 ): Promise<IRecruitment | null> => {
 
-  return RecruitModel.findOneAndUpdate(
-    { _id: new Types.ObjectId(id) },
-    { $set: payload },
-    { new: true }
-  ).lean();
-};
+  console.log("🟡 PAYLOAD TO DATABASE UPDATE:", payload);
 
+  // Temporary: Log the exact MongoDB query
+  const result = await RecruitModel.findOneAndUpdate(
+    { _id: new Types.ObjectId(id) },
+    { 
+      $set: {
+        preferedWorkingHours: payload.preferedWorkingHours,
+        expectedSalary: payload.expectedSalary,
+        preferedWorkingDays: payload.preferedWorkingDays,
+        comments: payload.comments,
+        overallRating: payload.overallRating,
+        applicationStatus: payload.applicationStatus,
+        updatedDate: new Date()
+      }
+    },
+    { new: true }
+  );
+
+  console.log("🟢 DATABASE UPDATE RESULT:", result);
+  return result;
+};
 
 
 /**
