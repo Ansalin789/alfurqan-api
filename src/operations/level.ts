@@ -41,3 +41,29 @@ export const getLevelsByCourseId = async (
   return { totalCount, levels };
 };
 
+export const updateLevel = async ({
+  courseId,
+  level,
+  description
+}: {
+  courseId: string;
+  level: string;
+  description: Buffer;
+})=>{
+   const selectLevel = await Level.findOne({
+    courseId: courseId,
+    level: level
+  });
+
+  // Level not found
+  if (!selectLevel) {
+    throw new Error("Level not found for this course");
+  }
+
+  selectLevel.description = description;
+ 
+  const updated = await selectLevel.save();
+
+  return updated;
+}
+
