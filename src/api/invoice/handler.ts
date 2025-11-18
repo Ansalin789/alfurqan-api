@@ -267,22 +267,27 @@ export default {
   },
 
 
-  async getStudentPaymentHistory(req: Request, h: ResponseToolkit) {
-    try {
-      const userId = req.query.userId as string;
+ async getStudentPaymentHistory(req: Request, h: ResponseToolkit) {
+  try {
+    const userId = req.query.userId as string;
+    const sortBy = (req.query.sortBy as string) || "createdDate";
+    const sortOrder = (req.query.sortOrder as string) || "desc";
+    const offset = req.query.offset ? Number(req.query.offset) : undefined;
+    const limit = req.query.limit ? Number(req.query.limit) : undefined;
 
-      if (!userId) {
-        return h.response({ message: "userId is required in query params" }).code(400);
-      }
-
-      const result = await getPaymentHistory({ userId });
-
-      return h.response(result).code(200);
-    } catch (error) {
-      console.error("❌ Error fetching payment history:", error);
-      return h.response({ message: "Server error" }).code(500);
+    if (!userId) {
+      return h.response({ message: "userId is required in query params" }).code(400);
     }
+
+    const result = await getPaymentHistory({ userId, sortBy, sortOrder, offset, limit });
+
+    return h.response(result).code(200);
+  } catch (error) {
+    console.error("❌ Error fetching payment history:", error);
+    return h.response({ message: "Server error" }).code(500);
   }
+}
+
 }
   
   
