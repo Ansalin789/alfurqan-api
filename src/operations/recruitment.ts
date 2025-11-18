@@ -18,39 +18,22 @@ import { academicAvailableTeachers } from "../kafka/producers/academicProducer";
 import SalaryAndWages from "../models/empwages";
 import classShedule from "../models/classShedule"
 
-export interface IRecruitmentUpdate {
-  supervisor?: {
+export interface IRecruitmentUpdate{
+  supervisor:{
     supervisorId?: string;
-    supervisorName?: string;
-    supervisorEmail?: string;
-    supervisorRole?: string;
   };
-  candidateFirstName?: string;
-  candidateLastName?: string;
-  gender?: string;
-  applicationDate?: Date;
-  candidateEmail?: string;
-  candidatePhoneNumber?: number;
-  candidateCountry?: string;
-  candidateCity?: string;
-  positionApplied?: string;
-  currency?: string;
-  expectedSalary?: number; // ✅ ADD THIS
-  preferedWorkingHours?: string; // ✅ ADD THIS
-  comments?: string;
-  applicationStatus?: string;
-  level?: string;
-  quranReading?: string;
-  tajweed?: string;
-  arabicWriting?: string;
-  arabicSpeaking?: string;
-  englishSpeaking?: string;
-  preferedWorkingDays?: string;
-  overallRating?: number;
-  skills?: string;
-  status?: string;
-  updatedDate?: Date;
-  updatedBy?: string;
+comments?: string,
+applicationStatus: any,
+level?: string,
+quranReading?: string,
+tajweed?: string,
+arabicWriting?: string,
+arabicSpeaking?: string,
+englishSpeaking?: string,
+preferedWorkingDays?: string,
+overallRating?: number,
+status: string,
+updatedDate?: Date,
 }
 
 
@@ -189,28 +172,13 @@ export const updateApplicantById = async (
   payload: Partial<IRecruitmentUpdate>
 ): Promise<IRecruitment | null> => {
 
-  console.log("🟡 PAYLOAD TO DATABASE UPDATE:", payload);
-
-  // Temporary: Log the exact MongoDB query
-  const result = await RecruitModel.findOneAndUpdate(
+  return RecruitModel.findOneAndUpdate(
     { _id: new Types.ObjectId(id) },
-    { 
-      $set: {
-        preferedWorkingHours: payload.preferedWorkingHours,
-        expectedSalary: payload.expectedSalary,
-        preferedWorkingDays: payload.preferedWorkingDays,
-        comments: payload.comments,
-        overallRating: payload.overallRating,
-        applicationStatus: payload.applicationStatus,
-        updatedDate: new Date()
-      }
-    },
+    { $set: payload },
     { new: true }
-  );
-
-  console.log("🟢 DATABASE UPDATE RESULT:", result);
-  return result;
+  ).lean();
 };
+
 
 
 /**
@@ -475,64 +443,6 @@ export const getTeacherCountriesCountDetails = async() =>{
 
 };
 
-
-// export const getApplicationStatusData = async(fromDate:  string, toDate: string): Promise<
-//   { date: string; totalApplied: number; shortlisted: number}[]
-// > => {
-//   let startDate: Date = new Date(fromDate);
-//   let endDate: Date = new Date(toDate); // Default to today
-//   let dateFormat: string;
-//   let intervalFn: (interval: { start: Date; end: Date }) => Date[];
-//   let outputFormat: string;
-
-//   // Determine start and end dates based on dateRange
-
-//       dateFormat = "%d-%m"; // MongoDB format for months
-//       intervalFn = eachMonthOfInterval;
-//       outputFormat = "dd-yyyy"; // Output format for months
-  
-//   console.log(`Fetching results from ${startDate.toISOString()} to ${endDate.toISOString()}`);
-
-//   // Aggregation query to count class statuses per date/month
-//   const result = await RecruitModel.aggregate([
-//     {
-//       $match: {
-//         status: "Active",
-//         startDate: { $gte: startDate, $lte: endDate },
-//       },
-//     },
-//     {
-//       $group: {
-//         _id: { date: { $dateToString: { format: dateFormat, date: "$startDate" } }, status: "$applicationStatus" },
-//         count: { $sum: 1 },
-//       },
-//     },
-//   ]);
-
-//   let finalResult: any;
-//     // Convert aggregation results into a structured object
-//     const groupedResults: Record<string, any> = {};
-//     result.forEach(({ _id, count }) => {
-//       const date = format(new Date(_id.date), outputFormat); // Convert to correct format safely
-//       if (!groupedResults[date]) {
-//         groupedResults[date] = {
-//           date,
-//           totalApplied: 0,
-//           shortlisted: 0,
-//         };
-//       }
-//       if (_id.status === "SHORTLISTED") groupedResults[date].shortlisted += count;
-//     });
-
-//     // Ensure all intervals are included (fill missing values with 0)
-//     const allDates = intervalFn({ start: startDate, end: endDate }).map((d) => format(d, outputFormat));
-//     finalResult = allDates.map((date) => groupedResults[date] || { date, shortlisted: 0});
-
-
-//     return finalResult;
- 
- 
-// };
 
 export const getApplicationStatusData = async (
   fromDate: string,

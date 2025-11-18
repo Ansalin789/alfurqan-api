@@ -4,13 +4,16 @@ import { zodRecruitmentSchema } from "../../models/recruitment";
 import { createRecruitment, getAllApplicantsRecords, getAllTeacherRecords, getApplicantRecordById, getApplicationStatusData, getTeacherCountriesCountDetails, getTeacherDetailsOverviewCount, getTeacherListFemaleMale, updateApplicantByAdminId, updateApplicantById } from "../../operations/recruitment";
 import { Readable } from "stream";
 import * as Stream from "stream";
+import * as fs from "fs";
 import { zodGetAllApplicantsRecordsQuerySchema, zodGetAllRecordsQuerySchema, zodGetAllTeachersRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
 import { recruitmentMessages } from "../../config/messages";
 import pdfParse from "pdf-parse";
-import { isNil, result } from "lodash";
+import { isNil } from "lodash";
 import { supervisorCardCount, supervisorRecruitmentList, supervisorTeacherList } from "../../kafka/producers/supervisorProducer";
 import { sendNotification } from "../../operations/notification";
+import { uploadFileToSharePoint } from "../../shared/sharepoint";
+
 
 
 const createInputValidation = z.object({
@@ -61,8 +64,6 @@ const createInputValidation = z.object({
     overallRating: true,
     status:true,
     updatedDate: true,
-    preferedWorkingHours: true,
-    expectedSalary: true,
   }),
  })
 
@@ -112,6 +113,26 @@ export default{
       ? await extractResumeDetails(uploadFileBuffer)
       : null;
 
+//save the resume in sharepoint
+        // derive filename from the upload object (hapi or generic) or fallback
+        const fileName =
+          (rawPayload.uploadResume &&
+            (rawPayload.uploadResume.hapi?.filename || rawPayload.uploadResume.filename)) ||
+          "resume.pdf";
+
+        // Read SharePoint configuration from environment (ensure these are set in your env)
+        const accessToken = process.env.SHAREPOINT_ACCESS_TOKEN || "";
+        const siteId = process.env.SHAREPOINT_SITE_ID || "";
+        const driveId = process.env.SHAREPOINT_DRIVE_ID || "";
+
+        // uploadFileToSharePoint expects (accessToken, siteId, driveId, fileName, fileContent)
+        const shareLink = await uploadFileToSharePoint(
+          uploadFileBuffer as Buffer,
+          fileName
+        );
+
+        console.log("File uploaded to SharePoint. Link:", shareLink.fileId);
+
     const result = await createRecruitment({
       supervisor: {
         supervisorId: "67a467bcc346aaaea402f760",
@@ -131,9 +152,7 @@ export default{
       currency: payload.currency,
       expectedSalary: payload.expectedSalary,
       preferedWorkingHours: payload.preferedWorkingHours,
-      uploadResume: uploadFileBuffer
-        ? uploadFileBuffer
-        : undefined,
+      uploadResume: shareLink.fileId || "",
       comments: payload.comments || "",
       applicationStatus: payload.applicationStatus,
       level: payload.level,
@@ -242,8 +261,7 @@ export default{
       const { payload } = updateInputValidation.parse({
         payload: req.payload
       });
-     console.log("🟢 VALIDATED PAYLOAD AFTER ZOD:", payload);
-
+   
       const result = await updateApplicantById(String(req.params.applicantId), payload);
       if (isNil(result)) {
         return notFound(recruitmentMessages.USER_NOT_FOUND);

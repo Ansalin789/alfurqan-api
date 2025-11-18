@@ -36,6 +36,7 @@ import leaveRequestAPI from "../api/leaveRequest/router";
 import TeachermeetingAPI from "../api/teacherMeeting/router"
 import Level from "../api/level/router"; 
 import AdminAssignment from "../api/adminAssignment/router";
+import fileUplocadAPI from "../api/fileUpload/router";
 
 
 export const appPlugins = [
@@ -148,5 +149,8 @@ export const appPlugins = [
   },
   {
     plugin:AdminAssignment,
+  },
+   {
+    plugin:fileUplocadAPI,
   }
 ];

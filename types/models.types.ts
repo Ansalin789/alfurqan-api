@@ -531,6 +531,7 @@ export interface ISubscritions extends Document{
 }
 
 export interface IClassSchedule extends Document{
+  classId?: string;
   student: {
     id: string;
     studentId: string;
@@ -633,6 +634,7 @@ export interface IAdminAssignment extends Document{
   updatedBy: string;
 } 
 export interface IClassScheduleCreate{
+  classId?: string;
   student: {
     id: string;
     studentId?: string;
@@ -1347,7 +1349,7 @@ export interface IRecruitment extends Document{
   englishSpeaking?: string;
   preferedWorkingDays?: string;
   overallRating?: number;
- professionalExperience?:{
+ professionalExperience:{
     jobRole?: string;
     organizationName?: string;
     jobLocation?: string;
@@ -1382,7 +1384,7 @@ export interface IRecruitmentCreate{
   currency: string;
   expectedSalary : number;
   preferedWorkingHours: string;
-  uploadResume?: Buffer;
+  uploadResume?: any;
   comments?: string;
   applicationStatus: string;
   level? : string;
@@ -1751,7 +1753,7 @@ export interface IKnowledgeBase extends Document{
   courseName: string,
   subjectTitle: string;
   uploadedFormat: string,
-  uploadedFile: Buffer,
+  uploadedFile: String,
   status: string,
   createdDate: Date,
   createdBy: string,
@@ -1763,7 +1765,7 @@ export interface IKnowledgeBaseCreate{
   courseName: string,
   subjectTitle: string;
   uploadedFormat: string,
-  uploadedFile: Buffer,
+  uploadedFile: any,
   status: string,
   createdDate: Date,
   createdBy: string,

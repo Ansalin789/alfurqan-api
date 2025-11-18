@@ -2,6 +2,7 @@ import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import getAllknowledge, { createKnowledgeBase } from "../../operations/knowledgeBase";
 import { zodknowledgeBaseValidationSchema } from "../../models/knowledgebase";
+import { uploadFileToSharePoint } from "../../shared/sharepoint";
 
 const createInputValidation = z.object({
   payload: zodknowledgeBaseValidationSchema.pick({
@@ -26,24 +27,17 @@ export default {
 
       let attachFileBuffer: Buffer;
 
-if (typeof payload.uploadedFile === "string") {
-  // Clean the base64 string (remove data URI prefix if present)
-  const base64String = payload.uploadedFile.split(",")[1] || payload.uploadedFile;
-  attachFileBuffer = Buffer.from(base64String, 'base64');
-} else if (Buffer.isBuffer(payload.uploadedFile)) {
-  attachFileBuffer = payload.uploadedFile;
-} else {
-  console.log("Invalid file format for attachFile");
-  return h
-    .response({ success: false, error: "attachFile must be a base64 string or Buffer" })
-    .code(400);
-}
+    const fileName = `${Date.now()}_knowledgebase_file`;
+ const shareLink = await uploadFileToSharePoint(
+          payload.uploadedFile as unknown as Buffer,
+          fileName
+        );
 
       const knowledgebase = await createKnowledgeBase({
         courseName: payload.courseName,
         subjectTitle: payload.subjectTitle,
         uploadedFormat: payload.uploadedFormat,
-        uploadedFile: attachFileBuffer, // now guaranteed to be Buffer or null
+        uploadedFile: shareLink || '', // now guaranteed to be Buffer or null
         status: payload.status ?? '',
         createdDate: payload.createdDate || new Date(),
         createdBy: payload.createdBy ?? '',

@@ -8,6 +8,11 @@ import { appStatus, attendeeStatus, commonMessages } from "../config/messages";
 
 const classScheduleSchema = new Schema<IClassSchedule>(
   {
+
+    classId: {
+      type: String,
+      required: false,
+    },  
     student: {
       id:{
         type: String,

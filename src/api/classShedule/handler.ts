@@ -252,12 +252,7 @@ async getAllClassShedule(req: Request, h: ResponseToolkit) {
 
   // 6. Call the service with the normalized and validated query
   return getAllClassShedule(queryForService);
-}
-
-
-,
-
-  // Handler for getting student by ID
+},  // Handler for getting student by ID
   async getAllClassSheduleById(req: Request, h: ResponseToolkit) {
     try {
       // Fetch the student by ID
@@ -602,10 +597,10 @@ async bulkcreateandSchedule(req: Request, h: ResponseToolkit) {
 
     console.log("Parsed Payload:", payload);
      const randomFourDigitStr = Math.floor(Math.random() * 10000).toString().padStart(4, "0");
-      const meetingId = `ALF-GRPCLASS-${randomFourDigitStr}`;
+      const meetingId = `AFGC-${randomFourDigitStr}`;
 
  const students:any = rawPayload.students || []; 
- const alfurqanStudents = await AlStudentModule.findOne({_id:new Types.ObjectId(students[0].studentId)} ).exec();   // 🧠 Extract reference values from the first student
+ const alfurqanStudents = await AlStudentModule.findOne({_id:new Types.ObjectId(students[0].id)} ).exec();   // 🧠 Extract reference values from the first student
  const evaluation = await Evaluation.findOne({ ["student.studentId"]: alfurqanStudents?.student.studentId }).exec();
  const refCourse = alfurqanStudents?.student?.course ;
   const refPackage = alfurqanStudents?.student?.package;
@@ -613,7 +608,7 @@ async bulkcreateandSchedule(req: Request, h: ResponseToolkit) {
  
   // ✅ Validate that all students match the same course, package, and hours
   for (const student of students) {
-    const alfurqanStudent = await AlStudentModule.findOne({_id: new Types.ObjectId(student.studentId)} ).exec()  // 🧠 Extract reference values from the first student
+    const alfurqanStudent = await AlStudentModule.findOne({_id: new Types.ObjectId(student.id)} ).exec()  // 🧠 Extract reference values from the first student
  const evaluation = await Evaluation.findOne({ ["student.studentId"]: alfurqanStudents?.student.studentId }).exec();
     if (
      alfurqanStudent?.student.course !== refCourse,
@@ -631,10 +626,11 @@ async bulkcreateandSchedule(req: Request, h: ResponseToolkit) {
     const classDayValues = payload.classDay?.map((day: { value: string; label: string }) => day.value);
     const startTimeValues = payload.startTime?.map((time: { value: string; label: string }) => time.value);
     const endTimeValues = payload.endTime?.map((time: { value: string; label: string }) => time.value);
-
+    const generateClassId = generateAFTCode("AFCL");
     // Prepare common scheduling details
     const commonScheduleData = {
-      teacher: {
+        classId: generateClassId,
+        teacher: {
         teacherId: payload.teacher?.teacherId ?? "",
         teacherName: payload.teacher?.teacherName ?? "",
         teacherEmail: payload.teacher?.teacherEmail ?? "",
@@ -680,7 +676,7 @@ async bulkcreateandSchedule(req: Request, h: ResponseToolkit) {
     if(rawPayload.students){
   for (const student of rawPayload.students) {
     console.log("student>>>", student)
-      const result = await updateStudentClassSchedule(student.studentId || "", {
+      const result = await updateStudentClassSchedule(student.id || "", {
         ...commonScheduleData,
         student 
       });
@@ -694,7 +690,7 @@ async bulkcreateandSchedule(req: Request, h: ResponseToolkit) {
       }
        
       allResults.push({
-        studentId: student.studentId,
+        studentId: student.id,
         result
       });
     }
@@ -861,18 +857,9 @@ teacherEnd = [...new Set(teacherEnd)];
     return h.response({ error: "Internal Server Error" }).code(500);
   }
 }
-
-
 }
 
-
-
-
-
-
-
-
-
-
-
-
+ function generateAFTCode(preName: string) {
+  const num = Math.floor(10000 + Math.random() * 90000);
+  return `${preName}${num}`;
+ }

@@ -20,7 +20,7 @@ const knowledgeBaseSchema = new Schema<IKnowledgeBase>(
         required: true,
       },
       uploadedFile: {
-        type: Buffer,
+        type: String,
         required: true,
       },
       status: {
@@ -59,17 +59,7 @@ const knowledgeBaseSchema = new Schema<IKnowledgeBase>(
     courseName: z.string(), 
     subjectTitle: z.string(),
     uploadedFormat: z.enum([uploadedFormat.PDF, uploadedFormat.VIDEO,]),
-    uploadedFile: z.union([
-      z.instanceof(Buffer),
-      z.string().refine((val) => {
-        // Remove data URI prefix if it exists
-        const cleanVal = val.split(",")[1] || val;
-        const base64Regex = /^[A-Za-z0-9+/=]+$/;
-        return base64Regex.test(cleanVal);
-      }, {
-        message: "uploadedFile must be a valid base64 string or Buffer",
-      })
-    ]),
+    uploadedFile: z.string(),
     
     status: z.string(),
     createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {

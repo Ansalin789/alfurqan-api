@@ -81,8 +81,13 @@ export const dashboardWidgetCounts = async (
     },
   ])
 
-  if (totaltrialpending.length != 0 && totalclasspending.length != 0) {
-    totalPendingClasses = totaltrialpending[0].count + totalclasspending[0].count || 0
+  if (totaltrialpending.length != 0 || totalclasspending.length != 0) {
+    let trialPending;
+    let evaluationPending; 
+
+    totaltrialpending.length == 0? trialPending = 0 : trialPending = totaltrialpending[0].count;
+    totalclasspending.length == 0? evaluationPending = 0 : evaluationPending = totalclasspending[0].count
+    totalPendingClasses = trialPending + evaluationPending;
   }
 
   // Execute all count queries in parallel
@@ -107,7 +112,6 @@ export const dashboardWidgetCounts = async (
     // Count active candidates
     totalPendingClasses,
   ])
-console.log("evaluationPendingCount>>>", evaluationPendingCount);
   return {
     trialAssigned: trialclassAssigned,
     evaluationCompleted: evaluationCompletedCount,
@@ -445,20 +449,6 @@ export const dashboardWidgetStudentCounts = async (
   };
 };
 
-
-/*
-totalLevel: get the level from alstudents collection "_id" == "studentId"
-totalAttendance: step 1: pass the studentid and cours to the classShedule collection - "student.studentId": studentId,
-step 2: from using this list collection get the student attendee == 'present' count
-step3: get toal classchedule count and present count and calculate the percentage
-totalAttendance = (presentCount / totalClassCount) * 100
-totalClasses: get the total class count from classShedule collection using studentId and course
-totalDuration: get the total hours from get student record from alstudents collection "_id" == "studentId" by using studentId and course
-               then pass the alstudent "student.studentId" to evaluation "student.studentId",
-               get evaluation record then get the accomblished hours from evaluation collection
-*/
-
-
 export const dashboardWidgetSupervisorCounts = async (
 ): Promise<{
   totalApplication: number
@@ -641,7 +631,6 @@ export const acUpcomingClassList = async (academicCoachId: string) => {
   const getUpcomingClass = await meetingschedule
     .find({
       ["academicCoach.academicCoachId"]: academicCoachId,
-      scheduledStartDate: { $gte: startOfTodayUTC },
     })
     .sort({ scheduledStartDate: 1, scheduledFrom: 1 })
 
@@ -665,7 +654,7 @@ export const acUpcomingClassList = async (academicCoachId: string) => {
     scheduledTo: item.scheduledTo || "",
     timeZone: item.timeZone || "",
   }))
-
+console.log("upcomingClass>>>>>", upcomingClass);
   return upcomingClass
 }
 

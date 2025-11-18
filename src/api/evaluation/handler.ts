@@ -12,7 +12,6 @@ import { teacherDashboardCardCount } from "../../kafka/producers/teacherProducer
 
 
 
-
 const createInputValidation = z.object({
     payload: zodEvaluationSchema.pick({
     academicCoachId: true,
@@ -105,7 +104,8 @@ export default {
         const startTimeValues = payload.startTime?.map((time: { value: string; label: string }) => time.value);
         const endTimeValues = payload.endTime?.map((time: { value: string; label: string }) => time.value);
    
-        const generateTrialId = trialIdGenerator("AFT");
+        const generateTrialId = generateAFTCode("AFT");
+
         const result = await createEvaluationRecord({
           trialId: generateTrialId,
           academicCoachId: payload.academicCoachId ?? "",
@@ -371,16 +371,21 @@ if(result){
   }
 
 
-  const useNumber  = 0;
-function trialIdGenerator(trialprefix: string) {
-
-// auto reset 
-if(useNumber > 99999){
-    throw new Error("All 5-digit trial IDs have been used!");
-
+  function generateAFTCode(preName: string) {
+  const num = Math.floor(10000 + Math.random() * 90000);
+  return `${preName}${num}`;
 }
-  const formattedNum = useNumber.toString().padStart(5, "0");
-  return `${trialprefix}${formattedNum}`;
 
-}
+//   const useNumber  = 0;
+// function trialIdGenerator(trialprefix: string) {
+
+// // auto reset 
+// if(useNumber > 99999){
+//     throw new Error("All 5-digit trial IDs have been used!");
+
+// }
+//   const formattedNum = useNumber.toString().padStart(5, "0");
+//   return `${trialprefix}${formattedNum}`;
+
+// }
 

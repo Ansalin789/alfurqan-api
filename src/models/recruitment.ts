@@ -74,7 +74,7 @@ preferedWorkingHours:{
     required: true,
 },
 uploadResume:{
-    type: Buffer,
+    type: String,
     required: false,
 },
 comments:{
