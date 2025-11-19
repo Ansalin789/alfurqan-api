@@ -4,7 +4,6 @@
 import { IRecruitment, IRecruitmentCreate } from "../../types/models.types";
 import RecruitModel from "../models/recruitment"
 import { GetAllApplicationsRecordsParams, GetAllTeachersRecordsParams } from "../shared/enum";
-import { forEach, isNil } from "lodash";
 import { applicationStatus } from "../config/messages";
 import AppLogger from "../helpers/logging";
 import { Types } from "mongoose";
@@ -270,7 +269,7 @@ async function createTeacherPortalPortal(updateData: any) {
     email: updateData.candidateEmail,
     password: password,
     profileImage: null,
-    userId: updateData._id,
+    userId: updateData.candidateId,
     role: "TEACHER",
     position: updateData.positionApplied,
     gender: updateData.gender,

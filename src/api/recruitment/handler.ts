@@ -3,8 +3,6 @@ import { z } from "zod";
 import { zodRecruitmentSchema } from "../../models/recruitment";
 import { createRecruitment, getAllApplicantsRecords, getAllTeacherRecords, getApplicantRecordById, getApplicationStatusData, getTeacherCountriesCountDetails, getTeacherDetailsOverviewCount, getTeacherListFemaleMale, updateApplicantByAdminId, updateApplicantById } from "../../operations/recruitment";
 import { Readable } from "stream";
-import * as Stream from "stream";
-import * as fs from "fs";
 import { zodGetAllApplicantsRecordsQuerySchema, zodGetAllRecordsQuerySchema, zodGetAllTeachersRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
 import { recruitmentMessages } from "../../config/messages";
@@ -120,10 +118,6 @@ export default{
             (rawPayload.uploadResume.hapi?.filename || rawPayload.uploadResume.filename)) ||
           "resume.pdf";
 
-        // Read SharePoint configuration from environment (ensure these are set in your env)
-        const accessToken = process.env.SHAREPOINT_ACCESS_TOKEN || "";
-        const siteId = process.env.SHAREPOINT_SITE_ID || "";
-        const driveId = process.env.SHAREPOINT_DRIVE_ID || "";
 
         // uploadFileToSharePoint expects (accessToken, siteId, driveId, fileName, fileContent)
         const shareLink = await uploadFileToSharePoint(
@@ -132,8 +126,9 @@ export default{
         );
 
         console.log("File uploaded to SharePoint. Link:", shareLink.fileId);
-
+const generateTeacherId = generateAFTCode("AFT");
     const result = await createRecruitment({
+      candidateId: generateTeacherId,
       supervisor: {
         supervisorId: "67a467bcc346aaaea402f760",
         supervisorName: "Arthi",
@@ -237,9 +232,7 @@ export default{
 
   // Call your service function
   return getAllApplicantsRecords(queryForService);
-}
-
-,
+},
 
 
 
@@ -252,9 +245,6 @@ export default{
 
   return result;
     },
-
-
-    
 
     async updateApplicantRecordById(req: Request, h: ResponseToolkit) {
 
@@ -408,3 +398,8 @@ const extractResumeDetails = async (fileStream: any) => {
   
    
 };
+
+  function generateAFTCode(preName: string) {
+  const num = Math.floor(10000 + Math.random() * 90000);
+  return `${preName}${num}`;
+}
