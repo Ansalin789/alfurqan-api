@@ -1,8 +1,5 @@
 import { Types } from "mongoose";
-import {
-  IClassSchedule,
-  IClassScheduleCreate,
-} from "../../types/models.types";
+import { IClassSchedule, IClassScheduleCreate } from "../../types/models.types";
 
 import ClassScheduleModel from "../models/classShedule";
 import UserModel from "../models/users";
@@ -10,7 +7,6 @@ import UserModel from "../models/users";
 import AppLogger from "../helpers/logging";
 import { AssignmentStatus, GetAllRecordsParams } from "../shared/enum";
 import { alstudentsMessages, commonMessages } from "../config/messages";
-import { isNil } from "lodash";
 import { Client } from "@microsoft/microsoft-graph-client";
 import { ClientSecretCredential } from "@azure/identity";
 import moment from "moment";
@@ -38,6 +34,7 @@ import { sendNotification } from "./notification";
 import { getIO } from "../shared/socket";
 import realtimemessage from "../models/realtimemessage";
 import dayjs from "dayjs";
+import { all } from "axios";
 
 type AssignmentItem = {
   assignmentId: string;
@@ -150,28 +147,26 @@ export const updateStudentClassSchedule = async (
     );
 
     for (const classDate of classDates) {
+      if (payload.sessionClassType === "GROUPCLASS") {
+        const duplicate = await ClassScheduleModel.findOne({
+          "student.id": alfurqanStudent?._id.toString(),
+          startDate: classDate,
+          endDate: classDate,
+          classDay: day,
+          package: payload.package,
+          startTime: start,
+          endTime: end,
+          sessionClassType: "GROUPCLASS",
+          status: "Active",
+        }).exec();
 
-        if (payload.sessionClassType === "GROUPCLASS") {
-    const duplicate = await ClassScheduleModel.findOne({
-      "student.id": alfurqanStudent?._id.toString(),
-      startDate: classDate,
-      endDate: classDate,
-      classDay: day,
-      package: payload.package,
-      startTime: start,
-      endTime: end,
-      sessionClassType: "GROUPCLASS",
-      status: "Active"
-    }).exec();
-
-    if (duplicate) {
-      console.log(`Duplicate found for ${day} ${classDate} — skipping.`);
-      continue; // Skip creating this duplicate
-    }
-  }
+        if (duplicate) {
+          console.log(`Duplicate found for ${day} ${classDate} — skipping.`);
+          continue; // Skip creating this duplicate
+        }
+      }
 
       const newClassSchedule = new ClassScheduleModel({
-
         student: {
           id: alfurqanStudent?._id.toString(),
           studentId: alfurqanStudent?.student.studentId,
@@ -179,7 +174,7 @@ export const updateStudentClassSchedule = async (
           studentLastName: alfurqanStudent?.username,
           studentEmail: alfurqanStudent?.student.studentEmail,
           gender: alfurqanStudent?.student.gender,
-          level : alfurqanStudent?.level
+          level: alfurqanStudent?.level,
         },
         teacher: {
           teacherId: teacher?.teacherId,
@@ -353,64 +348,75 @@ export const requestReschedule = async (payload: any) => {
       _id: new Types.ObjectId(classSchedule?.student.id),
     });
     const evaluation = await Evaluation.findOne({
-  "student.studentId": alfstudent?.student.studentId,
+      "student.studentId": alfstudent?.student.studentId,
     });
-     const oldresult = await ClassScheduleModel.findOne({
+    const oldresult = await ClassScheduleModel.findOne({
       _id: new Types.ObjectId(payload._id),
-     }).exec();
+    }).exec();
     const rescheduleResult = await ClassScheduleModel.findOneAndUpdate(
       { _id: new Types.ObjectId(payload._id) },
       { $set: { scheduleStatus: "Reschedulerequested" } },
       { new: true }
     );
     const academicCoachId = evaluation?.academicCoachId;
-    const academicCoach = await UserModel.findOne({_id : new Types.ObjectId(academicCoachId)});
-    const requestName = payload.requestedBy === "student" ? classSchedule?.student.studentFirstName : classSchedule?.teacher.teacherName;
-    const requestUserId = payload.requestedBy === "student" ? classSchedule?.student.studentId : classSchedule?.teacher.teacherId;
-    const requestEmail = payload.requestedBy === "student" ? classSchedule?.student.studentEmail : classSchedule?.teacher.teacherEmail;
+    const academicCoach = await UserModel.findOne({
+      _id: new Types.ObjectId(academicCoachId),
+    });
+    const requestName =
+      payload.requestedBy === "student"
+        ? classSchedule?.student.studentFirstName
+        : classSchedule?.teacher.teacherName;
+    const requestUserId =
+      payload.requestedBy === "student"
+        ? classSchedule?.student.studentId
+        : classSchedule?.teacher.teacherId;
+    const requestEmail =
+      payload.requestedBy === "student"
+        ? classSchedule?.student.studentEmail
+        : classSchedule?.teacher.teacherEmail;
     const message = `${requestName} (${payload.requestedBy}) has requested to reschedule class on ${classSchedule?.startDate} at ${classSchedule?.startTime[0]}.`;
     // Arrange message content for better readability:
-    const messageContent = 
+    const messageContent =
       `Requesting to reschedule class:\n` +
       `- From: ${oldresult?.startDate} ${oldresult?.startTime[0]} to ${classSchedule?.startDate} at ${classSchedule?.startTime[0]}\n` +
       `- Time Change: from ${classSchedule?.endTime[0]} to ${payload.requestDate} at ${payload.fromTime} - ${payload.toTime}\n` +
       `Comment: ${payload.comment}`;
-    if(rescheduleResult){
-    await sendNotification({
-                 messages: message,
-                 senderId: requestUserId?.toString(),
-                 senderName: requestName,
-                 senderEmail: requestEmail,
-                 isRead : false,
-                 receiverId: [academicCoach?._id.toString()],
-                 receiverName: [academicCoach?.userName],
-                 receiverEmail: [academicCoach?.email],
-                 notificationType: `REQUEST_RESCHEDULE_${payload.requestedBy.toUpperCase()}`,                 
-                 notificationStatus: "Unseen",
-                 status: "active",
-                 createdBy: "system",
-                 updatedBy: "system",
-               });
-    const newMessage = new realtimemessage({
+    if (rescheduleResult) {
+      await sendNotification({
+        messages: message,
+        senderId: requestUserId?.toString(),
+        senderName: requestName,
+        senderEmail: requestEmail,
+        isRead: false,
+        receiverId: [academicCoach?._id.toString()],
+        receiverName: [academicCoach?.userName],
+        receiverEmail: [academicCoach?.email],
+        notificationType: `REQUEST_RESCHEDULE_${payload.requestedBy.toUpperCase()}`,
+        notificationStatus: "Unseen",
+        status: "active",
+        createdBy: "system",
+        updatedBy: "system",
+      });
+      const newMessage = new realtimemessage({
         messages: messageContent,
         isRead: false,
-        senderId:  requestUserId?.toString(),
+        senderId: requestUserId?.toString(),
         senderName: requestName,
-        senderEmail: requestEmail ?? '', 
+        senderEmail: requestEmail ?? "",
         receiverId: academicCoach?._id,
         receiverName: academicCoach?.userName,
-        receiverEmail: academicCoach?.email ?? '', 
+        receiverEmail: academicCoach?.email ?? "",
         notificationStatus: "Unseen",
-        status: payload.status ?? '', 
-        createdDate:  new Date(),
-        createdBy:  'System',
-        updatedDate:  new Date(),
-        updatedBy:  'System', 
+        status: payload.status ?? "",
+        createdDate: new Date(),
+        createdBy: "System",
+        updatedDate: new Date(),
+        updatedBy: "System",
       });
       const savedMessage = await newMessage.save();
       const io = getIO();
-    io.to(newMessage.receiverId).emit("newmessage", savedMessage);
-    AppLogger.info(`Notification(s) sent: ${JSON.stringify(savedMessage)}`);           
+      io.to(newMessage.receiverId).emit("newmessage", savedMessage);
+      AppLogger.info(`Notification(s) sent: ${JSON.stringify(savedMessage)}`);
     }
     return {
       success: true,
@@ -425,8 +431,7 @@ export const requestReschedule = async (payload: any) => {
   }
 };
 
-
-export interface IClassScheduleUpdate{
+export interface IClassScheduleUpdate {
   student: {
     id: string;
     studentId: string;
@@ -437,23 +442,21 @@ export interface IClassScheduleUpdate{
     level: string;
     studnetSessionStart: any;
     studnetSessionEnd: any;
-  },
-  teacher:{
+  };
+  teacher: {
     teacherId: string;
     teacherName: string;
     teacherEmail: string;
     teacherSessionStart: any;
     teacherSessionEnd: any;
-  },
-
+  };
 }
 
 export const updateClassAttendanceById = async (
   id: string,
   payload: Partial<IClassScheduleUpdate>
 ): Promise<IClassSchedule | null> => {
-
- return ClassScheduleModel.findOneAndUpdate(
+  return ClassScheduleModel.findOneAndUpdate(
     { _id: new Types.ObjectId(id) },
     {
       $set: {
@@ -572,7 +575,6 @@ export const updateClassscheduleById = async (
     throw new Error("Class schedule not found");
   }
 
-
   return ClassScheduleModel.findOneAndUpdate(
     { _id: new Types.ObjectId(id) },
     {
@@ -653,9 +655,7 @@ export const getClassesForStudent = async (
   }
 };
 
-export const getClassesForTeacher = async (
-  params: GetAllRecordsParams
-) => {
+export const getClassesForTeacher = async (params: GetAllRecordsParams) => {
   const {
     teacherId,
     sortBy = "_id",
@@ -682,7 +682,7 @@ export const getClassesForTeacher = async (
         .exec(),
       ClassScheduleModel.countDocuments(query).exec(),
     ]);
-      let evaluation:any;
+    let evaluation: any;
     // Enrich class schedule with student and evaluation data
     const enrichedSchedules = await Promise.all(
       classScheduleList.map(async (cls) => {
@@ -690,28 +690,31 @@ export const getClassesForTeacher = async (
         const alfstudent = await AlStudenModel.findOne({
           _id: new Types.ObjectId(studentId),
         });
-console.log("alfstudent", alfstudent);
-         evaluation = await Evaluation.findOne({
+        console.log("alfstudent", alfstudent);
+        evaluation = await Evaluation.findOne({
           "student.studentId": alfstudent?.student?.studentId,
         });
 
-         const trialclass = await Calendar.findOne({
+        const trialclass = await Calendar.findOne({
           trialId: evaluation?._id,
         });
         return {
           ...cls.toObject(),
           alfstudent,
-          
         };
       })
     );
-    
-     const trialclass = await Calendar.find({
-          "teacher.teacherId":teacherId,
-        }).exec();
-        console.log("trialclass", trialclass);
 
-    return { totalCount, classSchedule: enrichedSchedules, trialclasses: trialclass?? [] };
+    const trialclass = await Calendar.find({
+      "teacher.teacherId": teacherId,
+    }).exec();
+    console.log("trialclass", trialclass);
+
+    return {
+      totalCount,
+      classSchedule: enrichedSchedules,
+      trialclasses: trialclass ?? [],
+    };
   } catch (error) {
     console.error("Error fetching classes for student:", error);
     throw new Error("Failed to fetch classes for the student");
@@ -1143,22 +1146,42 @@ export const getTotalClassesCount = async (
 
   // Determine start and end dates based on dateRange
   switch (dateRange.toLowerCase()) {
-    case "last8months":
-      startDate = startOfMonth(subMonths(new Date(), 7)); // 7 months ago, start of month
-      endDate = endOfMonth(new Date()); // end of current month
-      dateFormat = "%Y-%m"; // MongoDB date format
+    case "lastmonth":
+      startDate = startOfMonth(subMonths(new Date(), 1));
+      endDate = endOfMonth(subMonths(new Date(), 1));
+      dateFormat = "%Y-%m";
       intervalFn = eachMonthOfInterval;
-      outputFormat = "MMM-yyyy"; // Display format
+      outputFormat = "MMM-yyyy";
       break;
+
+    case "last3months":
+      startDate = startOfMonth(subMonths(new Date(), 2));
+      endDate = endOfMonth(new Date());
+      dateFormat = "%Y-%m";
+      intervalFn = eachMonthOfInterval;
+      outputFormat = "MMM-yyyy";
+      break;
+
     case "last6months":
-      startDate = startOfMonth(subMonths(new Date(), 5)); // 7 months ago, start of month
-      endDate = endOfMonth(new Date()); // end of current month
-      dateFormat = "%Y-%m"; // MongoDB date format
+      startDate = startOfMonth(subMonths(new Date(), 5));
+      endDate = endOfMonth(new Date());
+      dateFormat = "%Y-%m";
       intervalFn = eachMonthOfInterval;
-      outputFormat = "MMM-yyyy"; // Display format
+      outputFormat = "MMM-yyyy";
       break;
+
+    case "lastyear":
+      startDate = startOfMonth(subMonths(new Date(), 11)); // 12 months including current
+      endDate = endOfMonth(new Date());
+      dateFormat = "%Y-%m";
+      intervalFn = eachMonthOfInterval;
+      outputFormat = "MMM-yyyy";
+      break;
+
     default:
-      throw new Error("Invalid dateRange value. Use 'last8months'.");
+      throw new Error(
+        "Invalid dateRange. Use: lastmonth, last3months, last6months, last8months, lastyear"
+      );
   }
 
   console.log(
@@ -1218,13 +1241,13 @@ export const getClassesStatusCount = async () => {
         _id: null,
         totalClassCount: { $sum: 1 },
         pending: {
-          $sum: { $cond: [{ $eq: ["$scheduleStatus", "Reschedule"] }, 1, 0] },
+          $sum: { $cond: [{ $eq: ["$scheduleStatus", "Scheduled"] }, 1, 0] },
         },
         reschedule: {
-          $sum: { $cond: [{ $eq: ["$scheduleStatus", "Reschedule"] }, 1, 0] },
+          $sum: { $cond: [{ $in: ["$scheduleStatus",  ["Reschedule", "Reschedulerequested"]] }, 1, 0] },
         },
         complete: {
-          $sum: { $cond: [{ $eq: ["$scheduleStatus", "Complete"] }, 1, 0] },
+          $sum: { $cond: [{ $in: ["$scheduleStatus",["Completed","BothAbsent","TeacherAbsent","StudentAbsent"]] }, 1, 0] },
         },
       },
     },
@@ -1261,7 +1284,7 @@ export const getClassesWiseCount = async () => {
       },
     },
   ]);
-   const classscheduleGroup = await classShedule.aggregate([
+  const classscheduleGroup = await classShedule.aggregate([
     {
       $match: {
         sessionClassType: "GROUPCLASS",
@@ -1298,7 +1321,7 @@ export const getStudentList = async (
   {
     studentId: string;
     name: string;
-        level?: string;
+    level?: string;
 
     classType?: string;
     groupClassId?: string;
@@ -1343,27 +1366,28 @@ export const getStudentList = async (
             "student.studentId": alstudent.student.studentId,
           }).exec();
         }
-       let assignments: AssignmentItem[] = [];
+        let assignments: AssignmentItem[] = [];
 
-       if (alstudent) {
-  const assignmentList = await assignment.find(
-    { studentId: alstudent._id.toString() },
-    {
-      assignmentId: 1,
-      assignmentType: 1,
-      assignmentStatus: 1,
-      assignmentName: 1,
-      title: 1,
-      assignedDate: 1,
-      dueDate: 1,
-      questionName: 1,
-      questionType: 1,
-      typeofQuestion: 1,
-    }
-  ).lean();
+        if (alstudent) {
+          const assignmentList = await assignment
+            .find(
+              { studentId: alstudent._id.toString() },
+              {
+                assignmentId: 1,
+                assignmentType: 1,
+                assignmentStatus: 1,
+                assignmentName: 1,
+                title: 1,
+                assignedDate: 1,
+                dueDate: 1,
+                questionName: 1,
+                questionType: 1,
+                typeofQuestion: 1,
+              }
+            )
+            .lean();
 
-
-           assignments  = assignmentList.map(
+          assignments = assignmentList.map(
             (a): AssignmentItem => ({
               assignmentId: a.assignmentId || "-",
               assignmentName: a.assignmentName || "-",
@@ -1381,7 +1405,7 @@ export const getStudentList = async (
         uniqueStudentsMap.set(student.id, {
           studentId: student.id,
           name: student.studentFirstName,
-                    level: alstudent?.level || "", // ✅ Add level here
+          level: alstudent?.level || "", // ✅ Add level here
 
           studentDetails: {
             student: evaluation?.student,
@@ -1405,7 +1429,7 @@ export const getStudentList = async (
           },
           classType,
           groupClassId,
-  assignment: assignments, // ✅ This line must use `assignments`
+          assignment: assignments, // ✅ This line must use `assignments`
         });
       }
     }
@@ -1547,7 +1571,7 @@ export const getStudentAttendanceSummary = async (
         sessionStarttime: 1,
         sessionsEndtime: 1,
         scheduleStatus: 1,
-        package: 1,  // root-level package
+        package: 1, // root-level package
         student: 1,
       }
     ).lean();
@@ -1570,14 +1594,26 @@ export const getStudentAttendanceSummary = async (
         const end = cls.sessionsEndtime || cls.endTime?.[0];
 
         if (start && end) {
-          const [startH, startM] = start.replace(/[^0-9:]/g, "").split(":").map(Number);
-          const [endH, endM] = end.replace(/[^0-9:]/g, "").split(":").map(Number);
+          const [startH, startM] = start
+            .replace(/[^0-9:]/g, "")
+            .split(":")
+            .map(Number);
+          const [endH, endM] = end
+            .replace(/[^0-9:]/g, "")
+            .split(":")
+            .map(Number);
 
-          if (!isNaN(startH) && !isNaN(startM) && !isNaN(endH) && !isNaN(endM)) {
+          if (
+            !isNaN(startH) &&
+            !isNaN(startM) &&
+            !isNaN(endH) &&
+            !isNaN(endM)
+          ) {
             const startMinutes = startH * 60 + startM;
             const endMinutes = endH * 60 + endM;
             const calculated = Math.max(0, endMinutes - startMinutes);
-            sessionDuration = calculated > 0 ? calculated : DEFAULT_SESSION_DURATION_MINUTES;
+            sessionDuration =
+              calculated > 0 ? calculated : DEFAULT_SESSION_DURATION_MINUTES;
           }
         }
 
@@ -1600,9 +1636,6 @@ export const getStudentAttendanceSummary = async (
     throw new Error("Failed to generate student attendance summary");
   }
 };
-
-
-
 
 //Analytics cardcount with calculation
 export const getgetAnalyticscardCalculation = async (
@@ -1670,302 +1703,372 @@ export const getgetAnalyticscardCalculation = async (
 };
 
 // attendance and earnings update
-export const updateEarningsCalculation = async()=>{
-try{
-const currentDate = new Date()
-  const formattedDate = currentDate.toISOString().split("T")[0]
-  console.log("dateRange>>>>", formattedDate);
-  const startOfDayIST = `${formattedDate}T00:00:00.000+00:00`
-  const endOfDayIST = `${formattedDate}T23:59:59.999+00:00`
-  const getClasses = await ClassScheduleModel.find({
-    startDate:  {
+export const updateEarningsCalculation = async () => {
+  try {
+    const currentDate = new Date();
+    const formattedDate = currentDate.toISOString().split("T")[0];
+    console.log("dateRange>>>>", formattedDate);
+    const startOfDayIST = `${formattedDate}T00:00:00.000+00:00`;
+    const endOfDayIST = `${formattedDate}T23:59:59.999+00:00`;
+    const getClasses = await ClassScheduleModel.find({
+      startDate: {
         $gte: startOfDayIST,
         $lte: endOfDayIST,
       },
       status: "Active",
-      sessionStatus: "NotCompleted"
-  });
-const now = new Date();
-const hours = now.getHours();
-const minutes = now.getMinutes();
+      sessionStatus: "NotCompleted",
+    });
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
 
-// Always pad single digits:
-const formattedTime = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+    // Always pad single digits:
+    const formattedTime = `${hours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")}`;
 
-console.log("current time",formattedTime);
+    console.log("current time", formattedTime);
 
+    for (const scheduleClass of getClasses) {
+      const dateStr = dayjs(scheduleClass.startDate).format("YYYY-MM-DD");
 
-for(const scheduleClass of getClasses){
+      // Full class start datetime
+      const classEndDateTime = dayjs(
+        `${dateStr} ${scheduleClass.endTime}`,
+        `YYYY-MM-DD HH:mm`
+      );
 
-const dateStr = dayjs(scheduleClass.startDate).format("YYYY-MM-DD");
+      // Current datetime
+      const now = dayjs();
 
-// Full class start datetime
-const classEndDateTime = dayjs(`${dateStr} ${scheduleClass.endTime}`, `YYYY-MM-DD HH:mm`);
+      console.log(`Class ends at: ${classEndDateTime.format()}`);
+      console.log(`Now: ${now.format()}`);
 
-// Current datetime
-const now = dayjs();
+      // Check if class start time is before now
+      if (now.isAfter(classEndDateTime)) {
+        await ClassScheduleModel.findOneAndUpdate(
+          { _id: new Types.ObjectId(scheduleClass._id) },
+          {
+            $set: {
+              sessionStatus: "Completed",
+              scheduleStatus: "Completed",
+            },
+          },
+          { new: true }
+        ).lean();
+        console.log("✅ Session status: Completed");
+      } else {
+        await ClassScheduleModel.findOneAndUpdate(
+          { _id: new Types.ObjectId(scheduleClass._id) },
+          {
+            $set: {
+              sessionStatus: "NotCompleted",
+            },
+          },
+          { new: true }
+        ).lean();
+        console.log("⏳ Session status: Not Completed");
+      }
+      const [startHour, startMinute] = scheduleClass.startTime[0]
+        .split(":")
+        .map(Number);
+      const totalMinutes = startHour * 60 + startMinute + 15;
+      const attendanceHour = Math.floor(totalMinutes / 60);
+      const attendanceMinute = totalMinutes % 60;
+      const attendanceTime = `${attendanceHour
+        .toString()
+        .padStart(2, "0")}:${attendanceMinute.toString().padStart(2, "0")}`;
+      console.log("Attendance Time:", attendanceTime);
 
-console.log(`Class ends at: ${classEndDateTime.format()}`);
-console.log(`Now: ${now.format()}`);
+      const studentSessionStartTimes = await getSessionTime(
+        scheduleClass.student.studnetSessionStart
+      );
+      const teacherSessionStartTime = await getSessionTime(
+        scheduleClass.teacher.teacherSessionStart
+      );
 
-// Check if class start time is before now
-if (now.isAfter(classEndDateTime)) {
-  await ClassScheduleModel.findOneAndUpdate(
-  {_id:new Types.ObjectId(scheduleClass._id)},
-   {
-      $set: {
-       sessionStatus: "Completed",
-        scheduleStatus: "Completed"
-      },
-    },
-    { new: true }
+      const studentSessionEndTimes = await getSessionTime(
+        scheduleClass.student.studnetSessionEnd
+      );
+      const teacherSessionEndTime = await getSessionTime(
+        scheduleClass.teacher.teacherSessionEnd
+      );
+      if (scheduleClass.studentAttendee == "") {
+        await studentAttendanceUpdate(
+          attendanceTime,
+          studentSessionStartTimes,
+          scheduleClass
+        );
+      }
 
-).lean();
-  console.log("✅ Session status: Completed");
-} else {
-    await ClassScheduleModel.findOneAndUpdate(
-  {_id:new Types.ObjectId(scheduleClass._id)},
-   {
-      $set: {
-       sessionStatus: "NotCompleted",
-      
-      },
-    },
-    { new: true }
+      if (scheduleClass.teacherAttendee == "") {
+        await teacherAttendanceUpdate(
+          attendanceTime,
+          teacherSessionStartTime,
+          scheduleClass
+        );
+      }
 
-).lean();
-  console.log("⏳ Session status: Not Completed");
-}
-const [startHour, startMinute] = scheduleClass.startTime[0].split(":").map(Number);
-const totalMinutes = startHour * 60 + startMinute + 15;
-const attendanceHour = Math.floor(totalMinutes / 60);
-const attendanceMinute = totalMinutes % 60;
-const attendanceTime = `${attendanceHour.toString().padStart(2, "0")}:${attendanceMinute.toString().padStart(2, "0")}`;
-console.log("Attendance Time:", attendanceTime);
+      const sessionlHours = await getSessionTotalHours(
+        studentSessionStartTimes,
+        teacherSessionStartTime,
+        scheduleClass,
+        studentSessionEndTimes,
+        teacherSessionEndTime
+      );
+    }
+  } catch (error) {
+    console.error("Error in updateEarningsCalculation:", error);
+    throw new Error("Failed to update earnings calculation");
+  }
 
-const studentSessionStartTimes = await getSessionTime(scheduleClass.student.studnetSessionStart) ; 
-const teacherSessionStartTime = await getSessionTime(scheduleClass.teacher.teacherSessionStart) ;
-
-const studentSessionEndTimes = await getSessionTime(scheduleClass.student.studnetSessionEnd) ; 
-const teacherSessionEndTime = await getSessionTime(scheduleClass.teacher.teacherSessionEnd) ;
- if(scheduleClass.studentAttendee == ""){
- await studentAttendanceUpdate(attendanceTime,studentSessionStartTimes,scheduleClass);
- };
-
-  if(scheduleClass.teacherAttendee==""){
- await teacherAttendanceUpdate(attendanceTime,teacherSessionStartTime,scheduleClass);
- };
-
-const sessionlHours = await getSessionTotalHours(studentSessionStartTimes,teacherSessionStartTime,scheduleClass, studentSessionEndTimes,teacherSessionEndTime);
-
-}
-}catch(error) {
-  console.error("Error in updateEarningsCalculation:", error);
-  throw new Error("Failed to update earnings calculation");
-}
-  
-return "Earnings calculation updated successfully";
-} 
+  return "Earnings calculation updated successfully";
+};
 
 function getSessionTime(times: any): any {
-// 1️⃣ Filter out "00:00"
-//const validTimes = times.filter((time: string));
+  // 1️⃣ Filter out "00:00"
+  //const validTimes = times.filter((time: string));
 
-// 2️⃣ Convert to minutes since midnight
-const timesInMinutes = times.map((time:any) => {
-  const [h, m] = time.split(":").map(Number);
-  return h * 60 + m;
-});
+  // 2️⃣ Convert to minutes since midnight
+  const timesInMinutes = times.map((time: any) => {
+    const [h, m] = time.split(":").map(Number);
+    return h * 60 + m;
+  });
 
-// 3️⃣ Find minimum
-const minMinutes = Math.min(...timesInMinutes);
+  // 3️⃣ Find minimum
+  const minMinutes = Math.min(...timesInMinutes);
 
-// 4️⃣ Convert back to HH:mm
-const minHour = Math.floor(minMinutes / 60);
-const minMinute = minMinutes % 60;
-const earliestTime = `${minHour.toString().padStart(2, "0")}:${minMinute.toString().padStart(2, "0")}`;
-return earliestTime;
-};
+  // 4️⃣ Convert back to HH:mm
+  const minHour = Math.floor(minMinutes / 60);
+  const minMinute = minMinutes % 60;
+  const earliestTime = `${minHour.toString().padStart(2, "0")}:${minMinute
+    .toString()
+    .padStart(2, "0")}`;
+  return earliestTime;
+}
 async function studentAttendanceUpdate(
-  attendanceTime:any,studentSessionStartTimes:any,scheduleClass:any ) {
-const dateStr = moment(scheduleClass.startDate).format("YYYY-MM-DD");
-const studentSessionStart: any = dayjs(`${dateStr} ${studentSessionStartTimes}`, "YYYY-MM-DD HH:mm");
-const studentAttendanceTime: any = dayjs(`${dateStr} ${attendanceTime}`, "YYYY-MM-DD HH:mm");
+  attendanceTime: any,
+  studentSessionStartTimes: any,
+  scheduleClass: any
+) {
+  const dateStr = moment(scheduleClass.startDate).format("YYYY-MM-DD");
+  const studentSessionStart: any = dayjs(
+    `${dateStr} ${studentSessionStartTimes}`,
+    "YYYY-MM-DD HH:mm"
+  );
+  const studentAttendanceTime: any = dayjs(
+    `${dateStr} ${attendanceTime}`,
+    "YYYY-MM-DD HH:mm"
+  );
 
-console.log("Attendance time:", studentAttendanceTime.format());
-//console.log("Session starts at:", studentSessionStart.format());
+  console.log("Attendance time:", studentAttendanceTime.format());
+  //console.log("Session starts at:", studentSessionStart.format());
 
-let studentAttendance;
+  let studentAttendance;
 
-if (studentSessionStart.isBefore(studentAttendanceTime) || studentAttendanceTime.isSame(studentSessionStart)) {
-  // Arrived before or exactly at session start time — present
-  studentAttendance = await ClassScheduleModel.findOneAndUpdate(
-    { _id: new Types.ObjectId(scheduleClass._id) },
-    { $set: { studentAttendee: "present" } },
-    { new: true }
-  ).lean();
-  console.log("✅ Student is present");
-} else {
-  // Arrived late — absent
-  studentAttendance = await ClassScheduleModel.findOneAndUpdate(
-    { _id: new Types.ObjectId(scheduleClass._id) },
-    { $set: { studentAttendee: "absent" } },
-    { new: true }
-  ).lean();
-  console.log("❌ Student is absent");
+  if (
+    studentSessionStart.isBefore(studentAttendanceTime) ||
+    studentAttendanceTime.isSame(studentSessionStart)
+  ) {
+    // Arrived before or exactly at session start time — present
+    studentAttendance = await ClassScheduleModel.findOneAndUpdate(
+      { _id: new Types.ObjectId(scheduleClass._id) },
+      { $set: { studentAttendee: "present" } },
+      { new: true }
+    ).lean();
+    console.log("✅ Student is present");
+  } else {
+    // Arrived late — absent
+    studentAttendance = await ClassScheduleModel.findOneAndUpdate(
+      { _id: new Types.ObjectId(scheduleClass._id) },
+      { $set: { studentAttendee: "absent" } },
+      { new: true }
+    ).lean();
+    console.log("❌ Student is absent");
+  }
 }
 
-};
+async function teacherAttendanceUpdate(
+  attendanceTime: any,
+  teacherSessionStartTime: any,
+  scheduleClass: any
+) {
+  const dateStr = moment(scheduleClass.startDate).format("YYYY-MM-DD");
+  const teacherSessionStart = dayjs(
+    `${dateStr} ${teacherSessionStartTime}`,
+    "YYYY-MM-DD HH:mm"
+  );
+  const teacherAttendanceTime: any = dayjs(
+    `${dateStr} ${attendanceTime}`,
+    "YYYY-MM-DD HH:mm"
+  );
 
-async function teacherAttendanceUpdate(attendanceTime: any, teacherSessionStartTime: any, scheduleClass: any ) {
-
-const dateStr = moment(scheduleClass.startDate).format("YYYY-MM-DD");
-const teacherSessionStart = dayjs(`${dateStr} ${teacherSessionStartTime}`, "YYYY-MM-DD HH:mm");
-const teacherAttendanceTime: any = dayjs(`${dateStr} ${attendanceTime}`, "YYYY-MM-DD HH:mm");
-
-console.log("Attendance time: ", teacherAttendanceTime.format());
-console.log("Session starts at :", teacherSessionStart.format());
+  console.log("Attendance time: ", teacherAttendanceTime.format());
+  console.log("Session starts at :", teacherSessionStart.format());
   let teacherAttendance;
-  if(teacherSessionStart.isBefore(teacherAttendanceTime) || teacherAttendanceTime.isSame(teacherSessionStart)){
- teacherAttendance = await ClassScheduleModel.findOneAndUpdate(
-  {_id:new Types.ObjectId(scheduleClass._id)},
-   {
-      $set: {
-       teacherAttendee: "present"
+  if (
+    teacherSessionStart.isBefore(teacherAttendanceTime) ||
+    teacherAttendanceTime.isSame(teacherSessionStart)
+  ) {
+    teacherAttendance = await ClassScheduleModel.findOneAndUpdate(
+      { _id: new Types.ObjectId(scheduleClass._id) },
+      {
+        $set: {
+          teacherAttendee: "present",
+        },
       },
-    },
-    { new: true }
-
-).lean();
-  console.log("✅ teacher is present");
-
-}else{
- teacherAttendance = await ClassScheduleModel.findOneAndUpdate(
-  {_id:new Types.ObjectId(scheduleClass._id)},
-   {
-      $set: {
-       teacherAttendee: "absent"
+      { new: true }
+    ).lean();
+    console.log("✅ teacher is present");
+  } else {
+    teacherAttendance = await ClassScheduleModel.findOneAndUpdate(
+      { _id: new Types.ObjectId(scheduleClass._id) },
+      {
+        $set: {
+          teacherAttendee: "absent",
+        },
       },
-    },
-    { new: true }
-
-).lean();
-  console.log("✅ teacher is present");
-
-}
-console.log("teacherAttendance>>>>>>", teacherAttendance);
-return teacherAttendance;
+      { new: true }
+    ).lean();
+    console.log("✅ teacher is present");
+  }
+  console.log("teacherAttendance>>>>>>", teacherAttendance);
+  return teacherAttendance;
 }
 
-
-async function getSessionTotalHours(studentSessionStartTimes: any, teacherSessionStartTime: any, scheduleClass: any, studentSessionEndTimes: any,teacherSessionEndTime: any) {
- console.log("studentSessionEndTimes>>", studentSessionEndTimes);
+async function getSessionTotalHours(
+  studentSessionStartTimes: any,
+  teacherSessionStartTime: any,
+  scheduleClass: any,
+  studentSessionEndTimes: any,
+  teacherSessionEndTime: any
+) {
+  console.log("studentSessionEndTimes>>", studentSessionEndTimes);
   console.log("teacherSessionEndTime>>", teacherSessionEndTime);
 
   // Convert to minutes
-const [studentHour, studentMinute] = studentSessionStartTimes.split(":").map(Number);
-const [teacherHour, teacherMinute] = teacherSessionStartTime.split(":").map(Number);
+  const [studentHour, studentMinute] = studentSessionStartTimes
+    .split(":")
+    .map(Number);
+  const [teacherHour, teacherMinute] = teacherSessionStartTime
+    .split(":")
+    .map(Number);
 
-const [studentEndHour, studentEndMinute] = studentSessionEndTimes.split(":").map(Number);
-const [teacherEndHour, teacherEndMinute] = teacherSessionEndTime.split(":").map(Number);
+  const [studentEndHour, studentEndMinute] = studentSessionEndTimes
+    .split(":")
+    .map(Number);
+  const [teacherEndHour, teacherEndMinute] = teacherSessionEndTime
+    .split(":")
+    .map(Number);
 
-const studentEndMinutes = studentEndHour * 60 + studentEndMinute;
-const teacherEndMinutes = teacherEndHour * 60 + teacherEndMinute;
-const studentMinutes = studentHour * 60 + studentMinute;
-const teacherMinutes = teacherHour * 60 + teacherMinute;
+  const studentEndMinutes = studentEndHour * 60 + studentEndMinute;
+  const teacherEndMinutes = teacherEndHour * 60 + teacherEndMinute;
+  const studentMinutes = studentHour * 60 + studentMinute;
+  const teacherMinutes = teacherHour * 60 + teacherMinute;
 
-const earliestMinutes = Math.min(studentMinutes, teacherMinutes);
-const lateMinutes = Math.max(studentEndMinutes, teacherEndMinutes);
-// Convert back to HH:mm
-const earliestHour = Math.floor(earliestMinutes / 60).toString().padStart(2, "0");
-const earliestMinute = (earliestMinutes % 60).toString().padStart(2, "0");
+  const earliestMinutes = Math.min(studentMinutes, teacherMinutes);
+  const lateMinutes = Math.max(studentEndMinutes, teacherEndMinutes);
+  // Convert back to HH:mm
+  const earliestHour = Math.floor(earliestMinutes / 60)
+    .toString()
+    .padStart(2, "0");
+  const earliestMinute = (earliestMinutes % 60).toString().padStart(2, "0");
 
-const latestHour = Math.floor(lateMinutes / 60).toString().padStart(2, "0");
-const latestMinute = (lateMinutes % 60).toString().padStart(2, "0");
+  const latestHour = Math.floor(lateMinutes / 60)
+    .toString()
+    .padStart(2, "0");
+  const latestMinute = (lateMinutes % 60).toString().padStart(2, "0");
 
-const earliestTime = `${earliestHour}:${earliestMinute}`;
-const latestTime = `${latestHour}:${latestMinute}`;
-console.log("earliestTime>>", earliestTime);
-console.log("latestTime>>", latestTime);
+  const earliestTime = `${earliestHour}:${earliestMinute}`;
+  const latestTime = `${latestHour}:${latestMinute}`;
+  console.log("earliestTime>>", earliestTime);
+  console.log("latestTime>>", latestTime);
 
-if(scheduleClass.studentAttendee || scheduleClass.teacherAttendee && scheduleClass.sessionStarttime == ""){
-let sessioStartUpdate = await ClassScheduleModel.findOneAndUpdate(
-  {_id:new Types.ObjectId(scheduleClass._id)},
-   {
-      $set: {
-       sessionStarttime: earliestTime.toString(),
-       sessionsEndtime : latestTime.toString()
+  if (
+    scheduleClass.studentAttendee ||
+    (scheduleClass.teacherAttendee && scheduleClass.sessionStarttime == "")
+  ) {
+    let sessioStartUpdate = await ClassScheduleModel.findOneAndUpdate(
+      { _id: new Types.ObjectId(scheduleClass._id) },
+      {
+        $set: {
+          sessionStarttime: earliestTime.toString(),
+          sessionsEndtime: latestTime.toString(),
+        },
       },
-    },
-    { new: true }
+      { new: true }
+    ).lean();
+    console.log("sessioStartUpdate>>>");
+  }
+  if (scheduleClass?.teacherAttendee == "present") {
+    const teacherSessionStartTime = scheduleClass.teacher.teacherSessionStart;
+    const teacherSessionEndTime = scheduleClass.teacher.teacherSessionEnd;
+    const validStartTimes = teacherSessionStartTime.filter(
+      (time: string) => time !== "00:00"
+    );
+    const validEndTimes = teacherSessionEndTime.filter(
+      (time: string) => time !== "00:00"
+    );
+    console.log("validstartTimes", validStartTimes);
+    console.log("validendTimes", validEndTimes);
 
-).lean();
-console.log("sessioStartUpdate>>>")
-}
-if(scheduleClass?.teacherAttendee == "present"){
-const teacherSessionStartTime = scheduleClass.teacher.teacherSessionStart;
-const teacherSessionEndTime = scheduleClass.teacher.teacherSessionEnd
-const validStartTimes = teacherSessionStartTime.filter((time: string) => time !== "00:00");
-const validEndTimes = teacherSessionEndTime.filter((time: string) => time !== "00:00");
-console.log("validstartTimes",validStartTimes);
-console.log("validendTimes",validEndTimes);
+    const pairCount = Math.min(validStartTimes.length, validEndTimes.length);
+    console.log("pairCount>>>", pairCount);
+    let totalMinutes = 0;
 
-const pairCount = Math.min(validStartTimes.length, validEndTimes.length);
-console.log("pairCount>>>", pairCount);
-let totalMinutes = 0;
+    for (let i = 0; i < pairCount; i++) {
+      const [startH, startM] = validStartTimes[i].split(":").map(Number);
+      const [endH, endM] = validEndTimes[i].split(":").map(Number);
 
-for (let i = 0; i < pairCount; i++) {
-  const [startH, startM] = validStartTimes[i].split(":").map(Number);
-  const [endH, endM] = validEndTimes[i].split(":").map(Number);
+      const startTotal = startH * 60 + startM;
+      const endTotal = endH * 60 + endM;
 
-  const startTotal = startH * 60 + startM;
-  const endTotal = endH * 60 + endM;
+      const diff = endTotal - startTotal;
+      console.log(
+        `Session ${i + 1}: ${validStartTimes[i]} - ${
+          validEndTimes[i]
+        } => ${diff} mins`
+      );
 
-  const diff = endTotal - startTotal;
-  console.log(`Session ${i + 1}: ${validStartTimes[i]} - ${validEndTimes[i]} => ${diff} mins`);
+      totalMinutes += diff;
+    }
+    console.log(`Total time: ${totalMinutes} mins`);
 
-  totalMinutes += diff;
-}
-console.log(`Total time: ${totalMinutes} mins`);
+    if (scheduleClass.sessionClassType == "REGULARCLASS") {
+      const regularClassAmount = 4.0;
+      const classDefaultHours = 60;
+      const classTotalEarnings =
+        (totalMinutes / classDefaultHours) * regularClassAmount;
 
-if(scheduleClass.sessionClassType == "REGULARCLASS"){
-const regularClassAmount = 4.00;
-const classDefaultHours = 60;
-const classTotalEarnings = ( totalMinutes/classDefaultHours) * regularClassAmount;
+      await ClassScheduleModel.findOneAndUpdate(
+        { _id: new Types.ObjectId(scheduleClass._id) },
+        {
+          $set: {
+            classhour: totalMinutes.toString(),
+            amount: classTotalEarnings,
+          },
+        },
+        { new: true }
+      ).lean();
+    } else if (scheduleClass.sessionClassType == "GROUPCLASS") {
+      console.log("GROUPCLASS update");
+      const groupClassAmount = 6.0;
+      const classDefaultHours = 60;
+      const classTotalEarnings =
+        (totalMinutes / classDefaultHours) * groupClassAmount;
 
- await ClassScheduleModel.findOneAndUpdate(
-  {_id:new Types.ObjectId(scheduleClass._id)},
-   {
-      $set: {
-       classhour: totalMinutes.toString(),
-       amount: classTotalEarnings
-      },
-    },
-    { new: true }
-
-).lean();
-}else if (scheduleClass.sessionClassType == "GROUPCLASS") {
-console.log("GROUPCLASS update")
-  const groupClassAmount = 6.00;
-const classDefaultHours = 60;
-const classTotalEarnings = ( totalMinutes/classDefaultHours) * groupClassAmount;
-
- await ClassScheduleModel.findOneAndUpdate(
-  {_id:new Types.ObjectId(scheduleClass._id)},
-   {
-      $set: {
-       classhour: totalMinutes.toString(),
-       amount: classTotalEarnings
-      },
-    },
-    { new: true }
-
-).lean();
-}
-
-}
- 
-
+      await ClassScheduleModel.findOneAndUpdate(
+        { _id: new Types.ObjectId(scheduleClass._id) },
+        {
+          $set: {
+            classhour: totalMinutes.toString(),
+            amount: classTotalEarnings,
+          },
+        },
+        { new: true }
+      ).lean();
+    }
+  }
 }
 
 export const getTeacherTotalEarnings = async (
@@ -1977,13 +2080,13 @@ export const getTeacherTotalEarnings = async (
     regularClass: number;
     groupClass: number;
     trialClass: number;
-  },
+  };
   lastPeriod: {
     totalEarnings: number;
     regularClass: number;
     groupClass: number;
     trialClass: number;
-  }
+  };
 }> => {
   try {
     let currentStart: Date;
@@ -1998,7 +2101,6 @@ export const getTeacherTotalEarnings = async (
       const lastMonthDate = subMonths(new Date(), 1);
       lastStart = startOfMonth(lastMonthDate);
       lastEnd = endOfMonth(lastMonthDate);
-
     } else if (dateRange === "weekly") {
       currentStart = startOfWeek(new Date(), { weekStartsOn: 1 });
       currentEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
@@ -2006,7 +2108,6 @@ export const getTeacherTotalEarnings = async (
       const lastWeekDate = subWeeks(new Date(), 1);
       lastStart = startOfWeek(lastWeekDate, { weekStartsOn: 1 });
       lastEnd = endOfWeek(lastWeekDate, { weekStartsOn: 1 });
-
     } else if (dateRange === "daily") {
       currentStart = startOfDay(new Date());
       currentEnd = endOfDay(new Date());
@@ -2014,9 +2115,7 @@ export const getTeacherTotalEarnings = async (
       const yesterday = subDays(new Date(), 1);
       lastStart = startOfDay(yesterday);
       lastEnd = endOfDay(yesterday);
-
-    }
-    else {
+    } else {
       throw new Error("Invalid dateRange. Use 'weekly' or 'monthly'.");
     }
 
@@ -2068,54 +2167,53 @@ export const getTeacherTotalEarnings = async (
       },
     ]);
 
-
-  const result = await Evaluation.aggregate([
-    {
-      $match: {
-        "teacher.teacherId": teacherId,
-        updatedDate: {
-          $gte: currentStart,
-          $lte: currentEnd,
+    const result = await Evaluation.aggregate([
+      {
+        $match: {
+          "teacher.teacherId": teacherId,
+          updatedDate: {
+            $gte: currentStart,
+            $lte: currentEnd,
+          },
         },
       },
-    },
-    {
-      $addFields: {
-        amountNumber: { $toDouble: "$amount" },
-      },
-    },
-    {
-      $group: {
-        _id: null,
-        total: { $sum: "$amountNumber" },
-      },
-    },
-  ]);
-
-  const resultLastPeriod = await Evaluation.aggregate([
-    {
-      $match: {
-        "teacher.teacherId": teacherId,
-        updatedDate: {
-          $gte: lastStart,
-          $lte: lastEnd,
+      {
+        $addFields: {
+          amountNumber: { $toDouble: "$amount" },
         },
       },
-    },
-    {
-      $addFields: {
-        amountNumber: { $toDouble: "$amount" },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$amountNumber" },
+        },
       },
-    },
-    {
-      $group: {
-        _id: null,
-        total: { $sum: "$amountNumber" },
-      },
-    },
-  ]);
+    ]);
 
-  console.log("result>>>>",result[0]?.total || 0);
+    const resultLastPeriod = await Evaluation.aggregate([
+      {
+        $match: {
+          "teacher.teacherId": teacherId,
+          updatedDate: {
+            $gte: lastStart,
+            $lte: lastEnd,
+          },
+        },
+      },
+      {
+        $addFields: {
+          amountNumber: { $toDouble: "$amount" },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$amountNumber" },
+        },
+      },
+    ]);
+
+    console.log("result>>>>", result[0]?.total || 0);
 
     // 🔢 Unpack current
     const currentPeriod = {
@@ -2132,7 +2230,7 @@ export const getTeacherTotalEarnings = async (
         currentPeriod.regularClass = item.total;
       } else if (item._id === "GROUPCLASS") {
         currentPeriod.groupClass = item.total;
-      } else  {
+      } else {
         currentPeriod.trialClass = item.total;
       }
     }
@@ -2161,7 +2259,6 @@ export const getTeacherTotalEarnings = async (
       currentPeriod,
       lastPeriod,
     };
-
   } catch (error) {
     console.log("error>>>>", error);
     return {
@@ -2181,9 +2278,8 @@ export const getTeacherTotalEarnings = async (
   }
 };
 
-
 export const classesCountForTeacher = async (
-  teacherId: string,
+  teacherId: string
 ): Promise<{
   scheduled: number;
   completed: number;
@@ -2230,68 +2326,63 @@ export const classesCountForTeacher = async (
   return finalResult;
 };
 
-export const teacherClassLevelGrowth  = async (
-  teacherId: string, dateRange: string
-) => {
-
-
-}
+export const teacherClassLevelGrowth = async (
+  teacherId: string,
+  dateRange: string
+) => {};
 
 export const bulkupdateClassAttendanceByClassLink = async (
   classLink: string,
   payload: Partial<IClassScheduleUpdate>
 ): Promise<any> => {
-  try{
- const currentDate = new Date()
-    const formattedDate = currentDate.toISOString().split("T")[0]
-    const startOfDayIST = `${formattedDate}T00:00:00.000+00:00`
-    const endOfDayIST = `${formattedDate}T23:59:59.999+00:00`
+  try {
+    const currentDate = new Date();
+    const formattedDate = currentDate.toISOString().split("T")[0];
+    const startOfDayIST = `${formattedDate}T00:00:00.000+00:00`;
+    const endOfDayIST = `${formattedDate}T23:59:59.999+00:00`;
     const currentTime = moment().format("HH:mm");
     const teacherStart = payload.teacher?.teacherSessionStart || null;
-const teacherEnd = payload.teacher?.teacherSessionEnd || null;
-  console.log("currentTime>>>",currentTime);
-  // return await ClassScheduleModel.updateMany(
-  //   { classLink }, // Find all classes with same link
-  //   {
-  //     $set: {
-  //       teacher: payload.teacher,
-  //         startDate: {
-  //   $gte:startOfDayIST,
-  //   $lte:endOfDayIST,
-  // },
-  // startTime: { $lte: currentTime },  // class already started
-  // endTime: { $gte: currentTime }, 
-  //     },
-  //   },
-  //     {
-  //   $push: {
-  //     ...(teacherStart && { "teacher.teacherSessionStart": teacherStart }),
-  //     ...(teacherEnd && { "teacher.teacherSessionEnd": teacherEnd }),
-  //   },
-  // }
-  // );
-  
-return await ClassScheduleModel.updateMany(
-  {
-    classLink,
-    startDate: {
-      $gte: new Date(startOfDayIST),
-      $lte: new Date(endOfDayIST),
-    },
-    startTime: { $lte: currentTime },
-    endTime: { $gte: currentTime },
-  },
-  {
-    $push: {
-   "teacher.teacherSessionStart": teacherStart ,
-     "teacher.teacherSessionEnd": teacherEnd,
-    },
-  }
-);
+    const teacherEnd = payload.teacher?.teacherSessionEnd || null;
+    console.log("currentTime>>>", currentTime);
+    // return await ClassScheduleModel.updateMany(
+    //   { classLink }, // Find all classes with same link
+    //   {
+    //     $set: {
+    //       teacher: payload.teacher,
+    //         startDate: {
+    //   $gte:startOfDayIST,
+    //   $lte:endOfDayIST,
+    // },
+    // startTime: { $lte: currentTime },  // class already started
+    // endTime: { $gte: currentTime },
+    //     },
+    //   },
+    //     {
+    //   $push: {
+    //     ...(teacherStart && { "teacher.teacherSessionStart": teacherStart }),
+    //     ...(teacherEnd && { "teacher.teacherSessionEnd": teacherEnd }),
+    //   },
+    // }
+    // );
 
-}
-  catch(e){
+    return await ClassScheduleModel.updateMany(
+      {
+        classLink,
+        startDate: {
+          $gte: new Date(startOfDayIST),
+          $lte: new Date(endOfDayIST),
+        },
+        startTime: { $lte: currentTime },
+        endTime: { $gte: currentTime },
+      },
+      {
+        $push: {
+          "teacher.teacherSessionStart": teacherStart,
+          "teacher.teacherSessionEnd": teacherEnd,
+        },
+      }
+    );
+  } catch (e) {
     console.log(">>>>", e);
   }
-       
 };
