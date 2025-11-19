@@ -3,6 +3,7 @@ import { z } from "zod";
 import getAllknowledge, { createKnowledgeBase } from "../../operations/knowledgeBase";
 import { zodknowledgeBaseValidationSchema } from "../../models/knowledgebase";
 import { uploadFileToSharePoint } from "../../shared/sharepoint";
+import { Readable } from "stream";
 
 const createInputValidation = z.object({
   payload: zodknowledgeBaseValidationSchema.pick({
@@ -18,18 +19,48 @@ const createInputValidation = z.object({
   }),
 });
 
+async function streamToBuffer(stream: Readable): Promise<Buffer> {
+  const chunks: any[] = [];
+
+  return new Promise((resolve, reject) => {
+    stream.on("data", (chunk: any) =>
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+    );
+    stream.on("error", (err: any) => reject(err));
+    stream.on("end", () => resolve(Buffer.concat(chunks)));
+  });
+}
 export default {
 
 
   async createKnowledgeBase(req: Request, h: ResponseToolkit) {
     try {
       const { payload } = createInputValidation.parse({ payload: req.payload });
+          const rawPayload = req.payload as any;
+let uploadFileBuffer: Buffer | null = null;
 
-      let attachFileBuffer: Buffer;
+if (rawPayload.uploadedFile) {
+
+  // CASE 1: Hapi gives buffer inside _data
+  if (rawPayload.uploadedFile._data) {
+    uploadFileBuffer = rawPayload.uploadedFile._data;
+  }
+  // CASE 2: Already a Buffer
+  else if (Buffer.isBuffer(rawPayload.uploadedFile)) {
+    uploadFileBuffer = rawPayload.uploadedFile;
+  }
+  // CASE 3: Base64 string
+  else if (typeof rawPayload.uploadedFile === "string") {
+    uploadFileBuffer = Buffer.from(rawPayload.uploadedFile, "base64");
+  }
+  else {
+    throw new Error("Invalid file format received");
+  }
+}
 
     const fileName = `${Date.now()}_knowledgebase_file`;
- const shareLink = await uploadFileToSharePoint(
-          payload.uploadedFile as unknown as Buffer,
+    const shareLink = await uploadFileToSharePoint(
+          uploadFileBuffer  as Buffer,
           fileName
         );
 
@@ -37,7 +68,7 @@ export default {
         courseName: payload.courseName,
         subjectTitle: payload.subjectTitle,
         uploadedFormat: payload.uploadedFormat,
-        uploadedFile: shareLink || '', // now guaranteed to be Buffer or null
+        uploadedFile: shareLink.fileId || '', // now guaranteed to be Buffer or null
         status: payload.status ?? '',
         createdDate: payload.createdDate || new Date(),
         createdBy: payload.createdBy ?? '',

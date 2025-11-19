@@ -59,7 +59,7 @@ const knowledgeBaseSchema = new Schema<IKnowledgeBase>(
     courseName: z.string(), 
     subjectTitle: z.string(),
     uploadedFormat: z.enum([uploadedFormat.PDF, uploadedFormat.VIDEO,]),
-    uploadedFile: z.string(),
+    uploadedFile: z.any(),
     
     status: z.string(),
     createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
