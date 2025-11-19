@@ -1808,8 +1808,8 @@ export interface IAccessModel {
     supervisor?: boolean;
     supervisormodules?: {
       dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
-      recuirement?: { read?: boolean, write?: boolean, delete?: boolean },
-      meeting?: { read?: boolean, write?: boolean, delete?: boolean },
+      recruitment?: { read?: boolean, write?: boolean, delete?: boolean },
+      meetingtraining?: { read?: boolean, write?: boolean, delete?: boolean },
       teachers?: { read: boolean, write?: boolean, delete?: boolean },
       messages?: { read?: boolean, write?: boolean, delete?: boolean },
       support?: { read?: boolean, write?: boolean, delete?: boolean },
@@ -1875,8 +1875,8 @@ export interface IAccessModel extends Document{
     supervisor?: boolean;
     supervisormodules?: {
       dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
-      recuirement?: { read?: boolean, write?: boolean, delete?: boolean },
-      meeting?: { read?: boolean, write?: boolean, delete?: boolean },
+      recruitment?: { read?: boolean, write?: boolean, delete?: boolean },
+      meetingtraining?: { read?: boolean, write?: boolean, delete?: boolean },
       teachers?: { read: boolean, write?: boolean, delete?: boolean },
       messages?: { read?: boolean, write?: boolean, delete?: boolean },
       support?: { read?: boolean, write?: boolean, delete?: boolean },

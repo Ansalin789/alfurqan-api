@@ -7,6 +7,7 @@ import {
 } from "../../types/models.types";
 import EvaluationModel from "../models/evaluation";
 import StudentModel from "../models/student";
+import IAlStudents from "../models/alstudents";
 import UserShiftSchedule from "../models/usershiftschedule"; // Add this import
 import MeetingSchedule from "../models/calendar";
 import SubscriptionModel from "../models/subscription";
@@ -674,44 +675,43 @@ export const updateStudentInvoice = async (
 };
 
 export const getTotalTrialClassRequestCount = async () => {
+  
   const evaluationStats = await EvaluationModel.aggregate([
     {
-      $match: {
-        status: "Active",
-      },
+      $match: { status: "Active" }
     },
     {
       $group: {
         _id: null,
         totalCount: { $sum: 1 },
         maleCount: {
-          $sum: { $cond: [{ $eq: ["$student.studentGender", "Male"] }, 1, 0] },
+          $sum: { $cond: [{ $eq: ["$student.studentGender", "Male"] }, 1, 0] }
         },
         femaleCount: {
-          $sum: {
-            $cond: [{ $eq: ["$student.studentGender", "Female"] }, 1, 0],
-          },
+          $sum: { $cond: [{ $eq: ["$student.studentGender", "Female"] }, 1, 0] }
         },
         completedCount: {
-          $sum: { $cond: [{ $eq: ["$trialClassStatus", "COMPLETED"] }, 1, 0] },
+          $sum: { $cond: [{ $eq: ["$trialClassStatus", "COMPLETED"] }, 1, 0] }
         },
         pendingCount: {
-          $sum: { $cond: [{ $eq: ["$trialClassStatus", ""] }, 1, 0] },
+          $sum: { $cond: [{ $eq: ["$trialClassStatus", ""] }, 1, 0] }
         },
         inprogressCount: {
-          $sum: { $cond: [{ $eq: ["$trialClassStatus", "INPROGRESS"] }, 1, 0] },
-        },
-        studentJointCount: {
-          $sum: { $cond: [{ $eq: ["$studentStatus", "JOINED"] }, 1, 0] },
+          $sum: { $cond: [{ $eq: ["$trialClassStatus", "INPROGRESS"] }, 1, 0] }
         },
         studentNotJointCount: {
-          $sum: { $cond: [{ $eq: ["$studentStatus", "NOTJOINED"] }, 1, 0] },
-        },
-      },
-    },
+          $sum: { $cond: [{ $eq: ["$studentStatus", "NOTJOINED"] }, 1, 0] }
+        }
+      }
+    }
   ]);
 
-  return evaluationStats;
+  const studentStats = await IAlStudents.countDocuments();
+
+  return {
+    evaluation: evaluationStats[0] || {},
+    students: studentStats || {}
+  };
 };
 
 export const getTeacherStatusCount = async () => {
@@ -734,19 +734,28 @@ export const getTeacherStatusCount = async () => {
       },
     },
   ]);
-  const assignedTeacherPercentage = (
-    (evaluationStats[0].assignedTeacherCount /
-      evaluationStats[0].totalClassCount) *
-    100
-  ).toFixed(2);
-  const notAssignedTeacherPercentage = (
-    (evaluationStats[0].notAssinedCount / evaluationStats[0].totalClassCount) *
-    100
-  ).toFixed(2);
+
   const total = evaluationStats[0].totalClassCount;
 
-  return { total, assignedTeacherPercentage, notAssignedTeacherPercentage };
+  const assignedTeacherPercentage = (
+    (evaluationStats[0].assignedTeacherCount / total) *
+    100
+  ).toFixed(2);
+
+  const notAssignedTeacherPercentage = (
+    (evaluationStats[0].notAssinedCount / total) *
+    100
+  ).toFixed(2);
+
+  return {
+    total,
+    assignedTeacherCount: evaluationStats[0].assignedTeacherCount,
+    notAssinedCount: evaluationStats[0].notAssinedCount,
+    assignedTeacherPercentage,
+    notAssignedTeacherPercentage,
+  };
 };
+
 
 export const getPreferedTeacherPercentage = async () => {
   const preferedTeahcer = await EvaluationModel.aggregate([
