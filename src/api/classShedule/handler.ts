@@ -366,11 +366,40 @@ existingEnd.push(rawPayload.student.studnetSessionEnd);
 async getTeacherStudentCount(req: Request, h: ResponseToolkit) {
   try {
     console.log("Query parameters received:", req.query);
+
+    // STEP 1: get aggregated teacher list (your existing aggregation)
     const teachers = await teacherStudentCount(req.query.teacherId);
+
+    // STEP 2: For each teacher -> fetch individual trial & joined students
+    const enrichedTeachers = await Promise.all(
+      teachers.map(async (teacher) => {
+        const teacherId = teacher.teacherId;
+
+        // Trial students
+        const trialCount = await classShedule.countDocuments({
+          "teacher.teacherId": teacherId,
+          scheduleStatus: "Trial",
+        });
+
+        // Joined students
+        const joinedCount = await classShedule.countDocuments({
+          "teacher.teacherId": teacherId,
+          scheduleStatus: "Joined",
+        });
+
+        return {
+          ...teacher,
+          trialClassCount: trialCount,
+          joinedStudentsCount: joinedCount,
+        };
+      })
+    );
+
     return h.response({
       success: true,
-      data: teachers,
+      data: enrichedTeachers,
     }).code(200);
+
   } catch (error) {
     console.error("Error fetching teacher-student count:", error);
     return h.response({ success: false, message: "Internal Server Error" }).code(500);

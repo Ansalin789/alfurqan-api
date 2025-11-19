@@ -113,12 +113,12 @@ const roleAccess = new Schema<IAccessModel>(
           write: { type: Boolean, required: false },
           delete: { type: Boolean, required: false },
         },
-        recuirement: {
+        recruitment: {
           read: { type: Boolean, required: false },
           write: { type: Boolean, required: false },
           delete: { type: Boolean, required: false },
         },
-        meeting: {
+        meetingtraining: {
           read: { type: Boolean, required: false },
           write: { type: Boolean, required: false },
           delete: { type: Boolean, required: false },
@@ -346,12 +346,12 @@ export const zodroleAccessSchema = z.object({
         write: z.boolean().optional(),
         delete: z.boolean().optional(),
       }).optional(),
-      recuirement: z.object({
+      recruitment: z.object({
         read: z.boolean().optional(),
         write: z.boolean().optional(),
         delete: z.boolean().optional(),
       }).optional(),
-      meeting: z.object({
+      meetingtraining: z.object({
         read: z.boolean().optional(),
         write: z.boolean().optional(),
         delete: z.boolean().optional(),

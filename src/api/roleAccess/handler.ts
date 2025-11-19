@@ -55,8 +55,8 @@ export default{
           supervisor: rawPayload.roleAccess?.supervisor || false,
           supervisormodules: {
             dashboard: { read: rawPayload.roleAccess?.supervisormodules?.dashboard?.read || false, write: rawPayload.roleAccess?.supervisormodules?.dashboard?.write || false, delete: rawPayload.roleAccess?.supervisormodules?.dashboard?.delete || false },
-            recuirement: { read: rawPayload.roleAccess?.supervisormodules?.recuirement?.read || false, write: rawPayload.roleAccess?.supervisormodules?.recuirement?.write || false, delete: rawPayload.roleAccess?.supervisormodules?.recuirement?.delete || false },
-            meeting: { read: rawPayload.roleAccess?.supervisormodules?.meeting?.read || false, write: rawPayload.roleAccess?.supervisormodules?.meeting?.write || false, delete: rawPayload.roleAccess?.supervisormodules?.meeting?.delete || false },
+            recruitment: { read: rawPayload.roleAccess?.supervisormodules?.recruitment?.read || false, write: rawPayload.roleAccess?.supervisormodules?.recruitment?.write || false, delete: rawPayload.roleAccess?.supervisormodules?.recruitment?.delete || false },
+            meetingtraining: { read: rawPayload.roleAccess?.supervisormodules?.meetingtraining?.read || false, write: rawPayload.roleAccess?.supervisormodules?.meetingtraining?.write || false, delete: rawPayload.roleAccess?.supervisormodules?.meetingtraining?.delete || false },
             teachers: { read: rawPayload.roleAccess?.supervisormodules?.teachers?.read || false, write: rawPayload.roleAccess?.supervisormodules?.teachers?.write || false, delete: rawPayload.roleAccess?.supervisormodules?.teachers?.delete || false },
             messages: { read: rawPayload.roleAccess?.supervisormodules?.messages?.read || false, write: rawPayload.roleAccess?.supervisormodules?.messages?.write || false, delete: rawPayload.roleAccess?.supervisormodules?.messages?.delete || false },
             support: { read: rawPayload.roleAccess?.supervisormodules?.support?.read || false, write: rawPayload.roleAccess?.supervisormodules?.support?.write || false, delete: rawPayload.roleAccess?.supervisormodules?.support?.delete || false },
