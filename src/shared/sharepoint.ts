@@ -102,7 +102,7 @@ export async function uploadFileToSharePoint(
 //view file
 
 export async function viewFileFromSharePoint(fileId: string) {
-    const token = await getSharePointAccessToken();
+  const token = await getSharePointAccessToken();
   const siteId = await getSharePointSiteId(token);
   const driveId = await getSharePointDriveId(token, siteId);
 
@@ -110,15 +110,17 @@ export async function viewFileFromSharePoint(fileId: string) {
     `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${fileId}/content`;
 
   const response = await axios.get(fileUrl, {
-    responseType: "stream",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  responseType: "arraybuffer",   // <— MUST BE THIS
+  headers: { Authorization: `Bearer ${token}` }
+});
 
-  return {
-    stream: response.data,
-    contentType: response.headers["content-type"],
-  };
+return {
+  buffer: Buffer.from(response.data),
+  contentType: response.headers["content-type"],
+  contentLength: response.headers["content-length"],
+};
 }
+
 // export async function viewFileFromSharePoint(fileId: string) {
 //   try {
 //    const token = await getSharePointAccessToken();
