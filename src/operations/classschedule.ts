@@ -47,7 +47,8 @@ type AssignmentItem = {
     | "writing"
     | "reading"
     | "image identification"
-    | "word match";
+    | "word match"
+    | "reading comprehension";
   title: string;
   assignedDate: Date;
   dueDate: Date;
@@ -88,7 +89,7 @@ const getDatesForWeekdays = (
 };
 
 export const updateStudentClassSchedule = async (
-  id: String,
+  id: any,
   payload: Partial<IClassScheduleCreate>
 ) => {
   const {
@@ -103,7 +104,7 @@ export const updateStudentClassSchedule = async (
   } = payload;
 
   const alfurqanStudent = await AlStudenModel.findOne({
-    _id: new Types.ObjectId(student?.id),
+    _id: new Types.ObjectId(id),
   }).exec(); // 🧠 Extract reference values from the first student
   const courseDetails = await Course.findOne({});
   if (!student) {
@@ -117,7 +118,7 @@ export const updateStudentClassSchedule = async (
     !endTime ||
     !startDate ||
     !endDate ||
-    classDay.length !== startTime.length ||
+    //classDay.length !== startTime.length ||
     startTime.length !== endTime.length
   ) {
     throw new Error(
@@ -170,7 +171,9 @@ export const updateStudentClassSchedule = async (
   }
 
       const newClassSchedule = new ClassScheduleModel({
+
         student: {
+          id: alfurqanStudent?._id.toString(),
           studentId: alfurqanStudent?.student.studentId,
           studentFirstName: alfurqanStudent?.username,
           studentLastName: alfurqanStudent?.username,
@@ -352,9 +355,12 @@ export const requestReschedule = async (payload: any) => {
     const evaluation = await Evaluation.findOne({
   "student.studentId": alfstudent?.student.studentId,
     });
+     const oldresult = await ClassScheduleModel.findOne({
+      _id: new Types.ObjectId(payload._id),
+     }).exec();
     const rescheduleResult = await ClassScheduleModel.findOneAndUpdate(
       { _id: new Types.ObjectId(payload._id) },
-      { $set: { scheduleStatus: "RequestReschedule" } },
+      { $set: { scheduleStatus: "Reschedulerequested" } },
       { new: true }
     );
     const academicCoachId = evaluation?.academicCoachId;
@@ -363,9 +369,12 @@ export const requestReschedule = async (payload: any) => {
     const requestUserId = payload.requestedBy === "student" ? classSchedule?.student.studentId : classSchedule?.teacher.teacherId;
     const requestEmail = payload.requestedBy === "student" ? classSchedule?.student.studentEmail : classSchedule?.teacher.teacherEmail;
     const message = `${requestName} (${payload.requestedBy}) has requested to reschedule class on ${classSchedule?.startDate} at ${classSchedule?.startTime[0]}.`;
+    // Arrange message content for better readability:
     const messageContent = 
-     `Requesting to reschedule class on ${classSchedule?.startDate} at ${classSchedule?.startTime[0]} from ${classSchedule?.endTime[0]} to ${payload.requestDate} at ${payload.fromTime} - ${payload.toTime}.\n` +
-     `Comment: ${payload.comment}`;
+      `Requesting to reschedule class:\n` +
+      `- From: ${oldresult?.startDate} ${oldresult?.startTime[0]} to ${classSchedule?.startDate} at ${classSchedule?.startTime[0]}\n` +
+      `- Time Change: from ${classSchedule?.endTime[0]} to ${payload.requestDate} at ${payload.fromTime} - ${payload.toTime}\n` +
+      `Comment: ${payload.comment}`;
     if(rescheduleResult){
     await sendNotification({
                  messages: message,
@@ -376,7 +385,7 @@ export const requestReschedule = async (payload: any) => {
                  receiverId: [academicCoach?._id.toString()],
                  receiverName: [academicCoach?.userName],
                  receiverEmail: [academicCoach?.email],
-                 notificationType: " REQUEST_RESCHEDULE",
+                 notificationType: `REQUEST_RESCHEDULE_${payload.requestedBy.toUpperCase()}`,                 
                  notificationStatus: "Unseen",
                  status: "active",
                  createdBy: "system",
@@ -793,59 +802,6 @@ export const getStudentClassHours = async (
     throw new Error("Failed to fetch class hours for the student");
   }
 };
-
-// export const teacherStudentCount = async () => {
-//   const teachers = await classShedule.aggregate([
-//     {
-//       $match: {
-//         "teacher.teacherId": { $ne: null },
-//         "teacher.teacherName": { $ne: null },
-//         "teacher.teacherEmail": { $ne: null },
-//       },
-//     },
-//     {
-//       $group: {
-//         _id: "$teacher.teacherId", // Group by teacherId
-//         teacherId: { $first: "$teacher.teacherId" },
-//         teacherName: { $first: "$teacher.teacherName" },
-//         teacherEmail: { $first: "$teacher.teacherEmail" },
-//         uniqueStudents: {
-//           $addToSet: {
-//             studentId: "$student.studentId",
-//             gender: "$student.gender",
-//           },
-//         },
-//       },
-//     },
-//     {
-//       $project: {
-//         teacherId: 1,
-//         teacherName: 1,
-//         teacherEmail: 1,
-//         studentCount: { $size: "$uniqueStudents" },
-//         maleCount: {
-//           $size: {
-//             $filter: {
-//               input: "$uniqueStudents",
-//               as: "student",
-//               cond: { $eq: ["$$student.gender", "Male"] },
-//             },
-//           },
-//         },
-//         femaleCount: {
-//           $size: {
-//             $filter: {
-//               input: "$uniqueStudents",
-//               as: "student",
-//               cond: { $eq: ["$$student.gender", "Female"] },
-//             },
-//           },
-//         },
-//       },
-//     },
-//   ]);
-//   return teachers;
-// };
 
 export const teacherStudentCount = async (teacherId?: string) => {
   const matchStage: any = {

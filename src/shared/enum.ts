@@ -144,7 +144,7 @@ export interface GetAllAssignmentRecordsParams {
 
 export interface GetPaymentDetailsRecordsParams {
 
-  userId?: string,
+  userId: string,
   studentId?: string,
   _id?: string,
   userName?: string,

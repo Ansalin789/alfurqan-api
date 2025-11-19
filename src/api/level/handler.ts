@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ResponseToolkit, Request } from "@hapi/hapi";
-import { createLevel,getLevelsByCourseId } from "../../operations/level";
+import { createLevel,getLevelsByCourseId, updateLevel } from "../../operations/level";
 import { zodLevelSchema } from "../../models/level";
 
 // Validation Schema
@@ -13,6 +13,14 @@ const createLevelValidation = z.object({
     createdBy: true,
   }).partial(),
 });
+
+const updateLevelValidation = z.object({
+  payload : zodLevelSchema.pick({
+     courseId: true,
+    level: true,
+    description: true,
+  })
+})
 
 export default {
   // POST /levels
@@ -58,5 +66,29 @@ export default {
     return h.response({ error: "Failed to fetch levels", details: error }).code(500);
   }
 },
+
+async updateLevel (req: Request, h: ResponseToolkit) {
+   try{
+      const { payload } = updateLevelValidation.parse({ payload: req.payload });
+     const descriptionBuffer =
+      typeof payload.description === "string"
+        ? Buffer.from(payload.description, "utf-8")
+        : Buffer.from("", "utf-8");
+      const newLevel = await updateLevel({
+        courseId: payload.courseId || "",
+        level: payload.level || "",
+        description: descriptionBuffer,
+      }
+      );
+
+       return h
+        .response({ message: "Level updated successfully", data: newLevel })
+        .code(201);
+
+   }catch(error){
+        return h.response({ error: "Failed to fetch levels", details: error }).code(500);
+
+   }
+} 
 
 };

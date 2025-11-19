@@ -12,7 +12,6 @@ import { teacherDashboardCardCount } from "../../kafka/producers/teacherProducer
 
 
 
-
 const createInputValidation = z.object({
     payload: zodEvaluationSchema.pick({
     academicCoachId: true,
@@ -104,8 +103,11 @@ export default {
         const classDayValues = payload.classDay?.map((day: { value: string; label: string }) => day.value);
         const startTimeValues = payload.startTime?.map((time: { value: string; label: string }) => time.value);
         const endTimeValues = payload.endTime?.map((time: { value: string; label: string }) => time.value);
+   
+        const generateTrialId = generateAFTCode("AFT");
 
         const result = await createEvaluationRecord({
+          trialId: generateTrialId,
           academicCoachId: payload.academicCoachId ?? "",
 
             student: { // Ensure studentId is included
@@ -299,7 +301,7 @@ if(result){
 
     // Retrieve student details by studentId
   async getEvaluationRecordById(req: Request, h: ResponseToolkit) {
-    const result = await getEvaluationRecordById(String(req.params.evaluationId));
+    const result = await getEvaluationRecordById(req.params.evaluationId);
   
     if (isNil(result)) {
       return notFound(evaluationMessages.EVALUATIONS_NOT_FOUND);
@@ -357,8 +359,9 @@ if(result){
     },
 
    async getTrialClassByTeacher(req: Request, h: ResponseToolkit){
+      console.log("Id>>>>>", req.query.teacherId);
     const result = await getTrialClassRecordById(req.query.teacherId);
-  
+
     if (isNil(result)) {
       return notFound(evaluationMessages.EVALUATIONS_NOT_FOUND);
     }
@@ -368,4 +371,21 @@ if(result){
   }
 
 
+  function generateAFTCode(preName: string) {
+  const num = Math.floor(10000 + Math.random() * 90000);
+  return `${preName}${num}`;
+}
+
+//   const useNumber  = 0;
+// function trialIdGenerator(trialprefix: string) {
+
+// // auto reset 
+// if(useNumber > 99999){
+//     throw new Error("All 5-digit trial IDs have been used!");
+
+// }
+//   const formattedNum = useNumber.toString().padStart(5, "0");
+//   return `${trialprefix}${formattedNum}`;
+
+// }
 

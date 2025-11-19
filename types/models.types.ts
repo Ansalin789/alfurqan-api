@@ -87,6 +87,7 @@ export interface IStudents extends Document {
     role: string;
     email: string;
 };
+
   email: string;
   gender: string;
   phoneNumber: number;
@@ -116,6 +117,8 @@ export interface IStudentCreate {
   academicCoach: {
     academicCoachId: string;
   };
+  profilepic?: Buffer;
+
   email: string;
   gender: string;
   phoneNumber: number;
@@ -329,7 +332,8 @@ export interface ICourseCreate {
 
 
 export interface IEvaluation extends Document {
-  academicCoachId: string;
+trialId?: string;
+academicCoachId: string;
 student: {
   studentId: string;
   studentRegisterId: string;
@@ -425,6 +429,7 @@ updatedBy?: string;
 
 
 export interface IEvaluationCreate{
+  trialId?: string;
   academicCoachId: string;
   student: {
   studentId?: string;
@@ -526,6 +531,7 @@ export interface ISubscritions extends Document{
 }
 
 export interface IClassSchedule extends Document{
+  classId?: string;
   student: {
     id: string;
     studentId: string;
@@ -628,6 +634,7 @@ export interface IAdminAssignment extends Document{
   updatedBy: string;
 } 
 export interface IClassScheduleCreate{
+  classId?: string;
   student: {
     id: string;
     studentId?: string;
@@ -758,6 +765,8 @@ export interface IAlStudents extends Document{
     city:string;
     country: string;
   };
+profilepic?: Buffer;
+
 
   level?: string;
   username: string,
@@ -781,6 +790,8 @@ export interface IAlStudentCreate{
     studentPhone: number;
     gender: string;
   };
+profilepic?: Buffer;
+
   level?: string;
   username: string,
   role: string;
@@ -830,7 +841,7 @@ export interface IAssignment extends Document {
   assignedTeacher: string;
   assignedTeacherId: string;
   assignmentType: {
-    type: "quiz" | "writing" | "reading" | "image identification" | "word match";
+    type: "quiz" | "writing" | "reading" | "image identification" | "word match" | "reading comprehension";
     name?: string;
   };
   chooseType?: boolean;
@@ -854,7 +865,7 @@ export interface IAssignment extends Document {
   assignedDate: Date;
   dueDate: Date;
   answer: string;
-  answerValidation: string;
+  answerValidation?: string;
   assignmentStatus: AssignmentStatus;
   commends?: string;
   score: number; 
@@ -873,7 +884,7 @@ groupId?: string;
   assignedTeacher: string;
   assignedTeacherId: string;
 assignmentType: {
-    type: "quiz" | "writing" | "reading" | "image identification" | "word match";
+    type: "quiz" | "writing" | "reading" | "image identification" | "word match" | "reading comprehension";
     name?: string;
   };
   chooseType: boolean;
@@ -940,7 +951,7 @@ export interface IAssignmentCreate {
   assignedDate?: Date;
   dueDate?: Date;
   answer: string;
-  answerValidation: string;
+  answerValidation?: string;
   assignmentStatus: string;
     commends?: string;
   score: number; 
@@ -1373,7 +1384,7 @@ export interface IRecruitmentCreate{
   currency: string;
   expectedSalary : number;
   preferedWorkingHours: string;
-  uploadResume?: Buffer;
+  uploadResume?: any;
   comments?: string;
   applicationStatus: string;
   level? : string;
@@ -1400,10 +1411,36 @@ export interface IRecruitmentCreate{
 }
 
 export interface ITeacher {
-  teacherId: string;
-  teacherName: string;
-  teacherEmail: string;
-  attendee: string;
+  teacherId?: string;
+  teacherName?: string;
+  teacherEmail?: string;
+  attendee?: string;
+}
+export interface IStudentMeeting {
+  studentId?: string;
+  studentName?: string;
+  studentEmail?: string;
+  attendee?: string;
+}
+export interface IAdminMeet {
+  adminId?: string;
+ adminName?: string;
+  adminEmail?: string;
+  attendee?: string;
+}
+export interface IOrganizer {
+  organizerId?: string;
+  organizerName?: string;
+  organizerEmail?: string;
+  role?: "teacher" | "student" | "admin" | "supervisor" | "academiccoach";
+}
+// ✅ New unified participant interface
+export interface IParticipant {
+  participantId?: string;
+  participantName?: string;
+  participantEmail?: string;
+  role: "teacher" | "student" | "admin" | "supervisor"|"academiccoach";
+  attendee?: string;
 }
 
 export interface IMeetingCreate {
@@ -1412,46 +1449,33 @@ export interface IMeetingCreate {
   selectedDate: Date;
   startTime: string;
   endTime: string;
-  teacher: ITeacher[];
-   supervisor:{
-    supervisorId?: string;
-    supervisorName?: string;
-    supervisorEmail?: string;
-   
-  };
+  organizer?: IOrganizer;
+  participants?: IParticipant[];
   description: string;
   meetingminutes?: string;
-  duration: string;
+  duration?: string;
   status: string;
   meetingStatus: string;
   createdDate: Date;
   createdBy: string;
   updatedDate?: Date;
   updatedBy?: string;
-
-  
 }
 
-
-export interface IMeeting extends Document{
-  
+export interface IMeeting extends Document {
   meetingName: string;
   meetingId: string;
-   supervisor:{
-    supervisorId?: string;
-    supervisorName?: string;
-    supervisorEmail?: string;
-    supervisorRole?: string;
-  };
+  teacher: ITeacher[];
+  organizer?: IOrganizer;
   selectedDate: Date;
-  startTime: any;
-  endTime: any;
-  teacher: ITeacher[];  // Array of teacher objects
+  startTime: string;
+  endTime: string;
+  participants?: IParticipant[];
   description: string;
   status: string;
   meetingStatus: string;
-  meetingminutes: string;
-  duration: string;
+  meetingminutes?: string;
+  duration?: string;
   createdDate: Date;
   createdBy: string;
   updatedDate?: Date;
@@ -1729,7 +1753,7 @@ export interface IKnowledgeBase extends Document{
   courseName: string,
   subjectTitle: string;
   uploadedFormat: string,
-  uploadedFile: Buffer,
+  uploadedFile: String,
   status: string,
   createdDate: Date,
   createdBy: string,
@@ -1741,7 +1765,7 @@ export interface IKnowledgeBaseCreate{
   courseName: string,
   subjectTitle: string;
   uploadedFormat: string,
-  uploadedFile: Buffer,
+  uploadedFile: any,
   status: string,
   createdDate: Date,
   createdBy: string,
@@ -1784,8 +1808,8 @@ export interface IAccessModel {
     supervisor?: boolean;
     supervisormodules?: {
       dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
-      recuirement?: { read?: boolean, write?: boolean, delete?: boolean },
-      meeting?: { read?: boolean, write?: boolean, delete?: boolean },
+      recruitment?: { read?: boolean, write?: boolean, delete?: boolean },
+      meetingtraining?: { read?: boolean, write?: boolean, delete?: boolean },
       teachers?: { read: boolean, write?: boolean, delete?: boolean },
       messages?: { read?: boolean, write?: boolean, delete?: boolean },
       support?: { read?: boolean, write?: boolean, delete?: boolean },
@@ -1851,8 +1875,8 @@ export interface IAccessModel extends Document{
     supervisor?: boolean;
     supervisormodules?: {
       dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
-      recuirement?: { read?: boolean, write?: boolean, delete?: boolean },
-      meeting?: { read?: boolean, write?: boolean, delete?: boolean },
+      recruitment?: { read?: boolean, write?: boolean, delete?: boolean },
+      meetingtraining?: { read?: boolean, write?: boolean, delete?: boolean },
       teachers?: { read: boolean, write?: boolean, delete?: boolean },
       messages?: { read?: boolean, write?: boolean, delete?: boolean },
       support?: { read?: boolean, write?: boolean, delete?: boolean },

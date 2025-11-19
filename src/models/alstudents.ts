@@ -79,7 +79,9 @@ endDate:{
 status: {
     type: String,
     required: true
-},
+},    
+profilepic: { type: Buffer, required: false },
+
 createdDate: {
     type: Date,
     required: true,
@@ -102,6 +104,14 @@ updatedBy: {
     timestamps: false,
 }
 );
+const fileObjectSchema = z.object({
+    hapi: z.object({
+      filename: z.string(),
+      headers: z.any(),
+      payload: z.any(),
+    }).optional(),
+    _data: z.any().optional(),
+  });
 export const zodAlStudentSchema = z.object({
     student: z.object({
       studentId: z.string().optional(),
@@ -115,18 +125,30 @@ export const zodAlStudentSchema = z.object({
     }),
     sessionClassType:z.string().optional(),
     level:z.string().optional(),
-
+    profilepic: z
+    .union([z.string().nullable(), z.instanceof(Buffer), fileObjectSchema])
+    .optional()
+    .refine(
+      (val) =>
+        val === null ||
+        typeof val === "string" ||
+        Buffer.isBuffer(val) ||
+        (typeof val === "object" && "_data" in val),
+      {
+        message: "uploadFile must be a Buffer, a base64 string, a file object, or null",
+      }
+    ),
     username: z.string().min(3),
-    password: z.string().min(8),
+    password: z.string().min(8).optional(),
     role: z.string(),
       status: z.enum([appStatus.ACTIVE, appStatus.IN_ACTIVE, appStatus.DELETED]),
       createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
         message: commonMessages.INVALID_DATE_FORMAT,
       }).transform((val) => new Date(val)).optional(),
-      createdBy: z.string(),
+      createdBy: z.string().optional(),
       lastUpdatedDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
         message: commonMessages.INVALID_DATE_FORMAT,
       }).transform((val) => new Date(val)).optional(),
-      lastUpdatedBy: z.string(),
+      lastUpdatedBy: z.string().optional(),
 });
 export default model<IAlStudents>("AlfurqanStudent", alStudentSchema);

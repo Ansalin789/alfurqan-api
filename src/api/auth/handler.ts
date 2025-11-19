@@ -79,9 +79,9 @@ export default {
     console.log("Latest session:", latestSession.loginDate);
 
     // Step 2: If latest session is still active, block login
-    if (latestSession.isActive) {
-      return unauthorized("User already logged in on another device/session");
-    }
+    // if (latestSession.isActive) {
+    //   return unauthorized("User already logged in on another device/session");
+    // }
   }
 
     const jwtPayload = {
@@ -145,9 +145,9 @@ export default {
     console.log("Latest session:", latestSession.loginDate);
 
     // Step 2: If latest session is still active, block login
-    if (latestSession.isActive) {
-      return unauthorized("User already logged in on another device/session");
-    }
+    // if (latestSession.isActive) {
+    //   return unauthorized("User already logged in on another device/session");
+    // }
   }
     const jwtPayload = {
       userName:  activeRecord.username,
@@ -309,6 +309,8 @@ console.log(">>>>email", payload.email);
         id:users._id,
         username1:user.username,
         accessToken,
+        role:user.role,
+        package:user.student.package
       };// 200 - OK
     } catch (error) {
       return h.response({
@@ -362,6 +364,7 @@ console.log(">>>>email", payload.email);
         id:users._id,
         username1:activeRecord.userName,
         accessToken,
+        role:user.role[0]
       };// 200 - OK
     } catch (error) {
       return h.response({

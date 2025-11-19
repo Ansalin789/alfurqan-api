@@ -19,87 +19,83 @@ export const getPaymentHistory = async (
     return { totalCount: 0, paymentDetails: [] };
   }
 
+  // Find the student by studentId
   let alStudent;
   try {
-    alStudent = await alstudents.findOne({ _id: new Types.ObjectId(userId) }).lean();
-    console.log("🎯 Matched alstudent by _id:", alStudent);
+    alStudent = await alstudents.findOne({ "student.studentId": userId }).lean();
+    console.log("🎯 Matched alstudent by studentId:", alStudent);
 
     if (!alStudent) {
       AppLogger.warn("AlStudent not found for given student ID", { studentId: userId });
       return { totalCount: 0, paymentDetails: [] };
     }
   } catch (err) {
-    AppLogger.error("Invalid userId format", { userId, error: err });
+    AppLogger.error("Error fetching alstudent", { userId, error: err });
     return { totalCount: 0, paymentDetails: [] };
   }
 
-  // First attempt: payments by alstudent._id
-  let query: any = { userId: alStudent._id };
+  // Build payment query
+  let query: any = { userId: alStudent.student.studentId };
   const sortOptions: any = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
-  const paymentQuery = PaymentDetailsModel.find(query).sort(sortOptions);
 
-  if (!isNil(offset) && !isNil(limit)) {
-    const skip = Math.max(
-      0,
-      ((Number(offset) ?? Number(commonMessages.OFFSET)) - 1) *
-        (Number(limit) ?? Number(commonMessages.LIMIT))
-    );
-    console.log("⏩ Pagination:", { skip, limit });
-    paymentQuery.skip(skip).limit(Number(limit) ?? Number(commonMessages.LIMIT));
-  }
-
-  let [paymentDetails, totalCount] = await Promise.all([
-    paymentQuery.exec(),
-    PaymentDetailsModel.countDocuments(query).exec()
-  ]);
-
-  console.log("📦 Fetched payment details (by alstudent._id):", paymentDetails.length);
-  console.log("🔢 Total count:", totalCount);
-
-  // Fallback to evaluation IDs if no direct payments
-  if (totalCount === 0) {
-    console.log("⚠️ No payments found by alstudent._id, trying by evaluations...");
-
-    const evaluations = await EvaluationModel.find({
-      "student.studentId": alStudent.student.studentId
-    }).select("_id");
-
-    const evaluationIds = evaluations.map(e => e._id);
-    if (evaluationIds.length === 0) {
-      console.log("⚠️ No evaluations found for this alstudent.student.studentId");
-      return { totalCount: 0, paymentDetails: [] };
-    }
-
-    query = { userId: { $in: evaluationIds } };
-    const fallbackPaymentQuery = PaymentDetailsModel.find(query).sort(sortOptions);
-
+  const applyPagination = (q: any) => {
     if (!isNil(offset) && !isNil(limit)) {
       const skip = Math.max(
         0,
         ((Number(offset) ?? Number(commonMessages.OFFSET)) - 1) *
           (Number(limit) ?? Number(commonMessages.LIMIT))
       );
-      fallbackPaymentQuery.skip(skip).limit(Number(limit) ?? Number(commonMessages.LIMIT));
+      q.skip(skip).limit(Number(limit) ?? Number(commonMessages.LIMIT));
     }
+    return q;
+  };
+
+  let paymentQuery = applyPagination(PaymentDetailsModel.find(query).sort(sortOptions));
+
+  let [paymentDetails, totalCount] = await Promise.all([
+    paymentQuery.exec(),
+    PaymentDetailsModel.countDocuments(query).exec(),
+  ]);
+
+  console.log("📦 Fetched payment details (by studentId):", paymentDetails.length);
+  console.log("🔢 Total count:", totalCount);
+
+  // Fallback to evaluation IDs if no payments found
+  if (totalCount === 0) {
+    console.log("⚠️ No payments found by studentId, trying by evaluations...");
+
+    const evaluations = await EvaluationModel.find({
+      "student.studentId": alStudent.student.studentId,
+    }).select("_id");
+
+    const evaluationIds = evaluations.map(e => e._id);
+    if (evaluationIds.length === 0) {
+      console.log("⚠️ No evaluations found for this student");
+      return { totalCount: 0, paymentDetails: [] };
+    }
+
+    query = { userId: { $in: evaluationIds } };
+    const fallbackPaymentQuery = applyPagination(PaymentDetailsModel.find(query).sort(sortOptions));
 
     [paymentDetails, totalCount] = await Promise.all([
       fallbackPaymentQuery.exec(),
-      PaymentDetailsModel.countDocuments(query).exec()
+      PaymentDetailsModel.countDocuments(query).exec(),
     ]);
+
+    // Map userId back to studentId for consistency
+    paymentDetails = paymentDetails.map((payment: { toObject: () => any; }) => ({
+      ...payment.toObject(), // convert Mongoose doc to plain object
+      userId: alStudent.student.studentId,
+    }));
 
     console.log("📦 Fetched payment details (by evaluation IDs):", paymentDetails.length);
     console.log("🔢 Total count:", totalCount);
-
-    for (const payment of paymentDetails) {
-      payment.userId = alStudent._id.toString();
-      console.log(`🔄 Mapped payment ${payment._id} userId to alstudent._id`);
-    }
   }
 
-  // ✅ Add course from alStudent to each payment
+  // Add course info to each payment
   const course = alStudent.student.course || "N/A";
-  const updatedPaymentDetails = paymentDetails.map(payment => ({
-    ...payment.toObject?.() ?? payment,  // ensure plain object
+  const updatedPaymentDetails: IPaymentDetails[] = paymentDetails.map((payment: any) => ({
+    ...payment,
     course,
   }));
 
@@ -110,3 +106,5 @@ export const getPaymentHistory = async (
     paymentDetails: updatedPaymentDetails,
   };
 };
+;
+

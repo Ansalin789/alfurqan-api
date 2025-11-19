@@ -24,7 +24,7 @@ export interface IMeetingUpdate{
 
 export interface IMeetingMinutesUpdate {
   meetingStatus: string;
-  duration: string;
+  duration?: string;
   meetingminutes: string;
   teacher: ITeacher[];  // Fix this from `string` to `ITeacher[]`
 }
@@ -135,14 +135,9 @@ const groupedAutoMeetings = Array.from(groupedMap.values());
 
 
 
-export const createMeeting = async ( payload: IMeetingCreate): Promise<IMeeting | { error: any }> => {
+export const createMeeting = async ( payload: IMeetingCreate): Promise<IMeeting | IMeeting[] | { error: any }> => {
   try {
     // Extract and sanitize supervisor fields from payload
-    const supervisor = {
-      supervisorId: payload.supervisor?.supervisorId ?? "",
-      supervisorName: payload.supervisor?.supervisorName ?? "",
-      supervisorEmail: payload.supervisor?.supervisorEmail ?? "",
-    };
 
     // Convert selectedDate to a Date object
     const meetingDate = new Date(payload.selectedDate);
@@ -163,18 +158,43 @@ export const createMeeting = async ( payload: IMeetingCreate): Promise<IMeeting 
       };
     }
 
-    // Generate meetingId
-const meetingId = `meet-${uuidv4()}`;
+    // Generate/normalize meetingId (keep provided id if present)
+    const meetingId = payload.meetingId || `meet-${uuidv4()}`;
 
     // Check for past date
     if (meetingDate < new Date()) {
       return { error: "Meeting date cannot be in the past. Please select a future date." };
     }
 
-    // Create meeting document
+    // If multiple participants are provided, create one record per participant
+    const participants = Array.isArray(payload.participants) ? payload.participants : [];
+    if (participants.length > 0) {
+      const docs = participants.map((participant) => ({
+        meetingName: payload.meetingName,
+        meetingId,
+        organizer: payload.organizer, // ✅ include organizer
+        selectedDate: meetingDate,
+        startTime: payload.startTime,
+        endTime: payload.endTime,
+        participants: [participant],
+        description: payload.description,
+        meetingStatus: payload.meetingStatus,
+        status: payload.status,
+        createdBy: payload.createdBy,
+        createdDate: payload.createdDate,
+        updatedDate: payload.updatedDate,
+        meetingminutes: payload.meetingminutes,
+        duration: payload.duration,
+      }));
+
+      const saved = await Meeting.insertMany(docs);
+      return saved as unknown as IMeeting[];
+    }
+
+    // Otherwise, create a single meeting document
     const newMeeting = new Meeting({
       ...payload,
-      supervisor, // ✅ Use directly from payload
+      organizer: payload.organizer,
       meetingId,
     });
 
@@ -337,7 +357,7 @@ export const updateMeetingMinutesAndAttendees = async (
   duration: string,
   teacher: ITeacher[],
   updatedBy?: string
-): Promise<IMeetingMinutesUpdate | null> => {
+): Promise<Partial<IMeetingMinutesUpdate> | null> => {
   const updated = await addmeeting.findOneAndUpdate(
     { _id: new Types.ObjectId(id) },
     {
@@ -350,10 +370,10 @@ export const updateMeetingMinutesAndAttendees = async (
         updatedDate: new Date(), // set server-side
       },
     },
-    { new: true, projection: { meetingminutes: 1, teacher: 1, _id: 0 } } // return only relevant fields
+    { new: true, projection: { meetingminutes: 1, teacher: 1, duration: 1, meetingStatus: 1, _id: 0 } } // return only relevant fields
   ).lean();
 
-  return updated;
+  return updated as unknown as Partial<IMeetingMinutesUpdate> | null;
 };
 
 

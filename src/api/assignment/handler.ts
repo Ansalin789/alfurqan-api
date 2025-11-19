@@ -26,6 +26,7 @@ import {
   GetAllAssignmentRecordsParams,
   GetAlluserRecordsParams,
 } from "../../shared/enum";
+import { Readable } from "stream";
 
 // Input Validations for student list
 const getAssignmnentListInputValidation = z.object({
@@ -79,12 +80,15 @@ let getAssignmentInputValidation = z.object({
 });
 
 // Helper function to convert a readable stream to a buffer
-async function streamToBuffer(stream: Stream.Readable): Promise<Buffer> {
-  const chunks: Buffer[] = [];
+async function streamToBuffer(stream: Readable): Promise<Buffer> {
+  const chunks: any[] = [];
+
   return new Promise((resolve, reject) => {
-    stream.on("data", (chunk) => chunks.push(chunk));
+    stream.on("data", (chunk: any) =>
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+    );
+    stream.on("error", (err: any) => reject(err));
     stream.on("end", () => resolve(Buffer.concat(chunks)));
-    stream.on("error", (err) => reject(err));
   });
 }
 
@@ -176,11 +180,8 @@ export default {
         assignedTeacher,
       });
       // ✅ Generate assignmentId here (for this one group of questions)
-      const currentDate = new Date();
-      const datePart = `${currentDate.getDate()}${
-        currentDate.getMonth() + 1
-      }${currentDate.getFullYear()}`;
-      const sharedAssignmentId = `GRP-${Date.now()}-${datePart}`;
+     
+      const sharedAssignmentId = `REG-ASS-${String(Math.floor(1 + Math.random() * 99)).padStart(2, '0')}`;
 
       if (!studentId || !mongoose.Types.ObjectId.isValid(studentId)) {
         return h.response({ error: "Invalid studentId" }).code(400);
@@ -217,6 +218,7 @@ export default {
               "reading",
               "image identification",
               "word match",
+              "reading comprehension",
             ].includes(parsedType.type)
           ) {
             console.error(
@@ -335,10 +337,8 @@ export default {
           answer: "",
           answerValidation: rawPayload.answerValidation || "",
           assignmentStatus: rawPayload.assignmentStatus || "",
-          audioFile: audioFileBuffer ? Buffer.from(audioFileBuffer) : undefined,
-          uploadFile: uploadFileBufferNew
-            ? Buffer.from(uploadFileBufferNew)
-            : undefined,
+          audioFile: audioFileBuffer || undefined,
+          uploadFile: uploadFileBufferNew || undefined,
           score: 0,
           rating: "",
         };
@@ -381,7 +381,8 @@ export default {
       const payload = req.payload as any;
       console.log("📥 Raw payload received:", payload);
 
-      const groupAssignmentId = payload.groupAssignmentId || `GRP-${Date.now()}-${new Date().getDate()}${new Date().getMonth()+1}${new Date().getFullYear()}`;
+      // Group assignment ID in format GRP-ASS-01
+      const groupAssignmentId = payload.groupAssignmentId || `GRP-ASS-${String(Math.floor(1 + Math.random() * 99)).padStart(2, '0')}`;
       
 
       // ✅ Parse and validate students list BEFORE reconstructing
@@ -471,6 +472,7 @@ export default {
               "reading",
               "image identification",
               "word match",
+              "reading comprehension",
             ].includes(parsedType.type)
           ) {
             return h.response({ error: "Invalid assignmentType" }).code(400);
@@ -563,10 +565,8 @@ export default {
           answer: "",
           answerValidation: rawPayload.answerValidation || "",
           assignmentStatus: rawPayload.assignmentStatus || "",
-          audioFile: audioFileBuffer ? Buffer.from(audioFileBuffer) : undefined,
-          uploadFile: uploadFileBufferNew
-            ? Buffer.from(uploadFileBufferNew)
-            : undefined,
+          audioFile: audioFileBuffer || undefined,
+          uploadFile: uploadFileBufferNew || undefined,
           score: 0,
           rating: "",
         };

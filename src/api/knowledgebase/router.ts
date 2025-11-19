@@ -13,10 +13,11 @@ const register = async (server: Server): Promise<void> => {
       description: addKnowledgeBaseMessages.CREATE,
       tags: ["api", "knowledgeBase"],
       payload: {
+        output: "stream",
         parse: true, 
         maxBytes: 20 * 1024 * 1024 ,
-        allow: "application/json",
-        output: "data",
+         multipart: true,
+  allow: "multipart/form-data",
       },
       auth: {
         strategies: ["jwt"],

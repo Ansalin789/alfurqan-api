@@ -7,26 +7,28 @@ import { notFound } from "@hapi/boom";
 import { addMeetingMessages, ClassSchedulesMessages } from "../../config/messages";
 import { checkMeetingConflict, getMeetingById, mergeMeetingPayload } from "../../shared/utils/meetingUtils";
 import { supervisorAddMeeting } from "../../kafka/producers/supervisorProducer";
-import { ITeacher } from "../../../types/models.types";
+import { ITeacher, IParticipant, IOrganizer } from "../../../types/models.types";
 import { academicAvailableTeachers } from "../../kafka/producers/academicProducer";
 
 
 const createInputValidation = z.object({
   payload: zodAddMeetingSchema.pick({
     meetingName: true,
+    meetingId: true,
     selectedDate: true,
     startTime: true,
     endTime: true,
-    teacher: true,
-    supervisor: true,
+    organizer: true,
     description: true,
     status: true,
+    teacher: true,
     meetingStatus: true,
     meetingminutes: true,
     createdDate: true,
     createdBy: true,
-    duartion:true,
+    duration:true,
     updatedDate: true,
+    participants: true,
   }),
 });
 
@@ -55,62 +57,92 @@ const updateMeetingInputValidation = zodAddMeetingSchema.pick({
 
 
 export default {
-async createMeeting(req: Request, h: ResponseToolkit) {
-  try {
-    const { payload } = createInputValidation.parse({ payload: req.payload });
-
-    let supervisor: { supervisorId?: string; supervisorName?: string; supervisorEmail?: string } = {};
-
-    if (typeof payload.supervisor === "string") {
-      try {
-        const parsed = JSON.parse(payload.supervisor);
-        supervisor = {
-          supervisorId: parsed.supervisorId,
-          supervisorName: parsed.supervisorName,
-          supervisorEmail: parsed.supervisorEmail
+  async createMeeting(req: Request, h: ResponseToolkit) {
+    try {
+      const { payload } = createInputValidation.parse({ payload: req.payload });
+  
+      // ✅ Parse organizer safely (can be stringified or object)
+      let organizer: IOrganizer | undefined;
+  
+      const organizerInput = (req.payload as any)?.organizer ?? payload.organizer;
+      if (typeof organizerInput === "string") {
+        try {
+          const o = JSON.parse(organizerInput);
+          const rawRole = o.role ?? o.organizerRole;
+          const normRole = typeof rawRole === "string" ? rawRole.toLowerCase().replace(/\s+/g, "") : undefined;
+          organizer = {
+            organizerId: o.organizerId,
+            organizerName: o.organizerName,
+            organizerEmail: o.organizerEmail,
+            role: (normRole as any),
+          };
+        } catch (err) {
+          console.error("Failed to parse organizer string:", err);
+        }
+      } else if (typeof organizerInput === "object" && organizerInput !== null) {
+        const rawRole = (organizerInput as any).role ?? (organizerInput as any).organizerRole;
+        const normRole = typeof rawRole === "string" ? rawRole.toLowerCase().replace(/\s+/g, "") : undefined;
+        organizer = {
+          organizerId: (organizerInput as any).organizerId,
+          organizerName: (organizerInput as any).organizerName,
+          organizerEmail: (organizerInput as any).organizerEmail,
+          role: (normRole as any),
         };
-      } catch (err) {
-        console.error("Failed to parse supervisor string:", err);
       }
-    } else if (typeof payload.supervisor === "object" && payload.supervisor !== null) {
-      supervisor = {
-        supervisorId: payload.supervisor.supervisorId,
-        supervisorName: payload.supervisor.supervisorName,
-        supervisorEmail: payload.supervisor.supervisorEmail
-      };
+  
+      // ✅ Parse participants safely
+      const participants = Array.isArray(payload.participants)
+        ? payload.participants.map((p: any) => ({
+            participantId: p.participantId,
+            participantName: p.participantName,
+            participantEmail: p.participantEmail,
+            role: p.role,
+            attendee: p.attendee || p.role,
+          }))
+        : [];
+  
+      // 🧠 Shared meetingId for all records
+      const meetingId = payload.meetingId || `meet-${crypto.randomUUID()}`;
+  
+      // ✅ Create per-participant records in service
+      const meetingResult = await createMeeting({
+        meetingName: payload.meetingName,
+        meetingId,
+        selectedDate: payload.selectedDate,
+        startTime: payload.startTime,
+        endTime: payload.endTime,
+        description: payload.description,
+        meetingStatus: payload.meetingStatus,
+        createdDate: payload.createdDate,
+        createdBy: payload.createdBy,
+        status: payload.status ?? "Active",
+        meetingminutes: payload.meetingminutes,
+        duration: payload.duration,
+        participants,
+        organizer, // ✅ pass organizer here
+        updatedDate: payload.updatedDate,
+      });
+  
+      if ((meetingResult as any)?.error) {
+        return h.response({ error: (meetingResult as any).error }).code(400);
+      }
+  
+      return h
+        .response({
+          message: "✅ Meeting created successfully",
+          data: meetingResult,
+        })
+        .code(201);
+  
+    } catch (error) {
+      console.error("❌ Error creating meeting:", error);
+      return h.response({ error: (error as Error).message }).code(400);
     }
-
-    const meeting = await createMeeting({
-      meetingName: payload.meetingName,
-      selectedDate: new Date(payload.selectedDate),
-      startTime: payload.startTime,
-      endTime: payload.endTime,
-      teacher: Array.isArray(payload.teacher) ? payload.teacher : [],
-      supervisor, 
-      description: payload.description,
-      status: payload.status,
-      meetingStatus: payload.meetingStatus ?? "Scheduled",
-      meetingminutes: payload.meetingminutes,
-      createdDate: payload.createdDate || new Date(),
-      createdBy: payload.createdBy,
-      updatedDate: payload.updatedDate || new Date(),
-      meetingId: "",
-      duration: payload.duartion || "",
-
-    });
-
-    if (meeting) {
-     await supervisorAddMeeting({data: meeting });
-     await academicAvailableTeachers({event : 'update' , data : {date : payload.selectedDate , teacherId : payload.teacher ,from : payload.startTime ,to :payload.endTime }} );
-    }
-
-    return h.response({ message: "Meeting created successfully", data: meeting }).code(201);
-  } catch (error) {
-    return h.response({ error }).code(400);
   }
-},
-
-
+  
+  
+  
+,
 async getAllMeetings(req: Request, h: ResponseToolkit) {
   const { supervisorId, offset, limit, sortBy } = req.query;
 
@@ -187,12 +219,12 @@ const updatedPayload = {
       updatedPayload.endTime !== existingMeeting.endTime;
 
     if (isTimeChanged) {
-      console.log("Checking teacher and supervisor details", updatedPayload.teacher, updatedPayload.supervisor);
+      console.log("Checking teacher and supervisor details", updatedPayload.teacher, updatedPayload.organizer);
 
       if (
         !updatedPayload.teacher?.length ||
         !updatedPayload.teacher[0]?.teacherId ||
-        !updatedPayload.supervisor?.supervisorId
+        !updatedPayload.organizer?.organizerId
       ) {
         return h
           .response({ message: "Invalid teacher or supervisor details" })
@@ -201,7 +233,7 @@ const updatedPayload = {
 
       console.log("Checking for conflict:", {
         teacherId: updatedPayload.teacher[0].teacherId,
-        supervisorId: updatedPayload.supervisor.supervisorId,
+        organizerId: updatedPayload.organizer?.organizerId,
         selectedDate: updatedPayload.selectedDate,
         startTime: updatedPayload.startTime,
         endTime: updatedPayload.endTime,
@@ -212,7 +244,7 @@ const studentId = " "; // Assuming teacherId is used as studentId
       console.log("Meeting date:", meetingdate);
       const hasConflict = await checkMeetingConflict(
         updatedPayload.teacher[0].teacherId,
-        updatedPayload.supervisor.supervisorId,
+        updatedPayload.organizer?.organizerId,
         studentId,
         meetingdate.toString(),
         updatedPayload.startTime,

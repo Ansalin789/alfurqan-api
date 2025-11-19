@@ -8,6 +8,7 @@ import AlStudentsModel from "../models/alstudents"; // Ensure proper model impor
 import { Types } from "mongoose";
 import  ClassScheduleModel  from "../models/classShedule"
 import Evaluation from "../models/evaluation"; 
+import alstudents from "../models/alstudents";
 
 export const getAllalstudentsList = async (
   params: GetAllRecordsParams
@@ -312,6 +313,25 @@ export const getStudentlevel = async (studentId: string) => {
   };
 };
 
+export const updateStudent = async (studentData: any) => {
+  try {
+    const { _id, profilepic, ...updateFields } = studentData;
+
+    // Make sure _id exists
+    if (!_id) throw new Error("Student ID (_id) is required for update.");
+
+    const updatedStudent = await alstudents.findByIdAndUpdate(
+      _id,
+      { $set: { ...updateFields, profilepic } }, // include profilepic
+      { new: true } // return the updated document
+    );
+
+    return updatedStudent;
+  } catch (error: any) {
+    console.error("Error updating student:", error);
+    throw new Error(error.message);
+  }
+};
 
 
 

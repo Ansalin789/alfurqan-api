@@ -444,64 +444,6 @@ export const getTeacherCountriesCountDetails = async() =>{
 };
 
 
-// export const getApplicationStatusData = async(fromDate:  string, toDate: string): Promise<
-//   { date: string; totalApplied: number; shortlisted: number}[]
-// > => {
-//   let startDate: Date = new Date(fromDate);
-//   let endDate: Date = new Date(toDate); // Default to today
-//   let dateFormat: string;
-//   let intervalFn: (interval: { start: Date; end: Date }) => Date[];
-//   let outputFormat: string;
-
-//   // Determine start and end dates based on dateRange
-
-//       dateFormat = "%d-%m"; // MongoDB format for months
-//       intervalFn = eachMonthOfInterval;
-//       outputFormat = "dd-yyyy"; // Output format for months
-  
-//   console.log(`Fetching results from ${startDate.toISOString()} to ${endDate.toISOString()}`);
-
-//   // Aggregation query to count class statuses per date/month
-//   const result = await RecruitModel.aggregate([
-//     {
-//       $match: {
-//         status: "Active",
-//         startDate: { $gte: startDate, $lte: endDate },
-//       },
-//     },
-//     {
-//       $group: {
-//         _id: { date: { $dateToString: { format: dateFormat, date: "$startDate" } }, status: "$applicationStatus" },
-//         count: { $sum: 1 },
-//       },
-//     },
-//   ]);
-
-//   let finalResult: any;
-//     // Convert aggregation results into a structured object
-//     const groupedResults: Record<string, any> = {};
-//     result.forEach(({ _id, count }) => {
-//       const date = format(new Date(_id.date), outputFormat); // Convert to correct format safely
-//       if (!groupedResults[date]) {
-//         groupedResults[date] = {
-//           date,
-//           totalApplied: 0,
-//           shortlisted: 0,
-//         };
-//       }
-//       if (_id.status === "SHORTLISTED") groupedResults[date].shortlisted += count;
-//     });
-
-//     // Ensure all intervals are included (fill missing values with 0)
-//     const allDates = intervalFn({ start: startDate, end: endDate }).map((d) => format(d, outputFormat));
-//     finalResult = allDates.map((date) => groupedResults[date] || { date, shortlisted: 0});
-
-
-//     return finalResult;
- 
- 
-// };
-
 export const getApplicationStatusData = async (
   fromDate: string,
   toDate: string

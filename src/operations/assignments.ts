@@ -25,14 +25,7 @@ interface IAssignmentUpdatePayload {
  * @returns {Promise<{ totalCount: number; assignments: IAssignmentCreate[] } | { error: any }>}
  */
 
-async function streamToBuffer(stream: Stream.Readable): Promise<Buffer> {
-  const chunks: Buffer[] = [];
-  return new Promise((resolve, reject) => {
-    stream.on("data", (chunk) => chunks.push(chunk));
-    stream.on("end", () => resolve(Buffer.concat(chunks)));
-    stream.on("error", (err) => reject(err));
-  });
-}
+
 
 // Type for options
 type AssignmentOptions = {
@@ -63,6 +56,7 @@ export const createAssignment = async (
       "reading",
       "image identification",
       "word match",
+      "reading comprehension",
     ];
     console.log("✅ Allowed types:", allowedTypes);
 
@@ -257,6 +251,7 @@ export const createAssignmentforGroup = async (
       "reading",
       "image identification",
       "word match",
+      "reading comprehension",
     ];
     console.log("✅ Allowed types:", allowedTypes);
 

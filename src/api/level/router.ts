@@ -27,6 +27,18 @@ const register = async (server: Server): Promise<void> => {
       strategies: ["jwt"]
     }
   }
+},
+{
+  method : "PUT",
+  path : "/update-levels",
+  options:{
+    handler:handler.updateLevel,
+     description: "update level by level",
+    tags: ["api", "level"],
+    auth: {
+      strategies: ["jwt"]
+    }
+  }
 }
 
   ];

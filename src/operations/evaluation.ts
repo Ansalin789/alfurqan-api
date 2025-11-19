@@ -7,6 +7,7 @@ import {
 } from "../../types/models.types";
 import EvaluationModel from "../models/evaluation";
 import StudentModel from "../models/student";
+import IAlStudents from "../models/alstudents";
 import UserShiftSchedule from "../models/usershiftschedule"; // Add this import
 import MeetingSchedule from "../models/calendar";
 import SubscriptionModel from "../models/subscription";
@@ -34,6 +35,7 @@ import { sendNotification } from "./notification";
 import { evaluationTeacherSlotBook } from "../redis/handler/teacherSlotHander";
 import moment from "moment";
 import { generateRollNo } from "./rollcounter";
+import users from "../models/users";
 
 export interface EvaluationFilter {
   id(id: any): string;
@@ -81,7 +83,6 @@ export const createEvaluationRecord = async (
       email: loginUser?.email, // Provide a default value if undefined
     };
   }
-  console.log("roll no:", rollNo);
   newStudent.studentId = rollNo;
   newStudent.firstName = payload.student.studentFirstName;
   newStudent.lastName = payload.student.studentLastName;
@@ -169,7 +170,7 @@ export const createEvaluationRecord = async (
   newEvaluation.assignedTeacher = teacherDetails?.userName || " ";
   newEvaluation.studentStatus = payload.studentStatus;
   newEvaluation.classStatus = payload.classStatus;
-  newEvaluation.trialClassStatus = payload.trialClassStatus;
+  newEvaluation.trialClassStatus = "PENDING";
   newEvaluation.assignedTeacherId = teacherDetails?.userId || " ";
   newEvaluation.assignedTeacherEmail = teacherDetails?.email || " ";
   newEvaluation.teacherStatus = newEvaluation.teacher.teacherName
@@ -456,7 +457,7 @@ async function trialClassAssigned(
       country: createEvaluation.student.studentCountry,
       phonenumber: createEvaluation.student.studentPhone,
     },
-    trialId: createEvaluation._id,
+    trialId: createEvaluation.trialId,
     subject: "Student First class",
     meetingLocation: "Zoom",
     course: {
@@ -482,18 +483,18 @@ async function trialClassAssigned(
     lastUpdatedBy: "Admin",
   });
   await CreatemeetingDetails.save();
-
+const academicCoach = await users.findById(createEvaluation.academicCoachId);
   if (teacherDetails.userId) {
     await sendNotification({
       messages: `${createEvaluation.student.studentFirstName} ${createEvaluation.student.studentLastName} has been assigned to you for a trial class.`,
       senderId: createEvaluation.academicCoachId?.toString() ?? "system",
-      senderName: createEvaluation.academicCoachName ?? "system",
-      senderEmail: createEvaluation.createdBy,
+      senderName: academicCoach?.userName ?? "system",
+      senderEmail: academicCoach?.email ?? "system",
       isRead: false,
       receiverId: [teacherDetails.userId],
       receiverName: [teacherDetails.userName],
       receiverEmail: [teacherDetails.email],
-      notificationType: "TEACHER_NOTIFICATION",
+      notificationType: "TEACHER_TRAILCLASS_NOTIFICATION",
       notificationStatus: "Unseen",
       status: "active",
       createdBy: "system",
@@ -651,7 +652,7 @@ export const getEvaluationRecordById = async (
   id: string
 ): Promise<IEvaluation | null> => {
   return EvaluationModel.findOne({
-    _id: new Types.ObjectId(id),
+    trialId: id,
   }).lean();
 };
 
@@ -674,44 +675,43 @@ export const updateStudentInvoice = async (
 };
 
 export const getTotalTrialClassRequestCount = async () => {
+  
   const evaluationStats = await EvaluationModel.aggregate([
     {
-      $match: {
-        status: "Active",
-      },
+      $match: { status: "Active" }
     },
     {
       $group: {
         _id: null,
         totalCount: { $sum: 1 },
         maleCount: {
-          $sum: { $cond: [{ $eq: ["$student.studentGender", "Male"] }, 1, 0] },
+          $sum: { $cond: [{ $eq: ["$student.studentGender", "Male"] }, 1, 0] }
         },
         femaleCount: {
-          $sum: {
-            $cond: [{ $eq: ["$student.studentGender", "Female"] }, 1, 0],
-          },
+          $sum: { $cond: [{ $eq: ["$student.studentGender", "Female"] }, 1, 0] }
         },
         completedCount: {
-          $sum: { $cond: [{ $eq: ["$trialClassStatus", "COMPLETED"] }, 1, 0] },
+          $sum: { $cond: [{ $eq: ["$trialClassStatus", "COMPLETED"] }, 1, 0] }
         },
         pendingCount: {
-          $sum: { $cond: [{ $eq: ["$trialClassStatus", ""] }, 1, 0] },
+          $sum: { $cond: [{ $eq: ["$trialClassStatus", ""] }, 1, 0] }
         },
         inprogressCount: {
-          $sum: { $cond: [{ $eq: ["$trialClassStatus", "INPROGRESS"] }, 1, 0] },
-        },
-        studentJointCount: {
-          $sum: { $cond: [{ $eq: ["$studentStatus", "JOINED"] }, 1, 0] },
+          $sum: { $cond: [{ $eq: ["$trialClassStatus", "INPROGRESS"] }, 1, 0] }
         },
         studentNotJointCount: {
-          $sum: { $cond: [{ $eq: ["$studentStatus", "NOTJOINED"] }, 1, 0] },
-        },
-      },
-    },
+          $sum: { $cond: [{ $eq: ["$studentStatus", "NOTJOINED"] }, 1, 0] }
+        }
+      }
+    }
   ]);
 
-  return evaluationStats;
+  const studentStats = await IAlStudents.countDocuments();
+
+  return {
+    evaluation: evaluationStats[0] || {},
+    students: studentStats || {}
+  };
 };
 
 export const getTeacherStatusCount = async () => {
@@ -734,19 +734,28 @@ export const getTeacherStatusCount = async () => {
       },
     },
   ]);
-  const assignedTeacherPercentage = (
-    (evaluationStats[0].assignedTeacherCount /
-      evaluationStats[0].totalClassCount) *
-    100
-  ).toFixed(2);
-  const notAssignedTeacherPercentage = (
-    (evaluationStats[0].notAssinedCount / evaluationStats[0].totalClassCount) *
-    100
-  ).toFixed(2);
+
   const total = evaluationStats[0].totalClassCount;
 
-  return { total, assignedTeacherPercentage, notAssignedTeacherPercentage };
+  const assignedTeacherPercentage = (
+    (evaluationStats[0].assignedTeacherCount / total) *
+    100
+  ).toFixed(2);
+
+  const notAssignedTeacherPercentage = (
+    (evaluationStats[0].notAssinedCount / total) *
+    100
+  ).toFixed(2);
+
+  return {
+    total,
+    assignedTeacherCount: evaluationStats[0].assignedTeacherCount,
+    notAssinedCount: evaluationStats[0].notAssinedCount,
+    assignedTeacherPercentage,
+    notAssignedTeacherPercentage,
+  };
 };
+
 
 export const getPreferedTeacherPercentage = async () => {
   const preferedTeahcer = await EvaluationModel.aggregate([
@@ -991,24 +1000,19 @@ export const getTrialClassRecordById = async (teacherId: string) => {
     //     $lte: endOfDayIST
     //   }
   }).sort({ scheduledFrom: 1 });
-  //  console.log("trialClass>>>>", trialClass)
   let getTrialsClassstatus;
   for (const trialClassUpdateDetails of trialClass) {
     getTrialsClassstatus = await EvaluationModel.findOne({
-      _id: new Types.ObjectId(trialClassUpdateDetails.trialId),
+      trialId: trialClassUpdateDetails.trialId
     }).exec();
-    //console.log("trialClass>>>>", trialClass)
-    console.log("getTrialsClassstatus>>>>", getTrialsClassstatus);
-
-    if (getTrialsClassstatus && getTrialsClassstatus.trialClassStatus == "") {
+    if (getTrialsClassstatus && (getTrialsClassstatus.trialClassStatus == "" || getTrialsClassstatus.trialClassStatus =="PENDING")) {
       const trialClass = await MeetingSchedule.find({
-        trialId: getTrialsClassstatus._id.toString(),
+        trialId: getTrialsClassstatus.trialId,
         // scheduledStartDate:  {
         //     $gte: startOfDayIST,
         //     $lte: endOfDayIST
         //   }
       }).sort({ scheduledFrom: 1 });
-      console.log("trialClass list>>>>", trialClass);
 
       return trialClass || "";
     }
