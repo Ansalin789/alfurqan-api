@@ -1,5 +1,5 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
-import { admincreateMeeting, getAdminMeetingById, getAllAdminMeetingRecords ,getMeetingsByMeetingId, updateAdminMeetingById, updateMeetingStatus } from "../../operations/adminmeeting";
+import { admincreateMeeting, getAdminMeetingById, getAllAdminMeetingRecords ,getMeetingsByMeetingId, updateAdminMeetingById, updateMeetingStatus, requestAdminMeetingReschedule as requestAdminMeetingRescheduleOperation } from "../../operations/adminmeeting";
 import { IAdminMeetingCreate, ITeacher } from "../../../types/models.types";
 import { isNil } from "lodash";
 import { addAminMeetingMessages } from "../../config/messages";
@@ -56,7 +56,7 @@ export default {
       });
   
       const meetings = await admincreateMeeting(payload);
-  
+
       if ("error" in meetings) {
         return h.response({ error: meetings.error }).code(400);
       }
@@ -205,6 +205,22 @@ async updateAdminMeeting(req: Request, h: ResponseToolkit) {
   } catch (error) {
     console.error("Error updating meeting minutes and attendees:", error);
     return h.response({ message: "Internal Server Error", error }).code(500);
+  }
+},
+
+async requestAdminMeetingReschedule(req: Request, h: ResponseToolkit) {
+  try {
+    const payload = req.payload as any;
+    const result = await requestAdminMeetingRescheduleOperation(payload);
+
+    return h
+      .response(result)
+      .code(result.success ? 200 : 400);
+  } catch (error: any) {
+    console.error("Error in requestAdminMeetingReschedule handler:", error);
+    return h
+      .response({ success: false, message: error.message ?? "Internal Server Error" })
+      .code(500);
   }
 }
 
