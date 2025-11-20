@@ -35,6 +35,7 @@ import { getIO } from "../shared/socket";
 import realtimemessage from "../models/realtimemessage";
 import dayjs from "dayjs";
 import { all } from "axios";
+import evaluation from "../models/evaluation";
 
 type AssignmentItem = {
   assignmentId: string;
@@ -804,6 +805,34 @@ export const getStudentClassHours = async (
     console.error("Error fetching class hours for student:", error);
     throw new Error("Failed to fetch class hours for the student");
   }
+};
+
+export const getUniqueTeachers = async () => {
+  const uniqueTeachers = await evaluation.aggregate([
+    {
+      $match: {
+        assignedTeacher: { $ne: null }, // only records that have a teacher
+        assignedTeacherId: { $ne: null }
+      }
+    },
+    {
+      $group: {
+        _id: "$assignedTeacherId",      // group by teacher ID
+        teacherName: { $first: "$assignedTeacher" },
+        teacherEmail: { $first: "$assignedTeacherEmail" },
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        teacherId: "$_id",
+        teacherName: 1,
+        teacherEmail: 1,
+      }
+    }
+  ]);
+
+  return uniqueTeachers;
 };
 
 export const teacherStudentCount = async (teacherId?: string) => {
