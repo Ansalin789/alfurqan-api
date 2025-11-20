@@ -3,7 +3,10 @@ import { PipelineStage, Types } from "mongoose";
 import { IAdminMeeting, IAdminMeetingCreate, ITeacher } from "../../types/models.types";
 import adminmeeting from "../models/adminmeeting";
 import User from "../models/users";
-import { v4 as uuidv4 } from 'uuid';  // Import the uuid package to generate unique IDs
+import { sendNotification } from "./notification";
+import { getIO } from "../shared/socket";
+import realtimemessage from "../models/realtimemessage";
+import AppLogger from "../helpers/logging";
 
 
 export interface IAdminMeetingUpdate{
@@ -120,15 +123,78 @@ export const admincreateMeeting = async (
       const savedMeeting = await newMeeting.save();
       console.log("Meeting created:", savedMeeting);
       createdMeetings.push(savedMeeting);
+
+      try {
+        const meetingDateText = savedMeeting.selectedDate
+          ? new Date(savedMeeting.selectedDate).toDateString()
+          : "";
+        const requestName = admin.userName ?? "Admin";
+        const requestUserId = admin._id?.toString() ?? "";
+        const requestEmail = admin.email ?? "";
+        const message = `${requestName} (Admin) scheduled meeting "${savedMeeting.meetingName}" on ${meetingDateText} from ${savedMeeting.startTime} to ${savedMeeting.endTime}.`;
+        const messageContent =
+          `New admin meeting scheduled:\n` +
+          `- Meeting: ${savedMeeting.meetingName}\n` +
+          `- Date: ${meetingDateText}\n` +
+          `- Time: ${savedMeeting.startTime} - ${savedMeeting.endTime}\n` +
+          `- Description: ${savedMeeting.description}`;
+
+        await sendNotification({
+          messages: message,
+          senderId: requestUserId,
+          senderName: requestName,
+          senderEmail: requestEmail,
+          isRead: false,
+          receiverId: [teacher.teacherId],
+          receiverName: [teacher.teacherName],
+          receiverEmail: [teacher.teacherEmail],
+          notificationType: "ADMIN_MEETING_SCHEDULED",
+          notificationStatus: "Unseen",
+          status: "active",
+          createdBy: "system",
+          updatedBy: "system",
+        });
+
+        const newMessage = new realtimemessage({
+          messages: messageContent,
+          isRead: false,
+          senderId: requestUserId,
+          senderName: requestName,
+          senderEmail: requestEmail,
+          receiverId: teacher.teacherId,
+          receiverName: teacher.teacherName,
+          receiverEmail: teacher.teacherEmail,
+          notificationStatus: "Unseen",
+          status: savedMeeting.status ?? payload.status ?? "Active",
+          createdDate: new Date(),
+          createdBy: "System",
+          updatedDate: new Date(),
+          updatedBy: "System",
+        });
+
+        const savedMessage = await newMessage.save();
+        const io = getIO();
+        io.to(newMessage.receiverId).emit("newmessage", savedMessage);
+        AppLogger.info("Notification sent for admin meeting creation", {
+          meetingId: savedMeeting.meetingId,
+          receiverId: teacher.teacherId,
+        });
+      } catch (notifyError) {
+        console.error(
+          "Error sending notification for created admin meeting:",
+          notifyError
+        );
+      }
     }
 
     if (createdMeetings.length === 0) {
       console.warn("No valid teacher entries found. No meetings created for payload:", payload);
       return { error: "No valid teachers found. No meetings were created." };
     }
-
     return createdMeetings;
 
+
+    
   } catch (error) {
     console.error("Error creating meeting:", error);
     return { error };
@@ -255,7 +321,51 @@ export const updateMeetingStatus = async (
   return updated as IMeetingMinutesUpdate | null;
 };
 
+export const requestAdminMeetingReschedule = async (payload: any) => {
+  try {
+    console.log("[AdminMeeting] request reschedule payload:", payload);
+    if (!payload?._id) {
+      throw new Error("Meeting _id is required to request a reschedule.");
+    }
 
+    const meeting = await addmeeting.findOne({
+      _id: new Types.ObjectId(payload._id),
+    });
 
+    if (!meeting) {
+      throw new Error("Meeting not found.");
+    }
+    console.log("[AdminMeeting] existing meeting:", meeting);
 
+    const rescheduleResult = await addmeeting.findOneAndUpdate(
+      { _id: new Types.ObjectId(payload._id) },
+      {
+        $set: {
+          meetingStatus: "Reschedulerequested",
+          updatedDate: new Date(),
+          updatedBy: payload.requestedBy ?? meeting.updatedBy ?? "system",
+        },
+      },
+      { new: true }
+    );
 
+    if (!rescheduleResult) {
+      throw new Error("Unable to mark meeting for reschedule.");
+    }
+    console.log("[AdminMeeting] rescheduleResult:", rescheduleResult);
+
+   
+
+    return {
+      success: true,
+      message: "Admin meeting reschedule requested successfully.",
+      data: rescheduleResult,
+    };
+  } catch (error: any) {
+    console.error("Error in requestAdminMeetingReschedule:", error.message);
+    return {
+      success: false,
+      message: error.message,
+    };
+  }
+};
