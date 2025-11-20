@@ -5,7 +5,7 @@ import { ClassSchedulesMessages } from "../../config/messages";
 import { isNil } from "lodash";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { notFound } from "@hapi/boom";
-import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount, getTotalClassesCount, getClassesStatusCount, getClassesWiseCount, getStudentList, getTeacherAttendanceSummary, teacherStudentCount, getgetAnalyticscardCalculation, requestReschedule, updateClassAttendanceById, getTeacherTotalEarnings, classesCountForTeacher, teacherClassLevelGrowth, IClassScheduleUpdate, bulkupdateClassAttendanceByClassLink, getStudentAttendanceSummary} from "../../operations/classschedule";
+import { getAllClassShedule, getAllClassSheduleById, updateClassscheduleById, updateStudentClassSchedule,getClassesForStudent,getClassesForTeacher, getStudentClassHours, teachingActivity, updateteacherreschedule, getStudentClassCount, getTotalClassesCount, getClassesStatusCount, getClassesWiseCount, getStudentList, getTeacherAttendanceSummary, teacherStudentCount, getgetAnalyticscardCalculation, requestReschedule, updateClassAttendanceById, getTeacherTotalEarnings, classesCountForTeacher, teacherClassLevelGrowth, IClassScheduleUpdate, bulkupdateClassAttendanceByClassLink, getStudentAttendanceSummary, getUniqueTeachers} from "../../operations/classschedule";
 import { academicAvailableTeachers, academicDashboardTeachersStudentCount, academicStudentReSchedule, academicTeacherStudentList } from "../../kafka/producers/academicProducer";
 import AlStudentModule from "../../models/alstudents"
 import Evaluation from "../../models/evaluation";
@@ -367,24 +367,26 @@ async getTeacherStudentCount(req: Request, h: ResponseToolkit) {
   try {
     console.log("Query parameters received:", req.query);
 
+
+    
+
     // STEP 1: get aggregated teacher list (your existing aggregation)
-    const teachers = await teacherStudentCount(req.query.teacherId);
+    const teachers = await getUniqueTeachers();
 
     // STEP 2: For each teacher -> fetch individual trial & joined students
     const enrichedTeachers = await Promise.all(
       teachers.map(async (teacher) => {
         const teacherId = teacher.teacherId;
 
-        // Trial students
-        const trialCount = await classShedule.countDocuments({
+  
+        const trialCount = await Evaluation.countDocuments({
           "teacher.teacherId": teacherId,
-          scheduleStatus: "Trial",
         });
 
         // Joined students
-        const joinedCount = await classShedule.countDocuments({
+        const joinedCount = await Evaluation.countDocuments({
           "teacher.teacherId": teacherId,
-          scheduleStatus: "Joined",
+          trialClassStatus: "COMPLETED",
         });
 
         return {
