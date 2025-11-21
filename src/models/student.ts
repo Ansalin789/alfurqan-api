@@ -114,6 +114,9 @@ const studentSchema = new Schema<IStudents>(
       type: String,
       required: false
     },
+    referredBy:{  type:String,
+    required: false,},
+
     status: {
       type: String,
       enum: Object.values(CustomEnumerator.Status),
@@ -168,6 +171,7 @@ preferredToTime: z.string().regex(/^([01][0-9]|2[0-3]):[0-5][0-9]$/, "Time must 
   }).transform((val) => new Date(val)).optional(),
   evaluationStatus: z.enum([evaluationStatus.PENDING, evaluationStatus.INPROGRESS, evaluationStatus.COMPLETED]),
   refernceId: z.string().optional(),
+  referredBy:z.string().optional(),
   status: z.enum([appStatus.ACTIVE, appStatus.IN_ACTIVE, appStatus.DELETED]),
   createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: commonMessages.INVALID_DATE_FORMAT,

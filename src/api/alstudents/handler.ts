@@ -59,35 +59,35 @@ async function streamToBuffer(stream: Readable): Promise<Buffer> {
 const handler = {
   // Handler for getting all students
   async getAllalstudentsList(req: Request, h: ResponseToolkit) {
-    try {
-      // Parse and validate the request query using zod
-      const parsedQuery = getAllalstudentsListInputValidation.parse({
-        query: {
-          ...req.query,
-          filterValues: (() => {
-            try {
-              return req.query?.filterValues
-                ? JSON.parse(req.query.filterValues as string)
-                : {};
-            } catch {
-              throw new Error("Invalid filterValues JSON format.");
-            }
-          })(),
-        },
-      });
+  try {
+    // Parse and validate the request query using zod
+    const parsedQuery = getAllalstudentsListInputValidation.parse({
+      query: {
+        ...req.query,
+        filterValues: (() => {
+          try {
+            return req.query?.filterValues
+              ? JSON.parse(req.query.filterValues as string)
+              : {};
+          } catch {
+            throw new Error("Invalid filterValues JSON format.");
+          }
+        })(),
+      },
+    });
 
-      const query = parsedQuery.query;
+    const query = parsedQuery.query;
 
-      // Call your service or database function to fetch data
-      const result = await getAllalstudentsList(query);
+    // Call service
+    const result = await getAllalstudentsList(query);
 
-      // Return the response
-      return h.response(result).code(200);
-    } catch (error) {
-      // Handle errors (validation or other errors)
-      return h.response({ error }).code(400);
-    }
-  },
+    return h.response(result).code(200);
+
+  } catch (error) {
+    return h.response({ error }).code(400);
+  }
+}
+,
 
   // Handler for getting student by ID
   async getalstudentsById(req: Request, h: ResponseToolkit) {
