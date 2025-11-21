@@ -101,6 +101,33 @@ export const getOhterEmpCountriesCount = async() =>{
 
 };
 
+
+
+export const UpdateOtherEmployee = async (
+  employeeId: string,
+  payload: Partial<IOtherEmployee>
+) => {
+  try {
+    const updatedEmployee = await IOtherEmployeeModel.findByIdAndUpdate(
+      employeeId,
+      payload,
+      { new: true }
+    );
+
+    if (!updatedEmployee) {
+      return { error: "Employee not found" };
+    }
+
+    return updatedEmployee;
+  } catch (err) {
+    return { error: err };
+  }
+};
+
+
+
+
+
  async function createTeacherPortalPortal(updateData:any) {
     const specialChars = '@#$%&*!';
     const randomNum = Math.floor(Math.random() * 1000); // Random number between 0-999
