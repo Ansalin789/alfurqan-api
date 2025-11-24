@@ -9,106 +9,129 @@ import { Types } from "mongoose";
 import  ClassScheduleModel  from "../models/classShedule"
 import Evaluation from "../models/evaluation"; 
 import alstudents from "../models/alstudents";
+import StudentModel from "../models/student";
 
 export const getAllalstudentsList = async (
   params: GetAllRecordsParams
-): Promise<{ totalCount: number; students: IAlStudents[] }> => {
+): Promise<{
+  totalCount: number;
+  students: any[];
+}> => {
+
   const { studentId, searchText, sortBy, sortOrder, offset, limit, filterValues } = params;
 
-  // Construct query object based on filters
   const query: any = {};
 
-  // Add searchText to the query if provided
+  // 🔍 Search text filter
   if (searchText) {
     query.$or = [
-      { name: { $regex: searchText, $options: "i" } }, // Search by name
-      { email: { $regex: searchText, $options: "i" } }, // Search by email (if applicable)
+      { name: { $regex: searchText, $options: "i" } },
+      { email: { $regex: searchText, $options: "i" } },
     ];
   }
-   
-    if (studentId) {
-      query["student.studentId"] = Array.isArray(studentId) ? { $in: studentId } : studentId;
-    }
 
-  // Add filters to the query
-  if (filterValues) {
-    if (filterValues.course) {
-      query.course = { $in: filterValues.course }; // Filter by course
-    }
-    if (filterValues.country) {
-      query.country = { $in: filterValues.country }; // Filter by country
-    }
-    if (filterValues.teacher) {
-      query.teacher = { $in: filterValues.teacher }; // Filter by teacher IDs
-    }
-    if (filterValues.status) {
-      query.status = { $in: filterValues.status }; // Filter by status
-    }
+  // 🔍 Filter by studentId
+  if (studentId) {
+    query["student.studentId"] = Array.isArray(studentId)
+      ? { $in: studentId }
+      : studentId;
   }
 
-  console.log("Constructed Query:", JSON.stringify(query, null, 2)); // Log the constructed query
+  // 🔍 Additional Filter values
+  if (filterValues) {
+    if (filterValues.course) query.course = { $in: filterValues.course };
+    if (filterValues.country) query.country = { $in: filterValues.country };
+    if (filterValues.teacher) query.teacher = { $in: filterValues.teacher };
+    if (filterValues.status) query.status = { $in: filterValues.status };
+  }
 
-  // Sorting options
-  const sortOptions: any = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
+  console.log("Constructed Query:", JSON.stringify(query, null, 2));
 
-  // Create the query with sorting
+  // Sorting
+  const sortOptions: any = {
+    [sortBy]: sortOrder === "asc" ? 1 : -1,
+  };
+
   const studentQuery = AlStudentsModel.find(query).sort(sortOptions);
 
-  // Apply pagination (offset and limit)
+  // Pagination
   if (!isNil(offset) && !isNil(limit)) {
     const skip = Math.max(
       0,
-      ((Number(offset) ?? Number(commonMessages.OFFSET)) - 1) *
-      (Number(limit) ?? Number(commonMessages.LIMIT))
+      ((Number(offset) ?? 1) - 1) * (Number(limit) ?? 10)
     );
-    studentQuery.skip(skip).limit(Number(limit) ?? Number(commonMessages.LIMIT));
+    studentQuery.skip(skip).limit(Number(limit) ?? 10);
   }
 
-  // Execute the query and count concurrently
+  // Fetch students and total count
   const [students, totalCount] = await Promise.all([
-    studentQuery.exec(), // Fetch students with pagination
-    AlStudentsModel.countDocuments(query).exec(), // Count total records
+    studentQuery.exec(),
+    AlStudentsModel.countDocuments(query).exec(),
   ]);
 
+  // 🔥 Add referralId, classSchedule, teacher details, evaluation
+  const studentsWithExtras = await Promise.all(
+    students.map(async (student) => {
 
-// Add classSchedule count to each student
-const studentsWithClassScheduleCount = await Promise.all(
-  students.map(async (student) => {
-    const classScheduleCount = await ClassScheduleModel.countDocuments({
-      'student.id': student._id.toString() // ✅ Correct based on how you store it
-    }).exec();
+      // ClassSchedule Count
+      const classScheduleCount = await ClassScheduleModel.countDocuments({
+        "student.id": student._id.toString(),
+      });
 
-    // Fetch teacher and sessionClassType using same logic
-    const classSchedule = await ClassScheduleModel.findOne(
-      { 'student.id': student._id.toString() },  // ✅ must match same way as countDocuments
-      { 'teacher.teacherName': 1, 'sessionClassType': 1 }
-    ).sort({ _id: -1 }).lean();
+      // Latest ClassSchedule
+      const classSchedule = await ClassScheduleModel.findOne(
+        { "student.id": student._id.toString() },
+        { "teacher.teacherName": 1, sessionClassType: 1 }
+      )
+        .sort({ _id: -1 })
+        .lean();
 
-    // 2️⃣ fetch the matching evaluation(s)
-    const evaluations = await Evaluation.find({
-      'student.studentId': student.student.studentId  // or: stu._id.toString() if that’s your key
+      // Evaluation
+      const evaluations = await Evaluation.find({
+        "student.studentId": student.student.studentId,
+      })
+        .lean()
+        .exec();
+
+      // ⭐ Fetch referralId from Student model
+ 
+const mainStudent = await StudentModel.findOne(
+  { studentId: student?.student?.studentId },
+  { refernceId: 1 }
+).lean();
+
+
+// 2. Save that refernceId into AlStudentsModel
+if (mainStudent?.refernceId) {
+  await AlStudentsModel.updateOne(
+    { "student.studentId": student?.student?.studentId },
+    { $set: { refernceId: mainStudent.refernceId } }
+  );
+}
+
+const referralId = mainStudent?.refernceId || null;
+
+      return {
+        ...student.toObject(),
+        classScheduleCount,
+        teacherName: classSchedule?.teacher?.teacherName || "",
+        sessionClassType: classSchedule?.sessionClassType || "",
+        evaluation: evaluations,
+        referralId, // ⭐ Added referral ID here
+      };
     })
-    .lean()
-    .exec();
-    return {
-      ...student.toObject(),
-      classScheduleCount, // ✅ original logic
-      teacherName: classSchedule?.teacher?.teacherName || "",  // Ensure string
-      sessionClassType: classSchedule?.sessionClassType || "" , // Ensure string
-      evaluation: evaluations                     // ← now non-empty if matches exist      // ← new field
-    };
-  })
-);
+  );
 
-
-  // Log successful retrieval
   AppLogger.info(alstudentsMessages.GET_ALL_LIST_SUCCESS, {
-    totalCount: totalCount,
+    totalCount,
   });
 
-  // Return total count and fetched students
-  return { totalCount, students: studentsWithClassScheduleCount };
+  return {
+    totalCount,
+    students: studentsWithExtras,
+  };
 };
+
 
 
 export const getalstudentsById = async (studentId: string): Promise<IAlStudents | null> => {

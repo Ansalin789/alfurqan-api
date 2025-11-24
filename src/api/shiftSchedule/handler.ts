@@ -5,7 +5,7 @@ import { zodGetAllRecordsQuerySchema, zodGetAllUserRecordsQuerySchema } from "..
 import UserShiftSchedule from "../../models/usershiftschedule";
 import { GetAlluserRecordsParams } from "../../shared/enum";
 import { badRequest } from "@hapi/boom";
-import { getAllTeachers, getDayWiseShiftSchedule } from "../../operations/shiftshedule";
+import { getAllTeachers, getDayWiseShiftSchedule, updateShiftScheduleService,  } from "../../operations/shiftshedule";
 
 
 
@@ -136,10 +136,43 @@ async getShiftscheduleById(req: Request, h: ResponseToolkit) {
   const result = await getDayWiseShiftSchedule(query);
   return result;
 }
+,
+async updateShiftSchedule(req: Request, h: ResponseToolkit){
+  try {
+    const { employeeId } = req.query;
+
+    if (!employeeId) {
+      return h
+        .response({ statusCode: 400, message: "employeeId is required" })
+        .code(400);
+    }
+
+    const payload = req.payload as Record<string, any>;  // FIXED ✔
+
+    const result = await updateShiftScheduleService(employeeId, payload);
+
+    return h
+      .response({
+        statusCode: 200,
+        message: "Shift schedule updated successfully",
+        data: result,
+      })
+      .code(200);
+
+  } catch (error) {
+    return h.response({ error}).code(500);
+  }
+}
 
 
 
-};
+
+
+
+
+
+}
+
 async function createShiftschedule(arg0: { academicCoachId: string; teacherId: string; supervisorId:string; name: string; email: string; role: string; workhrs: number; startdate: string; enddate: string; fromtime: string; totime: string; createdDate: string; createdBy: string; lastUpdatedBy: string; }) {
 const shiftScheduleRecord = await UserShiftSchedule.create(arg0);
 console.log(shiftScheduleRecord);

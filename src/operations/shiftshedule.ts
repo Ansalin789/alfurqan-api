@@ -2,6 +2,7 @@ import moment from "moment";
 import { IUsershiftschedule } from "../../types/models.types";
 import usershiftschedule from "../models/usershiftschedule";
 import { GetAlluserRecordsParams } from "../shared/enum";
+import { UpdateQuery } from "mongoose";
 
 export const getAllTeachers = async (
   params: GetAlluserRecordsParams
@@ -86,3 +87,24 @@ export const getDayWiseShiftSchedule = async (
 
   return dayWiseSchedule;
 };
+
+
+export const updateShiftScheduleService = async (employeeId: any, data: UpdateQuery<IUsershiftschedule> | undefined) => {
+  const record = await usershiftschedule.findOneAndUpdate(
+    { employeeId: employeeId },
+    {
+      ...data,
+      lastUpdatedDate: new Date(),
+    },
+    { new: true }
+  );
+
+  if (!record) {
+    throw new Error(`Shift schedule not found for employeeId: ${employeeId}`);
+  }
+
+  return record;
+};
+
+
+
