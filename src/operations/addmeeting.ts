@@ -159,7 +159,9 @@ export const createMeeting = async ( payload: IMeetingCreate): Promise<IMeeting 
     }
 
     // Generate/normalize meetingId (keep provided id if present)
-    const meetingId = payload.meetingId || `meet-${uuidv4()}`;
+    // const meetingId = payload.meetingId || `meet-${uuidv4()}`;
+    const meetingId = generateAFTCode("AFM");
+
 
     // Check for past date
     if (meetingDate < new Date()) {
@@ -384,3 +386,8 @@ export const meetingByIdRecord = async (
     _id: new Types.ObjectId(_id),
   }).lean();
 };
+
+function generateAFTCode(preName: string) {
+  const num = Math.floor(10000 + Math.random() * 90000);
+    return `${preName}${num}`;
+}
