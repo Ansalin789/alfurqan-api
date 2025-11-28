@@ -1,14 +1,12 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
-import addmeeting, { zodAddMeetingSchema } from "../../models/addmeeting";
+import { zodAddMeetingSchema } from "../../models/addmeeting";
 import { createMeeting, getAllMeetingRecords, getMeetingRecordById, meetingByIdRecord, updateMeetingById, updateMeetingMinutesAndAttendees } from "../../operations/addmeeting";
 import { isNil } from "lodash";
-import { notFound } from "@hapi/boom";
 import { addMeetingMessages, ClassSchedulesMessages } from "../../config/messages";
-import { checkMeetingConflict, getMeetingById, mergeMeetingPayload } from "../../shared/utils/meetingUtils";
-import { supervisorAddMeeting } from "../../kafka/producers/supervisorProducer";
-import { ITeacher, IParticipant, IOrganizer } from "../../../types/models.types";
-import { academicAvailableTeachers } from "../../kafka/producers/academicProducer";
+import { checkMeetingConflict, getMeetingById } from "../../shared/utils/meetingUtils";
+import { ITeacher, IOrganizer } from "../../../types/models.types";
+import crypto from "node:crypto";
 
 
 const createInputValidation = z.object({
@@ -26,7 +24,7 @@ const createInputValidation = z.object({
     meetingminutes: true,
     createdDate: true,
     createdBy: true,
-    duration:true,
+    duration: true,
     updatedDate: true,
     participants: true,
   }),
@@ -44,66 +42,57 @@ const updateMeetingInputValidation = zodAddMeetingSchema.pick({
   updatedBy: true,
   filterValues: true,
 })
-.extend({
-  offset: z.string().optional().nullable(),
-  limit: z.string().optional().nullable(),
-  searchText: z.string().optional(),
-  sortBy: z.string().optional(),
-})
-.partial(); // ✅ allow partial updates
-
-
- 
-
+  .extend({
+    offset: z.string().optional().nullable(),
+    limit: z.string().optional().nullable(),
+    searchText: z.string().optional(),
+    sortBy: z.string().optional(),
+  })
+  .partial(); // ✅ allow partial updates
 
 export default {
   async createMeeting(req: Request, h: ResponseToolkit) {
     try {
       const { payload } = createInputValidation.parse({ payload: req.payload });
-  
       // ✅ Parse organizer safely (can be stringified or object)
       let organizer: IOrganizer | undefined;
-  
       const organizerInput = (req.payload as any)?.organizer ?? payload.organizer;
       if (typeof organizerInput === "string") {
         try {
           const o = JSON.parse(organizerInput);
           const rawRole = o.role ?? o.organizerRole;
-          const normRole = typeof rawRole === "string" ? rawRole.toLowerCase().replace(/\s+/g, "") : undefined;
+          const normRole = typeof rawRole === "string" ? rawRole.toLowerCase().replaceAll(/\s+/g, "") : undefined;
           organizer = {
             organizerId: o.organizerId,
             organizerName: o.organizerName,
             organizerEmail: o.organizerEmail,
             role: (normRole as any),
           };
-        } catch (err) {
-          console.error("Failed to parse organizer string:", err);
+        } catch (error) {
+          return h.response({ message: "Failed to parse organizer string:", error }).code(400);
         }
       } else if (typeof organizerInput === "object" && organizerInput !== null) {
-        const rawRole = (organizerInput as any).role ?? (organizerInput as any).organizerRole;
-        const normRole = typeof rawRole === "string" ? rawRole.toLowerCase().replace(/\s+/g, "") : undefined;
+        const rawRole = (organizerInput).role ?? (organizerInput).organizerRole;
+        const normRole = typeof rawRole === "string" ? rawRole.toLowerCase().replaceAll(/\s+/g, "") : undefined;
         organizer = {
-          organizerId: (organizerInput as any).organizerId,
-          organizerName: (organizerInput as any).organizerName,
-          organizerEmail: (organizerInput as any).organizerEmail,
+          organizerId: (organizerInput).organizerId,
+          organizerName: (organizerInput).organizerName,
+          organizerEmail: (organizerInput).organizerEmail,
           role: (normRole as any),
         };
       }
-  
       // ✅ Parse participants safely
       const participants = Array.isArray(payload.participants)
         ? payload.participants.map((p: any) => ({
-            participantId: p.participantId,
-            participantName: p.participantName,
-            participantEmail: p.participantEmail,
-            role: p.role,
-            attendee: p.attendee || p.role,
-          }))
+          participantId: p.participantId,
+          participantName: p.participantName,
+          participantEmail: p.participantEmail,
+          role: p.role,
+          attendee: p.attendee || p.role,
+        }))
         : [];
-  
       // 🧠 Shared meetingId for all records
       const meetingId = payload.meetingId || `meet-${crypto.randomUUID()}`;
-  
       // ✅ Create per-participant records in service
       const meetingResult = await createMeeting({
         meetingName: payload.meetingName,
@@ -122,229 +111,168 @@ export default {
         organizer, // ✅ pass organizer here
         updatedDate: payload.updatedDate,
       });
-  
       if ((meetingResult as any)?.error) {
         return h.response({ error: (meetingResult as any).error }).code(400);
       }
-  
       return h
         .response({
           message: "✅ Meeting created successfully",
           data: meetingResult,
         })
         .code(201);
-  
+
     } catch (error) {
-      console.error("❌ Error creating meeting:", error);
-      return h.response({ error: (error as Error).message }).code(400);
+      return h.response({ message: "❌ Error creating meeting:", error }).code(400);
     }
-  }
-  
-  
-  
-,
-async getAllMeetings(req: Request, h: ResponseToolkit) {
-  const { supervisorId, offset, limit, sortBy } = req.query;
+  },
 
-  // if (!supervisorId) {
-  //   return h.response({ message: "supervisorId is required" }).code(400);
-  // }
+  //Get all meetings
+  async listMeetings(req: Request, h: ResponseToolkit) {
+    const { supervisorId, offset, limit, sortBy } = req.query;
+    const queryForService = {
+      supervisorId,
+      offset: offset ? String(offset) : null,
+      limit: limit ? String(limit) : null,
+      sortBy: sortBy ?? "createdDate",
+    };
+    return getAllMeetingRecords(queryForService);
+  },
 
-  const queryForService = {
-    supervisorId,
-    offset: offset ? String(offset) : null,
-    limit: limit ? String(limit) : null,
-    sortBy: sortBy ?? "createdDate",
-  };
-
-  return getAllMeetingRecords(queryForService);
-}
-
-
-
-
-
-,
 
   //get by ID
+  async getMeetingById(req: Request, h: ResponseToolkit) {
+    const { meetingId } = req.query;
+    if (!meetingId) {
+      return h.response({ error: 'meetingId is required in query params' }).code(400);
+    }
+    const result = await getMeetingRecordById(meetingId as string);
+    if (!result.length) {
+      return h.response({ message: 'No meetings found' }).code(404);
+    }
+    return h.response({ total: result.length, meetings: result }).code(200);
+  },
 
 
+  //Update Meeting 
 
-      async  getMeetingById(req: Request, h: ResponseToolkit) {
-        const { meetingId } = req.query;
-      
-        if (!meetingId) {
-          return h.response({ error: 'meetingId is required in query params' }).code(400);
+  async updateMeetingRecordById(req: Request, h: ResponseToolkit) {
+    try {
+      const payload = req.payload as any;
+      if (!payload) {
+        return h.response({ message: "Request payload is missing" }).code(400);
+      }
+      // ✅ Step 1: Validate BEFORE merging (Zod expects strings, not Dates)
+      const validatedPayload = updateMeetingInputValidation.parse(payload);
+      // ✅ Step 2: Fetch the existing meeting
+      const existingMeeting = await getMeetingById(req.params.meetingId);
+      if (!existingMeeting) {
+        return h.response({ message: addMeetingMessages.USER_NOT_FOUND }).code(404);
+      }
+      // ✅ Step 3: Merge Zod-validated payload into existing object
+      const updatedPayload = {
+        ...existingMeeting.toObject(),
+        ...validatedPayload, // ⛔️ This might overwrite fields incorrectly
+      };
+      // 🔍 Check if time has changed
+      const isTimeChanged =
+        updatedPayload.startTime !== existingMeeting.startTime ||
+        updatedPayload.endTime !== existingMeeting.endTime;
+
+      if (isTimeChanged) {
+        if (
+          !updatedPayload.teacher?.length ||
+          !updatedPayload.teacher[0]?.teacherId ||
+          !updatedPayload.organizer?.organizerId
+        ) {
+          return h
+            .response({ message: "Invalid teacher or supervisor details" })
+            .code(400);
         }
-      
-        const result = await getMeetingRecordById(meetingId as string);
-      
-        if (!result.length) {
-          return h.response({ message: 'No meetings found' }).code(404);
+        const studentId = " "; // Assuming teacherId is used as studentId
+        const meetingdate = new Date(updatedPayload.selectedDate);
+        const hasConflict = await checkMeetingConflict(
+          updatedPayload.teacher[0].teacherId,
+          updatedPayload.organizer?.organizerId,
+          studentId,
+          meetingdate.toString(),
+          updatedPayload.startTime,
+          updatedPayload.endTime,
+          req.params.meetingId
+        );
+
+        if (hasConflict) {
+          return h
+            .response({ message: "Reschedule failed: Time slot already occupied" })
+            .code(400);
         }
-      
-        return h.response({ total: result.length, meetings: result }).code(200);
-      },
+        updatedPayload.meetingStatus = "Rescheduled";
+      }
+      // ✅ Update DB
+      const result = await updateMeetingById(req.params.meetingId, updatedPayload);
+      if (!result) {
+        return h.response({ message: addMeetingMessages.USER_NOT_FOUND }).code(404);
+      }
+      return h.response(result).code(200);
+    } catch (error) {
+      return h.response({ message: "Internal Server Error", error }).code(500);
+    }
+  },
 
-//Update Meeting 
 
-async  updateMeetingRecordById(req: Request, h: ResponseToolkit) {
-  try {
-const payload = req.payload as any;
+  //Update meeting minutes
+  async updateMeetingMinutesRecordById(req: Request, h: ResponseToolkit) {
+    try {
+      const meetingId = req.params.meetingById;
+      const payload = req.payload as {
+        duration: string;
+        meetingStatus: string;
+        meetingminutes: string;
+        teacher: ITeacher[];
+        updatedBy?: string;
+      };
 
-if (!payload) {
-  return h.response({ message: "Request payload is missing" }).code(400);
-}
-
-// ✅ Step 1: Validate BEFORE merging (Zod expects strings, not Dates)
-const validatedPayload = updateMeetingInputValidation.parse(payload);
-
-// ✅ Step 2: Fetch the existing meeting
-const existingMeeting = await getMeetingById(req.params.meetingId);
-if (!existingMeeting) {
-  return h.response({ message: addMeetingMessages.USER_NOT_FOUND }).code(404);
-}
-
-// ✅ Step 3: Merge Zod-validated payload into existing object
-const updatedPayload = {
-  ...existingMeeting.toObject(),
-  ...validatedPayload, // ⛔️ This might overwrite fields incorrectly
-};
-
- 
-
-    // 🔍 Check if time has changed
-    const isTimeChanged =
-      updatedPayload.startTime !== existingMeeting.startTime ||
-      updatedPayload.endTime !== existingMeeting.endTime;
-
-    if (isTimeChanged) {
-      console.log("Checking teacher and supervisor details", updatedPayload.teacher, updatedPayload.organizer);
-
-      if (
-        !updatedPayload.teacher?.length ||
-        !updatedPayload.teacher[0]?.teacherId ||
-        !updatedPayload.organizer?.organizerId
-      ) {
-        return h
-          .response({ message: "Invalid teacher or supervisor details" })
-          .code(400);
+      if (!payload?.meetingminutes || !Array.isArray(payload.teacher)) {
+        return h.response({ message: "Missing or invalid data" }).code(400);
       }
 
-      console.log("Checking for conflict:", {
-        teacherId: updatedPayload.teacher[0].teacherId,
-        organizerId: updatedPayload.organizer?.organizerId,
-        selectedDate: updatedPayload.selectedDate,
-        startTime: updatedPayload.startTime,
-        endTime: updatedPayload.endTime,
-        meetingId: req.params.meetingId,
-      });
-const studentId = " "; // Assuming teacherId is used as studentId
-      const meetingdate = new Date(updatedPayload.selectedDate);
-      console.log("Meeting date:", meetingdate);
-      const hasConflict = await checkMeetingConflict(
-        updatedPayload.teacher[0].teacherId,
-        updatedPayload.organizer?.organizerId,
-        studentId,
-        meetingdate.toString(),
-        updatedPayload.startTime,
-        updatedPayload.endTime,
-        req.params.meetingId
+      const result = await updateMeetingMinutesAndAttendees(
+        meetingId,
+        payload.meetingminutes,
+        payload.meetingStatus,
+        payload.duration,
+        payload.teacher,
+        payload.updatedBy
       );
 
-      console.log("hasConflict:", hasConflict);
-
-      if (hasConflict) {
-        return h
-          .response({ message: "Reschedule failed: Time slot already occupied" })
-          .code(400);
+      if (!result) {
+        return h.response({ message: addMeetingMessages.USER_NOT_FOUND }).code(404);
       }
 
-      updatedPayload.meetingStatus = "Rescheduled";
+      return h.response(result).code(200);
+    } catch (error) {
+      return h.response({ message: "Error updating meeting minutes and attendees", error }).code(400);
     }
-
-    // ✅ Update DB
-    const result = await updateMeetingById(req.params.meetingId, updatedPayload);
-
-    if (!result) {
-      return h.response({ message: addMeetingMessages.USER_NOT_FOUND }).code(404);
-    }
-
-    console.log("✅ Meeting updated successfully");
-    return h.response(result).code(200);
-  } catch (error) {
-    console.error("❌ Error updating meeting:", error);
-    return h.response({ message: "Internal Server Error", error }).code(500);
-  }
-},
+  },
 
 
-
-//Update meeting minutes
-async updateMeetingMinutesRecordById(req: Request, h: ResponseToolkit) {
-  try {
-    console.log("Content-Type:", req.headers["content-type"]);
-    console.log("Raw payload:", req.payload);
-
-    const meetingId = req.params.meetingbyId;
-    const payload = req.payload as {
-      duration: string;
-      meetingStatus: string;
-      meetingminutes: string;
-      teacher: ITeacher[];
-      updatedBy?: string;
-    };
-
-    if (!payload || !payload.meetingminutes || !Array.isArray(payload.teacher)) {
-      return h.response({ message: "Missing or invalid data" }).code(400);
-    }
-
-    const result = await updateMeetingMinutesAndAttendees(
-      meetingId,
-      payload.meetingminutes,
-        payload.meetingStatus,
-      payload.duration,
-      payload.teacher,
-      payload.updatedBy
-    );
-
-    if (!result) {
-      return h.response({ message: addMeetingMessages.USER_NOT_FOUND }).code(404);
-    }
-
-    return h.response(result).code(200);
-  } catch (error) {
-    console.error("Error updating meeting minutes and attendees:", error);
-    return h.response({ message: "Internal Server Error", error }).code(500);
-  }
-},
-
-async getMeetingByIdRecord (req: Request, h: ResponseToolkit) {
-
+  async getMeetingRecord(req: Request, h: ResponseToolkit) {
     try {
-        // Fetch the student by ID
-        const result = await meetingByIdRecord(String(req.params.id));
-  
-        // Handle not found case
-        if (isNil(result)) {
-          return h
-            .response({ message: ClassSchedulesMessages.NOT_FOUND })
-            .code(404);
-        }
-  
-       
-        return h.response(result).code(200);
-      } catch (error) {
-        // Handle errors (unexpected or other)
+      // Fetch the student by ID
+      const result = await meetingByIdRecord(String(req.params.id));
+      // Handle not found case
+      if (isNil(result)) {
         return h
-          .response({ error })
-          .code(500);
+          .response({ message: ClassSchedulesMessages.NOT_FOUND })
+          .code(404);
       }
-
-}
-  
-
-
+      return h.response(result).code(200);
+    } catch (error) {
+      // Handle errors (unexpected or other)
+      return h
+        .response({ error })
+        .code(500);
+    }
+  }
 }
 
 

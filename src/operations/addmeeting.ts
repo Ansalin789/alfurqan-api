@@ -259,8 +259,8 @@ const autoScheduleMeeting = async () => {
   for (const teacher of teachers) {
     const existingMeeting = await Meeting.findOne({
       selectedDate: date,
-      "supervisor.supervisorId": supervisor._id.toString(),
-      "teacher.teacherId": teacher._id.toString(),
+      "supervisor.supervisorId": String(supervisor._id),
+      "teacher.teacherId": String(teacher._id),
     });
 
     if (existingMeeting) {
@@ -279,13 +279,13 @@ const autoScheduleMeeting = async () => {
       createdBy: supervisor.userName,
       teacher: [
         {
-          teacherId: teacher._id.toString(),
+          teacherId: String(teacher._id),
           teacherName: teacher.userName,
           teacherEmail: teacher.email,
         }
       ],
       supervisor: {
-        supervisorId: supervisor._id.toString(),
+        supervisorId: String(supervisor._id),
         supervisorName: supervisor.userName,
         supervisorEmail: supervisor.email,
         supervisorRole: Array.isArray(supervisor.role) ? supervisor.role[0] : supervisor.role,

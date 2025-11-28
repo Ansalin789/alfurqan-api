@@ -38,7 +38,6 @@ const register = async (server: Server): Promise<void> => {
 //         },  },
 //     },
 
-//janani
    {
   method: "GET",
   path: "/assignments",
@@ -53,7 +52,6 @@ const register = async (server: Server): Promise<void> => {
   },
    },
 
-  //jo
    {
   method: "GET",
   path: "/assignments/student",
@@ -68,8 +66,6 @@ const register = async (server: Server): Promise<void> => {
   },
    },
 
-//jo
-
      {
   method: "GET",
   path: "/assignments/cardcount",
@@ -83,7 +79,6 @@ const register = async (server: Server): Promise<void> => {
     },
   },
 },
-//get assignment by ObjectId jo
 {
   method: "GET",
   path: "/assignments/{id}",
@@ -96,8 +91,6 @@ const register = async (server: Server): Promise<void> => {
     },
   },
 },
-
-
    {
       method: "POST",
       path: "/groupAssignments",
@@ -112,15 +105,13 @@ const register = async (server: Server): Promise<void> => {
           multipart: true,
           allow: "multipart/form-data",
         },
-        // auth: {
-        //   strategies: ["jwt"],
-        // },
+        auth: {
+          strategies: ["jwt"],
+        },
        },
     },
 
 
-
-//jo
 {
   method: "PUT",
   path: "/assignments/bulk",
@@ -138,8 +129,6 @@ const register = async (server: Server): Promise<void> => {
   },
 },
 
-
-    //janani
 
      {
   method: "GET",
@@ -161,9 +150,9 @@ const register = async (server: Server): Promise<void> => {
     handler: handler.getAssignmentQuestionList,
     description: "Get all assignments counts for a student by teacherId",
     tags: ["api", "assignment"],
-    // auth: {
-    //   strategies: ["jwt"],
-    // },
+    auth: {
+      strategies: ["jwt"],
+    },
   },
      },
 

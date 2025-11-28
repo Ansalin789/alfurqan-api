@@ -48,20 +48,20 @@ const register = async (server: Server): Promise<void> => {
                   }, },
            },
 
-   {
-  method: "GET",
-  path: "/allAdminMeeting/meetingId",
-  options: {
-    handler: handler.getAdminMeetingRecordByMeetingId,
-    description: addAminMeetingMessages.LIST,
-    tags: ["api", "adminmeeting"],
-    auth: {
-      strategies: ["jwt"],
-    },
-  },
-},
+          {
+          method: "GET",
+          path: "/allAdminMeeting/meetingId",
+          options: {
+            handler: handler.getAdminMeetingRecordByMeetingId,
+            description: addAminMeetingMessages.LIST,
+            tags: ["api", "adminmeeting"],
+            auth: {
+              strategies: ["jwt"],
+            },
+          },
+        },
 
-          
+
           {
             method: "PUT",
             path: "/allAdminMeeting/{meetingId}",
@@ -75,9 +75,9 @@ const register = async (server: Server): Promise<void> => {
                     allow: "application/json", // Ensure JSON is allowed
                     maxBytes: 50 * 1024 * 1024,
                 },
-                // auth: {
-                //   strategies: ["jwt"],
-                // }, 
+                auth: {
+                  strategies: ["jwt"],
+                }, 
               },
           },
 
@@ -110,10 +110,6 @@ const register = async (server: Server): Promise<void> => {
               },
             },
           }
-
-
-
-
 
   ];
   server.route(routes);

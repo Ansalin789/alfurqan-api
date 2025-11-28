@@ -5,17 +5,6 @@ import handler from "./handler";
 const register = async (server: Server): Promise<void> => {
     // Register all routes for this unit
     const routes: ServerRoute[] = [
-     
-      // {
-      //   method: "PUT",
-      //   path: "/createclassschedule/{studentId}",
-      //   options: {
-      //    handler: handler.createandUpdateSchedule,
-      //    description: evaluationMessages.UPDATE,
-      //    tags: ["api", "evaluation"],
-      // },
-      // },
-      
       {
         method: "GET",
         path: "/classShedule",

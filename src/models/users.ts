@@ -1,10 +1,11 @@
-import mongoose, { Schema } from "mongoose";
+
 import { v4 as uuidv4 } from "uuid";
 import { IUser } from "../../types/models.types";
 
 import CustomEnumerator from "../shared/enum";
 import { z } from "zod";
 import { appStatus, commonMessages } from "../config/messages";
+import mongoose, { Schema } from "mongoose";
 
 const userSchema = new Schema<IUser>(
   {
