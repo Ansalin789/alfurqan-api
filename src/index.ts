@@ -249,7 +249,7 @@ cron.schedule("0 0 * * *", async () => {
     console.log("evaluation",evaluation);
   if( evaluation.classType == "REGULARCLASS"&& evaluation.weeklySlots && (!evaluation.paymentStatus||evaluation.paymentStatus == "Pending" || evaluation.paymentStatus == "" )){
     console.log("deleting booked");
-   await removeBookedSlots(evaluation.joiningDate.toString(), evaluation.weeklySlots, evaluation.teacher.teacherId);
+   await removeBookedSlots(String(evaluation.joiningDate), evaluation.weeklySlots, evaluation.teacher.teacherId);
   } 
 }
 });
@@ -434,7 +434,7 @@ cron.schedule("*/5 * * * *", async () => {
   console.log(`🔄 Checking ${groupClassSchedule.length} classes at ${moment().format("HH:mm:ss")}`); 
  
   for (const cls of classSchedules) {
-    const classId = cls._id.toString();
+    const classId = String(cls._id);
     const startTime = moment(cls.startTime?.[0], "HH:mm");
     const endTime = moment(cls.endTime?.[0], "HH:mm");
     const nowMoment = moment();
@@ -552,7 +552,7 @@ cron.schedule("*/5 * * * *", async () => {
   const teacher = cls.teacher;
   const message = `Student ${student?.studentFirstName} was absent for the class on ${cls.startDate} at ${cls.startTime[0]}. The session has been marked accordingly.`;
 const classSchedule = await ClassScheduleModel.findOne({
-      _id: new Types.ObjectId(cls._id),
+      _id: new Types.ObjectId(String(cls._id)),
     });
     const alfstudent = await AlStudenModel.findOne({
       _id: new Types.ObjectId(classSchedule?.student.studentId),
@@ -569,7 +569,7 @@ const classSchedule = await ClassScheduleModel.findOne({
       senderName: "System",
       senderEmail: "system@gmail.com", 
       isRead: false,
-      receiverId: [teacher.teacherId.toString(),academicCoach?._id.toString()],
+      receiverId: [String(teacher.teacherId),String(academicCoach?._id)],
       receiverName: [teacher.teacherName ,academicCoach?.userName],
       receiverEmail: [teacher.teacherEmail || 'some@gmail.com',academicCoach?.email],
       notificationType: "STUDENT_ABSENT_ALERT",
@@ -600,7 +600,7 @@ const classSchedule = await ClassScheduleModel.findOne({
   const message = `Teacher ${teacher?.teacherName} was absent for the class on ${cls.startDate} at ${cls.startTime[0]}. The session has been marked accordingly.`;
 
   const classSchedule = await ClassScheduleModel.findOne({
-    _id: new Types.ObjectId(cls._id),
+    _id: new Types.ObjectId(String(cls._id)),
   });
 
   const alfstudent = await AlStudenModel.findOne({
@@ -623,7 +623,7 @@ const classSchedule = await ClassScheduleModel.findOne({
       senderName: "System",
       senderEmail: "system@gmail.com",
       isRead: false,
-      receiverId: [student.studentId.toString(), academicCoach?._id.toString()],
+      receiverId: [String(student.studentId), String(academicCoach?._id)],
       receiverName: [student.studentFirstName, academicCoach?.userName],
       receiverEmail: [student.studentEmail || "unknown@student.com", academicCoach?.email],
       notificationType: "TEACHER_ABSENT_ALERT",
@@ -653,7 +653,7 @@ const classSchedule = await ClassScheduleModel.findOne({
   const message = `Both the student (${student?.studentFirstName}) and the teacher (${teacher?.teacherName}) were absent for the class on ${cls.startDate} at ${cls.startTime[0]}. The session has been marked accordingly.`;
 
   const classSchedule = await ClassScheduleModel.findOne({
-    _id: new Types.ObjectId(cls._id),
+    _id: new Types.ObjectId(String(cls._id)),
   });
 
   const alfstudent = await AlStudenModel.findOne({
@@ -676,7 +676,7 @@ const classSchedule = await ClassScheduleModel.findOne({
       senderName: "System",
       senderEmail: "system@gmail.com",
       isRead: false,
-      receiverId: [academicCoach._id.toString()],
+      receiverId: [String(academicCoach._id)],
       receiverName: [academicCoach.userName],
       receiverEmail: [academicCoach.email || "coach@default.com"],
       notificationType: "BOTH_ABSENT_ALERT",
@@ -857,9 +857,9 @@ async function sendGroupAbsentNotification(type: any, user1: any, user2: any, me
 
   // 📦 Prepare Notification Targets
   const receivers = [
-    ...(teacher?.teacherId ? [teacher.teacherId.toString()] : []),
-    ...(student?.studentId ? [student.studentId.toString()] : []),
-    ...(academicCoach?._id ? [academicCoach._id.toString()] : [])
+    ...(teacher?.teacherId ? [String(teacher.teacherId)] : []),
+    ...(student?.studentId ? [String(student.studentId)] : []),
+    ...(academicCoach?._id ? [String(academicCoach._id)] : [])
   ];
 
   const receiverNames = [

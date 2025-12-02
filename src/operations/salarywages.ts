@@ -25,168 +25,6 @@ export const runSalaryCron = async () => {
   }
 };
 
-// const processAllUsers = async (now: Date, monthLabel: string) => {
-//   // Get all active users with relevant roles
-//   const eligibleUsers = await UserModel.find({
-//     role: { $in: ["TEACHER", "SUPERVISOR", "ACADEMICCOACH"] },
-//     status: "Active"
-//   }).lean();
-
-//   console.log(`👥 Found ${eligibleUsers.length} eligible users`);
-
-//   for (const user of eligibleUsers) {
-//     const designation = user.role.find(r => 
-//       ["TEACHER", "SUPERVISOR", "ACADEMICCOACH"].includes(r)
-//     )?.toUpperCase();
-
-//     if (!designation) continue;
-
-//     if (!user.userId) {
-//       console.warn(`User ${user.userName} is missing userId, skipping salary record creation.`);
-//       return;
-//     }
-
-//     try {
-//       // Check if record exists using atomic operation
-//       const result = await salaryandwages.findOneAndUpdate(
-//         {
-//           employeeId: user.userId,
-//           designation,
-//           status: "Active"
-//         },
-//         { $setOnInsert: { 
-//           employeeName: user.userName,
-//           employeeMail: user.email || "",
-//           designation,
-//           salaryAmount: designation === "TEACHER" ? "0" : await getFixedSalaryAmount(user.userId),
-//           deductionAmount: 0,
-//           balanceAmount: designation === "TEACHER" ? 0 : await getFixedSalaryAmount(user.userId),
-//           paymentMethod: "Bank Transfer",
-//           status: "Active",
-//           paymentStatus: "Pending",
-//           createdDate: new Date().toISOString(),
-//           createdBy: "SYSTEM",
-//           paymentDate: new Date().toISOString()
-//         }},
-//         { 
-//           upsert: true,
-//           new: true,
-//           setDefaultsOnInsert: true
-//         }
-//       );
-
-//       if (!result) {
-//         console.log(`🆕 Created initial ${designation} record for ${user.userName}`);
-//       } else {
-//         console.log(`✅ Existing record found for ${designation} ${user.userName}`);
-//       }
-
-//       // Process based on designation
-//       if (designation === "TEACHER" && user.userId) {
-//         await processTeacherSalary(user.userId, now);
-//       } else if (now.getDate() <= 3 && user.userId) { // Only process fixed salaries on 1st-3rd
-//         await processFixedSalaryEmployee(user.userId, designation, monthLabel);
-//       }
-//     } catch (err) {
-//       console.error(`❌ Error processing ${designation} ${user.userName}:`, err);
-//     }
-//   }
-// };
-
-// const getFixedSalaryAmount = async (employeeId: string) => {
-//   const wageInfo = await EmpWagesModel.findOne({ employeeId }).lean();
-//   if (!wageInfo) {
-//     console.warn(`⚠️ No wage info found for employee ${employeeId}`);
-//     return 0;
-//   }
-//   return parseFloat(String(wageInfo.classType.rate).replace(/\$|,/g, '') || "0");
-// };
-
-// const processTeacherSalary = async (teacherId: string, now: Date) => {
-//   try {
-//     // 1. Find all payable classes (regardless of processing status)
-//     const payableClasses = await classShedule.find({
-//       "teacher.teacherId": teacherId,
-//       amount: { $exists: true, $ne: "$0.00" }
-//     }).lean();
-
-//     if (!payableClasses.length) {
-//       console.log(`⏩ No payable classes found for teacher ${teacherId}`);
-//       return;
-//     }
-
-//     // 2. Calculate total amount (simple sum)
-//     let totalAmount = 0;
-//     for (const cls of payableClasses) {
-//       const amount = parseFloat(String(cls.amount).replace(/\$|,/g, ""));
-//       if (!isNaN(amount)) {
-//         totalAmount += amount;
-//       }
-//     }
-
-//     if (totalAmount <= 0) {
-//       console.log(`⚠️ No valid payable amount for teacher ${teacherId}`);
-//       return;
-//     }
-
-//     // 3. Update salary record with simple increment
-//     await salaryandwages.updateOne(
-//       {
-//         employeeId: teacherId,
-//         designation: "TEACHER",
-//         status: "Active"
-//       },
-//       {
-//         $inc: {
-//           salaryAmount: totalAmount,
-//           balanceAmount: totalAmount
-//         },
-//         $set: {
-//           updatedAt: now,
-//           paymentDate: now,
-//           isSalaryProcessed: true
-//         }
-//       }
-//     );
-
-//     console.log(`➕ Added ₹${totalAmount.toFixed(2)} to TEACHER ${teacherId}`);
-//   } catch (error) {
-//     console.error(`❌ Error processing salary for teacher ${teacherId}:`, error);
-//     throw error;
-//   }
-// };
-
-// const processFixedSalaryEmployee = async (employeeId: string, designation: string, monthLabel: string) => {
-//   const salaryAmount = await getFixedSalaryAmount(employeeId);
-  
-//   if (salaryAmount <= 0) {
-//     return;
-//   }
-
-//   // Update fixed salary (only updates if record exists)
-//   await salaryandwages.updateOne(
-//     {
-//       employeeId,
-//       designation,
-//       monthLabel,
-//       status: "Active"
-//     },
-//     {
-//       $set: {
-//         salaryAmount: salaryAmount.toString(),
-//         balanceAmount: salaryAmount,
-//         updatedAt: new Date(),
-//         paymentDate: new Date()
-//       }
-//     }
-//   );
-
-//   console.log(`💰 Updated ${designation} ${employeeId} salary to $${salaryAmount}`);
-// };
-
-
-
-
 
 export const getAllSalaryList = async (
   params: GetAllRecordsParams
@@ -488,7 +326,7 @@ const processFixedSalaryEmployee = async (employeeId: string, designation: strin
         employeeId,
         designation,
         monthLabel,
-        salaryAmount: salaryAmount.toString(),
+        salaryAmount: String(salaryAmount),
         balanceAmount: salaryAmount,
         status: "Active",
         paymentStatus: "Pending",
@@ -503,7 +341,7 @@ const processFixedSalaryEmployee = async (employeeId: string, designation: strin
         { _id: existing._id },
         {
           $set: {
-            salaryAmount: salaryAmount.toString(),
+            salaryAmount: String(salaryAmount),
             balanceAmount: salaryAmount,
             updatedAt: new Date(),
             paymentDate: new Date()
@@ -518,7 +356,7 @@ const processFixedSalaryEmployee = async (employeeId: string, designation: strin
       employeeId,
       designation,
       monthLabel,
-      salaryAmount: salaryAmount.toString(),
+      salaryAmount: String(salaryAmount),
       balanceAmount: salaryAmount,
       status: "Active",
       paymentStatus: "Pending",

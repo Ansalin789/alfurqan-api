@@ -75,12 +75,12 @@ export const getAllalstudentsList = async (
 
       // ClassSchedule Count
       const classScheduleCount = await ClassScheduleModel.countDocuments({
-        "student.id": student._id.toString(),
+        "student.id": String(student._id),
       });
 
       // Latest ClassSchedule
       const classSchedule = await ClassScheduleModel.findOne(
-        { "student.id": student._id.toString() },
+        { "student.id": String(student._id) },
         { "teacher.teacherName": 1, sessionClassType: 1 }
       )
         .sort({ _id: -1 })

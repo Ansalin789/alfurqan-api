@@ -194,7 +194,7 @@ export default {
           updatedPayload.teacher[0].teacherId,
           updatedPayload.organizer?.organizerId,
           studentId,
-          meetingdate.toString(),
+          String(meetingdate),
           updatedPayload.startTime,
           updatedPayload.endTime,
           req.params.meetingId

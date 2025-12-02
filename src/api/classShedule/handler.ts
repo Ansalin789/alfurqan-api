@@ -521,7 +521,7 @@ export default {
       });
 
       const rawPayload = req.payload as any;
-      const randomFourDigitStr = Math.floor(Math.random() * 10000).toString().padStart(4, "0");
+      const randomFourDigitStr = Math.floor(Math.random() * 10000).toString().padStart(4, "0")
       const meetingId = `AFGC-${randomFourDigitStr}`;
       const students: any = rawPayload.students || [];
       const alfurqanStudents = await AlStudentModule.findOne({ _id: new Types.ObjectId(String(students[0].id)) }).exec();   // 🧠 Extract reference values from the first student

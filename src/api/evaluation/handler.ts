@@ -376,16 +376,4 @@ if(result){
   return `${preName}${num}`;
 }
 
-//   const useNumber  = 0;
-// function trialIdGenerator(trialprefix: string) {
-
-// // auto reset 
-// if(useNumber > 99999){
-//     throw new Error("All 5-digit trial IDs have been used!");
-
-// }
-//   const formattedNum = useNumber.toString().padStart(5, "0");
-//   return `${trialprefix}${formattedNum}`;
-
-// }
 

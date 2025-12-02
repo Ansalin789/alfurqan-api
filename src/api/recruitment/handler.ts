@@ -290,7 +290,7 @@ try{
           await supervisorCardCount({supervisorId});
           await sendNotification({
             messages: `Admin gaves Approval to ${result.candidateFirstName} teacher !.`,
-            senderId: req.params.id.toString(),
+            senderId: String(req.params.id),
             senderName: result.candidateFirstName,
             senderEmail: result.candidateEmail,
             isRead : false,
@@ -310,7 +310,7 @@ try{
          await supervisorCardCount({supervisorId});
          await sendNotification({
             messages: `Admin added ${result.candidateFirstName} teacher in your team !.`,
-            senderId: req.params.id.toString(),
+            senderId: String(req.params.id),
             senderName: result.candidateFirstName,
             senderEmail: result.candidateEmail,
             isRead : false,

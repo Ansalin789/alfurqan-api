@@ -27,7 +27,7 @@ otherempdetails.preferedShiftTo = preffredToTime;
   const salaryRecords = [
     {
       employeeName: savedOtherEmployee.firstName + " " + savedOtherEmployee.lastName,
-      employeeId: savedOtherEmployee._id.toString(),
+      employeeId: String(savedOtherEmployee._id),
        classType:{
             className: "FIXEDSALARY",
             hoursMins: "1 month",
@@ -172,7 +172,7 @@ async function createShiftSchedule(saveOtherEmployee:any, saveUser: any) {
         academicCoachId : saveOtherEmployee.designation == "ACADEMICCOACH" ? saveUser.userId : null,
         teacherId : null,
         supervisorId: saveOtherEmployee.designation == "SUPERVISOR" ? saveUser.userId : null,
-        employeeId: saveOtherEmployee._id.toString(),
+        employeeId: String(saveOtherEmployee._id),
         name: saveUser.userName,
         email: saveUser.email,
         role: saveUser.role[0],

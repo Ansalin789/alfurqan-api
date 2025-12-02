@@ -38,7 +38,7 @@ export const decodeCustomBase64 = (value: string): string => {
 export const encryptPassword = (plainText: string): string => {
   // Encrypt the plain text password using the secret key
   const encryptedBytes = CryptoJS.AES.encrypt(plainText, secretKey);
-  const encrypted = encryptedBytes.toString(); // Encrypted data as Base64 string
+  const encrypted = String(encryptedBytes); // Encrypted data as Base64 string
   // Convert to custom Base64 format
   const customBase64 = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(encrypted))
     .replace(/\+/g, '-')

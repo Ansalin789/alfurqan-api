@@ -520,8 +520,8 @@ export default {
           message: error.message,
           details: {
             receivedQuery: {
-              assignmentId: assignmentId?.toString(),
-              _id: _id?.toString(),
+              assignmentId: String(assignmentId),
+              _id: String(_id),
             },
             cleanedQuery: {
               assignmentId: cleanAssignmentId,

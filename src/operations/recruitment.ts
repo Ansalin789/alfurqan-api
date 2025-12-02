@@ -211,7 +211,7 @@ export const updateApplicantByAdminId = async (
       const updatedApprovalData = {
         ...approvalData,
         supervisor: {
-          supervisorId: getSupervisor._id.toString(),
+          supervisorId: String(getSupervisor._id),
           supervisorName: getSupervisor.userName,
           supervisorEmail: getSupervisor.email,
           supervisorRole: getSupervisor.role[0],

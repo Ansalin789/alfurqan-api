@@ -76,7 +76,7 @@ export const createAssignment = async (
         continue;
       }
 
-      const studentId = studentDetails._id.toString();
+      const studentId = String(studentDetails._id);
       const studentName = studentDetails.username || "";
       const sessionClassType = studentDetails.sessionClassType || "";
       const level = studentDetails.level || "";
@@ -271,7 +271,7 @@ export const createAssignmentforGroup = async (
         continue;
       }
 
-      const studentId = studentDetails._id.toString();
+      const studentId = String(studentDetails._id);
       const studentName = studentDetails.username || "";
       const sessionClassType = studentDetails.sessionClassType || "";
       const level = studentDetails.level || "";

@@ -21,7 +21,7 @@ export default{
   
       // Prepare the updated access payload
       const accessPayload: Partial<IAccessModel> = {
-        employeeId: user._id.toString(),
+        employeeId: String(user._id),
         employeeName: user.userName || '',
         contact: user.email || '',
         designation: Array.isArray(user.role) ? user.role : [user.role],
@@ -93,12 +93,12 @@ export default{
       };
   
       // Check if the access record for this user already exists
-      let roleAccess = await roleacces.findOne({ employeeId: user._id.toString() });
+      let roleAccess = await roleacces.findOne({ employeeId: String(user._id) });
   
       if (roleAccess) {
         // If the record exists, update it
         roleAccess = await roleacces.findOneAndUpdate(
-          { employeeId: user._id.toString() },  // Match by employeeId
+          { employeeId: String(user._id) },  // Match by employeeId
           accessPayload,  // Update the record with the new payload
           { new: true }  // Return the updated document
         );

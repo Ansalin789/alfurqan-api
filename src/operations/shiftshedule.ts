@@ -29,9 +29,9 @@ export const getAllTeachers = async (
   const users = await usershiftschedule.find(query).exec();
 
   // Ensure the result matches the expected type
-  const usersFormatted: IUsershiftschedule[] = users.map((user) => ({
-    ...(user.toObject() as IUsershiftschedule),
-  }));
+  const usersFormatted: IUsershiftschedule[] = users.map((user) =>
+    user.toObject() as unknown as IUsershiftschedule
+  );
 
   // Get the total count of users matching the query
   const totalCount = await usershiftschedule.countDocuments(query);

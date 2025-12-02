@@ -17,7 +17,7 @@ export const startInvoiceConsumer = async () => {
     eachMessage : async({topic , message})=>{
       if(!message.value) return;
       try{
-        const raw = message.value?.toString();
+        const raw = String(message.value);
         const data = JSON.parse(raw);
         const handler = topicHandler[topic];
         if(handler){

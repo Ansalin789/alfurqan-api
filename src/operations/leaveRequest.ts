@@ -34,9 +34,9 @@ export const createLeaveRequest = async (
     const basePayload = {
       ...payload,
       name: employee.userName,
-      employeeId: employee._id.toString(),
+      employeeId: String(employee._id),
       role: Array.isArray(employee.role) ? employee.role[0] : employee.role,
-      approvedId: admin._id.toString(),
+      approvedId: String(admin._id),
       approvedName: admin.userName,
     };
 
@@ -135,11 +135,17 @@ export const createLeaveRequest = async (
       }
     );
 
-    return {
+    return ( {
       ...(updatedLeaveRequest?.toObject() ?? {}),
-      employeeId: employee._id.toString(),
+      employeeId: String(employee._id),
       totalCounts: counts,
-    };
+    } as unknown as ILeaveRequest & {
+      totalCounts: {
+        sickLeave: number;
+        casualLeave: number;
+        paidLeave: number;
+      };
+    } );
   } catch (error) {
     return { error: error instanceof Error ? error.message : error };
   }

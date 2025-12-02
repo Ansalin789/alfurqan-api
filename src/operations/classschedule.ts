@@ -150,7 +150,7 @@ export const updateStudentClassSchedule = async (
     for (const classDate of classDates) {
       if (payload.sessionClassType === "GROUPCLASS") {
         const duplicate = await ClassScheduleModel.findOne({
-          "student.id": alfurqanStudent?._id.toString(),
+          "student.id": String(alfurqanStudent?._id),
           startDate: classDate,
           endDate: classDate,
           classDay: day,
@@ -169,7 +169,7 @@ export const updateStudentClassSchedule = async (
 
       const newClassSchedule = new ClassScheduleModel({
         student: {
-          id: alfurqanStudent?._id.toString(),
+          id: String(alfurqanStudent?._id),
           studentId: alfurqanStudent?.student.studentId,
           studentFirstName: alfurqanStudent?.username,
           studentLastName: alfurqanStudent?.username,
@@ -191,7 +191,7 @@ export const updateStudentClassSchedule = async (
         sessionsEndtime: payload.sessionsEndtime || "",
         sessionStatus: "NotCompleted",
         course: {
-          courseId: courseDetails?._id.toString(),
+          courseId: String(courseDetails?._id),
           courseName: courseDetails?.courseName,
         },
         package: payload.package,
@@ -385,11 +385,11 @@ export const requestReschedule = async (payload: any) => {
     if (rescheduleResult) {
       await sendNotification({
         messages: message,
-        senderId: requestUserId?.toString(),
+        senderId: String(requestUserId),
         senderName: requestName,
         senderEmail: requestEmail,
         isRead: false,
-        receiverId: [academicCoach?._id.toString()],
+        receiverId: [String(academicCoach?._id)],
         receiverName: [academicCoach?.userName],
         receiverEmail: [academicCoach?.email],
         notificationType: `REQUEST_RESCHEDULE_${payload.requestedBy.toUpperCase()}`,
@@ -401,7 +401,7 @@ export const requestReschedule = async (payload: any) => {
       const newMessage = new realtimemessage({
         messages: messageContent,
         isRead: false,
-        senderId: requestUserId?.toString(),
+        senderId: String(requestUserId),
         senderName: requestName,
         senderEmail: requestEmail ?? "",
         receiverId: academicCoach?._id,
@@ -1400,7 +1400,7 @@ export const getStudentList = async (
         if (alstudent) {
           const assignmentList = await assignment
             .find(
-              { studentId: alstudent._id.toString() },
+              { studentId: String(alstudent._id) },
               {
                 assignmentId: 1,
                 assignmentType: 1,
@@ -1776,7 +1776,7 @@ export const updateEarningsCalculation = async () => {
       // Check if class start time is before now
       if (now.isAfter(classEndDateTime)) {
         await ClassScheduleModel.findOneAndUpdate(
-          { _id: new Types.ObjectId(scheduleClass._id) },
+          { _id: new Types.ObjectId(String(scheduleClass._id)) },
           {
             $set: {
               sessionStatus: "Completed",
@@ -1788,7 +1788,7 @@ export const updateEarningsCalculation = async () => {
         console.log("✅ Session status: Completed");
       } else {
         await ClassScheduleModel.findOneAndUpdate(
-          { _id: new Types.ObjectId(scheduleClass._id) },
+          { _id: new Types.ObjectId(String(scheduleClass._id)) },
           {
             $set: {
               sessionStatus: "NotCompleted",
@@ -1804,8 +1804,7 @@ export const updateEarningsCalculation = async () => {
       const totalMinutes = startHour * 60 + startMinute + 15;
       const attendanceHour = Math.floor(totalMinutes / 60);
       const attendanceMinute = totalMinutes % 60;
-      const attendanceTime = `${attendanceHour
-        .toString()
+      const attendanceTime = `${String(attendanceHour)
         .padStart(2, "0")}:${attendanceMinute.toString().padStart(2, "0")}`;
       console.log("Attendance Time:", attendanceTime);
 
@@ -2021,8 +2020,8 @@ async function getSessionTotalHours(
       { _id: new Types.ObjectId(scheduleClass._id) },
       {
         $set: {
-          sessionStarttime: earliestTime.toString(),
-          sessionsEndtime: latestTime.toString(),
+          sessionStarttime: String(earliestTime),
+          sessionsEndtime: String(latestTime),
         },
       },
       { new: true }
@@ -2073,7 +2072,7 @@ async function getSessionTotalHours(
         { _id: new Types.ObjectId(scheduleClass._id) },
         {
           $set: {
-            classhour: totalMinutes.toString(),
+            classhour: String(totalMinutes),
             amount: classTotalEarnings,
           },
         },
@@ -2090,7 +2089,7 @@ async function getSessionTotalHours(
         { _id: new Types.ObjectId(scheduleClass._id) },
         {
           $set: {
-            classhour: totalMinutes.toString(),
+            classhour: String(totalMinutes),
             amount: classTotalEarnings,
           },
         },

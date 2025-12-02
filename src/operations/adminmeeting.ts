@@ -98,7 +98,7 @@ export const admincreateMeeting = async (
         meetingName: payload.meetingName,
         meetingId: groupMeetingId,
         admin: {
-          adminId: admin._id.toString(),
+          adminId: String(admin._id),
           adminName: admin.userName,
           adminEmail: admin.email,
           adminRole: Array.isArray(admin.role) ? admin.role[0] : admin.role,
@@ -129,7 +129,7 @@ export const admincreateMeeting = async (
           ? new Date(savedMeeting.selectedDate).toDateString()
           : "";
         const requestName = admin.userName ?? "Admin";
-        const requestUserId = admin._id?.toString() ?? "";
+        const requestUserId = String(admin._id) ?? "";
         const requestEmail = admin.email ?? "";
         const message = `${requestName} (Admin) scheduled meeting "${savedMeeting.meetingName}" on ${meetingDateText} from ${savedMeeting.startTime} to ${savedMeeting.endTime}.`;
         const messageContent =

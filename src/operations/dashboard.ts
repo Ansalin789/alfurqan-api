@@ -646,7 +646,7 @@ export const acUpcomingClassList = async (academicCoachId: string) => {
       email: item.student?.email || "",
       meetingLink: item.meetingLink || "",
     },
-    _id: item._id?.toString(),
+    _id: String(item._id),
     classType: item.classType || "",
     scheduledStartDate: item.scheduledStartDate || "",
     scheduledEndDate: item.scheduledEndDate || "",

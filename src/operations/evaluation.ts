@@ -124,7 +124,7 @@ export const createEvaluationRecord = async (
   const newEvaluation = new EvaluationModel(payload);
   if (createStudent) {
     (newEvaluation.student = {
-      studentRegisterId: createStudent.id.toString(),
+      studentRegisterId: String(createStudent.id),
       studentId: createStudent.studentId,
       studentFirstName: createStudent.firstName,
       studentLastName: createStudent.lastName,
@@ -152,7 +152,7 @@ export const createEvaluationRecord = async (
   }
   if (subscriptonDetaails) {
     newEvaluation.subscription = {
-      subscriptionId: subscriptonDetaails?.id.toString(),
+      subscriptionId: String(subscriptonDetaails?.id),
       subscriptionName: subscriptonDetaails?.subscriptionName,
       subscriptionPricePerHr: subscriptonDetaails?.subscriptionPricePerHr,
       subscriptionDays: subscriptonDetaails?.subscriptionDays,
@@ -265,14 +265,14 @@ export const updateStudentEvaluation = async (
             payload.student.studentLastName
         )
         .replace("<address>", payload.student.studentCity || " ")
-        .replace("<phonenumber>", payload.student.studentPhone.toString())
+        .replace("<phonenumber>", String(payload.student.studentPhone))
         .replace("<email>", payload.student.studentEmail)
         .replace("<plan>", payload.subscription.subscriptionName)
         .replace("<coursename>", payload.student.learningInterest)
-        .replace("<amount>", evaluation.planTotalPrice.toString())
-        .replace("<adjustamount>", evaluation.planTotalPrice.toString())
-        .replace("<subtotal>", evaluation.planTotalPrice.toString())
-        .replace("<total>", evaluation.planTotalPrice.toString())
+        .replace("<amount>", String(evaluation.planTotalPrice))
+        .replace("<adjustamount>", String(evaluation.planTotalPrice))
+        .replace("<subtotal>", String(evaluation.planTotalPrice))
+        .replace("<total>", String(evaluation.planTotalPrice))
         .replace("<paymentLink>", updatedEvaluation.paymentLink);
 
       await sendEmailClient(emailTo, subject, htmlPart);
@@ -487,7 +487,7 @@ const academicCoach = await users.findById(createEvaluation.academicCoachId);
   if (teacherDetails.userId) {
     await sendNotification({
       messages: `${createEvaluation.student.studentFirstName} ${createEvaluation.student.studentLastName} has been assigned to you for a trial class.`,
-      senderId: createEvaluation.academicCoachId?.toString() ?? "system",
+      senderId: String(createEvaluation.academicCoachId) ?? "system",
       senderName: academicCoach?.userName ?? "system",
       senderEmail: academicCoach?.email ?? "system",
       isRead: false,
