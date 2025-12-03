@@ -12,7 +12,7 @@ enum LearningInterest {
   ISLAMIC = 'Islamic Studies',
   ARANIC = 'Arabic',
 }
-enum notificationStatus{
+enum notificationStatus {
   SEEN = "Seen",
   UN_SEEN = "Unseen",
 }
@@ -29,17 +29,17 @@ enum PreferredTeacher {
   TEACHER_3 = 'Either',
 }
 
-enum ReferalResource{
-  FRIENDS='Friend',
-  SOCIALMEDIA='Social Media',
-  EMAIL='E-Mail',
-  GOOGLE='Google',
-  OTHER='Other'
+enum ReferalResource {
+  FRIENDS = 'Friend',
+  SOCIALMEDIA = 'Social Media',
+  EMAIL = 'E-Mail',
+  GOOGLE = 'Google',
+  OTHER = 'Other'
 }
-enum EvaluationStatus{
-  PENDING='PENDING',
-  INPROGRESS='INPROGRESS',
-  COMPLETED='COMPLETED'
+enum EvaluationStatus {
+  PENDING = 'PENDING',
+  INPROGRESS = 'INPROGRESS',
+  COMPLETED = 'COMPLETED'
 }
 
 export interface IUser extends Document {
@@ -87,7 +87,7 @@ export interface IStudents extends Document {
     name: string;
     role: string;
     email: string;
-};
+  };
 
   email: string;
   gender: string;
@@ -102,10 +102,10 @@ export interface IStudents extends Document {
   preferredToTime: string;
   timeZone: string;
   referralSource: ReferalResource;
-  startDate : Date;
+  startDate: Date;
   evaluationStatus: EvaluationStatus;
   refernceId: string,
-  referredBy:string,
+  referredBy: string,
   status: Status;
   createdDate: Date;
   createdBy: string;
@@ -134,10 +134,10 @@ export interface IStudentCreate {
   preferredToTime: string;
   timeZone: string;
   referralSource: ReferalResource;
-  startDate : Date;
+  startDate: Date;
   evaluationStatus: EvaluationStatus;
   refernceId: string;
-  referredBy:string;
+  referredBy: string;
   status: Status;
   createdDate: Date;
   createdBy: string;
@@ -145,7 +145,7 @@ export interface IStudentCreate {
   lastUpdatedBy: string;
 }
 
-export interface IUsershiftschedule extends Document{
+export interface IUsershiftschedule extends Document {
   academicCoachId: string;
   teacherId: string;
   supervisorId: string;
@@ -166,7 +166,7 @@ export interface IUsershiftschedule extends Document{
   lastUpdatedBy: string
 }
 
-export interface IUsershiftscheduleCreate{
+export interface IUsershiftscheduleCreate {
   academicCoachId: string;
   teacherId: string;
   supervisorId: string;
@@ -191,12 +191,12 @@ export interface IMeetingSchedule extends Document {
     academicCoachId: string;
     name: string;
     email: string;
-  };  
+  };
   teacher: {
     teacherId: string;
     name: string;
     email: string;
-  };   
+  };
   student: {
     studentId: string;
     name: string;
@@ -213,7 +213,7 @@ export interface IMeetingSchedule extends Document {
     courseId: string;
     courseName: string;
   };
-  classType: string; 
+  classType: string;
   meetingType: string;
   meetingLink: string;
   isScheduledMeeting: boolean;
@@ -238,12 +238,12 @@ export interface IMeetingScheduleCreate {
     academicCoachId: string;
     name: string;
     email: string;
-  };  
+  };
   teacher: {
     teacherId: string;
     name: string;
     email: string;
-  };   
+  };
   student: {
     studentId: string;
     name: string;
@@ -261,7 +261,7 @@ export interface IMeetingScheduleCreate {
     courseId: string;
     courseName: string;
   };
-  classType: string; 
+  classType: string;
   meetingType: string;
   meetingLink: string;
   isScheduledMeeting: boolean;
@@ -289,7 +289,7 @@ export interface ICourse extends Document {
     courseDescription: string;
     courseLevel: string;
   };
-  level:string;
+  level: string;
   courseName: string;
   status: string;
   createdDate: Date;
@@ -298,33 +298,33 @@ export interface ICourse extends Document {
   lastUpdatedBy: string;
 }
 
-export interface ILevel extends Document{
+export interface ILevel extends Document {
   courseId: string;
-  level:string;
-  duration:string;
-  description:Buffer;
+  level: string;
+  duration: string;
+  description: Buffer;
   createdDate: Date;
   createdBy: string;
 }
 
 export interface ILevelCreate {
-courseId: string;
-  level:string;
-  duration:Buffer;
-  description:string;
+  courseId: string;
+  level: string;
+  duration: Buffer;
+  description: string;
   createdDate: Date;
   createdBy: string;
 }
- 
+
 export interface ICourseCreate {
   course: {
     courseId?: string;
-    courseTitle:string;
-    courseDuration:string;
-    courseDescription:string;
-    courseLevel:string;
+    courseTitle: string;
+    courseDuration: string;
+    courseDescription: string;
+    courseLevel: string;
   };
-  level :string;
+  level: string;
   courseName: string;
   status: string;
   createdDate: Date;
@@ -335,192 +335,192 @@ export interface ICourseCreate {
 
 
 export interface IEvaluation extends Document {
-trialId?: string;
-academicCoachId: string;
-student: {
-  studentId: string;
-  studentRegisterId: string;
-  studentFirstName: string;
-  studentLastName: string;
-  studentEmail: string;
-  studentGender: string;
-  studentPhone: number;
-  studentCity?: string;
-  studentCountry: string;
-  studentCountryCode: string;
-  learningInterest: LearningInterest;
-  numberOfStudents: number;
-  preferredTeacher: PreferredTeacher;
-  preferredFromTime: string;
-  preferredToTime: string;
-  timeZone: string;
-  referralSource: ReferalResource;
-  preferredDate: Date;
-  evaluationStatus: EvaluationStatus;
-  amount?: string;
-  currency?: string;
-  status: Status;
-  createdDate: Date;
-  createdBy: string;
-};
-classType: string;
-teacher:{
-  teacherId: string;
-  teacherName: string;
-  teacherEmail: string;
-},
-joiningDate: Date;
-classDay: any;
-startTime: any;
-endTime: any;
-isLanguageLevel: boolean;
-languageLevel: string;
-isReadingLevel: boolean;
-readingLevel?: string;
-isGrammarLevel: boolean;
-grammarLevel: string;
-hours: number;
-subscription: {
+  trialId?: string;
+  academicCoachId: string;
+  student: {
+    studentId: string;
+    studentRegisterId: string;
+    studentFirstName: string;
+    studentLastName: string;
+    studentEmail: string;
+    studentGender: string;
+    studentPhone: number;
+    studentCity?: string;
+    studentCountry: string;
+    studentCountryCode: string;
+    learningInterest: LearningInterest;
+    numberOfStudents: number;
+    preferredTeacher: PreferredTeacher;
+    preferredFromTime: string;
+    preferredToTime: string;
+    timeZone: string;
+    referralSource: ReferalResource;
+    preferredDate: Date;
+    evaluationStatus: EvaluationStatus;
+    amount?: string;
+    currency?: string;
+    status: Status;
+    createdDate: Date;
+    createdBy: string;
+  };
+  classType: string;
+  teacher: {
+    teacherId: string;
+    teacherName: string;
+    teacherEmail: string;
+  },
+  joiningDate: Date;
+  classDay: any;
+  startTime: any;
+  endTime: any;
+  isLanguageLevel: boolean;
+  languageLevel: string;
+  isReadingLevel: boolean;
+  readingLevel?: string;
+  isGrammarLevel: boolean;
+  grammarLevel: string;
+  hours: number;
+  subscription: {
     subscriptionId: string;
     subscriptionName: string;
     subscriptionPricePerHr: number;
     subscriptionDays: number;
     subscriptionStartDate: Date;
     subscriptionEndDate: Date;
-};
-planTotalPrice: number
-classStartDate: Date;
- weeklySlots?: {
+  };
+  planTotalPrice: number
+  classStartDate: Date;
+  weeklySlots?: {
     [day: string]: {
       from: string;
       to: string;
     }[];
   };
-classEndDate: Date;
-classStartTime: string;
-classEndTime: string;
-accomplishmentTime?: string;
-studentRate: number;
-expectedFinishingDate: number;
-gardianName: string;
-gardianEmail: string;
-gardianPhone: string;
-gardianCity: string;
-gardianCountry: string;
-gardianTimeZone: string;
-gardianLanguage: string;
-assignedTeacher: string;
-assignedTeacherId:string;
-assignedTeacherEmail:string;
-studentStatus: string;
-classStatus: string;
-comments?: string;
-trialClassStatus?: string;
-invoiceStatus?: string;
-paymentLink: string;
-paymentStatus?: string;
-teacherStatus?: string;
-amount?: string;
-currency?: string;
-status?: string;
-createdDate: Date;
-createdBy?: string;
-updatedDate?: Date;
-updatedBy?: string;
-  
-} 
-
-
-export interface IEvaluationCreate{
-  trialId?: string;
-  academicCoachId: string;
-  student: {
-  studentId?: string;
-  studentRegisterId?: string;
-  studentFirstName: string;
-  studentLastName: string;
-  studentEmail: string;
-  studentGender: string;
-  studentPhone: number;
-  studentCity?: string;
-  studentCountry: string;
-  studentCountryCode: string;
-  learningInterest: LearningInterest;
-  numberOfStudents: number;
-  preferredTeacher: PreferredTeacher;
-  preferredFromTime?: string;
-  preferredToTime?: string;
-  timeZone: string;
-  referralSource: ReferalResource;
-  preferredDate?: Date;
-  evaluationStatus: any;
-  status: Status;
+  classEndDate: Date;
+  classStartTime: string;
+  classEndTime: string;
+  accomplishmentTime?: string;
+  studentRate: number;
+  expectedFinishingDate: number;
+  gardianName: string;
+  gardianEmail: string;
+  gardianPhone: string;
+  gardianCity: string;
+  gardianCountry: string;
+  gardianTimeZone: string;
+  gardianLanguage: string;
+  assignedTeacher: string;
+  assignedTeacherId: string;
+  assignedTeacherEmail: string;
+  studentStatus: string;
+  classStatus: string;
+  comments?: string;
+  trialClassStatus?: string;
+  invoiceStatus?: string;
+  paymentLink: string;
+  paymentStatus?: string;
+  teacherStatus?: string;
+  amount?: string;
+  currency?: string;
+  status?: string;
   createdDate: Date;
   createdBy?: string;
-};
-classType: string;
-teacher:{
-  teacherId: string;
-  teacherName: string;
-  teacherEmail: string;
-},
-joiningDate?: Date;
-classDay?: string[];
-startTime?: string[];
-endTime?: string[];
-isLanguageLevel: boolean;
-languageLevel: string;
-isReadingLevel: boolean;
-readingLevel?: string;
-isGrammarLevel: boolean;
-grammarLevel: string;
-hours: number;
-subscription: {
-    subscriptionName: string;
-};
-planTotalPrice: number
-classStartDate: Date;
-classEndDate: Date;
-classStartTime: string;
-weeklySlots?: {
-    [day: string]: {
-      from: string;
-      to: string;
-    }[];
-  };
-classEndTime: string;
-gardianName: string;
-gardianEmail: string;
-gardianPhone: string;
-gardianCity: string;
-gardianCountry: string;
-gardianTimeZone: string;
-gardianLanguage: string;
-assignedTeacher: string;
-accomplishmentTime?: string;
-studentRate: number;
-studentStatus: string;
-classStatus: string;
-comments?: string;
-trialClassStatus?:string;
-invoiceStatus?: string;
-paymentLink?: string;
-paymentStatus?: string;
-teacherStatus?: string;
-amount?: string;
-currency?: string;
-preferredTrialFromTime?:string;
-preferredTrialToTime?:string;
-preferredTrialDate? : Date;
-status?: string;
-createdDate: Date;
-createdBy?: string;
-updatedDate?: Date;
-updatedBy?: string;  
+  updatedDate?: Date;
+  updatedBy?: string;
+
 }
 
 
-export interface ISubscritions extends Document{
+export interface IEvaluationCreate {
+  trialId?: string;
+  academicCoachId: string;
+  student: {
+    studentId?: string;
+    studentRegisterId?: string;
+    studentFirstName: string;
+    studentLastName: string;
+    studentEmail: string;
+    studentGender: string;
+    studentPhone: number;
+    studentCity?: string;
+    studentCountry: string;
+    studentCountryCode: string;
+    learningInterest: LearningInterest;
+    numberOfStudents: number;
+    preferredTeacher: PreferredTeacher;
+    preferredFromTime?: string;
+    preferredToTime?: string;
+    timeZone: string;
+    referralSource: ReferalResource;
+    preferredDate?: Date;
+    evaluationStatus: any;
+    status: Status;
+    createdDate: Date;
+    createdBy?: string;
+  };
+  classType: string;
+  teacher: {
+    teacherId: string;
+    teacherName: string;
+    teacherEmail: string;
+  },
+  joiningDate?: Date;
+  classDay?: string[];
+  startTime?: string[];
+  endTime?: string[];
+  isLanguageLevel: boolean;
+  languageLevel: string;
+  isReadingLevel: boolean;
+  readingLevel?: string;
+  isGrammarLevel: boolean;
+  grammarLevel: string;
+  hours: number;
+  subscription: {
+    subscriptionName: string;
+  };
+  planTotalPrice: number
+  classStartDate: Date;
+  classEndDate: Date;
+  classStartTime: string;
+  weeklySlots?: {
+    [day: string]: {
+      from: string;
+      to: string;
+    }[];
+  };
+  classEndTime: string;
+  gardianName: string;
+  gardianEmail: string;
+  gardianPhone: string;
+  gardianCity: string;
+  gardianCountry: string;
+  gardianTimeZone: string;
+  gardianLanguage: string;
+  assignedTeacher: string;
+  accomplishmentTime?: string;
+  studentRate: number;
+  studentStatus: string;
+  classStatus: string;
+  comments?: string;
+  trialClassStatus?: string;
+  invoiceStatus?: string;
+  paymentLink?: string;
+  paymentStatus?: string;
+  teacherStatus?: string;
+  amount?: string;
+  currency?: string;
+  preferredTrialFromTime?: string;
+  preferredTrialToTime?: string;
+  preferredTrialDate?: Date;
+  status?: string;
+  createdDate: Date;
+  createdBy?: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+}
+
+
+export interface ISubscritions extends Document {
   subscriptionName: string,
   subscriptionPricePerHr: number,
   subscriptionDays: number,
@@ -533,7 +533,7 @@ export interface ISubscritions extends Document{
   updatedBy: string
 }
 
-export interface IClassSchedule extends Document{
+export interface IClassSchedule extends Document {
   classId?: string;
   student: {
     id: string;
@@ -547,7 +547,7 @@ export interface IClassSchedule extends Document{
     studnetSessionEnd: any;
 
   },
-  teacher:{
+  teacher: {
     teacherId: string;
     teacherName: string;
     teacherEmail: string;
@@ -559,20 +559,20 @@ export interface IClassSchedule extends Document{
   preferedTeacher: string;
   course: string;
   totalHourse: number;
-  classhour:string;
-  amount:string;
-  currency:string;
-  sessionClassType:string;
-  sessionStarttime:string;
-  sessionsEndtime:string;
-  sessionStatus:string;
+  classhour: string;
+  amount: string;
+  currency: string;
+  sessionClassType: string;
+  sessionStarttime: string;
+  sessionsEndtime: string;
+  sessionStatus: string;
   startDate: Date;
   endDate: Date;
   startTime: any;
   endTime: any;
   scheduleStatus: string,
   scheduledStartDate: Date,
-  classStatus:string,
+  classStatus: string,
   classType: string,
   classLink: string,
   isScheduledMeeting: boolean,
@@ -601,42 +601,42 @@ export interface IAdminAssignmentCreate {
   courseId: string;
   courseName: string;
   assignmentName: string;
-  questions: 
+  questions:
   {
-  assignmentType: QuestionType;       
-  questionName: string;            
-  question: 
-  {
-  contentType: ContentType;                         
-  question: string | string[] | Buffer; 
-  answerType : AnswerType;
-  options?: string[];              
-  correctAnswer: string | string[];      
-  }
+    assignmentType: QuestionType;
+    questionName: string;
+    question:
+    {
+      contentType: ContentType;
+      question: string | string[] | Buffer;
+      answerType: AnswerType;
+      options?: string[];
+      correctAnswer: string | string[];
+    }
   }[];
 }
-export interface IAdminAssignment extends Document{
+export interface IAdminAssignment extends Document {
   levelId: string;
   levelName: string;
   courseId: string;
   courseName: string;
-   assignmentId: string;
-   assignmentName: string;
-   assignmentType:string;
-   questionName: string;
-   chooseType?: boolean;
+  assignmentId: string;
+  assignmentName: string;
+  assignmentType: string;
+  questionName: string;
+  chooseType?: boolean;
   trueorfalseType?: boolean;
   question?: string;
-   options?: string[];
+  options?: string[];
   audioFile?: Buffer;
   uploadFile?: Buffer;
   answerValidation: string;
-   createdDate: Date;
+  createdDate: Date;
   createdBy: string;
   updatedDate: Date;
   updatedBy: string;
-} 
-export interface IClassScheduleCreate{
+}
+export interface IClassScheduleCreate {
   classId?: string;
   student: {
     id: string;
@@ -649,29 +649,29 @@ export interface IClassScheduleCreate{
     studnetSessionStart: any;
     studnetSessionEnd: any;
   },
-  teacher:{
+  teacher: {
     teacherId: string;
     teacherName: string;
     teacherEmail: string;
     teacherSessionStart: any;
     teacherSessionEnd: any;
   },
-  classhour:string;
-  amount:string;
-  currency:string;
+  classhour: string;
+  amount: string;
+  currency: string;
   weeklySlots: {
     [day: string]: {
       from: string;
       to: string;
     }[];
   };
-  sessionClassType:string;
-  sessionStarttime:string;
-  sessionsEndtime:string;
-  sessionStatus:string;
+  sessionClassType: string;
+  sessionStarttime: string;
+  sessionsEndtime: string;
+  sessionStatus: string;
   classDay: string[];
   classLink: string;
-  classStatus:string;
+  classStatus: string;
   package: string;
   preferedTeacher: string;
   course: string;
@@ -757,27 +757,27 @@ export interface MeetingSchedulePayload {
 }
 
 
-export interface IAlStudents extends Document{
-  student:{
+export interface IAlStudents extends Document {
+  student: {
     studentId: string;
     studentEmail: string;
     studentPhone: number;
     gender: string;
     course: string;
     package: string;
-    city:string;
+    city: string;
     country: string;
   };
-profilepic?: Buffer;
-referredBy?:string;
-  refernceId:string;
+  profilepic?: Buffer;
+  referredBy?: string;
+  refernceId: string;
   level?: string;
   username: string,
   password: string;
   role: string;
-  sessionClassType:string;
+  sessionClassType: string;
   startDate: Date;
-  endDate:Date;
+  endDate: Date;
   status: string;
   createdDate: Date;
   createdBy: string;
@@ -786,21 +786,21 @@ referredBy?:string;
 }
 
 
-export interface IAlStudentCreate{
-  student:{
+export interface IAlStudentCreate {
+  student: {
     studentId: string;
     studentEmail: string;
     studentPhone: number;
     gender: string;
   };
-profilepic?: Buffer;
+  profilepic?: Buffer;
 
   level?: string;
   username: string,
   role: string;
 }
 
-export interface IPaymentDetails extends Document{
+export interface IPaymentDetails extends Document {
   userId: string;
   userName: string;
   paymentStatus: string;
@@ -815,7 +815,7 @@ export interface IPaymentDetails extends Document{
   lastUpdatedBy: string
 }
 
-export interface CreatePaymentDetails{
+export interface CreatePaymentDetails {
   userId: string;
   userName: string;
   paymentStatus: string;
@@ -837,9 +837,9 @@ export interface IAssignment extends Document {
   questionName?: string;
   questionType?: string;
   typeofQuestion?: string;
-  title: string;   
-  course?: string;  
-  groupId?: string;                    
+  title: string;
+  course?: string;
+  groupId?: string;
   assignmentName: string;
   assignedTeacher: string;
   assignedTeacherId: string;
@@ -871,22 +871,22 @@ export interface IAssignment extends Document {
   answerValidation?: string;
   assignmentStatus: AssignmentStatus;
   commends?: string;
-  score: number; 
-  rating: string; 
+  score: number;
+  rating: string;
 }
 export interface IallAssignment {
   studentId: string;
-  studentName :string;
-  title:string;
-groupId?: string;
-    sessionClassType?:string;
-    questionName?:string;
-    questionType?:string;
-     typeofQuestion?:string;
+  studentName: string;
+  title: string;
+  groupId?: string;
+  sessionClassType?: string;
+  questionName?: string;
+  questionType?: string;
+  typeofQuestion?: string;
   assignmentName: string;
   assignedTeacher: string;
   assignedTeacherId: string;
-assignmentType: {
+  assignmentType: {
     type: "quiz" | "writing" | "reading" | "image identification" | "word match" | "reading comprehension";
     name?: string;
   };
@@ -910,25 +910,25 @@ assignmentType: {
   level: string;
   courses: string;
   assignedDate: Date;
-  dueDate: Date;
+  dueDate: Date;
   assignmentStatus: string;
-    commends?: string;
-  score: number; 
+  commends?: string;
+  score: number;
   rating: string;
 
 }
 export interface IAssignmentCreate {
   studentId?: string;
-  studentName :string;
-    sessionClassType:string;
-    questionName?:string;
-    questionType?:string;
-     typeofQuestion?:string;
-     title:string;
-     groupId?: string;
+  studentName: string;
+  sessionClassType: string;
+  questionName?: string;
+  questionType?: string;
+  typeofQuestion?: string;
+  title: string;
+  groupId?: string;
   assignmentName: string;
   assignedTeacher?: string;
- assignmentType: {
+  assignmentType: {
     type: "quiz" | "writing" | "reading" | "image identification" | "word match";
     name?: string;
   };
@@ -956,8 +956,8 @@ export interface IAssignmentCreate {
   answer: string;
   answerValidation?: string;
   assignmentStatus: string;
-    commends?: string;
-  score: number; 
+  commends?: string;
+  score: number;
   rating: string;
 }
 export interface IStudentInvoice extends Document {
@@ -970,18 +970,18 @@ export interface IStudentInvoice extends Document {
     city: string;
   };
   evaluationData: any,
-  paymentDate?: Date; 
+  paymentDate?: Date;
   courseName: string;
-  amount: number; 
-  packageType:string;
-  itemDescription:string;
-  duration:string;
-  rate:string;
-  description:string;
-  attachFile?:Buffer;
-  dueDate?:string;
+  amount: number;
+  packageType: string;
+  itemDescription: string;
+  duration: string;
+  rate: string;
+  description: string;
+  attachFile?: Buffer;
+  dueDate?: string;
   invoiceStatus: string;
-    paymentStatus: string;
+  paymentStatus: string;
 
   status: string;
   createdDate?: string;
@@ -1025,7 +1025,7 @@ export interface IMessageCreate {
     fileName: string;
     fileType: string;
     fileUrl: string;
-  }[]; 
+  }[];
   group: {
     groupId: string;
     groupName: string;
@@ -1061,9 +1061,9 @@ export interface IMessage extends Document {
     fileType: string;
     fileUrl: string;
   };
-  sender:string;
+  sender: string;
   timeZone: string;
-  receiver:string;
+  receiver: string;
   createdDate: Date; // Timestamp when the message was created
   createdBy: string; // Identifier of the user who created the message
   updatedDate: Date; // Timestamp when the message was last updated
@@ -1074,12 +1074,12 @@ export interface IMessage extends Document {
     members: {
       userId: string;
       userName: string;
-    }[];
-  }[];
+    }[];
+  }[];
 }
 
 export interface IFeedbackCreate {
-  sessionId?:string;
+  sessionId?: string;
   student?: {
     studentId?: string;
     studentFirstName?: string;
@@ -1100,7 +1100,7 @@ export interface IFeedbackCreate {
   classDay?: string;
   preferedTeacher?: string;
   feedbackmessage?: string;
-  
+
   course?: {
     courseId?: string;  // Ensure a valid course ID
     courseName?: string;
@@ -1141,8 +1141,8 @@ export interface IFeedbackCreate {
 
 
 
-export interface IFeedback  extends Document{
-  sessionId?:string;
+export interface IFeedback extends Document {
+  sessionId?: string;
   student?: {
     studentId?: string;
     studentFirstName?: string;
@@ -1150,7 +1150,7 @@ export interface IFeedback  extends Document{
     studentEmail?: string;
   };
   supervisorRating?: {
-    knowledgeofstudentsandcontent?:number;
+    knowledgeofstudentsandcontent?: number;
     assessmentofstudents?: number;
     professionalism?: number;
     communicationandcollaboration?: number;
@@ -1163,7 +1163,7 @@ export interface IFeedback  extends Document{
   classDay?: string[];
   preferedTeacher: string;
   feedbackmessage?: string;
-  
+
   course: {
     courseId?: string;
     courseName: string;
@@ -1180,9 +1180,9 @@ export interface IFeedback  extends Document{
   // ✅ NEW: Ratings for Teacher Assessment
   teacherRatings: {
     listeningAbility?: number;
-    readingAbility? : number;
+    readingAbility?: number;
     overallPerformance?: number;
-        communicationConcentration?: number;
+    communicationConcentration?: number;
 
   };
 
@@ -1202,7 +1202,7 @@ export interface IFeedback  extends Document{
 
 
 export interface ISupervisorFeedbackCreate {
-  sessionId?:string;
+  sessionId?: string;
   student?: {
     studentId?: string;
     studentFirstName?: string;
@@ -1223,7 +1223,7 @@ export interface ISupervisorFeedbackCreate {
   classDay?: string;
   preferedTeacher?: string;
   feedbackmessage?: string;
-  
+
   course?: {
     courseId?: string;  // Ensure a valid course ID
     courseName?: string;
@@ -1265,8 +1265,8 @@ export interface ISupervisorFeedbackCreate {
 
 
 
-export interface ISuperviosrFeedback  extends Document{
-  sessionId?:string;
+export interface ISuperviosrFeedback extends Document {
+  sessionId?: string;
   student?: {
     studentId?: string;
     studentFirstName?: string;
@@ -1274,7 +1274,7 @@ export interface ISuperviosrFeedback  extends Document{
     studentEmail?: string;
   };
   supervisorRating?: {
-    knowledgeofstudentsandcontent?:number;
+    knowledgeofstudentsandcontent?: number;
     assessmentofstudents?: number;
     communicationandcollaboration?: number;
     professionalism?: number;
@@ -1287,7 +1287,7 @@ export interface ISuperviosrFeedback  extends Document{
   classDay?: string[];
   preferedTeacher: string;
   feedbackmessage?: string;
-  
+
   course: {
     courseId?: string;
     courseName: string;
@@ -1304,7 +1304,7 @@ export interface ISuperviosrFeedback  extends Document{
   // ✅ NEW: Ratings for Teacher Assessment
   teacherRatings: {
     listeningAbility?: number;
-    readingAbility? : number;
+    readingAbility?: number;
     overallPerformance?: number;
     communicationConcentration?: number;
   };
@@ -1322,37 +1322,37 @@ export interface ISuperviosrFeedback  extends Document{
   lastUpdatedBy?: string;
 }
 
-export interface IRecruitment extends Document{
+export interface IRecruitment extends Document {
   candidateFirstName: string;
-  candidateLastName : string;
-  supervisor:{
+  candidateLastName: string;
+  supervisor: {
     supervisorId: string;
     supervisorName: string;
     supervisorEmail: string;
     supervisorRole: string;
   };
   gender?: string;
-  applicationDate : Date;
-  candidateEmail : string;
-  candidatePhoneNumber : number;
-  candidateCountry : string;
-  candidateCity : string;
-  positionApplied : string;
+  applicationDate: Date;
+  candidateEmail: string;
+  candidatePhoneNumber: number;
+  candidateCountry: string;
+  candidateCity: string;
+  positionApplied: string;
   currency: string;
-  expectedSalary : number;
+  expectedSalary: number;
   preferedWorkingHours: string;
   uploadResume?: Buffer;
   comments: string;
   applicationStatus?: string;
   level?: string;
-  quranReading? : string;
-  tajweed? : string;
+  quranReading?: string;
+  tajweed?: string;
   arabicWriting?: string;
   arabicSpeaking?: string;
   englishSpeaking?: string;
   preferedWorkingDays?: string;
   overallRating?: number;
- professionalExperience:{
+  professionalExperience: {
     jobRole?: string;
     organizationName?: string;
     jobLocation?: string;
@@ -1368,37 +1368,37 @@ export interface IRecruitment extends Document{
   updatedBy?: string;
 }
 
-export interface IRecruitmentCreate{
-  supervisor:{
+export interface IRecruitmentCreate {
+  supervisor: {
     supervisorId?: string,
     supervisorName?: string,
     supervisorEmail?: string,
     supervisorRole?: string
-  }  ,
+  },
   candidateFirstName: string;
-  candidateLastName : string;
-  gender?:  string;
-  applicationDate : Date;
-  candidateEmail : string;
-  candidatePhoneNumber : number;
-  candidateCountry : string;
-  candidateCity : string;
-  positionApplied : string;
+  candidateLastName: string;
+  gender?: string;
+  applicationDate: Date;
+  candidateEmail: string;
+  candidatePhoneNumber: number;
+  candidateCountry: string;
+  candidateCity: string;
+  positionApplied: string;
   currency: string;
-  expectedSalary : number;
+  expectedSalary: number;
   preferedWorkingHours: string;
   uploadResume?: any;
   comments?: string;
   applicationStatus: string;
-  level? : string;
-  quranReading? : string;
-  tajweed? : string;
+  level?: string;
+  quranReading?: string;
+  tajweed?: string;
   arabicWriting?: string;
   arabicSpeaking?: string;
   englishSpeaking?: string;
   preferedWorkingDays?: string;
   overallRating?: number;
-  professionalExperience:{
+  professionalExperience: {
     jobRole?: string;
     organizationName?: string;
     jobLocation?: string;
@@ -1427,7 +1427,7 @@ export interface IStudentMeeting {
 }
 export interface IAdminMeet {
   adminId?: string;
- adminName?: string;
+  adminName?: string;
   adminEmail?: string;
   attendee?: string;
 }
@@ -1442,7 +1442,7 @@ export interface IParticipant {
   participantId?: string;
   participantName?: string;
   participantEmail?: string;
-  role: "teacher" | "student" | "admin" | "supervisor"|"academiccoach";
+  role: "teacher" | "student" | "admin" | "supervisor" | "academiccoach";
   attendee?: string;
 }
 
@@ -1485,49 +1485,49 @@ export interface IMeeting extends Document {
   updatedBy?: string;
 }
 
-export interface INotification{
-    messages ?: string;
-    isRead ?: boolean;
-    senderId : string;
-    senderName : string;
-    senderEmail : string;
-    receiverId : string;
-    receiverName : string;
-    receiverEmail : string;
-    notificationType ?: string;
-    notificationStatus ?: string;
-    status: string;
-    createdDate: Date;
-    createdBy: string;
-    updatedDate?: Date;
-    updatedBy?: string;
-}
-
-export interface INotification extends Document{
-  messages ?: string;
-  isRead ?: boolean;
-  senderId : string;
-  senderName : string;
-  senderEmail : string;
-  receiverId : string;
-  receiverName : string;
-  receiverEmail : string;
-  notificationType ?: string;
-  notificationStatus ?: string;
-  status : string;
-  createdDate : Date;
+export interface INotification {
+  messages?: string;
+  isRead?: boolean;
+  senderId: string;
+  senderName: string;
+  senderEmail: string;
+  receiverId: string;
+  receiverName: string;
+  receiverEmail: string;
+  notificationType?: string;
+  notificationStatus?: string;
+  status: string;
+  createdDate: Date;
   createdBy: string;
   updatedDate?: Date;
   updatedBy?: string;
 }
 
-export interface IOtherEmployee extends Document{
+export interface INotification extends Document {
+  messages?: string;
+  isRead?: boolean;
+  senderId: string;
+  senderName: string;
+  senderEmail: string;
+  receiverId: string;
+  receiverName: string;
+  receiverEmail: string;
+  notificationType?: string;
+  notificationStatus?: string;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+}
+
+export interface IOtherEmployee extends Document {
   firstName: string;
   lastName: string;
   email: string;
   phoneNumber: number;
   nationality: string;
-  country: string ;
+  country: string;
   city: string;
   dateOfBirth: string;
   gender: string;
@@ -1547,7 +1547,7 @@ export interface IOtherEmployee extends Document{
   designation: string;
   department: string;
   preferedWorkingHours: number;
-  preferedShiftFrom : string;
+  preferedShiftFrom: string;
   preferedShiftTo: string;
   comments: string;
   profileImage: string;
@@ -1565,13 +1565,13 @@ export interface IOtherEmployee extends Document{
 }
 
 
-export interface IOtherEmployeeCreate{
+export interface IOtherEmployeeCreate {
   firstName: string;
   lastName: string;
   email: string;
   phoneNumber: number;
   nationality: string;
-  country: string ;
+  country: string;
   city: string;
   dateOfBirth: string;
   gender: string;
@@ -1591,7 +1591,7 @@ export interface IOtherEmployeeCreate{
   designation: string;
   department: string;
   preferedWorkingHours: number;
-  preferedShiftFrom : string;
+  preferedShiftFrom: string;
   preferedShiftTo: string;
   comments: string;
   profileImage: string;
@@ -1634,11 +1634,11 @@ export interface IAdminMeetingCreate {
 
 
 
-export interface IAdminMeeting extends Document{
-  
+export interface IAdminMeeting extends Document {
+
   meetingName: string;
   meetingId: string;
-   admin:{
+  admin: {
     adminId?: string;
     adminName?: string;
     adminEmail?: string;
@@ -1647,7 +1647,7 @@ export interface IAdminMeeting extends Document{
   selectedDate: Date;
   startTime: any;
   endTime: any;
-  teacher:  string[];
+  teacher: string[];
   description: string;
   status: string;
   meetingStatus: string;
@@ -1656,16 +1656,16 @@ export interface IAdminMeeting extends Document{
   updatedDate?: Date;
   updatedBy?: string;
 }
-export interface RealTimeMessageCreate{
-  messages : string;
-  isRead : boolean;
-  senderId : string;
-  senderName : string;
-  senderEmail ?: string;
-  receiverId : string;
-  receiverName : string;
-  receiverEmail ?: string;
-  notificationStatus : notificationStatus;
+export interface RealTimeMessageCreate {
+  messages: string;
+  isRead: boolean;
+  senderId: string;
+  senderName: string;
+  senderEmail?: string;
+  receiverId: string;
+  receiverName: string;
+  receiverEmail?: string;
+  notificationStatus: notificationStatus;
   status?: string;
   createdDate?: Date;
   createdBy?: string;
@@ -1673,27 +1673,27 @@ export interface RealTimeMessageCreate{
   updatedBy?: string;
 }
 
-export interface RealTimeMessage extends Document{
-messages : string;
-isRead : boolean;
-senderId : string;
-senderName : string;
-senderEmail ?: string;
-receiverId : string;
-receiverName : string;
-receiverEmail ?: string;
-notificationStatus : notificationStatus;
-status ?: string;
-createdDate ?: Date;
-createdBy?: string;
-updatedDate?: Date;
-updatedBy?: string;
+export interface RealTimeMessage extends Document {
+  messages: string;
+  isRead: boolean;
+  senderId: string;
+  senderName: string;
+  senderEmail?: string;
+  receiverId: string;
+  receiverName: string;
+  receiverEmail?: string;
+  notificationStatus: notificationStatus;
+  status?: string;
+  createdDate?: Date;
+  createdBy?: string;
+  updatedDate?: Date;
+  updatedBy?: string;
 }
 
-export interface IEmpwages extends Document{
+export interface IEmpwages extends Document {
   employeeId: string,
   employeeName: string,
-  classType:{
+  classType: {
     className: string,
     hoursMins: string,
     rate: string,
@@ -1706,10 +1706,10 @@ export interface IEmpwages extends Document{
   updatedBy: string
 }
 
-export interface IEmpwagesCreate{
+export interface IEmpwagesCreate {
   employeeId: string,
   employeeName: string,
-  classType:{
+  classType: {
     className: string,
     hoursMins: string,
     rate: string,
@@ -1723,12 +1723,12 @@ export interface IEmpwagesCreate{
 }
 
 
-export interface IExpense extends Document{
+export interface IExpense extends Document {
   paymentDate: string,
   expenseType: string,
-  amount:string,
-  category:string,
-  paymentMethod:string,
+  amount: string,
+  category: string,
+  paymentMethod: string,
   status: string,
   createdDate: Date,
   createdBy: string,
@@ -1736,10 +1736,10 @@ export interface IExpense extends Document{
   updatedBy: string
 }
 
-export interface IExpenseCreate{
+export interface IExpenseCreate {
   employeeId: string,
   employeeName: string,
-  classType:{
+  classType: {
     className: string,
     hoursMins: string,
     rate: string,
@@ -1752,7 +1752,7 @@ export interface IExpenseCreate{
   updatedBy: string
 }
 
-export interface IKnowledgeBase extends Document{
+export interface IKnowledgeBase extends Document {
   courseName: string,
   subjectTitle: string;
   uploadedFormat: string,
@@ -1764,7 +1764,7 @@ export interface IKnowledgeBase extends Document{
   updatedBy: string
 }
 
-export interface IKnowledgeBaseCreate{
+export interface IKnowledgeBaseCreate {
   courseName: string,
   subjectTitle: string;
   uploadedFormat: string,
@@ -1790,7 +1790,7 @@ export interface IAccessModel {
       student?: { read?: boolean, write?: boolean, delete?: boolean },
       employees?: { read?: boolean, write?: boolean, delete?: boolean },
       courses?: { read?: boolean, write?: boolean, delete?: boolean },
-            meetings?: { read?: boolean, write?: boolean, delete?: boolean },
+      meetings?: { read?: boolean, write?: boolean, delete?: boolean },
 
       classes?: { read?: boolean, write?: boolean, delete?: boolean },
       invoice?: { read?: boolean, write?: boolean, delete?: boolean },
@@ -1839,12 +1839,12 @@ export interface IAccessModel {
       support?: { read?: boolean, write?: boolean, delete?: boolean },
     },
   };
-  
-  
+
+
 }
 
 
-export interface IAccessModel extends Document{
+export interface IAccessModel extends Document {
   employeeId: string;
   employeeName: string;
   contact: string;
@@ -1890,8 +1890,8 @@ export interface IAccessModel extends Document{
       classes?: { read?: boolean, write?: boolean, delete?: boolean },
       assignments?: { read: boolean, write?: boolean, delete?: boolean },
       payments?: { read?: boolean, write?: boolean, delete?: boolean },
-      knowledgebase?: { read?: boolean, write?: boolean, delete?: boolean },     
-       messages?: { read?: boolean, write?: boolean, delete?: boolean },
+      knowledgebase?: { read?: boolean, write?: boolean, delete?: boolean },
+      messages?: { read?: boolean, write?: boolean, delete?: boolean },
 
       support?: { read?: boolean, write?: boolean, delete?: boolean },
     },
@@ -1907,12 +1907,12 @@ export interface IAccessModel extends Document{
       support?: { read?: boolean, write?: boolean, delete?: boolean },
     },
   };
-  
-    status: string;
-    createdDate: Date;
-    createdBy: string;
-    updatedDate?: Date;
-    updatedBy?: string;
+
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate?: Date;
+  updatedBy?: string;
 }
 
 
@@ -1992,20 +1992,20 @@ export interface IPackageCreate {
 export interface ILeaveRequestCreate {
   employeeId: string,
   name: string,
-  role:string,
+  role: string,
   fromDate: Date,
   toDate: Date,
   leaveType: string,
   leaveStatus: string,
-   deductionDays?: number;
+  deductionDays?: number;
   approvedDays: number;
   approvedId: string,
   approvedName: string,
   reason: string,
   updatedLeave?: string,
-    sickLeaveCount:number,
-  casualLeaveCount:number,
-  paidLeaveCount:number,
+  sickLeaveCount: number,
+  casualLeaveCount: number,
+  paidLeaveCount: number,
   status?: string,
   createdDate?: Date,
   createdBy?: string,
@@ -2017,7 +2017,7 @@ export interface ILeaveRequestCreate {
 export interface ILeaveRequest extends Document {
   employeeId: string;
   name: string,
-  role:string,
+  role: string,
   fromDate: Date,
   toDate: Date,
   leaveType: string,
@@ -2028,9 +2028,9 @@ export interface ILeaveRequest extends Document {
   approvedName: string,
   reason: string,
   updatedLeave?: string,
-  sickLeaveCount:number,
-  casualLeaveCount:number,
-  paidLeaveCount:number,
+  sickLeaveCount: number,
+  casualLeaveCount: number,
+  paidLeaveCount: number,
   status?: string,
   createdDate?: Date,
   createdBy?: string,
@@ -2041,7 +2041,7 @@ export interface ILeaveRequest extends Document {
 
 export interface IleaveSummary {
   name: string,
-  role:string,
+  role: string,
   fromDate: Date,
   toDate: Date,
   leaveType: string,
@@ -2057,15 +2057,15 @@ export interface IleaveSummary {
   createdBy?: string,
   updatedDate?: Date,
   updatedBy?: string,
-   approvedDays: number;
-   deductionDays: number;
+  approvedDays: number;
+  deductionDays: number;
 }
 
 
-export interface IleaveSummary  extends Document {
+export interface IleaveSummary extends Document {
   employeeId: any;
   name: string,
-  role:string,
+  role: string,
   fromDate: Date,
   toDate: Date,
   leaveType: string,
@@ -2081,26 +2081,26 @@ export interface IleaveSummary  extends Document {
   createdBy?: string,
   updatedDate?: Date,
   updatedBy?: string,
- approvedDays: number;
- deductionDays:number;
+  approvedDays: number;
+  deductionDays: number;
 }
 
 export interface TeacherTimeSlots {
-  name : string,
-  from : string,
-  to : string,
-  isStatus : boolean,
+  name: string,
+  from: string,
+  to: string,
+  isStatus: boolean,
 }
 
 export interface TeacherAvaliableSlots extends Document {
-   date: string,
-   teacherId : string,
-   position : string,
-   name : string,
-   from : string,
-   to : string,
-   isStatus : boolean,
-   createdDate? : Date,
+  date: string,
+  teacherId: string,
+  position: string,
+  name: string,
+  from: string,
+  to: string,
+  isStatus: boolean,
+  createdDate?: Date,
 }
 
 
@@ -2158,17 +2158,89 @@ export interface TeacherMeeting extends Document {
 export interface LogDocument extends Document {
   userId: string;
   logType: 'SUCCESS' | 'REDIRECT' | 'ERROR' | 'INFO';
-  action?: string;       
-  description?: string;   
-  route?: string;        
-  errorMessage?: string;  
-  stack?: string;         
+  action?: string;
+  description?: string;
+  route?: string;
+  errorMessage?: string;
+  stack?: string;
   ip?: string;
   meta?: any;
   createdDate: Date;
 }
 
 export interface IRollCounter extends Document {
-   prefix: String;
-    sequence: String;
+  prefix: String;
+  sequence: String;
 }
+
+
+export interface IGroupMessageParticipant {
+  participantId: string;
+  participantName: string;
+  participantEmail?: string;
+  role: "teacher" | "student" | "admin" | "supervisor" | "academiccoach";
+  isRemoved?: boolean;
+  removedDate?: Date;
+}
+
+export interface Group {
+  groupId: string;
+  GroupName: string;
+  GroupNameDescription: string;
+  CourseName: string;
+  Designation: string;
+  PreferredTeacher: string;
+
+  groupMessageParticipant: IGroupMessageParticipant[];
+
+  groupMessageOrganizer: {
+    organizerId: string;
+    organizerName: string;
+    organizerEmail?: string;
+    role: "teacher" | "student" | "admin" | "supervisor" | "academiccoach";
+  };
+
+  messages: string;
+  isRead: boolean;
+  notificationStatus: "SEEN" | "UN_SEEN";
+  status: "Active" | "Inactive" | "Deleted";
+  isGroupDeleted: boolean;
+  groupDeletedAt?: Date;
+  groupDeletedBy?: string;
+  createdDate?: Date;
+  createdBy?: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+  isDeleted?: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
+}
+
+
+export interface GroupMessage {
+  groupId: string;
+
+  messages: string;
+  isRead: boolean;
+
+  groupMessageParticipant: IGroupMessageParticipant[];
+
+  groupMessageOrganizer: {
+    organizerId: string;
+    organizerName: string;
+    organizerEmail?: string;
+    role: "teacher" | "student" | "admin" | "supervisor" | "academiccoach";
+  };
+
+  notificationStatus: "SEEN" | "UN_SEEN";
+  status: "Active" | "Inactive" | "Deleted";
+
+  createdDate?: Date;
+  createdBy?: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+  isDeleted?: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
+}
+
