@@ -2183,14 +2183,48 @@ export interface IGroupMessageParticipant {
   removedDate?: Date;
 }
 
-export interface Group {
+export interface Group extends Document {
   groupId: string;
   GroupName: string;
   GroupNameDescription: string;
   CourseName: string;
   Designation: string;
   PreferredTeacher: string;
+  uploadedFormat?: string,
+  uploadedFile?: any,
+  groupMessageParticipant: IGroupMessageParticipant[];
 
+  groupMessageOrganizer: {
+    organizerId: string;
+    organizerName: string;
+    organizerEmail?: string;
+    role: "teacher" | "student" | "admin" | "supervisor" | "academiccoach";
+  };
+
+  messages: string;
+  isRead: boolean;
+  notificationStatus: "SEEN" | "UN_SEEN";
+  status: "Active" | "Inactive" | "Deleted";
+  isGroupDeleted: boolean;
+  groupDeletedAt?: Date;
+  groupDeletedBy?: string;
+  createdDate?: Date;
+  createdBy?: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+  isDeleted?: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
+}
+export interface GroupCreate {
+  groupId: string;
+  GroupName: string;
+  GroupNameDescription: string;
+  CourseName: string;
+  Designation: string;
+  PreferredTeacher: string;
+  uploadedFormat?: string,
+  uploadedFile?: any,
   groupMessageParticipant: IGroupMessageParticipant[];
 
   groupMessageOrganizer: {
@@ -2216,8 +2250,34 @@ export interface Group {
   deletedBy?: string;
 }
 
+export interface GroupMessage extends Document {
+  groupId: string;
+  uploadedFormat?: string,
+  uploadedFile?: any,
+  messages: string;
+  isRead: boolean;
 
-export interface GroupMessage {
+  groupMessageParticipant: IGroupMessageParticipant[];
+
+  groupMessageOrganizer: {
+    organizerId: string;
+    organizerName: string;
+    organizerEmail?: string;
+    role: "teacher" | "student" | "admin" | "supervisor" | "academiccoach";
+  };
+
+  notificationStatus: "SEEN" | "UN_SEEN";
+  status: "Active" | "Inactive" | "Deleted";
+
+  createdDate?: Date;
+  createdBy?: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+  isDeleted?: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
+}
+export interface GroupMessageCreate {
   groupId: string;
 
   messages: string;
@@ -2243,4 +2303,3 @@ export interface GroupMessage {
   deletedAt?: Date;
   deletedBy?: string;
 }
-

@@ -78,18 +78,18 @@ const register = async (server: Server): Promise<void> => {
     },
 
     //GET MESSAGE
-//     {
-//   method: "GET",
-//   path: "/groupmessage/{groupId}",
-//   options: {
-//     handler: handler.getGroupMessagesHandler,
-//     tags: ["api", "groupmessage"],
-//     // auth: {
-//     //   strategies: ["jwt"],
-//     // },
+    {
+  method: "GET",
+  path: "/groupmessage/{groupId}",
+  options: {
+    handler: handler.getGroupChatHandler,
+    tags: ["api", "groupmessage"],
+    // auth: {
+    //   strategies: ["jwt"],
+    // },
     
-//   },
-// }
+  },
+}
 
   ];
 

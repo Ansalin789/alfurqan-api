@@ -1,6 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import { Group } from "../../types/models.types";
-import { appStatus, notificationStatus } from "../config/messages";
+import { appStatus, notificationStatus, uploadedFormat } from "../config/messages";
 import { z } from "zod";
 
 const groupSchema = new Schema<Group>(
@@ -53,7 +53,14 @@ const groupSchema = new Schema<Group>(
       enum: [appStatus.ACTIVE, appStatus.IN_ACTIVE, appStatus.DELETED],
       default: appStatus.ACTIVE,
     },
-
+ uploadedFormat: {
+        type: String,
+        required: false,
+      },
+      uploadedFile: {
+        type: String,
+        required: false,
+      },
     createdDate: { type: Date, default: Date.now },
     createdBy: { type: String },
     updatedDate: { type: Date, default: Date.now },
@@ -76,7 +83,9 @@ export const zodGroupSchema = z.object({
   CourseName: z.string(),
   Designation: z.string(),
   PreferredTeacher: z.string(),
-
+ uploadedFormat: z.enum([uploadedFormat.PDF, uploadedFormat.VIDEO,]).optional(),
+    uploadedFile: z.any().optional(),
+    
   groupMessageParticipant: z.array(
     z.object({
       participantId: z.string(),

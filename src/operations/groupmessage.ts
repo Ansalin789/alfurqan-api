@@ -2,6 +2,7 @@ import GroupModel from "../models/group";
 import GroupMessageModel from "../models/groupMessage";
 import { IGroupMessageParticipant } from "../../types/models.types";
 import { Status } from "../shared/enum";
+import { uploadedFormat } from "../config/messages";
 
 
 //  CREATE GROUP 
@@ -29,9 +30,14 @@ export async function createGroup(groupData: any) {
 
 export async function createGroupMessage(messageData: any) {
   try {
+    if (messageData.uploadedFormat === uploadedFormat.PDF && messageData.uploadedFormat === uploadedFormat.VIDEO) {
+          return { error: "Uploaded format cannot be both PDF and VIDEO at the same time." };
+        }
     const newMessage = new GroupMessageModel({
       ...messageData,
       status: Status.ACTIVE,
+      uploadedFormat: messageData.uploadedFormat,
+      uploadedFile: messageData.uploadedFile ?? undefined,
       createdDate: messageData.createdDate ?? new Date(),
       updatedDate: messageData.updatedDate ?? new Date(),
       isDeleted: false,
@@ -162,3 +168,47 @@ export async function softDeleteGroup(groupId: string, deletedBy: string) {
 
 
 //GET MESSAGE
+
+export async function getGroupChatMessages(groupId: string) {
+  const messages = await GroupMessageModel.find({
+    groupId,
+  }).sort({ createdDate: 1 });
+
+  const formattedMessages = messages.map((msg) => {
+    let senderId: string | null = null;
+    let senderName: string = "Unknown";
+    let role: string = "unknown";
+
+    // Try to match createdBy with participant name
+    if (msg.groupMessageParticipant?.length > 0) {
+      const participant = msg.groupMessageParticipant.find(
+        (p: any) => p.participantName === msg.createdBy
+      );
+      if (participant) {
+        senderId = participant.participantId;
+        senderName = participant.participantName;
+        role = participant.role;
+      }
+    }
+
+    if (!senderId && msg.groupMessageOrganizer) {
+      senderId = msg.groupMessageOrganizer.organizerId;
+      senderName = msg.groupMessageOrganizer.organizerName;
+      role = msg.groupMessageOrganizer.role;
+    }
+
+    return {
+      message: msg.messages,
+      senderId,
+      senderName,
+      role,
+      createdDate: msg.createdDate,
+    };
+  });
+
+  return formattedMessages;
+}
+
+
+
+

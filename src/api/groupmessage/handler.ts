@@ -6,12 +6,15 @@ import {
   clearConversation,
   createGroup,
   createGroupMessage,
+  getGroupChatMessages,
   removeParticipants,
   softDeleteGroup
 } from "../../operations/groupmessage";
 import { zodGroupMessageSchema } from "../../models/groupMessage";
 import { zodGroupSchema } from "../../models/group";
-
+import { getIO } from "../../shared/socket";
+import AppLogger from "../../helpers/logging";
+import { uploadFileToSharePoint } from "../../shared/sharepoint";
 
 
 
@@ -37,6 +40,8 @@ const createMessageValidation = z.object({
     groupMessageOrganizer: true,
     notificationStatus: true,
     status: true,
+    uploadedFormat: true,
+    uploadedFile: true,
   }),
 });
 
@@ -74,7 +79,7 @@ const SoftDeleteGroupValidation = z.object({
 export default {
 
   //  CREATE GROUP (NO MESSAGE)
- 
+
   async createGroup(req: Request, h: ResponseToolkit) {
     const { payload } = createGroupValidation.parse({ payload: req.payload });
 
@@ -110,17 +115,42 @@ export default {
       .code(201);
   },
 
- 
+
   // SEND MESSAGE IN A GROUP
-  
+
   async sendMessage(req: Request, h: ResponseToolkit) {
     const { payload } = createMessageValidation.parse({ payload: req.payload });
+    let uploadFileBuffer: Buffer | null = null;
 
+    if (payload.uploadedFile) {
+
+      // CASE 1: Hapi gives buffer inside _data
+      if (payload.uploadedFile._data) {
+        uploadFileBuffer = payload.uploadedFile._data;
+      }
+      // CASE 2: Already a Buffer
+      else if (Buffer.isBuffer(payload.uploadedFile)) {
+        uploadFileBuffer = payload.uploadedFile;
+      }
+      // CASE 3: Base64 string
+      else if (typeof payload.uploadedFile === "string") {
+        uploadFileBuffer = Buffer.from(payload.uploadedFile, "base64");
+      }
+      else {
+        throw new Error("Invalid file format received");
+      }
+    }
+    const fileName = `${Date.now()}_knowledgebase_file`;
+    const shareLink = await uploadFileToSharePoint(
+      uploadFileBuffer as Buffer,
+      fileName
+    );
     const messageData = {
       groupId: payload.groupId,
       messages: payload.messages,
-      isRead: payload.isRead,
-
+      isRead: false,
+      uploadedFormat: payload.uploadedFormat,
+      uploadedFile: shareLink.fileId || '',
       groupMessageParticipant: payload.groupMessageParticipant,
       groupMessageOrganizer: payload.groupMessageOrganizer,
 
@@ -135,15 +165,40 @@ export default {
       isDeleted: false,
     };
 
-    const createdMessage = await createGroupMessage(messageData);
+    // Save message
+    const savedMessage = await createGroupMessage(messageData);
+
+    // Get socket instance
+    const io = getIO();
+
+    // Emit to all participants
+    if (payload.groupMessageParticipant?.length) {
+      payload.groupMessageParticipant.forEach((p) => {
+        if (p.participantId) {
+          io.to(p.participantId.toString()).emit("newmessage", savedMessage);
+          AppLogger.info(`Message emitted to participant ${p.participantId}`);
+        }
+      });
+    }
+
+    // Emit to organizer
+    if (payload.groupMessageOrganizer?.organizerId) {
+      io.to(payload.groupMessageOrganizer.organizerId.toString())
+        .emit("newmessage", savedMessage);
+      AppLogger.info(
+        `Message emitted to organizer ${payload.groupMessageOrganizer.organizerId}`
+      );
+    }
 
     return h
       .response({
         message: "Message sent successfully",
-        data: createdMessage,
+        data: savedMessage,
       })
       .code(201);
-  },
+  }
+
+  ,
 
   //  ADD PARTICIPANTS
 
@@ -212,6 +267,28 @@ export default {
 
 
 
+  //GET MESSAGE
+  async getGroupChatHandler(request: Request, h: ResponseToolkit) {
+    try {
+      const { groupId } = request.params;
+
+      const messages = await getGroupChatMessages(groupId);
+
+      return h
+        .response({
+          status: "success",
+          data: messages,
+        })
+        .code(200);
+    } catch (error: any) {
+      return h
+        .response({
+          status: "error",
+          message: error.message,
+        })
+        .code(500);
+    }
+  }
 
 
 };
