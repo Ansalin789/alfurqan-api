@@ -1,11 +1,11 @@
 
 import { isNil } from "lodash";
-import { IAlStudentCreate, IAlStudents } from "../../types/models.types";
+import { IAlStudentCreate, IAlStudents, IStudents } from "../../types/models.types";
 import { alstudentsMessages, commonMessages } from "../config/messages";
 import { GetAllRecordsParams } from "../shared/enum";
 import AppLogger from "../helpers/logging";
 import AlStudentsModel from "../models/alstudents"; // Ensure proper model import
-import { Types } from "mongoose";
+import { FlattenMaps, Types } from "mongoose";
 import  ClassScheduleModel  from "../models/classShedule"
 import Evaluation from "../models/evaluation"; 
 import alstudents from "../models/alstudents";
@@ -168,7 +168,7 @@ const studentDetails = student as IAlStudents;
  */
  export const getActiveStudentRecord = async (
    query: Partial<{ id: string; username: string; role: string }>
- ): Promise<IAlStudents | null> => {
+ ): Promise<Array<FlattenMaps<IAlStudents>> | null> => {
    const { id, username, role } = query;
  
    const dbQuery: any = {
@@ -179,10 +179,10 @@ const studentDetails = student as IAlStudents;
    if (!isNil(username)) dbQuery.username = username;
    if (!isNil(role)) dbQuery.role = role;
  
-   const result = await AlStudentsModel.findOne(dbQuery).lean();
-   console.log("result>>",result);
+   const result = await AlStudentsModel.find(dbQuery).lean();
+  console.log("result>>", result);
 
-   return AlStudentsModel.findOne(dbQuery).lean();
+  return result;
  };
 
   /**
@@ -294,7 +294,27 @@ export const getStudentCountriesCount = async() =>{
   return { studentCount, studentCountByCountry: results };
 
 };
+export const getalstudentsByAlfId = async (AlfId: string): Promise<IStudents | null> => {
+  if (!AlfId) {
+    console.log("Invalid student ID: ID is missing or undefined");
+    return null;
+  }
 
+  console.log(`Searching for student with studentId: ${AlfId}`);
+
+  try {
+    // Query using student.studentId
+    const student = await StudentModel.findOne({
+     studentId: AlfId,
+    }).lean();
+const studentDetails = student as IStudents;
+    console.log("Fetched student details:", student);
+    return studentDetails;
+  } catch (error) {
+    console.error("Error fetching student by studentId:", error);
+    return null;
+  }
+};
 
 
 export const getStudentlevel = async (studentId: string) => {

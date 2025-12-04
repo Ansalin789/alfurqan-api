@@ -44,6 +44,15 @@ const register = async (server: Server): Promise<void> => {
         },
       },
     },
+    {
+      method: "GET",
+      path: "/alstudentbyalfid/{alfId}",
+      options: {
+        handler: handler.getalstudentsByAlfId,
+        description: alstudentsMessages.BYID,
+        tags: ["api", "alstudents"],
+      },
+    },
 
     {
       method: "GET",

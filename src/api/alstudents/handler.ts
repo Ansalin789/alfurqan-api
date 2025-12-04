@@ -5,6 +5,7 @@ import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation"
 import {
   createAlStudent,
   getAllalstudentsList,
+  getalstudentsByAlfId,
   getalstudentsById,
   getStudentCountriesCount,
   getStudentlevel,
@@ -131,6 +132,29 @@ const handler = {
       username: payload.username || " ",
       role: payload.role || " ",
     });
+  },
+  
+   async getalstudentsByAlfId(req: Request, h: ResponseToolkit) {
+    try {
+      // Extract student ID from request params
+      const AlfId = String(req.params.alfId);
+
+      // Fetch student details asynchronously
+      const studentDetailsPromise = getalstudentsByAlfId(AlfId);
+      const studentDetails = await studentDetailsPromise;
+
+      // Handle not found case
+      if (isNil(studentDetails)) {
+        return h
+          .response({ message: alstudentsMessages.ALFURQANSTUDENTS_NOT_FOUND })
+          .code(404);
+      }
+
+      // Return the found student details
+      return h.response({ studentDetails }).code(200);
+    } catch (error) {
+      return h.response({ message: "Internal Server Error", error }).code(500);
+    }
   },
 
   async getAllStudentCount(req: Request, h: ResponseToolkit) {
