@@ -243,37 +243,58 @@ export default {
     try {
       const user = await AlStudentsModel.findOne({ 'student.studentEmail': email }).exec();
       let users: any = await getActiveStudentRecord({ username: user?.username });
-      if (isNil(user)) {
-        return h.response({
-          message: 'Email not found.',
-        }).code(404); // 404 - Not Found
-      }
+        console.log("student>>>", users);
 
-      const activeRecord = users;
+  // users is NOW an array
+  if (!users || users.length === 0) {
+    return badRequest(userMessages.USER_NOT_FOUND);
+  }
 
-    const jwtPayload = {
-      userName: activeRecord.userName ,
-      sub: String(activeRecord._id),
-    };
+  // If multiple users found with same username (rare, but possible)
+  // You can choose first, or enforce uniqueness
+  const activeRecord = users[0];
 
-    const accessToken = generateAuthToken(jwtPayload);
-    // Save the session for logout activity
-    await createActiveSessionRecord({
-      userId: String(activeRecord._id),
-      loginDate: new Date(),
-      isActive: true,
-      accessToken,
-    });
-      
-     
-      return {
-        message: 'Email found.',
-        id:users._id,
-        username1:user.username,
-        accessToken,
-        role:user.role,
-        package:user.student.package
-      };// 200 - OK
+  
+
+  // Find latest session
+  const latestSession = await ActiveSessionModel.findOne({
+    userId: String(activeRecord.student.studentId),
+  })
+    .sort({ loginDate: -1 })
+    .exec();
+
+  if (latestSession) {
+    console.log("Latest session:", latestSession.loginDate);
+
+    // if (latestSession.isActive) {
+    //   return unauthorized("User already logged in on another device/session");
+    // }
+  }
+
+  const jwtPayload = {
+    userName: activeRecord.username,
+    sub: String(activeRecord._id),
+  };
+
+  const accessToken = generateAuthToken(jwtPayload);
+
+ const usersWithoutPassword = users.map((user : any) =>
+  omit(user, ["password"])
+);
+
+  // Save session
+  await createActiveSessionRecord({
+    userId: String(activeRecord.student.studentId),
+    loginDate: new Date(),
+    isActive: true,
+    accessToken,
+  });
+
+  return {
+    ...usersWithoutPassword,
+     message: 'Email found.',
+    accessToken,
+  };
     } catch (error) {
       return h.response({
         message: 'Internal Server Error.', error
