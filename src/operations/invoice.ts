@@ -61,22 +61,34 @@ export const getAllStudetnInVoiceList = async (
   };
 
 
- export const getStudentInvoicesById = async (studentId: string): Promise<IStudentInvoice[]> => {
+  export const getStudentInvoicesByAlStudentId = async (
+  alStudentId: string,
+  courseName: string
+): Promise<IStudentInvoice[]> => {
   try {
 
-    // Directly search invoices using studentId (string)
-    const invoices = await StudentInvoiceModel.find({
-      "student.studentId": studentId
-    }).sort({ lastUpdatedDate: -1 });
+    const objectId = new Types.ObjectId(alStudentId);
 
+    const alStudent = await alstudents.findById(objectId);
+
+    if (!alStudent) {
+      return [];
+    }
+    const studentId = alStudent.student.studentId;
+
+    const query: any = {
+      "student.studentId": studentId,
+      courseName: courseName
+    };
+
+    const invoices = await StudentInvoiceModel.find(query)
+      .sort({ lastUpdatedDate: -1 });
     return invoices;
-
   } catch (error) {
-    console.error("🚨 Error in getStudentInvoicesById:", error);
+    console.error("🚨 Error in getStudentInvoicesByAlStudentId:", error);
     return [];
   }
 };
-
 
 
  
