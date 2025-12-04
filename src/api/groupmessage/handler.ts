@@ -12,6 +12,7 @@ import {
 } from "../../operations/groupmessage";
 import { zodGroupMessageSchema } from "../../models/groupMessage";
 import { zodGroupSchema } from "../../models/group";
+import GroupModel from "../../models/group";
 import { getIO } from "../../shared/socket";
 import AppLogger from "../../helpers/logging";
 import { uploadFileToSharePoint } from "../../shared/sharepoint";
@@ -106,6 +107,28 @@ export default {
     };
 
     const createdGroup = await createGroup(groupData);
+
+    // Get socket instance
+    const io = getIO();
+
+    // Emit to all participants
+    if (createdGroup.groupMessageParticipant?.length) {
+      createdGroup.groupMessageParticipant.forEach((p) => {
+        if (p.participantId) {
+          io.to(p.participantId.toString()).emit("newgroup", createdGroup);
+          AppLogger.info(`Group created emitted to participant ${p.participantId}`);
+        }
+      });
+    }
+
+    // Emit to organizer
+    if (createdGroup.groupMessageOrganizer?.organizerId) {
+      io.to(createdGroup.groupMessageOrganizer.organizerId.toString())
+        .emit("newgroup", createdGroup);
+      AppLogger.info(
+        `Group created emitted to organizer ${createdGroup.groupMessageOrganizer.organizerId}`
+      );
+    }
 
     return h
       .response({
@@ -210,6 +233,28 @@ export default {
 
     const result = await addParticipants(groupId, participants, updatedBy);
 
+    // Get socket instance
+    const io = getIO();
+
+    // Emit to all participants
+    if (result.groupMessageParticipant?.length) {
+      result.groupMessageParticipant.forEach((p) => {
+        if (p.participantId) {
+          io.to(p.participantId.toString()).emit("groupupdated", result);
+          AppLogger.info(`Group updated emitted to participant ${p.participantId}`);
+        }
+      });
+    }
+
+    // Emit to organizer
+    if (result.groupMessageOrganizer?.organizerId) {
+      io.to(result.groupMessageOrganizer.organizerId.toString())
+        .emit("groupupdated", result);
+      AppLogger.info(
+        `Group updated emitted to organizer ${result.groupMessageOrganizer.organizerId}`
+      );
+    }
+
     return h.response({
       message: "Participants added successfully",
       data: result,
@@ -226,6 +271,28 @@ export default {
 
     const result = await removeParticipants(groupId, participantIds, updatedBy);
 
+    // Get socket instance
+    const io = getIO();
+
+    // Emit to all participants
+    if (result.groupMessageParticipant?.length) {
+      result.groupMessageParticipant.forEach((p) => {
+        if (p.participantId) {
+          io.to(p.participantId.toString()).emit("groupupdated", result);
+          AppLogger.info(`Group updated emitted to participant ${p.participantId}`);
+        }
+      });
+    }
+
+    // Emit to organizer
+    if (result.groupMessageOrganizer?.organizerId) {
+      io.to(result.groupMessageOrganizer.organizerId.toString())
+        .emit("groupupdated", result);
+      AppLogger.info(
+        `Group updated emitted to organizer ${result.groupMessageOrganizer.organizerId}`
+      );
+    }
+
     return h
       .response({
         message: "Participants soft removed successfully",
@@ -239,6 +306,32 @@ export default {
     const { groupId, deletedBy } = req.payload as any;
 
     const result = await clearConversation(groupId, deletedBy);
+
+    const group = await GroupModel.findOne({ groupId });
+
+    if (group) {
+      // Get socket instance
+      const io = getIO();
+
+      // Emit to all participants
+      if (group.groupMessageParticipant?.length) {
+        group.groupMessageParticipant.forEach((p) => {
+          if (p.participantId) {
+            io.to(p.participantId.toString()).emit("groupupdated", group);
+            AppLogger.info(`Group updated emitted to participant ${p.participantId}`);
+          }
+        });
+      }
+
+      // Emit to organizer
+      if (group.groupMessageOrganizer?.organizerId) {
+        io.to(group.groupMessageOrganizer.organizerId.toString())
+          .emit("groupupdated", group);
+        AppLogger.info(
+          `Group updated emitted to organizer ${group.groupMessageOrganizer.organizerId}`
+        );
+      }
+    }
 
     return h
       .response({
@@ -256,6 +349,28 @@ export default {
     const { groupId, deletedBy } = payload;
 
     const result = await softDeleteGroup(groupId, deletedBy);
+
+    // Get socket instance
+    const io = getIO();
+
+    // Emit to all participants
+    if (result.groupMessageParticipant?.length) {
+      result.groupMessageParticipant.forEach((p) => {
+        if (p.participantId) {
+          io.to(p.participantId.toString()).emit("groupdeleted", result);
+          AppLogger.info(`Group deleted emitted to participant ${p.participantId}`);
+        }
+      });
+    }
+
+    // Emit to organizer
+    if (result.groupMessageOrganizer?.organizerId) {
+      io.to(result.groupMessageOrganizer.organizerId.toString())
+        .emit("groupdeleted", result);
+      AppLogger.info(
+        `Group deleted emitted to organizer ${result.groupMessageOrganizer.organizerId}`
+      );
+    }
 
     return h
       .response({
