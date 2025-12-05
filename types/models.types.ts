@@ -94,6 +94,8 @@ export interface IStudents extends Document {
   phoneNumber: number;
   city?: string;
   country: string;
+  familyId?: string;
+  familyEmail?: string;
   countryCode: string;
   learningInterest: LearningInterest;
   numberOfStudents: NumberOfStudents;
@@ -120,7 +122,8 @@ export interface IStudentCreate {
     academicCoachId: string;
   };
   profilepic?: Buffer;
-
+familyId?: string;
+familyEmail?: string;
   email: string;
   gender: string;
   phoneNumber: number;

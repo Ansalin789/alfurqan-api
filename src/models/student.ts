@@ -110,6 +110,12 @@ const studentSchema = new Schema<IStudents>(
       enum: Object.values(CustomEnumerator.EvaluationStatus),
       required: true
     },
+    familyId: {
+      type: String,
+      required: false },
+    familyEmail: {
+      type: String,
+      required: false },
     refernceId: {
       type: String,
       required: false
@@ -159,6 +165,8 @@ export const zodStudentSchema = z.object({
   city: z.string().optional(),
   country: z.string().min(3),
   countryCode: z.string().min(1),
+  familyId: z.string().optional(),
+  familyEmail: z.string().email().optional(),
   learningInterest: z.enum([learningInterest.QURAN, learningInterest.ISLAMIC, learningInterest.ARABIC]),
   numberOfStudents: z.nativeEnum(NumberOfStudents).default(NumberOfStudents.ONE),
   preferredTeacher: z.enum([preferredTeacher.TEACHER_1, preferredTeacher.TEACHER_2, preferredTeacher.TEACHER_3]),

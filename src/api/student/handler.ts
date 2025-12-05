@@ -29,6 +29,8 @@ const createInputValidation = z.object({
     preferredFromTime: true,
     preferredToTime: true,
     timeZone: true,
+    familyId: true,
+    familyEmail: true,
     referralSource: true,
     startDate: true,
     evaluationStatus: true,
@@ -63,6 +65,8 @@ export default {
     const { payload } = createInputValidation.parse({
       payload: req.payload,
     });
+    
+    const sharedFamilyId = `FAM-${String(Math.floor(1 + Math.random() * 99)).padStart(2, '0')}`;
     const result = await createStudent({     
   firstName: payload.firstName,
   lastName: payload.lastName,
@@ -81,6 +85,8 @@ export default {
   preferredFromTime: payload.preferredFromTime,
   preferredToTime: payload.preferredToTime,
   timeZone: payload.timeZone,
+  familyId: sharedFamilyId ?? "defaultFamilyId",
+  familyEmail: payload.familyEmail ?? "defaultFamilyEmail",
   referralSource: payload.referralSource ?? "defaultReferralSource", 
   startDate: payload.startDate ?? new Date(), // Provide a default value for startDate
   evaluationStatus: payload.evaluationStatus ?? EvaluationStatus.PENDING, // Use a valid EvaluationStatus value
