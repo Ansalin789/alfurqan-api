@@ -66,7 +66,7 @@ export default {
       payload: req.payload,
     });
     
-    const sharedFamilyId = `FAM-${String(Math.floor(1 + Math.random() * 99)).padStart(2, '0')}`;
+    const sharedFamilyId = payload.familyId || `FAM-${String(Math.floor(1 + Math.random() * 99)).padStart(2, '0')}`;
     const result = await createStudent({     
   firstName: payload.firstName,
   lastName: payload.lastName,
@@ -85,7 +85,7 @@ export default {
   preferredFromTime: payload.preferredFromTime,
   preferredToTime: payload.preferredToTime,
   timeZone: payload.timeZone,
-  familyId: sharedFamilyId ?? "defaultFamilyId",
+  familyId: sharedFamilyId,
   familyEmail: payload.familyEmail ?? "defaultFamilyEmail",
   referralSource: payload.referralSource ?? "defaultReferralSource", 
   startDate: payload.startDate ?? new Date(), // Provide a default value for startDate
