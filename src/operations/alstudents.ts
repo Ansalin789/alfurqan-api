@@ -167,23 +167,24 @@ const studentDetails = student as IAlStudents;
  *  - `totalCount`: The total number of user records matching the query.
  */
  export const getActiveStudentRecord = async (
-   query: Partial<{ id: string; username: string; role: string }>
- ): Promise<Array<FlattenMaps<IAlStudents>> | null> => {
-   const { id, username, role } = query;
- 
-   const dbQuery: any = {
-     status: "Active",
-   };
- 
-   if (!isNil(id)) dbQuery._id = new Types.ObjectId(id);
-   if (!isNil(username)) dbQuery.username = username;
-   if (!isNil(role)) dbQuery.role = role;
- 
-   const result = await AlStudentsModel.find(dbQuery).lean();
+  query: Partial<{ id: string; username: string; role: string }>
+): Promise<IAlStudents[] | null> => {
+  const { id, username, role } = query;
+
+  const dbQuery: any = {
+    status: "Active"
+  };
+
+  if (id) dbQuery._id = new Types.ObjectId(id);
+  if (username) dbQuery.username = username;
+  if (role) dbQuery.role = role;
+
+  const result = await AlStudentsModel.find(dbQuery).lean<IAlStudents[]>();
   console.log("result>>", result);
 
   return result;
- };
+};
+
 
   /**
  * Creates a new user.
