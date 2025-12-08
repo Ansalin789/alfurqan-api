@@ -88,7 +88,6 @@ export const createStudent = async (
         ];
         const subject = "Welcome To Alfurqan";
         const htmlPart = emailTemplate.templateContent.replace('<username>', payload.firstName + ' ' + payload.lastName);
-        //const htmlPart = "<html><body><p>Hello World</p></body></html>";
         sendEmailClient(emailTo, subject,htmlPart);
     }
 
@@ -145,7 +144,7 @@ export const createStudent = async (
     });
 
     const subject = 'Evaluation Zoom Meeting';
-    const htmlPart = zoomMailTemplate?.templateContent.replace('<date>', payload.startDate.toDateString()).replace('<meetingtime>', payload.preferredFromTime).replace('<zoomlink>', CreatemeetingDetails.meetingLink);
+    const htmlPart = zoomMailTemplate?.templateContent.replace('<Preferred Date>', payload.startDate.toDateString()).replace('<Preferred Time>', payload.preferredFromTime).replace('<Zoom Link>', CreatemeetingDetails.meetingLink);
     const emailTo = [
       { email: payload.email }, { email: savedUser.academicCoach.email }
   ];
@@ -266,7 +265,7 @@ export const createNewCourseForStudent = async (
     });
 
     const subject = 'Evaluation Zoom Meeting';
-    const htmlPart = zoomMailTemplate?.templateContent.replace('<date>', payload.startDate.toDateString()).replace('<meetingtime>', payload.preferredFromTime).replace('<zoomlink>', CreatemeetingDetails.meetingLink);
+    const htmlPart = zoomMailTemplate?.templateContent.replace('<Preferred Date>', payload.startDate.toDateString()).replace('<Preferred Time>', payload.preferredFromTime).replace('<Zoom Link>', CreatemeetingDetails.meetingLink);
     const emailTo = [
       { email: payload.email }, { email: savedUser.academicCoach.email }
   ];
