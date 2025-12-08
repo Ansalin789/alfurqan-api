@@ -256,24 +256,24 @@ export const updateStudentEvaluation = async (
     ) {
       const emailTo = [{ email: payload.student.studentEmail }];
       const subject = "Invoice";
-
+const totalPrice = Number(payload?.planTotalPrice) || 1;
+const hours = Number(payload?.accomplishmentTime) || 1;
+const dueDate = new Date();
+dueDate.setDate(dueDate.getDate() + 2);
+const ratePerHour = totalPrice / hours;
       const htmlPart = emailTemplate.templateContent
-        .replace(
-          "<studentname>",
-          payload.student.studentFirstName +
+               .replace(/{{Student’s Name}}/g,  payload.student.studentFirstName +
             " " +
-            payload.student.studentLastName
-        )
-        .replace("<address>", payload.student.studentCity || " ")
-        .replace("<phonenumber>", String(payload.student.studentPhone))
-        .replace("<email>", payload.student.studentEmail)
-        .replace("<plan>", payload.subscription.subscriptionName)
-        .replace("<coursename>", payload.student.learningInterest)
-        .replace("<amount>", String(evaluation.planTotalPrice))
-        .replace("<adjustamount>", String(evaluation.planTotalPrice))
-        .replace("<subtotal>", String(evaluation.planTotalPrice))
-        .replace("<total>", String(evaluation.planTotalPrice))
-        .replace("<paymentLink>", updatedEvaluation.paymentLink);
+            payload.student.studentLastName)
+
+        .replace(/{{Invoice Date}}/g, new Date().toDateString())
+        .replace(/{{Hourly Rate}}/g, String(ratePerHour))
+        .replace(/{{Total Amount}}/g, String(evaluation.planTotalPrice))
+        .replace(/{{Package Name}}/g, payload.subscription.subscriptionName) 
+        .replace(/{{Hours}}/g, String(hours))
+        .replace(/{{Payment Link}}/g, updatedEvaluation.paymentLink)
+        .replace(/{{Due Date}}/g, dueDate.toDateString());
+
 
       await sendEmailClient(emailTo, subject, htmlPart);
       console.log("✅ Invoice Email sent");
@@ -333,12 +333,11 @@ export const updateStudentEvaluation = async (
     if (zoomMailTemplate) {
       const subject = "Trial class";
       const htmlPart = zoomMailTemplate.templateContent
-        .replace(
-          "<date>",
-          moment(String(payload.preferredTrialDate)).format("DD-MM-YYYY")
-        )
-        .replace("<meetingTime>", payload.preferredTrialFromTime as string)
-        .replace("<zoomlink>", updatedMeetingDetails?.meetingLink ?? "");
+         .replace(/{{Student’s Name}}/g, existingMeeting?.student?.name || " ")
+        .replace(/{{Teacher Name}}/g, teacherName || " ")  
+  .replace(/{{Preferred Date}}/g, payload.preferredTrialDate?.toDateString() || " ")
+  .replace(/{{Preferred Time}}/g, payload.preferredTrialFromTime + " - " + payload.preferredTrialToTime)
+  .replace(/{{Zoom Link}}/g,  updatedMeetingDetails?.meetingLink || existingMeeting?.meetingLink || " ");
 
       // Only send to valid teacher email
       const emailTo = [];
@@ -421,9 +420,11 @@ async function trialClassAssigned(
 
   const subject = "Trail class";
   const htmlPart = zoomMailTemplate?.templateContent
-    .replace("<date>", preferredTrialDate)
-    .replace("<meetingTime>", preferredTrialFromTime)
-    .replace("<zoomlink>", meetingDetails.join_url);
+     .replace(/{{Student’s Name}}/g, createEvaluation.student.studentFirstName + ' ' + createEvaluation.student.studentLastName)
+        .replace(/{{Teacher Name}}/g, teacherEmail.userName)  
+  .replace(/{{Preferred Date}}/g, preferredTrialDate.toDateString())
+  .replace(/{{Preferred Time}}/g, preferredTrialFromTime)
+  .replace(/{{Zoom Link}}/g,  meetingDetails.join_url);
   const emailTo = [
     { email: teacherEmail.email },
     { email: createEvaluation.student.studentEmail },
