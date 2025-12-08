@@ -89,6 +89,7 @@ export const getAllalstudentsList = async (
       // Evaluation
       const evaluations = await Evaluation.find({
         "student.studentId": student.student.studentId,
+        "student.learningInterest": student.student.course,
       })
         .lean()
         .exec();

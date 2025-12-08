@@ -13,6 +13,7 @@ import { Client } from "@microsoft/microsoft-graph-client";
 import { ClientSecretCredential } from "@azure/identity";
 import Course from "../../models/course";
 import { sendInvoiceEvent } from "../../kafka/producers/adminProducer";
+import  StudentSchemaModel  from "../../models/student";
 import {
   academicDashboardCard,
   academicStudentList,
@@ -142,10 +143,21 @@ async function createStudentPortal(updatedEvaluation: any) {
       .reverse()
       .join(""); // Reverse the first name
 
-    const password = `${firstThreeChars}${randomSpecial}${randomNum}${reversedUsername}`;
+      const alstudentExists = await StudentPortModel.findOne({
+        "student.studentId": updatedEvaluation.student.studentId,
+      }).exec();
+      let password = null;
+      if (alstudentExists) {
+        password = alstudentExists.password;
+      }else{
+       password = `${firstThreeChars}${randomSpecial}${randomNum}${reversedUsername}`;
+      }
 
     const courseDetails = await Course.findOne({
       courseName: updatedEvaluation.student.learningInterest,
+    }).exec();
+    const studentDetails = await StudentSchemaModel.findOne({
+      studentId: updatedEvaluation.student.studentId,
     }).exec();
     // Create student portal entry
     const studentPortal = await StudentPortModel.create({
@@ -161,6 +173,10 @@ async function createStudentPortal(updatedEvaluation: any) {
       },
       username: `${updatedEvaluation.student.studentFirstName} ${updatedEvaluation.student.studentLastName}`,
       sessionClassType: updatedEvaluation.classType,
+      refernceId:studentDetails?.refernceId || "",
+      referredBy: studentDetails?.referredBy || "",
+      familyId:studentDetails?.familyId || "",
+      familyEmail:studentDetails?.familyEmail || "",
       level: "1",
       password: password,
       role: "Student",

@@ -47,7 +47,6 @@ const studentSchema = new Schema<IStudents>(
       type: String,
       required: true,
       match: /\S+@\S+\.\S+/,
-      unique: true,
     },
     gender: {
       type: String,
