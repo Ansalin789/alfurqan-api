@@ -245,45 +245,47 @@ export const updateStudentEvaluation = async (
     console.log("updatedEvaluation>>", updatedEvaluation);
 
     const emailTemplate = await EmailTemplate.findOne({
-      templateKey: "Invoice",
-    }).exec();
+  templateKey: "Invoice",
+}).exec();
 
-    if (
-      emailTemplate &&
-      payload.student &&
-      payload.subscription &&
-      evaluation
-    ) {
-      const emailTo = [{ email: payload.student.studentEmail }];
-      const subject = "Invoice";
-const totalPrice = Number(payload?.planTotalPrice) || 1;
-const hours = Number(payload?.accomplishmentTime) || 1;
-const dueDate = new Date();
-dueDate.setDate(dueDate.getDate() + 2);
-const ratePerHour = totalPrice / hours;
-      const htmlPart = emailTemplate.templateContent
-        .replace(
-          "<studentname>",
-          payload.student.studentFirstName +
-          " " +
-          payload.student.studentLastName
-        )
-        .replace("<address>", payload.student.studentCity || " ")
-        .replace("<phonenumber>", String(payload.student.studentPhone))
-        .replace("<email>", payload.student.studentEmail)
-        .replace("<plan>", payload.subscription.subscriptionName)
-        .replace("<coursename>", payload.student.learningInterest)
-        .replace("<amount>", String(evaluation.planTotalPrice))
-        .replace("<adjustamount>", String(evaluation.planTotalPrice))
-        .replace("<subtotal>", String(evaluation.planTotalPrice))
-        .replace("<total>", String(evaluation.planTotalPrice))
-        .replace("<paymentLink>", updatedEvaluation.paymentLink);
+if (emailTemplate && payload.student && payload.subscription && evaluation) {
+  
+  const emailTo = [{ email: payload.student.studentEmail }];
+  const subject = "Invoice";
 
-      await sendEmailClient(emailTo, subject, htmlPart);
-      console.log("✅ Invoice Email sent");
-    }
+  const totalPrice = Number(evaluation?.planTotalPrice) || 1;
+  const hours = Number(evaluation?.accomplishmentTime) || 1;
 
-    return updatedEvaluation;
+  const dueDate = new Date();
+  dueDate.setDate(dueDate.getDate() + 2);
+
+  const ratePerHour = totalPrice / hours;
+
+ 
+
+  let htmlPart = emailTemplate.templateContent;
+
+  htmlPart = emailTemplate.templateContent
+  .replace(/{{Student Name}}/g, payload.student.studentFirstName + " " + payload.student.studentLastName)
+  .replace(/{{Invoice Date}}/g, new Date().toDateString())
+  .replace(/{{Hourly Rate}}/g, String(ratePerHour))
+  .replace(/{{Total Amount}}/g, String(evaluation.planTotalPrice))
+  .replace(/{{Package Name}}/g, payload.subscription.subscriptionName)
+  .replace(/{{Hours}}/g, String(hours))
+  .replace(/{{Payment Link}}/g, updatedEvaluation.paymentLink)
+  .replace(/{{Due Date}}/g, dueDate.toDateString());
+
+
+ 
+
+  await sendEmailClient(emailTo, subject, htmlPart);
+
+  console.log("✅ Invoice Email sent");
+ 
+}
+
+
+    return updatedEvaluation ;
   } else if (
     payload.teacher ||
     payload.preferredTrialDate ||
@@ -339,7 +341,7 @@ const ratePerHour = totalPrice / hours;
       const htmlPart = zoomMailTemplate.templateContent
          .replace(/{{Student’s Name}}/g, existingMeeting?.student?.name || " ")
         .replace(/{{Teacher Name}}/g, teacherName || " ")  
-  .replace(/{{Preferred Date}}/g, payload.preferredTrialDate?.toDateString() || " ")
+  .replace(/{{Preferred Date}}/g, new Date(payload.preferredTrialDate || '').toDateString())
   .replace(/{{Preferred Time}}/g, payload.preferredTrialFromTime + " - " + payload.preferredTrialToTime)
   .replace(/{{Zoom Link}}/g,  updatedMeetingDetails?.meetingLink || existingMeeting?.meetingLink || " ");
 
@@ -426,7 +428,7 @@ async function trialClassAssigned(
   const htmlPart = zoomMailTemplate?.templateContent
      .replace(/{{Student’s Name}}/g, createEvaluation.student.studentFirstName + ' ' + createEvaluation.student.studentLastName)
         .replace(/{{Teacher Name}}/g, teacherEmail.userName)  
-  .replace(/{{Preferred Date}}/g, preferredTrialDate.toDateString())
+  .replace(/{{Preferred Date}}/g,   new Date(preferredTrialDate).toDateString())
   .replace(/{{Preferred Time}}/g, preferredTrialFromTime)
   .replace(/{{Zoom Link}}/g,  meetingDetails.join_url);
   const emailTo = [
