@@ -95,6 +95,9 @@ export const createStudent = async (
     const zoomMailTemplate = await EmailTemplate.findOne({
       templateKey: 'evaluation',
   }).exec();
+  if(!zoomMailTemplate){
+    console.log("Zoom email template not found");
+  }
    
         const course = await Course.findOne({
           courseName: payload.learningInterest,
@@ -151,6 +154,7 @@ export const createStudent = async (
 
   
     if(htmlPart){
+      console.log("Sending evaluation email",htmlPart);
        sendEmailClient(emailTo, subject,htmlPart);
     }
     const userObject = savedUser.toObject();
