@@ -147,14 +147,17 @@ export const createStudent = async (
     });
 
     const subject = 'Evaluation Zoom Meeting';
-    const htmlPart = zoomMailTemplate?.templateContent.replace('<Preferred Date>', payload.startDate.toDateString()).replace('<Preferred Time>', payload.preferredFromTime).replace('<Zoom Link>', CreatemeetingDetails.meetingLink);
+const htmlPart = zoomMailTemplate?.templateContent
+  .replace(/{{Student’s Name}}/g,savedUser.firstName + ' ' + savedUser.lastName)
+  .replace(/{{Preferred Date}}/g, payload.startDate.toDateString())
+  .replace(/{{Preferred Time}}/g, payload.preferredFromTime)
+  .replace(/{{Zoom Link}}/g, CreatemeetingDetails.meetingLink);
     const emailTo = [
-      { email: payload.email }, { email: savedUser.academicCoach.email }
+      { email: savedUser.email }, { email: savedUser.academicCoach.email }
   ];
 
   
     if(htmlPart){
-      console.log("Sending evaluation email",htmlPart);
        sendEmailClient(emailTo, subject,htmlPart);
     }
     const userObject = savedUser.toObject();
