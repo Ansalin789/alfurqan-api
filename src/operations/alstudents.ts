@@ -6,8 +6,8 @@ import { GetAllRecordsParams } from "../shared/enum";
 import AppLogger from "../helpers/logging";
 import AlStudentsModel from "../models/alstudents"; // Ensure proper model import
 import { FlattenMaps, Types } from "mongoose";
-import  ClassScheduleModel  from "../models/classShedule"
-import Evaluation from "../models/evaluation"; 
+import ClassScheduleModel from "../models/classShedule"
+import Evaluation from "../models/evaluation";
 import alstudents from "../models/alstudents";
 import StudentModel from "../models/student";
 
@@ -94,22 +94,30 @@ export const getAllalstudentsList = async (
         .exec();
 
       // ⭐ Fetch referralId from Student model
- 
-const mainStudent = await StudentModel.findOne(
-  { studentId: student?.student?.studentId },
-  { refernceId: 1 }
-).lean();
+
+      const mainStudent = await StudentModel.findOne(
+        { studentId: student?.student?.studentId },
+        { refernceId: 1, familyId: 1, familyEmail: 1 }
+
+      ).lean();
 
 
-// 2. Save that refernceId into AlStudentsModel
-if (mainStudent?.refernceId) {
-  await AlStudentsModel.updateOne(
-    { "student.studentId": student?.student?.studentId },
-    { $set: { refernceId: mainStudent.refernceId } }
-  );
-}
+      // 2. Save that refernceId into AlStudentsModel
+      if (mainStudent?.refernceId) {
+        await AlStudentsModel.updateOne(
+          { "student.studentId": student?.student?.studentId },
+          {
+            $set: {
+              refernceId: mainStudent.refernceId || null,
+              familyId: mainStudent.familyId || null,
+              familyEmail: mainStudent.familyEmail || null
+            }
+          },
 
-const referralId = mainStudent?.refernceId || null;
+        );
+      }
+
+      const referralId = mainStudent?.refernceId || null;
 
       return {
         ...student.toObject(),
@@ -117,7 +125,9 @@ const referralId = mainStudent?.refernceId || null;
         teacherName: classSchedule?.teacher?.teacherName || "",
         sessionClassType: classSchedule?.sessionClassType || "",
         evaluation: evaluations,
-        referralId, // ⭐ Added referral ID here
+        referralId,
+        familyId: mainStudent?.familyId || null,
+        familyEmail: mainStudent?.familyEmail || null
       };
     })
   );
@@ -147,7 +157,7 @@ export const getalstudentsById = async (studentId: string): Promise<IAlStudents 
     const student = await AlStudentsModel.findOne({
       _id: studentId,
     }).lean();
-const studentDetails = student as IAlStudents;
+    const studentDetails = student as IAlStudents;
     console.log("Fetched student details:", student);
     return studentDetails;
   } catch (error) {
@@ -156,17 +166,17 @@ const studentDetails = student as IAlStudents;
   }
 };
 
-  
-  /**
- * Retrieves all user records for a given tenant, with support for search, pagination, sorting, role filtering, and excluding passwords.
- *
- *  @param {Partial<{ id: string; username: string; role: string }>}  query - The parameters for fetching user records, including role filtering.
- *
- * @returns {Promise<IStudent | null>} - A promise that resolves to an object containing:
- *  - `users`: An array of user records for the given tenant, with passwords excluded.
- *  - `totalCount`: The total number of user records matching the query.
- */
- export const getActiveStudentRecord = async (
+
+/**
+* Retrieves all user records for a given tenant, with support for search, pagination, sorting, role filtering, and excluding passwords.
+*
+*  @param {Partial<{ id: string; username: string; role: string }>}  query - The parameters for fetching user records, including role filtering.
+*
+* @returns {Promise<IStudent | null>} - A promise that resolves to an object containing:
+*  - `users`: An array of user records for the given tenant, with passwords excluded.
+*  - `totalCount`: The total number of user records matching the query.
+*/
+export const getActiveStudentRecord = async (
   query: Partial<{ id: string; username: string; role: string }>
 ): Promise<IAlStudents[] | null> => {
   const { id, username, role } = query;
@@ -186,78 +196,78 @@ const studentDetails = student as IAlStudents;
 };
 
 
-  /**
- * Creates a new user.
- *
- * @param {IAlStudentCreate} payload - The data of the user to be created.
- */
- export const createAlStudent = async (
-   payload: IAlStudentCreate
- ): Promise<IAlStudents | null> => {
-   const newStudent = new AlStudentsModel(payload);
-   const specialChars = '@#$%&*!';
-    const randomNum = Math.floor(Math.random() * 1000); // Random number between 0-999
-    const randomSpecial = specialChars[Math.floor(Math.random() * specialChars.length)]; // Random special character
-  
-    // Generate password
-    const firstThreeChars = newStudent.username.substring(0, 3); // First 3 characters of the username
-    const reversedUsername = newStudent.username.split('').reverse().join(''); // Reverse the username
-  
-    const studentPassword = `${firstThreeChars}${randomSpecial}${randomNum}${reversedUsername}`;
-   newStudent.password = studentPassword
+/**
+* Creates a new user.
+*
+* @param {IAlStudentCreate} payload - The data of the user to be created.
+*/
+export const createAlStudent = async (
+  payload: IAlStudentCreate
+): Promise<IAlStudents | null> => {
+  const newStudent = new AlStudentsModel(payload);
+  const specialChars = '@#$%&*!';
+  const randomNum = Math.floor(Math.random() * 1000); // Random number between 0-999
+  const randomSpecial = specialChars[Math.floor(Math.random() * specialChars.length)]; // Random special character
 
-   const savedUser = await newStudent.save();
+  // Generate password
+  const firstThreeChars = newStudent.username.substring(0, 3); // First 3 characters of the username
+  const reversedUsername = newStudent.username.split('').reverse().join(''); // Reverse the username
 
-   return savedUser
- };
+  const studentPassword = `${firstThreeChars}${randomSpecial}${randomNum}${reversedUsername}`;
+  newStudent.password = studentPassword
 
+  const savedUser = await newStudent.save();
 
- 
-
- export const getStudentRecordCount = async()=>{
- 
-   const alfStudentCount= await AlStudentsModel.aggregate([
-     {
-       $group: {
-         _id: null,
-         studentTotalCount: { $sum: 1 },
-         activeStudent: { $sum: { $cond: [{ $eq: ["$status", "Active"] }, 1, 0] } },
-         inActiveStudent: { $sum: { $cond: [{ $eq: ["$status", "InActive"] }, 1, 0] } },
-         onHoldStudent: { $sum: { $cond: [{ $eq: ["$studentStatus", "HOLD"] }, 1, 0] } },
-         studentOnBreak: { $sum: { $cond: [{ $eq: ["$studentStatus", "BREAKING"] }, 1, 0] } } 
-       },
-     },
-     {
-       $sort: { count: -1 }, // Optional: sort descending
-     },
-   ]);
-   
-   return  alfStudentCount ;
-   
- };
+  return savedUser
+};
 
 
- export const getStudentPercentage = async() =>{
-     const studentTotalCount= await AlStudentsModel.aggregate([
-      
-       {
-        $group: {
-          _id: null,
-          studentCount: { $sum: 1 },
-          studentMaleCount: { $sum: { $cond: [{ $eq: ["$student.gender", "Male"] }, 1, 0] } },
-          studentFemaleCount: { $sum: { $cond: [{ $eq: ["$student.gender", "Female"] }, 1, 0] } },
-        },
+
+
+export const getStudentRecordCount = async () => {
+
+  const alfStudentCount = await AlStudentsModel.aggregate([
+    {
+      $group: {
+        _id: null,
+        studentTotalCount: { $sum: 1 },
+        activeStudent: { $sum: { $cond: [{ $eq: ["$status", "Active"] }, 1, 0] } },
+        inActiveStudent: { $sum: { $cond: [{ $eq: ["$status", "InActive"] }, 1, 0] } },
+        onHoldStudent: { $sum: { $cond: [{ $eq: ["$studentStatus", "HOLD"] }, 1, 0] } },
+        studentOnBreak: { $sum: { $cond: [{ $eq: ["$studentStatus", "BREAKING"] }, 1, 0] } }
       },
-      ]);
-      const studentPercentage = studentTotalCount[0].studentCount;
-      const studentMalePercentage = ((studentTotalCount[0].studentMaleCount/ studentTotalCount[0].studentCount)*100).toFixed(2);
-      const studentFemalePercentage = ((studentTotalCount[0].studentFemaleCount/ studentTotalCount[0].studentCount)*100).toFixed(2);
-      
-      return {studentPercentage, studentMalePercentage, studentFemalePercentage};
- };
+    },
+    {
+      $sort: { count: -1 }, // Optional: sort descending
+    },
+  ]);
+
+  return alfStudentCount;
+
+};
 
 
-export const getStudentCountriesCount = async() =>{
+export const getStudentPercentage = async () => {
+  const studentTotalCount = await AlStudentsModel.aggregate([
+
+    {
+      $group: {
+        _id: null,
+        studentCount: { $sum: 1 },
+        studentMaleCount: { $sum: { $cond: [{ $eq: ["$student.gender", "Male"] }, 1, 0] } },
+        studentFemaleCount: { $sum: { $cond: [{ $eq: ["$student.gender", "Female"] }, 1, 0] } },
+      },
+    },
+  ]);
+  const studentPercentage = studentTotalCount[0].studentCount;
+  const studentMalePercentage = ((studentTotalCount[0].studentMaleCount / studentTotalCount[0].studentCount) * 100).toFixed(2);
+  const studentFemalePercentage = ((studentTotalCount[0].studentFemaleCount / studentTotalCount[0].studentCount) * 100).toFixed(2);
+
+  return { studentPercentage, studentMalePercentage, studentFemalePercentage };
+};
+
+
+export const getStudentCountriesCount = async () => {
 
   const studentCountByCountry = await AlStudentsModel.aggregate([
     {
@@ -275,13 +285,13 @@ export const getStudentCountriesCount = async() =>{
       $sort: { count: -1 }, // Optional: sort descending
     },
   ]);
-  
+
   const studentCount = await AlStudentsModel.countDocuments({
     status: "Active",
   }).exec();
-  
+
   const results: any[] = [];
-  
+
   for (const studentCountry of studentCountByCountry) {
     let studentCountryPercentage = ((studentCountry.count / studentCount) * 100).toFixed(2);
     results.push({
@@ -290,8 +300,8 @@ export const getStudentCountriesCount = async() =>{
       percentage: parseFloat(studentCountryPercentage),
     });
   }
-  
-  
+
+
   return { studentCount, studentCountByCountry: results };
 
 };
@@ -306,9 +316,9 @@ export const getalstudentsByAlfId = async (AlfId: string): Promise<IStudents | n
   try {
     // Query using student.studentId
     const student = await StudentModel.findOne({
-     studentId: AlfId,
+      studentId: AlfId,
     }).lean();
-const studentDetails = student as IStudents;
+    const studentDetails = student as IStudents;
     console.log("Fetched student details:", student);
     return studentDetails;
   } catch (error) {

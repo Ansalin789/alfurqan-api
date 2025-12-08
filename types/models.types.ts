@@ -771,6 +771,8 @@ export interface IAlStudents extends Document {
     city: string;
     country: string;
   };
+  familyId?: string;
+  familyEmail?: string;
   profilepic?: Buffer;
   referredBy?: string;
   refernceId: string;
