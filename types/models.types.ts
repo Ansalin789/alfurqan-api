@@ -365,6 +365,9 @@ export interface IEvaluation extends Document {
     status: Status;
     createdDate: Date;
     createdBy: string;
+    refernceId?: string | null;
+    familyId?: string | null;
+    familyEmail?: string | null;
   };
   classType: string;
   teacher: {
@@ -372,6 +375,9 @@ export interface IEvaluation extends Document {
     teacherName: string;
     teacherEmail: string;
   },
+  familyEmail?: string;
+  familyId?: string;
+  referralId?: string;
   joiningDate: Date;
   classDay: any;
   startTime: any;
@@ -460,6 +466,9 @@ export interface IEvaluationCreate {
     status: Status;
     createdDate: Date;
     createdBy?: string;
+    refernceId?: string | null;
+    familyId?: string | null;
+    familyEmail?: string | null;
   };
   classType: string;
   teacher: {
@@ -467,6 +476,8 @@ export interface IEvaluationCreate {
     teacherName: string;
     teacherEmail: string;
   },
+  familyEmail?: string;
+  familyId?: string;
   joiningDate?: Date;
   classDay?: string[];
   startTime?: string[];

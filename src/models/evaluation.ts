@@ -317,6 +317,18 @@ academicCoachId: {
     type: String,
     required: false  
     },
+    familyId: {
+        type: String,
+        required: false
+    },
+    familyEmail: {
+        type: String,
+        required: false
+    },
+    referralId: {
+        type: String,
+        required: false
+    },
     status: {
         type: String,
         required: false,
@@ -387,6 +399,9 @@ export const zodEvaluationSchema = z.object({
       }).transform((val) => new Date(val)).optional(),
     weeklySlots: WeeklySlotMapSchema.optional(),
     classType:z.enum([classType.REGULARCLASS, classType.GROUPCLASS]).optional(),
+    familyEmail:z.string().optional(),
+    familyId:z.string().optional(),
+    referralId:z.string().optional(),
     teacher:z.object ({
         teacherId: z.string().optional(),
         teacherName: z.string().optional(),

@@ -74,7 +74,7 @@ export const createEvaluationRecord = async (
   }).exec();
 
   //rollNo
-     const rollNo = await generateRollNo('ALFST', 3);
+  const rollNo = await generateRollNo('ALFST', 3);
   if (loginUser) {
     newStudent.academicCoach = {
       academicCoachId: payload.academicCoachId || " ", // Provide a default value if undefined
@@ -262,24 +262,28 @@ const dueDate = new Date();
 dueDate.setDate(dueDate.getDate() + 2);
 const ratePerHour = totalPrice / hours;
       const htmlPart = emailTemplate.templateContent
-               .replace(/{{Student’s Name}}/g,  payload.student.studentFirstName +
-            " " +
-            payload.student.studentLastName)
-
-        .replace(/{{Invoice Date}}/g, new Date().toDateString())
-        .replace(/{{Hourly Rate}}/g, String(ratePerHour))
-        .replace(/{{Total Amount}}/g, String(evaluation.planTotalPrice))
-        .replace(/{{Package Name}}/g, payload.subscription.subscriptionName) 
-        .replace(/{{Hours}}/g, String(hours))
-        .replace(/{{Payment Link}}/g, updatedEvaluation.paymentLink)
-        .replace(/{{Due Date}}/g, dueDate.toDateString());
-
+        .replace(
+          "<studentname>",
+          payload.student.studentFirstName +
+          " " +
+          payload.student.studentLastName
+        )
+        .replace("<address>", payload.student.studentCity || " ")
+        .replace("<phonenumber>", String(payload.student.studentPhone))
+        .replace("<email>", payload.student.studentEmail)
+        .replace("<plan>", payload.subscription.subscriptionName)
+        .replace("<coursename>", payload.student.learningInterest)
+        .replace("<amount>", String(evaluation.planTotalPrice))
+        .replace("<adjustamount>", String(evaluation.planTotalPrice))
+        .replace("<subtotal>", String(evaluation.planTotalPrice))
+        .replace("<total>", String(evaluation.planTotalPrice))
+        .replace("<paymentLink>", updatedEvaluation.paymentLink);
 
       await sendEmailClient(emailTo, subject, htmlPart);
       console.log("✅ Invoice Email sent");
     }
 
-    return updatedEvaluation ;
+    return updatedEvaluation;
   } else if (
     payload.teacher ||
     payload.preferredTrialDate ||
@@ -295,7 +299,7 @@ const ratePerHour = totalPrice / hours;
     let teacherName = payload.teacher?.teacherName;
     let teacherEmail = payload.teacher?.teacherEmail;
     if (
-      payload.teacher?.teacherId && 
+      payload.teacher?.teacherId &&
       (!teacherName || teacherName === "Not Assigned" || !teacherEmail || teacherEmail === "Not Assigned")
     ) {
       const teacherUser = await User.findOne({ userId: payload.teacher.teacherId, role: "TEACHER" }).exec();
@@ -484,7 +488,7 @@ async function trialClassAssigned(
     lastUpdatedBy: "Admin",
   });
   await CreatemeetingDetails.save();
-const academicCoach = await users.findById(createEvaluation.academicCoachId);
+  const academicCoach = await users.findById(createEvaluation.academicCoachId);
   if (teacherDetails.userId) {
     await sendNotification({
       messages: `${createEvaluation.student.studentFirstName} ${createEvaluation.student.studentLastName} has been assigned to you for a trial class.`,
@@ -581,7 +585,7 @@ async function getZoomAccessToken() {
  */
 export const getAllEvaluationRecords = async (
   params: GetAllRecordsParams
-): Promise<{ totalCount: number; evaluation: IEvaluation[] }> => {
+): Promise<{ totalCount: number; evaluation: IEvaluation[]; referralId?: string | null; familyId?: string | null; familyEmail?: string | null }> => {
   const {
     academicCoachId,
     searchText,
@@ -629,7 +633,7 @@ export const getAllEvaluationRecords = async (
     const skip = Math.max(
       0,
       ((Number(offset) ?? Number(commonMessages.OFFSET)) - 1) *
-        (Number(limit) ?? Number(commonMessages.LIMIT))
+      (Number(limit) ?? Number(commonMessages.LIMIT))
     );
     evaluationQuery
       .skip(skip)
@@ -644,6 +648,59 @@ export const getAllEvaluationRecords = async (
   AppLogger.info(evaluationMessages.GET_ALL_LIST_SUCCESS, {
     totalCount: totalCount,
   });
+  
+  // Ensure the three fields exist on each evaluation.student by setting them
+  // to the student's values or `null` when missing. This allows callers to
+  // detect presence even when the value is not set.
+  const updateOps: Promise<any>[] = [];for (const ev of evaluation) {
+  const studentId =
+    ev?.student?.studentId || ev?.student?.studentRegisterId;
+
+  if (!studentId) continue;
+
+  // 1️⃣ Fetch already stored values from StudentModel
+  const mainStudent = await StudentModel.findOne(
+    { studentId },
+    {
+      refernceId: 1,
+      familyId: 1,
+      familyEmail: 1,
+      _id: 0,
+    }
+  ).lean();
+
+  if (!mainStudent) continue;
+
+  // 2️⃣ If already stored in Evaluation → no need to update again
+  const needsUpdate =
+    ev?.student?.refernceId !== mainStudent.refernceId || null;
+    ev?.student?.familyId !== mainStudent.familyId || null;
+    ev?.student?.familyEmail !== mainStudent.familyEmail || null;
+
+  if (!needsUpdate) continue;
+
+  // 3️⃣ Save permanently in EvaluationModel
+  updateOps.push(
+    EvaluationModel.updateOne(
+      { _id: ev._id },
+      {
+        $set: {
+          "student.refernceId": mainStudent.refernceId ?? null,
+          "student.familyId": mainStudent.familyId ?? null,
+          "student.familyEmail": mainStudent.familyEmail ?? null,
+        },
+      }
+    )
+  );
+
+  // Also update local response object so UI gets updated instantly
+  ev.student.refernceId = mainStudent.refernceId ?? null;
+  ev.student.familyId = mainStudent.familyId ?? null;
+  ev.student.familyEmail = mainStudent.familyEmail ?? null;
+}
+
+if (updateOps.length > 0) await Promise.all(updateOps);
+
 
   return { totalCount, evaluation };
 };
@@ -676,7 +733,7 @@ export const updateStudentInvoice = async (
 };
 
 export const getTotalTrialClassRequestCount = async () => {
-  
+
   const evaluationStats = await EvaluationModel.aggregate([
     {
       $match: { status: "Active" }
@@ -968,7 +1025,7 @@ export const getTrialClassCount = async (
     const skip = Math.max(
       0,
       ((Number(offset) ?? Number(commonMessages.OFFSET)) - 1) *
-        (Number(limit) ?? Number(commonMessages.LIMIT))
+      (Number(limit) ?? Number(commonMessages.LIMIT))
     );
     evaluationQuery
       .skip(skip)
@@ -1006,7 +1063,7 @@ export const getTrialClassRecordById = async (teacherId: string) => {
     getTrialsClassstatus = await EvaluationModel.findOne({
       trialId: trialClassUpdateDetails.trialId
     }).exec();
-    if (getTrialsClassstatus && (getTrialsClassstatus.trialClassStatus == "" || getTrialsClassstatus.trialClassStatus =="PENDING")) {
+    if (getTrialsClassstatus && (getTrialsClassstatus.trialClassStatus == "" || getTrialsClassstatus.trialClassStatus == "PENDING")) {
       const trialClass = await MeetingSchedule.find({
         trialId: getTrialsClassstatus.trialId,
         // scheduledStartDate:  {

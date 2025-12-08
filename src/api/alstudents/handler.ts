@@ -30,6 +30,8 @@ const getAllalstudentsListInputValidation = z.object({
     limit: true,
     studentId: true,
     filterValues: true,
+    familyId: true, 
+    familyName: true,
   }),
 });
 
