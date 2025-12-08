@@ -649,57 +649,82 @@ export const getAllEvaluationRecords = async (
     totalCount: totalCount,
   });
   
-  // Ensure the three fields exist on each evaluation.student by setting them
-  // to the student's values or `null` when missing. This allows callers to
-  // detect presence even when the value is not set.
-  const updateOps: Promise<any>[] = [];for (const ev of evaluation) {
-  const studentId =
-    ev?.student?.studentId || ev?.student?.studentRegisterId;
+  // Ensure referral/family values from StudentModel are present on the
+  // Evaluation document (stored at top-level fields: `referralId`,
+  // `familyId`, `familyEmail`). This fixes several bugs:
+  // - Student model uses `refernceId` (note spelling) so we must read that.
+  // - Evaluation stores these values at the document root, not inside
+  //   the `student` sub-document, so update those top-level fields.
+  const updateOps: Promise<any>[] = [];
+  for (const ev of evaluation) {
+    try {
+      const studentKey = ev?.student?.studentRegisterId || ev?.student?.studentId;
+      if (!studentKey) continue;
 
-  if (!studentId) continue;
-
-  // 1️⃣ Fetch already stored values from StudentModel
-  const mainStudent = await StudentModel.findOne(
-    { studentId },
-    {
-      refernceId: 1,
-      familyId: 1,
-      familyEmail: 1,
-      _id: 0,
-    }
-  ).lean();
-
-  if (!mainStudent) continue;
-
-  // 2️⃣ If already stored in Evaluation → no need to update again
-  const needsUpdate =
-    ev?.student?.refernceId !== mainStudent.refernceId || null;
-    ev?.student?.familyId !== mainStudent.familyId || null;
-    ev?.student?.familyEmail !== mainStudent.familyEmail || null;
-
-  if (!needsUpdate) continue;
-
-  // 3️⃣ Save permanently in EvaluationModel
-  updateOps.push(
-    EvaluationModel.updateOne(
-      { _id: ev._id },
-      {
-        $set: {
-          "student.refernceId": mainStudent.refernceId ?? null,
-          "student.familyId": mainStudent.familyId ?? null,
-          "student.familyEmail": mainStudent.familyEmail ?? null,
+      // Fetch the student by either `studentId` or `_id` (studentRegisterId)
+      const mainStudent = await StudentModel.findOne(
+        {
+          $or: [
+            { studentId: ev.student?.studentId },
+            { _id: ev.student?.studentRegisterId },
+          ],
         },
-      }
-    )
-  );
+        { refernceId: 1, familyId: 1, familyEmail: 1 }
+      ).lean();
 
-  // Also update local response object so UI gets updated instantly
-  ev.student.refernceId = mainStudent.refernceId ?? null;
-  ev.student.familyId = mainStudent.familyId ?? null;
-  ev.student.familyEmail = mainStudent.familyEmail ?? null;
-}
+      if (!mainStudent) continue;
 
-if (updateOps.length > 0) await Promise.all(updateOps);
+      const currentReferral = (ev as any).referralId ?? (ev as any).referralId === undefined ? null : (ev as any).referralId;
+      const currentFamilyId = (ev as any).familyId ?? null;
+      const currentFamilyEmail = (ev as any).familyEmail ?? null;
+
+      const studentReferral = mainStudent.refernceId ?? null; // spelled in student model
+      const studentFamilyId = mainStudent.familyId ?? null;
+      const studentFamilyEmail = mainStudent.familyEmail ?? null;
+
+      const needsUpdate =
+        currentReferral !== studentReferral ||
+        currentFamilyId !== studentFamilyId ||
+        currentFamilyEmail !== studentFamilyEmail;
+
+      if (!needsUpdate) continue;
+
+      AppLogger.info("Syncing student referral/family to evaluation", {
+        trialId: ev.trialId ?? ev._id,
+        studentRegisterId: ev.student?.studentRegisterId,
+        studentId: ev.student?.studentId,
+        studentReferral,
+        studentFamilyId,
+        studentFamilyEmail,
+      });
+
+      // Persist to evaluation top-level fields (these exist in evaluation schema)
+      updateOps.push(
+        EvaluationModel.updateOne(
+          { _id: ev._id },
+          {
+            $set: {
+              referralId: studentReferral,
+              familyId: studentFamilyId,
+              familyEmail: studentFamilyEmail,
+            },
+          }
+        )
+      );
+
+      // Update local response object so API caller sees changes immediately
+      (ev as any).referralId = studentReferral;
+      (ev as any).familyId = studentFamilyId;
+      (ev as any).familyEmail = studentFamilyEmail;
+    } catch (err) {
+      AppLogger.error("Error syncing student data to evaluation", { err, ev });
+    }
+  }
+
+  if (updateOps.length > 0) {
+    AppLogger.info(`Applying ${updateOps.length} evaluation update(s)`);
+    await Promise.all(updateOps);
+  }
 
 
   return { totalCount, evaluation };
