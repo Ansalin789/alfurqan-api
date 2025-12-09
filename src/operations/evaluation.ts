@@ -249,39 +249,78 @@ export const updateStudentEvaluation = async (
 }).exec();
 
 if (emailTemplate && payload.student && payload.subscription && evaluation) {
-  
+
   const emailTo = [{ email: payload.student.studentEmail }];
   const subject = "Invoice";
 
-  const totalPrice = Number(evaluation?.planTotalPrice) || 1;
+  // Base values
+  const rawTotalPrice = Number(evaluation?.planTotalPrice) || 1;
   const hours = Number(evaluation?.accomplishmentTime) || 1;
+
+  // Compute discount if family is being used for 4th time or more
+  let displayTotal = Number(rawTotalPrice);
+  let displayRate = displayTotal / (hours || 1);
+  let discountApplied = false;
+
+  const familyId = (evaluation && (evaluation as any).familyId) || payload.student.familyId || null;
+  if (familyId) {
+    try {
+      const familyUsageCount = await EvaluationModel.countDocuments({ familyId }).exec();
+      // Apply discount when family key has been used 4th time or more
+      if (familyUsageCount >= 3) {
+        discountApplied = true;
+        displayTotal = Number((displayTotal * 0.9).toFixed(2)); // 10% off
+        displayRate = Number((displayTotal / (hours || 1)).toFixed(2));
+
+        // Persist discounted total/amount and flag to evaluation (best-effort; fields may vary by schema)
+        try {
+          await EvaluationModel.findByIdAndUpdate(
+            id,
+            {
+              $set: {
+                planTotalPrice: String(displayTotal),
+                amount: String(displayTotal),
+                discountApplied: true,
+              },
+            },
+            { new: true }
+          ).exec();
+        } catch (err) {
+          // don't block email if DB update fails; just log
+          AppLogger.error("Failed to persist discounted price for evaluation", { err, id, familyId });
+        }
+      }
+    } catch (err) {
+      AppLogger.error("Error counting family usage for discount", { err, familyId });
+    }
+  }
 
   const dueDate = new Date();
   dueDate.setDate(dueDate.getDate() + 2);
 
-  const ratePerHour = totalPrice / hours;
+  // Prepare HTML using computed display values
+  let htmlPart = emailTemplate.templateContent || "";
+  htmlPart = htmlPart
+    .replace(/{{Student Name}}/g, (payload.student.studentFirstName || "") + " " + (payload.student.studentLastName || ""))
+    .replace(/{{Invoice Date}}/g, new Date().toDateString())
+    .replace(/{{Hourly Rate}}/g, String(displayRate))
+    .replace(/{{Total Amount}}/g, String(displayTotal))
+    .replace(/{{Package Name}}/g, payload.subscription.subscriptionName)
+    .replace(/{{Hours}}/g, String(hours))
+    .replace(/{{Payment Link}}/g, (updatedEvaluation && (updatedEvaluation as any).paymentLink) || "")
+    .replace(/{{Due Date}}/g, dueDate.toDateString());
 
- 
-
-  let htmlPart = emailTemplate.templateContent;
-
-  htmlPart = emailTemplate.templateContent
-  .replace(/{{Student Name}}/g, payload.student.studentFirstName + " " + payload.student.studentLastName)
-  .replace(/{{Invoice Date}}/g, new Date().toDateString())
-  .replace(/{{Hourly Rate}}/g, String(ratePerHour))
-  .replace(/{{Total Amount}}/g, String(evaluation.planTotalPrice))
-  .replace(/{{Package Name}}/g, payload.subscription.subscriptionName)
-  .replace(/{{Hours}}/g, String(hours))
-  .replace(/{{Payment Link}}/g, updatedEvaluation.paymentLink)
-  .replace(/{{Due Date}}/g, dueDate.toDateString());
-
-
- 
+  // If discount applied, optionally annotate the email (if template has a placeholder {{DiscountNote}})
+  if (discountApplied) {
+    htmlPart = htmlPart.replace(/{{DiscountNote}}/g, "10% family discount applied");
+  } else {
+    htmlPart = htmlPart.replace(/{{DiscountNote}}/g, "");
+  }
 
   await sendEmailClient(emailTo, subject, htmlPart);
 
-  console.log("✅ Invoice Email sent");
- 
+  console.log("✅ Invoice Email sent", { discountApplied });
+
 }
 
 
