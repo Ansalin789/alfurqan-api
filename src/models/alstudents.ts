@@ -140,6 +140,8 @@ export const zodAlStudentSchema = z.object({
         gender: z.string()
     }),
     sessionClassType: z.string().optional(),
+    familyId: z.string().optional(),
+    familyEmail: z.string().optional(),
     refernceId: z.string(),
     referredBy: z.string().optional(),
     level: z.string().optional(),
