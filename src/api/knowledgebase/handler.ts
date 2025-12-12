@@ -1,13 +1,17 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
-import getAllknowledge, { createKnowledgeBase } from "../../operations/knowledgeBase";
+import  { createKnowledgeBase,getAllknowledge, getAllknowledgeForStudent } from "../../operations/knowledgeBase";
 import { zodknowledgeBaseValidationSchema } from "../../models/knowledgebase";
-import { uploadFileToSharePoint } from "../../shared/sharepoint";
+import { uploadFileToSharePoint, uploadVideoToSharePoint } from "../../shared/sharepoint";
 import { Readable } from "stream";
+import { uploadedFormat } from "../../config/messages";
+import message from "../../models/message";
 
 const createInputValidation = z.object({
   payload: zodknowledgeBaseValidationSchema.pick({
     courseName: true,
+    level: true,
+    teacherId: true,
     subjectTitle: true,
     uploadedFormat: true,
     uploadedFile: true,
@@ -58,14 +62,28 @@ if (rawPayload.uploadedFile) {
   }
 }
 
-    const fileName = `${Date.now()}_knowledgebase_file`;
-    const shareLink = await uploadFileToSharePoint(
+let shareLink: { fileId?: string } = {};
+
+if(rawPayload.uploadedFormat === uploadedFormat.VIDEO){
+ const fileName = `${payload.courseName}-${payload.subjectTitle}-${payload.level}-${Date.now()}_knowledgebase_file`;
+   shareLink = await uploadVideoToSharePoint(
           uploadFileBuffer  as Buffer,
           fileName
         );
+}else{
+ const fileName = `${Date.now()}_knowledgebase_file`;
+   shareLink = await uploadFileToSharePoint(
+          uploadFileBuffer  as Buffer,
+          fileName
+        );
+}
+
+   
 
       const knowledgebase = await createKnowledgeBase({
         courseName: payload.courseName,
+        level: payload.level,
+        teacherId: payload?.teacherId || '',
         subjectTitle: payload.subjectTitle,
         uploadedFormat: payload.uploadedFormat,
         uploadedFile: shareLink.fileId || '', // now guaranteed to be Buffer or null
@@ -97,6 +115,32 @@ async getknowledgebaseList(req: Request, h: ResponseToolkit) {
     return h.response({
       status: 'success',
       data: result,
+    }).code(200);
+  } catch (error) {
+    console.error(error);
+    return h.response({ message: 'Internal Server Error' }).code(500);
+  }
+},
+async getknowledgebaseListForStudent(req: Request, h: ResponseToolkit) {
+  try {
+    // Extract filters from query parameters
+    const { studentId, course } = req.query;
+    if(!studentId || !course){
+      return h.response({
+        status : 'failed',
+        data : [],
+        message : "Missing StudentId and courseName"
+      })
+    }
+    // Pass filters to your data access function
+    const result = await getAllknowledgeForStudent(studentId, course);
+ if (result instanceof Error) {
+    return h.response({ message: result.message }).code(500);
+  }
+    return h.response({
+      status: 'success',
+      data: result,
+      message :"data fetched"
     }).code(200);
   } catch (error) {
     console.error(error);

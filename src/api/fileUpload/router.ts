@@ -12,7 +12,17 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "feedback"],  
         description: "View File from SharePoint",},
     },
-
+ {
+      method: "GET",
+      path: "/files/videoview/{fileId}",
+      options: {
+        handler:handler.streamVideoFromSharePoint ,  
+        tags: ["api", "feedback"],
+        auth: {
+          strategies: ["jwt"],
+        },  
+        description: "View File from SharePoint",},
+    }
   ];
 
 

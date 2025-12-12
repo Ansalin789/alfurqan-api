@@ -1770,7 +1770,9 @@ export interface IExpenseCreate {
 
 export interface IKnowledgeBase extends Document {
   courseName: string,
-  subjectTitle: string;
+  level:string,
+  teacherId?:string,
+  subjectTitle: string,
   uploadedFormat: string,
   uploadedFile: String,
   status: string,
@@ -1782,6 +1784,8 @@ export interface IKnowledgeBase extends Document {
 
 export interface IKnowledgeBaseCreate {
   courseName: string,
+  level:string,
+  teacherId?:string,
   subjectTitle: string;
   uploadedFormat: string,
   uploadedFile: any,
