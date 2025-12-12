@@ -15,7 +15,7 @@ const register = async (server: Server): Promise<void> => {
       payload: {
         output: "stream",
         parse: true, 
-        maxBytes: 100 * 1024 * 1024 ,
+        maxBytes: 1024 * 1024 * 1024 ,
          multipart: true,
   allow: "multipart/form-data",
       },
