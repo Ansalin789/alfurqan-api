@@ -112,22 +112,29 @@ export default {
     const io = getIO();
 
     // Emit to all participants
-    if (createdGroup.groupMessageParticipant?.length) {
-      createdGroup.groupMessageParticipant.forEach((p) => {
-        if (p.participantId) {
-          io.to(p.participantId.toString()).emit("newgroup", createdGroup);
-          AppLogger.info(`Group created emitted to participant ${p.participantId}`);
-        }
-      });
-    }
+    // Prefer emitting once to the group room (faster)
+    if (createdGroup.groupId) {
+      io.to(createdGroup.groupId.toString()).emit("newgroup", createdGroup);
+      AppLogger.info(`Group created emitted to group ${createdGroup.groupId}`);
+    } else {
+      // Fallback: emit to all participants
+      if (createdGroup.groupMessageParticipant?.length) {
+        createdGroup.groupMessageParticipant.forEach((p) => {
+          if (p.participantId) {
+            io.to(p.participantId.toString()).emit("newgroup", createdGroup);
+            AppLogger.info(`Group created emitted to participant ${p.participantId}`);
+          }
+        });
+      }
 
-    // Emit to organizer
-    if (createdGroup.groupMessageOrganizer?.organizerId) {
-      io.to(createdGroup.groupMessageOrganizer.organizerId.toString())
-        .emit("newgroup", createdGroup);
-      AppLogger.info(
-        `Group created emitted to organizer ${createdGroup.groupMessageOrganizer.organizerId}`
-      );
+      // Fallback: emit to organizer
+      if (createdGroup.groupMessageOrganizer?.organizerId) {
+        io.to(createdGroup.groupMessageOrganizer.organizerId.toString())
+          .emit("newgroup", createdGroup);
+        AppLogger.info(
+          `Group created emitted to organizer ${createdGroup.groupMessageOrganizer.organizerId}`
+        );
+      }
     }
 
     return h
@@ -194,23 +201,29 @@ export default {
     // Get socket instance
     const io = getIO();
 
-    // Emit to all participants
-    if (payload.groupMessageParticipant?.length) {
-      payload.groupMessageParticipant.forEach((p) => {
-        if (p.participantId) {
-          io.to(p.participantId.toString()).emit("newmessage", savedMessage);
-          AppLogger.info(`Message emitted to participant ${p.participantId}`);
-        }
-      });
-    }
+    // Emit once to the group room (faster than emitting per user)
+    if (payload.groupId) {
+      io.to(payload.groupId.toString()).emit("newmessage", savedMessage);
+      AppLogger.info(`Message emitted to group ${payload.groupId}`);
+    } else {
+      // Fallback: emit to all participants
+      if (payload.groupMessageParticipant?.length) {
+        payload.groupMessageParticipant.forEach((p) => {
+          if (p.participantId) {
+            io.to(p.participantId.toString()).emit("newmessage", savedMessage);
+            AppLogger.info(`Message emitted to participant ${p.participantId}`);
+          }
+        });
+      }
 
-    // Emit to organizer
-    if (payload.groupMessageOrganizer?.organizerId) {
-      io.to(payload.groupMessageOrganizer.organizerId.toString())
-        .emit("newmessage", savedMessage);
-      AppLogger.info(
-        `Message emitted to organizer ${payload.groupMessageOrganizer.organizerId}`
-      );
+      // Fallback: emit to organizer
+      if (payload.groupMessageOrganizer?.organizerId) {
+        io.to(payload.groupMessageOrganizer.organizerId.toString())
+          .emit("newmessage", savedMessage);
+        AppLogger.info(
+          `Message emitted to organizer ${payload.groupMessageOrganizer.organizerId}`
+        );
+      }
     }
 
     return h
@@ -236,23 +249,29 @@ export default {
     // Get socket instance
     const io = getIO();
 
-    // Emit to all participants
-    if (result.groupMessageParticipant?.length) {
-      result.groupMessageParticipant.forEach((p) => {
-        if (p.participantId) {
-          io.to(p.participantId.toString()).emit("groupupdated", result);
-          AppLogger.info(`Group updated emitted to participant ${p.participantId}`);
-        }
-      });
-    }
+    // Prefer emitting once to the group room
+    if (result.groupId) {
+      io.to(result.groupId.toString()).emit("groupupdated", result);
+      AppLogger.info(`Group updated emitted to group ${result.groupId}`);
+    } else {
+      // Fallback: emit to all participants
+      if (result.groupMessageParticipant?.length) {
+        result.groupMessageParticipant.forEach((p) => {
+          if (p.participantId) {
+            io.to(p.participantId.toString()).emit("groupupdated", result);
+            AppLogger.info(`Group updated emitted to participant ${p.participantId}`);
+          }
+        });
+      }
 
-    // Emit to organizer
-    if (result.groupMessageOrganizer?.organizerId) {
-      io.to(result.groupMessageOrganizer.organizerId.toString())
-        .emit("groupupdated", result);
-      AppLogger.info(
-        `Group updated emitted to organizer ${result.groupMessageOrganizer.organizerId}`
-      );
+      // Fallback: emit to organizer
+      if (result.groupMessageOrganizer?.organizerId) {
+        io.to(result.groupMessageOrganizer.organizerId.toString())
+          .emit("groupupdated", result);
+        AppLogger.info(
+          `Group updated emitted to organizer ${result.groupMessageOrganizer.organizerId}`
+        );
+      }
     }
 
     return h.response({
@@ -274,23 +293,29 @@ export default {
     // Get socket instance
     const io = getIO();
 
-    // Emit to all participants
-    if (result.groupMessageParticipant?.length) {
-      result.groupMessageParticipant.forEach((p) => {
-        if (p.participantId) {
-          io.to(p.participantId.toString()).emit("groupupdated", result);
-          AppLogger.info(`Group updated emitted to participant ${p.participantId}`);
-        }
-      });
-    }
+    // Prefer emitting once to the group room
+    if (result.groupId) {
+      io.to(result.groupId.toString()).emit("groupupdated", result);
+      AppLogger.info(`Group updated emitted to group ${result.groupId}`);
+    } else {
+      // Fallback: emit to all participants
+      if (result.groupMessageParticipant?.length) {
+        result.groupMessageParticipant.forEach((p) => {
+          if (p.participantId) {
+            io.to(p.participantId.toString()).emit("groupupdated", result);
+            AppLogger.info(`Group updated emitted to participant ${p.participantId}`);
+          }
+        });
+      }
 
-    // Emit to organizer
-    if (result.groupMessageOrganizer?.organizerId) {
-      io.to(result.groupMessageOrganizer.organizerId.toString())
-        .emit("groupupdated", result);
-      AppLogger.info(
-        `Group updated emitted to organizer ${result.groupMessageOrganizer.organizerId}`
-      );
+      // Fallback: emit to organizer
+      if (result.groupMessageOrganizer?.organizerId) {
+        io.to(result.groupMessageOrganizer.organizerId.toString())
+          .emit("groupupdated", result);
+        AppLogger.info(
+          `Group updated emitted to organizer ${result.groupMessageOrganizer.organizerId}`
+        );
+      }
     }
 
     return h
@@ -313,23 +338,29 @@ export default {
       // Get socket instance
       const io = getIO();
 
-      // Emit to all participants
-      if (group.groupMessageParticipant?.length) {
-        group.groupMessageParticipant.forEach((p) => {
-          if (p.participantId) {
-            io.to(p.participantId.toString()).emit("groupupdated", group);
-            AppLogger.info(`Group updated emitted to participant ${p.participantId}`);
-          }
-        });
-      }
+      // Prefer emitting once to the group room
+      if (group.groupId) {
+        io.to(group.groupId.toString()).emit("groupupdated", group);
+        AppLogger.info(`Group updated emitted to group ${group.groupId}`);
+      } else {
+        // Fallback: emit to all participants
+        if (group.groupMessageParticipant?.length) {
+          group.groupMessageParticipant.forEach((p) => {
+            if (p.participantId) {
+              io.to(p.participantId.toString()).emit("groupupdated", group);
+              AppLogger.info(`Group updated emitted to participant ${p.participantId}`);
+            }
+          });
+        }
 
-      // Emit to organizer
-      if (group.groupMessageOrganizer?.organizerId) {
-        io.to(group.groupMessageOrganizer.organizerId.toString())
-          .emit("groupupdated", group);
-        AppLogger.info(
-          `Group updated emitted to organizer ${group.groupMessageOrganizer.organizerId}`
-        );
+        // Fallback: emit to organizer
+        if (group.groupMessageOrganizer?.organizerId) {
+          io.to(group.groupMessageOrganizer.organizerId.toString())
+            .emit("groupupdated", group);
+          AppLogger.info(
+            `Group updated emitted to organizer ${group.groupMessageOrganizer.organizerId}`
+          );
+        }
       }
     }
 
@@ -353,23 +384,29 @@ export default {
     // Get socket instance
     const io = getIO();
 
-    // Emit to all participants
-    if (result.groupMessageParticipant?.length) {
-      result.groupMessageParticipant.forEach((p) => {
-        if (p.participantId) {
-          io.to(p.participantId.toString()).emit("groupdeleted", result);
-          AppLogger.info(`Group deleted emitted to participant ${p.participantId}`);
-        }
-      });
-    }
+    // Prefer emitting once to the group room
+    if (result.groupId) {
+      io.to(result.groupId.toString()).emit("groupdeleted", result);
+      AppLogger.info(`Group deleted emitted to group ${result.groupId}`);
+    } else {
+      // Fallback: emit to all participants
+      if (result.groupMessageParticipant?.length) {
+        result.groupMessageParticipant.forEach((p) => {
+          if (p.participantId) {
+            io.to(p.participantId.toString()).emit("groupdeleted", result);
+            AppLogger.info(`Group deleted emitted to participant ${p.participantId}`);
+          }
+        });
+      }
 
-    // Emit to organizer
-    if (result.groupMessageOrganizer?.organizerId) {
-      io.to(result.groupMessageOrganizer.organizerId.toString())
-        .emit("groupdeleted", result);
-      AppLogger.info(
-        `Group deleted emitted to organizer ${result.groupMessageOrganizer.organizerId}`
-      );
+      // Fallback: emit to organizer
+      if (result.groupMessageOrganizer?.organizerId) {
+        io.to(result.groupMessageOrganizer.organizerId.toString())
+          .emit("groupdeleted", result);
+        AppLogger.info(
+          `Group deleted emitted to organizer ${result.groupMessageOrganizer.organizerId}`
+        );
+      }
     }
 
     return h
