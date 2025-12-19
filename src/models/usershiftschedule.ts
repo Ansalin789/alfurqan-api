@@ -28,8 +28,8 @@ const usershiftscheduleSchema = new Schema<IUsershiftschedule>({
         required: true,
     },
     role: {
-      type: String,
-      required: true,
+        type: [String],
+      required: true
   },
   position:{
       type: String,

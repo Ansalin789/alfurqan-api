@@ -4,7 +4,7 @@ import Meeting from "../models/addmeeting";
 import User from "../models/users";
 import cron from "node-cron";
 import { GetAllRecordsParams } from "../shared/enum";
-import mongoose, { Types } from "mongoose";
+import  { Types } from "mongoose";
 import { v4 as uuidv4 } from 'uuid';
 import adminmeeting from "../models/adminmeeting"
 

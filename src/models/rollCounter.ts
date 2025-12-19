@@ -1,4 +1,4 @@
-import mongoose, { model, Schema } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 import { IRollCounter } from "../../types/models.types";
 
 const rollCounterSchema = new Schema<IRollCounter>({

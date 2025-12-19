@@ -23,7 +23,8 @@ const register = async (server: Server): Promise<void> => {
         },
         auth: {
           strategies: ["jwt"],
-        }, },
+        }, 
+      },
       
     },
      
@@ -63,7 +64,21 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "users"],
         auth: {
           strategies: ["jwt"],
-        }, },
+        },
+       },
+    },
+
+    {
+      method: "PUT",
+      path: "/otheremp/roleupdate/{id}",
+      options: {
+        handler: handler.updateOtherEmployeeRole,
+        description: userMessages.LIST,
+        tags: ["api", "users"],
+        auth: {
+          strategies: ["jwt"],
+        },
+       },
     },
 ];
 server.route(routes);

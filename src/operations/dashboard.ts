@@ -11,9 +11,6 @@ import {
   endOfMonth,
   startOfYear,
   endOfYear,
-  format,
-  eachDayOfInterval,
-  eachMonthOfInterval,
 } from "date-fns"
 import { Types } from "mongoose"
 import meetingschedule from "../models/calendar"
@@ -315,74 +312,6 @@ const monthlyResult = await classShedule.aggregate(monthlyPipeline as PipelineSt
     throw error;
   }
 }
-
-
-
-// export const dashboardWidgetStudentCounts = async (
-//   studentId: string,
-//   courseName: string // Pass course name dynamically from query
-// ): Promise<{
-//   totalLevel: number
-//   totalAttendance: number
-//   totalClasses: number
-//   totalDuration: number
-// }> => {
-//   // Step 1: Get student record from alstudents
-//   const studentRecord = await alstudents.findOne({
-//     _id: studentId,
-//     "course.courseName": courseName,
-//   }).exec();
-
-//   // Step 2: Calculate attendance: present and total class counts
-//   const [presentCount, totalClassCount] = await Promise.all([
-//     classShedule.countDocuments({
-//       "student.studentId": studentId,
-//       "course.courseName": courseName,
-//       "studentAttendee": "present",
-//     }).exec(),
-
-//     classShedule.countDocuments({
-//       "student.studentId": studentId,
-//       "course.courseName": courseName,
-//     }).exec(),
-//   ]);
-
-//   const totalAttendance =
-//     totalClassCount > 0 ? (presentCount / totalClassCount) * 100 : 0;
-
-//   // Step 3: Get totalDuration (accomplished hours from EvaluationModel)
-//   // let totalDuration = 0;
-//   // if (internalStudentId) {
-//   //   const accomplishedHours = await EvaluationModel.aggregate([
-//   //     {
-//   //       $match: {
-//   //         "student.studentId": internalStudentId,
-//   //       },
-//   //     },
-//   //     {
-//   //       $group: {
-//   //         _id: null,
-//   //         totalAccomplishedHours: {
-//   //           $sum: "$student.accomplishedHours", // Update if the field is different
-//   //         },
-//   //       },
-//   //     },
-//   //   ]);
-
-//   //   totalDuration = accomplishedHours[0]?.totalAccomplishedHours || 0;
-//   // }
-
-//   const totalLevel = studentRecord?.level || 1; 
-
-//   // Step 5: Return final metrics
-//   return {
-//     totalLevel,
-//     totalAttendance: parseFloat(totalAttendance.toFixed(2)),
-//     totalClasses: totalClassCount,
-//     // totalDuration,
-//   };
-// };
-
 
 //pass the studentId and course from query
 export const dashboardWidgetStudentCounts = async (

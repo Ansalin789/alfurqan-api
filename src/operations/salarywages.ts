@@ -11,8 +11,6 @@ import AppLogger from "../helpers/logging";
 import moment from "moment";
 
 
-
-
 export const runSalaryCron = async () => {
   console.log("🔄 Starting salary calculation cron job...");
 
@@ -29,7 +27,7 @@ export const runSalaryCron = async () => {
 export const getAllSalaryList = async (
   params: GetAllRecordsParams
 ): Promise<{ totalCount: number; expenses: ISalarywages[] }> => {
-  const { searchText, sortBy, sortOrder, offset, limit, filterValues } = params;
+  const { sortBy, sortOrder } = params;
 
   // Initialize the query object
   const query: any = {};
@@ -304,7 +302,7 @@ const getFixedSalaryAmount = async (employeeId: string) => {
     console.warn(`⚠️ No wage info found for employee ${employeeId}`);
     return 0;
   }
-  return parseFloat(String(wageInfo.classType.rate).replace(/\$|,/g, '') || "0");
+  return parseFloat(String(wageInfo.classType.rate).replaceAll(/\$|,/g, '') || "0");
 };
 
 const processFixedSalaryEmployee = async (employeeId: string, designation: string, monthLabel: string) => {

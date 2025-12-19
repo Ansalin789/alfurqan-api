@@ -150,7 +150,10 @@ export const evaluationStatus: Record<string, any> = Object.freeze({
 
   export const role: Record<string, string> = Object.freeze({
     ACADEMICCOACH: "ACADEMICCOACH",
-    TEACHER: "Teacher",
+    SUPERVISOR: "SUPERVISOR",
+    ADMIN: "ADMIN",
+    STUDENT: "STUDENT",
+    TEACHER: "TEACHER",
   });
 
   export const applicationStatus: Record<string, any> = Object.freeze({

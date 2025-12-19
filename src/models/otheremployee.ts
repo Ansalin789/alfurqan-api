@@ -5,6 +5,11 @@ import { commonMessages } from "../config/messages";
 
 const otherEmployeeSchema = new Schema<IOtherEmployee>(
     {
+    employeeId:
+    {
+     type: String,
+     required: false,
+    },
     firstName:
     {
      type: String,
@@ -116,9 +121,9 @@ const otherEmployeeSchema = new Schema<IOtherEmployee>(
         required: true,
     },
     designation:
-    {
-    type: String,
-    required: true, 
+   {
+      type: [String],
+      required: true
     },
     department:
     {
@@ -177,6 +182,10 @@ const otherEmployeeSchema = new Schema<IOtherEmployee>(
     {
     type: Buffer,
     required: false,
+    },
+    isRole: {
+    type: String,
+    required: true,
     },
     status:
     {
@@ -245,7 +254,7 @@ const otherEmployeeSchema = new Schema<IOtherEmployee>(
           ),
         relationshipWithEmployee: z.string(),
         address: z.string(),
-        designation: z.string(),
+        designation: z.array(z.string()).min(1),
         department: z.string(),
         preferedWorkingHours: z.preprocess(
             (val) => (typeof val === "string" ? parseInt(val, 10) : val), 
@@ -255,22 +264,23 @@ const otherEmployeeSchema = new Schema<IOtherEmployee>(
         preferedShiftTo: z.string().regex(/^([01][0-9]|2[0-3]):[0-5][0-9]$/, "Time must be in 24-hour format HH:MM"),
         comments: z.string(),
         profileImage: z.string().optional(),
-        applicationDate:  z.string().refine((val) => !isNaN(Date.parse(val)), {
+        applicationDate:  z.string().refine((val) => !Number.isNaN(Date.parse(val)), {
             message: commonMessages.INVALID_DATE_FORMAT,
           }).transform((val) => new Date(val)),
         currency: z.string(),
         expectedSalary: z.preprocess(
-            (val) => (typeof val === "string" ? parseInt(val, 10) : val), 
+            (val) => (typeof val === "string" ? Number.parseInt(val, 10) : val), 
             z.number()
           ),
         applicationStatus: z.string(),
         preferedWorkingDays: z.string().optional(),
         status: z.string(),
+        isRole: z.string(),
         createdBy: z.string().optional(),
-        createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+        createdDate: z.string().refine((val) => !Number.isNaN(Date.parse(val)), {
             message: commonMessages.INVALID_DATE_FORMAT,
           }).transform((val) => new Date(val)).optional(),
-          updatedDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+          updatedDate: z.string().refine((val) => !Number.isNaN(Date.parse(val)), {
             message: commonMessages.INVALID_DATE_FORMAT,
           }).transform((val) => new Date(val)).optional(),
 

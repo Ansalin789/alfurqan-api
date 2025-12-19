@@ -1,0 +1,226 @@
+{
+    "ACADEMICCOACH": [
+        {
+            "key": "dashboard",
+            "isEnabled": true,
+            "permission": {
+                "read": true,
+                "write": true,
+                "delete": false
+            }
+        },
+        {
+            "key": "trailmanagement",
+            "isEnabled": true,
+            "permission": {
+                "read": true,
+                "write": true,
+                "delete": false
+            }
+        },
+        {
+            "key": "schedule",
+            "isEnabled": true,
+            "permission": {
+                "read": true,
+                "write": true,
+                "delete": false
+            }
+        },
+        {
+            "key": "managestudents",
+            "isEnabled": true,
+            "permission": {
+                "read": true,
+                "write": true,
+                "delete": false
+            }
+        },
+        {
+            "key": "manageteachers",
+            "isEnabled": true,
+            "permission": {
+                "read": true,
+                "write": true,
+                "delete": false
+            }
+        },
+        {
+            "key": "messages",
+            "isEnabled": true,
+            "permission": {
+                "read": true,
+                "write": true,
+                "delete": false
+            }
+        },
+        {
+            "key": "support",
+            "isEnabled": true,
+            "permission": {
+                "read": true,
+                "write": true,
+                "delete": false
+            }
+        }
+    ],
+    "SUPERVISOR": [
+        {
+            "key": "dashboard",
+            "isEnabled": true,
+            "permission": {
+                "read": true,
+                "write": true,
+                "delete": false
+            }
+        },
+        {
+            "key": "recruitment",
+            "isEnabled": true,
+            "permission": {
+                "read": true,
+                "write": true,
+                "delete": false
+            }
+        },
+        {
+            "key": "meetingtraining",
+            "isEnabled": true,
+            "permission": {
+                "read": true,
+                "write": true,
+                "delete": false
+            }
+        },
+        {
+            "key": "teachers",
+            "isEnabled": true,
+            "permission": {
+                "read": true,
+                "write": true,
+                "delete": false
+            }
+        },
+        {
+            "key": "messages",
+            "isEnabled": true,
+            "permission": {
+                "read": true,
+                "write": true,
+                "delete": false
+            }
+        },
+        {
+            "key": "support",
+            "isEnabled": true,
+            "permission": {
+                "read": true,
+                "write": true,
+                "delete": false
+            }
+        }
+    ],
+    "TEACHER": [
+        {
+            "key": "dashboard",
+            "isEnabled": true,
+            "permission": {
+                "read": true,
+                "write": true,
+                "delete": false
+            }
+        },
+        {
+            "key": "meeting",
+            "isEnabled": true,
+            "permission": {
+                "read": true,
+                "write": true,
+                "delete": false
+            }
+        },
+        {
+            "key": "schedule",
+            "isEnabled": true,
+            "permission": {
+                "read": true,
+                "write": true,
+                "delete": false
+            }
+        },
+        {
+            "key": "liveclass",
+            "isEnabled": true,
+            "permission": {
+                "read": true,
+                "write": true,
+                "delete": false
+            }
+        },
+        {
+            "key": "assignment",
+            "isEnabled": true,
+            "permission": {
+                "read": true,
+                "write": true,
+                "delete": false
+            }
+        },
+        {
+            "key": "analytics",
+            "isEnabled": true,
+            "permission": {
+                "read": true,
+                "write": true,
+                "delete": false
+            }
+        },
+        {
+            "key": "messages",
+            "isEnabled": true,
+            "permission": {
+                "read": true,
+                "write": true,
+                "delete": false
+            }
+        },
+        {
+            "key": "support",
+            "isEnabled": true,
+            "permission": {
+                "read": true,
+                "write": true,
+                "delete": false
+            }
+        }
+    ],
+    "ADMIN": [
+        {
+            "key": "users",
+            "isEnabled": true,
+            "permission": {
+                "read": true,
+                "write": true,
+                "delete": true
+            }
+        },
+        {
+            "key": "roles",
+            "isEnabled": true,
+            "permission": {
+                "read": true,
+                "write": true,
+                "delete": true
+            }
+        },
+        {
+            "key": "modules",
+            "isEnabled": true,
+            "permission": {
+                "read": true,
+                "write": true,
+                "delete": true
+            }
+        }
+    ]
+}

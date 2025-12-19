@@ -1,8 +1,7 @@
 import { ResponseToolkit,Request } from "@hapi/hapi";
 import { z } from "zod";
-import otheremployee, { zodOtherEmployeeSchema } from "../../models/otheremployee";
-import { getOhterEmpCountriesCount, getOhterEmployeeById, saveOtherEmployee, UpdateOtherEmployee } from "../../operations/otheremployee";
-import * as Stream from "stream";
+import { zodOtherEmployeeSchema } from "../../models/otheremployee";
+import { getOhterEmpCountriesCount, getOhterEmployeeById, saveOtherEmployee, UpdateOtherEmployee, updateOtherEmployeeRoleById } from "../../operations/otheremployee";
 import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
 import { recruitmentMessages } from "../../config/messages";
@@ -46,11 +45,17 @@ const createEmployeeInputValidation = z.object({
     expectedSalary: true,
     applicationStatus: true,
     preferedWorkingDays: true,
-    status: true
+    status: true,
+    isRole: true,
   }),
 });
 
-
+ const updateInputValidation = z.object({
+  payload: zodOtherEmployeeSchema.pick({
+   designation: true,
+   isRole:true,
+  }),
+ });
 
 
 export default {
@@ -65,7 +70,11 @@ export default {
             ? await streamToBuffer(rawPayload.uploadResume)
             : null;
 
+              const generateRoleId = generateAFTCode("AFOEMP");
+  
+
             return await saveOtherEmployee({  
+            employeeId: generateRoleId,
             firstName : payload.firstName,
             lastName: payload.lastName,
             email: payload.email,
@@ -88,7 +97,7 @@ export default {
             emergencyContactNumber: payload.emergencyContactNumber,
             relationshipWithEmployee: payload.relationshipWithEmployee,
             address: payload.address,
-            designation: payload.designation,
+            designation: Array.isArray(payload.designation) ? payload.designation.join(", ") : payload.designation,
             department: payload.department,
             preferedWorkingHours: payload.preferedWorkingHours,
             preferedShiftFrom: payload.preferedShiftFrom,
@@ -100,8 +109,9 @@ export default {
             expectedSalary: payload.expectedSalary,
             applicationStatus: payload.applicationStatus,
             preferedWorkingDays: payload.preferedWorkingDays,
-            resume: uploadFileBuffer ? uploadFileBuffer : undefined ,
-            status: payload.status
+            resume: uploadFileBuffer ?? undefined ,
+            status: payload.status,
+            isRole: payload.isRole,
           }) 
      },
      async getOhterEmpCountries(req: Request, h: ResponseToolkit){
@@ -129,7 +139,7 @@ async updateOtherEmployee(req: Request, h: ResponseToolkit) {
  const updateData = {
   firstName: payload.firstName,
   lastName: payload.lastName,
-  designation: payload.designation,
+  designation: Array.isArray(payload.designation) ? payload.designation : [payload.designation],
   email: payload.email,
   phoneNumber: payload.phoneNumber,
   dateOfBirth: payload.dateOfBirth,
@@ -154,12 +164,25 @@ async updateOtherEmployee(req: Request, h: ResponseToolkit) {
   });
 
   const updatedEmployee = await UpdateOtherEmployee(_id, updateData);
-
   if (!updatedEmployee) return { error: "Employee not found" };
 
   return updatedEmployee;
-}
+},
 
+async updateOtherEmployeeRole(req: Request, h: ResponseToolkit) {
+
+ const { payload } = updateInputValidation.parse({
+        payload: req.payload
+      });
+   
+      const result = await updateOtherEmployeeRoleById(String(req.params.id), payload);
+      if (isNil(result)) {
+        return notFound(recruitmentMessages.USER_NOT_FOUND);
+      }
+    
+      return result;
+
+},
 
 
 }
@@ -173,9 +196,14 @@ async function streamToBuffer(stream: Readable): Promise<Buffer> {
     stream.on("error", (err: any) => reject(err));
     stream.on("end", () => resolve(Buffer.concat(chunks)));
   });
-
-
-
   
 }
 
+
+
+
+
+function generateAFTCode(preName: string) {
+  const num = Math.floor(10000 + Math.random() * 90000);
+  return `${preName}${num}`;
+}

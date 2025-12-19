@@ -1,9 +1,8 @@
-import mongoose, { model, Schema } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
 import { IRecruitment } from "../../types/models.types";
 import { z } from "zod";
 import { applicationStatus, appStatus, commonMessages } from "../config/messages";
-
 
 const recruitmentSchema = new Schema<IRecruitment>(
 {
@@ -187,12 +186,12 @@ export const zodRecruitmentSchema = z.object({
         supervisorRole:z.string().optional(),
     }).optional(),
     gender: z.string().optional(),
-    applicationDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    applicationDate: z.string().refine((val) => !Number.isNaN(Date.parse(val)), {
         message: commonMessages.INVALID_DATE_FORMAT,
       }).transform((val) => new Date(val)).optional(),
       candidateEmail: z.string().email() ,
       candidatePhoneNumber: z.preprocess(
-        (val) => (typeof val === "string" ? parseInt(val, 10) : val), 
+        (val) => (typeof val === "string" ? Number.parseInt(val, 10) : val), 
         z.number()
       ),
       candidateCountry: z.string(),
@@ -200,7 +199,7 @@ export const zodRecruitmentSchema = z.object({
       positionApplied: z.string(),
       currency: z.string(),
       expectedSalary: z.preprocess(
-        (val) => (typeof val === "string" ? parseInt(val, 10) : val), 
+        (val) => (typeof val === "string" ? Number.parseInt(val, 10) : val), 
         z.number()
       ),
       preferedWorkingHours: z.string(),
@@ -214,7 +213,7 @@ export const zodRecruitmentSchema = z.object({
       englishSpeaking: z.string().optional(),
       preferedWorkingDays: z.string().optional(),
       overallRating: z.preprocess(
-        (val) => (typeof val === "string" ? parseInt(val, 10) : val), 
+        (val) => (typeof val === "string" ? Number.parseInt(val, 10) : val), 
         z.number()
       ).optional(),
     //   professionalExperience:z.array(z.object({
@@ -232,11 +231,11 @@ export const zodRecruitmentSchema = z.object({
     // ).optional(),
       skills: z.string().optional(),
       status: z.enum([appStatus.ACTIVE, appStatus.IN_ACTIVE, appStatus.DELETED]).optional(),
-      createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
+      createdDate: z.string().refine((val) => !Number.isNaN(Date.parse(val)), {
         message: commonMessages.INVALID_DATE_FORMAT,
       }).transform((val) => new Date(val)).optional(),
       createdBy: z.string().optional(),
-      updatedDate:z.string().refine((val) => !isNaN(Date.parse(val)), {
+      updatedDate:z.string().refine((val) => !Number.isNaN(Date.parse(val)), {
         message: commonMessages.INVALID_DATE_FORMAT,
       }).transform((val) => new Date(val)).optional(),
       updatedBy:z.string().optional()
