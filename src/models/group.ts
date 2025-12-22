@@ -8,10 +8,10 @@ const groupSchema = new Schema<Group>(
     groupId: { type: String, required: true },
 
     GroupName: { type: String, required: true },
-    GroupNameDescription: { type: String },
-    CourseName: { type: String },
-    Designation: { type: String },
-    PreferredTeacher: { type: String },
+    GroupNameDescription: { type: String ,required: false },
+    CourseName: { type: String , required: false },
+    Designation: { type: String ,required: false},
+    PreferredTeacher: { type: String ,required: false},
 
     groupMessageParticipant: [
       {
@@ -80,9 +80,9 @@ export const zodGroupSchema = z.object({
   groupId: z.string(),
   GroupName: z.string(),
   GroupNameDescription: z.string().optional(),
-  CourseName: z.string(),
-  Designation: z.string(),
-  PreferredTeacher: z.string(),
+  CourseName: z.string().optional(),
+  Designation: z.string().optional(),
+  PreferredTeacher: z.string().optional(),
  uploadedFormat: z.enum([uploadedFormat.PDF, uploadedFormat.VIDEO,]).optional(),
     uploadedFile: z.any().optional(),
     
