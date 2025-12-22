@@ -1,7 +1,7 @@
 import { ResponseToolkit, Request } from "@hapi/hapi";
 import { z } from "zod";
 import { zodAlStudentInvoiceSchemaValidation, zodAlStudentPaymentSchemaValidation } from "../../shared/zod_schema_validation";
-import getstudentInvoiceList, { getAllStudetnInVoiceList, getAllTotalInvoice, getInvoiceCounts, getInvoiceDueDateBuckets, getStudentAllRevenue, getStudentInvoicesById, getTotalAmountByCountry, getTotalAmountByCourse, sendInvoiceOperation } from "../../operations/invoice";
+import getstudentInvoiceList, { getAllStudetnInVoiceList, getAllTotalInvoice, getInvoiceCounts, getInvoiceDueDateBuckets, getStudentAllRevenue, getStudentInvoicesByAlStudentId, getTotalAmountByCountry, getTotalAmountByCourse, sendInvoiceOperation } from "../../operations/invoice";
 import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
 import { evaluationMessages } from "../../config/messages";
@@ -72,13 +72,13 @@ export default {
   },
 
   async getStudentInvoicesByQuery(req: Request, h: ResponseToolkit) {
-    const { studentId } = req.query;
+    const { studentId ,courseName } = req.query;
 
-    if (!studentId) {
-      return h.response({ error: "studentId query param is required" }).code(400);
+    if (!studentId && !courseName) {
+      return h.response({ error: "studentId and courseName query param is required" }).code(400);
     }
 
-    const invoices = await getStudentInvoicesById(studentId as string);
+    const invoices = await getStudentInvoicesByAlStudentId(studentId as string , courseName as string);
 
     return h.response({
       count: invoices.length,

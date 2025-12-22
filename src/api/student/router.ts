@@ -18,6 +18,16 @@ const register = async (server: Server): Promise<void> => {
     },
 
     {
+      method: "PUT",
+      path :"/student/addcourse/{studentId}",
+      options:{
+        handler: handler.addCourseToStudent,
+        description: studentMessages.UPDATE,
+        tags: ["api", "student"],
+      }
+    },
+
+    {
       method: "GET",
       path: "/studentlist",
       options: {

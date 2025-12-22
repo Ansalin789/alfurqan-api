@@ -88,6 +88,133 @@ export const createStudent = async (
         ];
         const subject = "Welcome To Alfurqan";
         const htmlPart = emailTemplate.templateContent.replace('<username>', payload.firstName + ' ' + payload.lastName);
+        sendEmailClient(emailTo, subject,htmlPart);
+    }
+
+    const meetingDetails = await zoomMeetingInvite(savedUser);
+    const zoomMailTemplate = await EmailTemplate.findOne({
+      templateKey: 'evaluation',
+  }).exec();
+  if(!zoomMailTemplate){
+    console.log("Zoom email template not found");
+  }
+   
+        const course = await Course.findOne({
+          courseName: payload.learningInterest,
+        });
+        const CreatemeetingDetails = await MeetingSchedule.create(
+          {
+            academicCoach: {
+            academicCoachId: savedUser?.academicCoach.academicCoachId,
+            name: savedUser?.academicCoach.name,
+            role: savedUser?.academicCoach.role,
+            email:savedUser?.academicCoach.email
+            },
+          teacher: {
+            teacherId: null,
+            name: null,
+            email: null,
+          },
+          student: {
+            studentId: savedUser._id,
+            name: savedUser.firstName + ' ' + savedUser.lastName,
+            email: savedUser.email
+
+          },
+          subject: "Student Evaluation",
+          meetingLocation: 'Zoom',
+          course: {
+            courseId: course?._id,
+            courseName: course?.courseName,
+          },
+          classType: 'Evaluation',
+          meetingType: 'Online',
+          meetingLink: meetingDetails.join_url,
+          isScheduledMeeting: true,
+          scheduledStartDate: savedUser.startDate,
+          scheduledEndDate: savedUser.startDate,
+          scheduledFrom: savedUser.preferredFromTime,
+          scheduledTo: savedUser.preferredToTime,
+          timeZone: savedUser.timeZone,
+          description: 'Test Description',
+          meetingStatus: 'Scheduled',
+          studentResponse: 'Pending',
+          status: 'Active',
+          createdDate: new Date(),
+          createdBy: savedUser.firstName + ' ' + savedUser.lastName,
+          lastUpdatedDate: new Date(),
+          lastUpdatedBy: savedUser.firstName + ' ' + savedUser.lastName,
+    });
+
+    const subject = 'Evaluation Zoom Meeting';
+const htmlPart = zoomMailTemplate?.templateContent
+  .replace(/{{Student’s Name}}/g,savedUser.firstName + ' ' + savedUser.lastName)
+  .replace(/{{Preferred Date}}/g, payload.startDate.toDateString())
+  .replace(/{{Preferred Time}}/g, payload.preferredFromTime)
+  .replace(/{{Zoom Link}}/g, CreatemeetingDetails.meetingLink);
+    const emailTo = [
+      { email: savedUser.email }, { email: savedUser.academicCoach.email }
+  ];
+
+  
+    if(htmlPart){
+       sendEmailClient(emailTo, subject,htmlPart);
+    }
+    const userObject = savedUser.toObject();
+    await CreatemeetingDetails.save();
+    return userObject;
+};
+
+export const createNewCourseForStudent = async (
+    payload: IStudentCreate , studentId: string
+): Promise<IStudents | { error: any }> => {
+    const newUser = new StudentModel(payload);
+    if (newUser.startDate?.toDateString() === new Date().toDateString()) {
+        return {
+            error: badRequest('Evaluation class is not allowed to current date. Select another date'),
+        };
+    }
+     const rollNo = studentId;
+
+    const academicCoach = await UserModel.findOne({
+      userId : payload.academicCoach.academicCoachId 
+    });
+
+      console.log("academicCoach>>>>", academicCoach);
+      newUser.studentId = rollNo;
+    newUser.academicCoach = {
+        academicCoachId: String(academicCoach?._id) || " ", // Provide a default value if undefined
+        name: academicCoach?.userName || " ",                       // Provide a default value if undefined
+        role: academicCoach?.role[0] || " ", // Provide a default value if undefined
+        email: academicCoach?.email || " " // Provide a default value if undefined
+    };
+    const savedUser = await newUser.save(); 
+    await sendNotification({
+      messages: `${savedUser.firstName}! has been joined in our academic team !.`,
+      senderId: String(savedUser._id),
+      senderName: savedUser.firstName,
+      senderEmail: savedUser.email,
+      isRead : false,
+      receiverId: [String(savedUser.academicCoach.academicCoachId),"6805da8c06542aa33858b889"],
+      receiverName: [savedUser.academicCoach.name,"Admin"],
+      receiverEmail: [savedUser.academicCoach.email,"rahul.blackstoneinfomatics@gmail.com"],
+    
+      notificationType: "STUDENT_NOTIFICATION",
+      notificationStatus: "Unseen",
+      status: "active",
+      createdBy: "system",
+      updatedBy: "system",
+    });
+  
+    const emailTemplate = await EmailTemplate.findOne({
+        templateKey: 'welcome_email',
+    }).exec();
+    if(emailTemplate){
+        const emailTo = [
+            { email: payload.email }
+        ];
+        const subject = "Welcome To Alfurqan";
+        const htmlPart = emailTemplate.templateContent.replace('<username>', payload.firstName + ' ' + payload.lastName);
         //const htmlPart = "<html><body><p>Hello World</p></body></html>";
         sendEmailClient(emailTo, subject,htmlPart);
     }
@@ -145,11 +272,14 @@ export const createStudent = async (
     });
 
     const subject = 'Evaluation Zoom Meeting';
-    const htmlPart = zoomMailTemplate?.templateContent.replace('<date>', payload.startDate.toDateString()).replace('<meetingtime>', payload.preferredFromTime).replace('<zoomlink>', CreatemeetingDetails.meetingLink);
+    const htmlPart = zoomMailTemplate?.templateContent
+  .replace(/{{Student’s Name}}/g,savedUser.firstName + ' ' + savedUser.lastName)
+  .replace(/{{Preferred Date}}/g, payload.startDate.toDateString())
+  .replace(/{{Preferred Time}}/g, payload.preferredFromTime)
+  .replace(/{{Zoom Link}}/g, CreatemeetingDetails.meetingLink);
     const emailTo = [
-      { email: payload.email }, { email: savedUser.academicCoach.email }
+      { email: savedUser.email }, { email: savedUser.academicCoach.email }
   ];
-
   
     if(htmlPart){
        sendEmailClient(emailTo, subject,htmlPart);
@@ -158,6 +288,43 @@ export const createStudent = async (
     await CreatemeetingDetails.save();
     return userObject;
 };
+
+export async function getStudentRecordByAlfId(
+  alfId: string,
+  learningInterest: string
+): Promise<{ error?: string; student?: IStudents | null }> {
+
+  if (!alfId || !learningInterest) {
+    return { error: "studentId and learningInterest are required" };
+  }
+
+  try {
+    // Check if course already exists
+    const existingCourse = await StudentModel.findOne({
+      studentId: alfId,
+      learningInterest: learningInterest
+    }).lean();
+
+    if (existingCourse) {
+      return { error: "Course already exists for this student" };
+    }
+
+    // Fetch base student record for creating new course
+    const student = await StudentModel.findOne({
+      studentId: alfId
+    }).lean();
+
+    if (!student) {
+      return { error: "Student not found" };
+    }
+
+    return { student };
+
+  } catch (error) {
+    console.error("Error in getStudentRecordByAlfId:", error);
+    return { error: "Internal server error" };
+  }
+}
 
 
 async function zoomMeetingInvite(savedUser: any ) {

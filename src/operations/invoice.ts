@@ -21,6 +21,7 @@ import {
 import stinvoice from "../models/stinvoice";
 import { Request, ResponseToolkit } from "@hapi/hapi";
 import alstudents from "../models/alstudents";
+import paymentDetails from "../models/paymentDetails";
 
 /**
  * Retrieves a list of all evaluation records with filters, sorting, and pagination.
@@ -29,147 +30,167 @@ import alstudents from "../models/alstudents";
  * @returns {Promise<{ totalCount: number; invoice: IStudentInvoice[] }>} - The total count and list of evaluations.
  */
 export const getAllStudetnInVoiceList = async (
-    params: GetAllRecordsParams
-  ): Promise<{ totalCount: number; invoice: IStudentInvoice[] }> => {
-    const { sortBy, sortOrder, offset, limit } = params;
-  
-    const sortOptions: any = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
-  
-    const studentInvoiceQuery = StudentInvoiceModel.find().sort(sortOptions);
-  
-    if (!isNil(offset) && !isNil(limit)) {
-      const skip = Math.max(
-        0,
-        ((Number(offset) ?? Number(commonMessages.OFFSET)) - 1) *
-        (Number(limit) ?? Number(commonMessages.LIMIT))
-      );
-      studentInvoiceQuery
-        .skip(skip)
-        .limit(Number(limit) ?? Number(commonMessages.LIMIT));
-    }
-    const [invoice, totalCount] = await Promise.all([
-        studentInvoiceQuery.exec(),
-      StudentInvoiceModel.countDocuments().exec(),
-    ]);
-  
-   // Log successful retrieval
-   AppLogger.info(evaluationMessages.GET_ALL_LIST_SUCCESS, {
+  params: GetAllRecordsParams
+): Promise<{ totalCount: number; invoice: IStudentInvoice[] }> => {
+  const { sortBy, sortOrder, offset, limit } = params;
+
+  const sortOptions: any = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
+
+  const studentInvoiceQuery = StudentInvoiceModel.find().sort(sortOptions);
+
+  if (!isNil(offset) && !isNil(limit)) {
+    const skip = Math.max(
+      0,
+      ((Number(offset) ?? Number(commonMessages.OFFSET)) - 1) *
+      (Number(limit) ?? Number(commonMessages.LIMIT))
+    );
+    studentInvoiceQuery
+      .skip(skip)
+      .limit(Number(limit) ?? Number(commonMessages.LIMIT));
+  }
+  const [invoice, totalCount] = await Promise.all([
+    studentInvoiceQuery.exec(),
+    StudentInvoiceModel.countDocuments().exec(),
+  ]);
+
+  // Log successful retrieval
+  AppLogger.info(evaluationMessages.GET_ALL_LIST_SUCCESS, {
     totalCount: totalCount,
   });
   console.log(invoice);
-    return { totalCount, invoice };
-  };
+  return { totalCount, invoice };
+};
 
 
-  export const getStudentInvoicesById = async (studentId: string): Promise<IStudentInvoice[]> => { // Accept studentId as a parameter
-    try {
-      const objectId = new Types.ObjectId(studentId); // Convert the passed studentId to ObjectId
-  
-      // Find student in alstudents collection using _id
-      const alStudent = await alstudents.findById(objectId);
-  
-      if (!alStudent) {
-        console.log("❌ No student found in alstudents with given _id");
-        return [];
-      }
-  
-      console.log("✅ Found student:", alStudent);
-  
-      // Find invoices based on the student's _id
-      const invoices = await StudentInvoiceModel.find({
-        "student.studentId": studentId, // match studentId as a string
-        paymentStatus: "Pending"        // filter directly in the DB query
-      }).sort({ lastUpdatedDate: -1 });
-      
-  
-      console.log(`🧾 Total invoices found: ${invoices.length}`);
-  
-      // Filter pending invoices
-      const pendingInvoices = invoices.filter(
-        (invoice) => invoice.paymentStatus === "Pending"
-      );
-  
-      console.log(`📌 Pending invoice count: ${pendingInvoices.length}`);
-      console.log("💬 Pending invoice details:", pendingInvoices);
-  
-      return pendingInvoices;
-    } catch (error) {
-      console.error("🚨 Error in getStudentInvoicesById:", error);
+export const getStudentInvoicesByAlStudentId = async (
+  alStudentId: string,
+  courseName: string
+): Promise<IStudentInvoice[]> => {
+  try {
+
+    const objectId = new Types.ObjectId(alStudentId);
+
+    const alStudent = await alstudents.findById(objectId);
+    if (!alStudent) {
       return [];
     }
-  };
 
- 
-  export const getStudentAllRevenue = async (
-    dateRange: string,
-    year: string // year as ISO string like "2023-01-01"
-  ): Promise<{ date: string; label: string; revenue: number }[]> => {
-    let startDate: Date;
-    let endDate: Date;
-    let intervalFn: (interval: { start: Date; end: Date }) => Date[];
-    let outputFormat: string;
-  
-    // Parse the provided year string
-    const parsedDate = parseISO(year);
-    const parsedYear = parsedDate.getFullYear();
-  
-    const now = new Date();
-  
-    switch (dateRange.toLowerCase()) {
-      case "yearly":
-        startDate = new Date(Date.UTC(parsedYear, 0, 1));
-        endDate = new Date(Date.UTC(parsedYear, 11, 31, 23, 59, 59, 999));
-        intervalFn = eachMonthOfInterval;
-        outputFormat = "MMM-yyyy";
-        break;
-      case "monthly":
-        startDate = startOfMonth(now);
-        endDate = endOfMonth(now);
-        intervalFn = eachDayOfInterval;
-        outputFormat = "yyyy-MM-dd";
-        break;
-      case "weekly":
-        startDate = startOfWeek(now, { weekStartsOn: 1 });
-        endDate = endOfWeek(now, { weekStartsOn: 1 });
-        intervalFn = eachDayOfInterval;
-        outputFormat = "yyyy-MM-dd";
-        break;
-      default:
-        throw new Error("Invalid dateRange value. Use 'weekly', 'monthly', or 'yearly'.");
+    const studentId = alStudent.student.studentId;
+
+    // Get all payment details for this student
+    const paymentDetailsList = await paymentDetails.find({
+      userId: studentId
+    });
+
+    // Find all invoices for this student + course
+    const query: any = {
+      "student.studentId": studentId,
+      courseName: courseName
+    };
+
+    const invoices = await StudentInvoiceModel.find(query)
+      .sort({ lastUpdatedDate: -1 });
+
+    // Attach paymentDate to invoice
+   const invoicesWithPaymentDate = invoices.map((invoice) => {
+  const invoiceObj = invoice.toObject();
+
+  // Convert cents → dollars before comparison
+  const matchingPayment = paymentDetailsList.find(
+    (pd) =>
+      Number(pd.paymentAmount) / 100 === Number(invoice.amount) &&
+      pd.userId === studentId
+  );
+
+  if (matchingPayment) {
+    invoiceObj.paymentDate = matchingPayment.paymentDate;
+  }
+
+  return invoiceObj;
+});
+
+
+    return invoicesWithPaymentDate;
+
+  } catch (error) {
+    console.error("🚨 Error in getStudentInvoicesByAlStudentId:", error);
+    return [];
+  }
+};
+
+
+
+
+export const getStudentAllRevenue = async (
+  dateRange: string,
+  year: string // year as ISO string like "2023-01-01"
+): Promise<{ date: string; label: string; revenue: number }[]> => {
+  let startDate: Date;
+  let endDate: Date;
+  let intervalFn: (interval: { start: Date; end: Date }) => Date[];
+  let outputFormat: string;
+
+  // Parse the provided year string
+  const parsedDate = parseISO(year);
+  const parsedYear = parsedDate.getFullYear();
+
+  const now = new Date();
+
+  switch (dateRange.toLowerCase()) {
+    case "yearly":
+      startDate = new Date(Date.UTC(parsedYear, 0, 1));
+      endDate = new Date(Date.UTC(parsedYear, 11, 31, 23, 59, 59, 999));
+      intervalFn = eachMonthOfInterval;
+      outputFormat = "MMM-yyyy";
+      break;
+    case "monthly":
+      startDate = startOfMonth(now);
+      endDate = endOfMonth(now);
+      intervalFn = eachDayOfInterval;
+      outputFormat = "yyyy-MM-dd";
+      break;
+    case "weekly":
+      startDate = startOfWeek(now, { weekStartsOn: 1 });
+      endDate = endOfWeek(now, { weekStartsOn: 1 });
+      intervalFn = eachDayOfInterval;
+      outputFormat = "yyyy-MM-dd";
+      break;
+    default:
+      throw new Error("Invalid dateRange value. Use 'weekly', 'monthly', or 'yearly'.");
+  }
+
+  const invoices: IStudentInvoice[] = await StudentInvoiceModel.find({
+    invoiceStatus: { $in: ["Paid"] },
+  }).exec();
+
+  const revenueMap: Record<string, number> = {};
+
+  invoices.forEach((invoice) => {
+    if (!invoice.createdDate) return; // ✅ Skip if date is undefined
+
+    const invoiceDate = new Date(invoice.createdDate);
+    const formattedDate = format(invoiceDate, outputFormat);
+
+    if (revenueMap[formattedDate]) {
+      revenueMap[formattedDate] += invoice.amount;
+    } else {
+      revenueMap[formattedDate] = invoice.amount;
     }
-  
-    const invoices: IStudentInvoice[] = await StudentInvoiceModel.find({
-      invoiceStatus: { $in: ["Paid"] },
-    }).exec();
-  
-    const revenueMap: Record<string, number> = {};
-  
-    invoices.forEach((invoice) => {
-      if (!invoice.createdDate) return; // ✅ Skip if date is undefined
-  
-      const invoiceDate = new Date(invoice.createdDate);
-      const formattedDate = format(invoiceDate, outputFormat);
-  
-      if (revenueMap[formattedDate]) {
-        revenueMap[formattedDate] += invoice.amount;
-      } else {
-        revenueMap[formattedDate] = invoice.amount;
-      }
-    });
-  
-    const result = intervalFn({ start: startDate, end: endDate }).map((date) => {
-      const label = format(date, outputFormat);
-      return {
-        date: label,
-        label,
-        revenue: revenueMap[label] || 0,
-      };
-    });
-  
-    return result;
-  };
+  });
 
-  
+  const result = intervalFn({ start: startDate, end: endDate }).map((date) => {
+    const label = format(date, outputFormat);
+    return {
+      date: label,
+      label,
+      revenue: revenueMap[label] || 0,
+    };
+  });
+
+  return result;
+};
+
+
 
 export const getTotalAmountByCountry = async (
   dateRange: string
@@ -192,11 +213,11 @@ export const getTotalAmountByCountry = async (
     } else if (dateRange === "yearly") {
       startDate = new Date(now.getFullYear(), 0, 1);
     }
-    
+
     if (startDate) {
       matchStage.createdDate = { $gte: startDate, $lte: now };
     }
-    
+
 
     const result = await stinvoice.aggregate([
       { $match: matchStage },
@@ -241,7 +262,7 @@ export const getTotalAmountByCourse = async (
   try {
     console.log("▶️ Called getTotalAmountByCourse with dateRange:", dateRange);
 
-    const matchStage: any = {}; 
+    const matchStage: any = {};
 
     const now = new Date();
     console.log("🕒 Current Date:", now);
@@ -278,7 +299,7 @@ export const getTotalAmountByCourse = async (
         invoiceStatus: doc.invoiceStatus,
       });
     });
-        
+
 
     const result = await stinvoice.aggregate([
       { $match: {} }, // No filtering
@@ -299,7 +320,7 @@ export const getTotalAmountByCourse = async (
       },
       { $sort: { revenue: -1 } },
     ]);
-    
+
 
     console.log("📊 Aggregation Result:", result);
 
@@ -404,7 +425,7 @@ export const getAllTotalInvoice = async (): Promise<{ date: string; total: numbe
   });
 };
 
-  
+
 export const getInvoiceCounts = async (): Promise<{
   total: number;
   paid: number;
@@ -430,7 +451,7 @@ export const getInvoiceCounts = async (): Promise<{
   };
 };
 
- 
+
 export const getInvoiceDueDateBuckets = async (): Promise<{
   range_0_10: number;
   range_11_20: number;

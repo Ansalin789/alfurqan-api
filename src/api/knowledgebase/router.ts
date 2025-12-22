@@ -15,13 +15,14 @@ const register = async (server: Server): Promise<void> => {
       payload: {
         output: "stream",
         parse: true, 
-        maxBytes: 20 * 1024 * 1024 ,
+        maxBytes: 1024 * 1024 * 1024 ,
          multipart: true,
   allow: "multipart/form-data",
       },
-      auth: {
-        strategies: ["jwt"],
-      }, },
+      //  auth: {
+      //     strategies: ["jwt"],
+      //   },
+      },
     },
     {
       method: "GET",
@@ -32,7 +33,19 @@ const register = async (server: Server): Promise<void> => {
         auth: {
           strategies: ["jwt"],
         },},
-    }
+    },
+    {
+      method: "GET",
+      path: "/knowledgebaseforstudent/list",
+      options: {
+        handler: handler.getknowledgebaseListForStudent,
+        tags: ["api", "knowledgeBase"],
+        auth: {
+          strategies: ["jwt"],
+        }
+        },
+    },
+
     
 
   ];

@@ -37,6 +37,7 @@ import TeachermeetingAPI from "../api/teacherMeeting/router"
 import Level from "../api/level/router"; 
 import AdminAssignment from "../api/adminAssignment/router";
 import fileUplocadAPI from "../api/fileUpload/router";
+import groupMessageAPI from "../api/groupmessage/router";
 
 
 export const appPlugins = [
@@ -152,5 +153,8 @@ export const appPlugins = [
   },
    {
     plugin:fileUplocadAPI,
+  },
+  {
+    plugin:groupMessageAPI,
   }
 ];

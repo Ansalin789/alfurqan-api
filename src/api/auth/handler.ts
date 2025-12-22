@@ -97,56 +97,70 @@ export default {
   },
 
 
-  async studentSignIn(req: Request, h: ResponseToolkit) {
-    const { payload } = signInInputValidation.parse({
-      payload: req.payload,
-    });
+ async studentSignIn(req: Request, h: ResponseToolkit) {
+  const { payload } = signInInputValidation.parse({
+    payload: req.payload,
+  });
 
-    const { username, password } = payload;
-    let users: any = await getActiveStudentRecord({ username: username });
-    // Validate the user exists in either DB
-    if (isNil(users)) {
-      return badRequest(userMessages.USER_NOT_FOUND);
-    }
-    // Check password for `users`
-    if (users && payload.password !== users.password) {
-      return unauthorized(authMessages.INCORRECT_PASSWORD);
-    }
+  const { username, password } = payload;
 
-    // Determine which record to use
-    const activeRecord = users;
-    // 🔎 Step 1: Find latest session for this user (by loginDate)
-  const latestSession = await ActiveSessionModel.findOne({ userId: String(activeRecord._id) })
-    .sort({ loginDate: -1 }) // most recent first
+  let users = await getActiveStudentRecord({ username });
+
+  console.log("student>>>", users);
+
+  // users is NOW an array
+  if (!users || users.length === 0) {
+    return badRequest(userMessages.USER_NOT_FOUND);
+  }
+
+  // If multiple users found with same username (rare, but possible)
+  // You can choose first, or enforce uniqueness
+  const activeRecord = users[0];
+
+  // Check password
+  if (password !== activeRecord.password) {
+    return unauthorized(authMessages.INCORRECT_PASSWORD);
+  }
+
+  // Find latest session
+  const latestSession = await ActiveSessionModel.findOne({
+    userId: String(activeRecord.student.studentId),
+  })
+    .sort({ loginDate: -1 })
     .exec();
 
   if (latestSession) {
-    // Step 2: If latest session is still active, block login
+    console.log("Latest session:", latestSession.loginDate);
+
     // if (latestSession.isActive) {
     //   return unauthorized("User already logged in on another device/session");
     // }
   }
-    const jwtPayload = {
-      userName:  activeRecord.username,
-      sub: String(activeRecord._id),
-    };
 
-    const accessToken = generateAuthToken(jwtPayload);
-    const userWithoutPassword = omit(activeRecord, ["password"]);
-    // Save the session for logout activity
-    await createActiveSessionRecord({
-      userId: String(activeRecord._id),
-      loginDate: new Date(),
-      isActive: true,
-      accessToken,
-    });
+  const jwtPayload = {
+    userName: activeRecord.username,
+    sub: String(activeRecord._id),
+  };
 
-    return {
-      ...userWithoutPassword,
-      accessToken,
-    };
-  },
+  const accessToken = generateAuthToken(jwtPayload);
 
+ const usersWithoutPassword = users.map((user) =>
+  omit(user, ["password"])
+);
+
+  // Save session
+  await createActiveSessionRecord({
+    userId: String(activeRecord.student.studentId),
+    loginDate: new Date(),
+    isActive: true,
+    accessToken,
+  });
+
+  return {
+    ...usersWithoutPassword,
+    accessToken,
+  };
+},
 
  async signOut(req: Request, h: ResponseToolkit) {
   try {
@@ -229,37 +243,58 @@ export default {
     try {
       const user = await AlStudentsModel.findOne({ 'student.studentEmail': email }).exec();
       let users: any = await getActiveStudentRecord({ username: user?.username });
-      if (isNil(user)) {
-        return h.response({
-          message: 'Email not found.',
-        }).code(404); // 404 - Not Found
-      }
+        console.log("student>>>", users);
 
-      const activeRecord = users;
+  // users is NOW an array
+  if (!users || users.length === 0) {
+    return badRequest(userMessages.USER_NOT_FOUND);
+  }
 
-    const jwtPayload = {
-      userName: activeRecord.userName ,
-      sub: String(activeRecord._id),
-    };
+  // If multiple users found with same username (rare, but possible)
+  // You can choose first, or enforce uniqueness
+  const activeRecord = users[0];
 
-    const accessToken = generateAuthToken(jwtPayload);
-    // Save the session for logout activity
-    await createActiveSessionRecord({
-      userId: String(activeRecord._id),
-      loginDate: new Date(),
-      isActive: true,
-      accessToken,
-    });
-      
-     
-      return {
-        message: 'Email found.',
-        id:users._id,
-        username1:user.username,
-        accessToken,
-        role:user.role,
-        package:user.student.package
-      };// 200 - OK
+  
+
+  // Find latest session
+  const latestSession = await ActiveSessionModel.findOne({
+    userId: String(activeRecord.student.studentId),
+  })
+    .sort({ loginDate: -1 })
+    .exec();
+
+  if (latestSession) {
+    console.log("Latest session:", latestSession.loginDate);
+
+    // if (latestSession.isActive) {
+    //   return unauthorized("User already logged in on another device/session");
+    // }
+  }
+
+  const jwtPayload = {
+    userName: activeRecord.username,
+    sub: String(activeRecord._id),
+  };
+
+  const accessToken = generateAuthToken(jwtPayload);
+
+ const usersWithoutPassword = users.map((user : any) =>
+  omit(user, ["password"])
+);
+
+  // Save session
+  await createActiveSessionRecord({
+    userId: String(activeRecord.student.studentId),
+    loginDate: new Date(),
+    isActive: true,
+    accessToken,
+  });
+
+  return {
+    ...usersWithoutPassword,
+     message: 'Email found.',
+    accessToken,
+  };
     } catch (error) {
       return h.response({
         message: 'Internal Server Error.', error

@@ -74,7 +74,7 @@ export const createEvaluationRecord = async (
   }).exec();
 
   //rollNo
-     const rollNo = await generateRollNo('ALFST', 3);
+  const rollNo = await generateRollNo('ALFST', 3);
   if (loginUser) {
     newStudent.academicCoach = {
       academicCoachId: payload.academicCoachId || " ", // Provide a default value if undefined
@@ -245,39 +245,84 @@ export const updateStudentEvaluation = async (
     console.log("updatedEvaluation>>", updatedEvaluation);
 
     const emailTemplate = await EmailTemplate.findOne({
-      templateKey: "Invoice",
-    }).exec();
+  templateKey: "Invoice",
+}).exec();
 
-    if (
-      emailTemplate &&
-      payload.student &&
-      payload.subscription &&
-      evaluation
-    ) {
-      const emailTo = [{ email: payload.student.studentEmail }];
-      const subject = "Invoice";
+if (emailTemplate && payload.student && payload.subscription && evaluation) {
 
-      const htmlPart = emailTemplate.templateContent
-        .replace(
-          "<studentname>",
-          payload.student.studentFirstName +
-            " " +
-            payload.student.studentLastName
-        )
-        .replace("<address>", payload.student.studentCity || " ")
-        .replace("<phonenumber>", String(payload.student.studentPhone))
-        .replace("<email>", payload.student.studentEmail)
-        .replace("<plan>", payload.subscription.subscriptionName)
-        .replace("<coursename>", payload.student.learningInterest)
-        .replace("<amount>", String(evaluation.planTotalPrice))
-        .replace("<adjustamount>", String(evaluation.planTotalPrice))
-        .replace("<subtotal>", String(evaluation.planTotalPrice))
-        .replace("<total>", String(evaluation.planTotalPrice))
-        .replace("<paymentLink>", updatedEvaluation.paymentLink);
+  const emailTo = [{ email: payload.student.studentEmail }];
+  const subject = "Invoice";
 
-      await sendEmailClient(emailTo, subject, htmlPart);
-      console.log("✅ Invoice Email sent");
+  // Base values
+  const rawTotalPrice = Number(evaluation?.planTotalPrice) || 1;
+  const hours = Number(evaluation?.accomplishmentTime) || 1;
+
+  // Compute discount if family is being used for 4th time or more
+  let displayTotal = Number(rawTotalPrice);
+  let displayRate = displayTotal / (hours || 1);
+  let discountApplied = false;
+
+  const familyId = (evaluation && (evaluation as any).familyId) || payload.student.familyId || null;
+  if (familyId) {
+    try {
+      const familyUsageCount = await EvaluationModel.countDocuments({ familyId }).exec();
+      // Apply discount when family key has been used 4th time or more
+      if (familyUsageCount >= 3) {
+        discountApplied = true;
+        displayTotal = Number((displayTotal * 0.9).toFixed(2)); // 10% off
+        displayRate = Number((displayTotal / (hours || 1)).toFixed(2));
+
+        // Persist discounted total/amount and flag to evaluation (best-effort; fields may vary by schema)
+        try {
+          await EvaluationModel.findByIdAndUpdate(
+            id,
+            {
+              $set: {
+                planTotalPrice: String(displayTotal),
+                amount: String(displayTotal),
+                discountApplied: true,
+              },
+            },
+            { new: true }
+          ).exec();
+        } catch (err) {
+          // don't block email if DB update fails; just log
+          AppLogger.error("Failed to persist discounted price for evaluation", { err, id, familyId });
+        }
+      }
+    } catch (err) {
+      AppLogger.error("Error counting family usage for discount", { err, familyId });
     }
+  }
+
+  const dueDate = new Date();
+  dueDate.setDate(dueDate.getDate() + 2);
+
+  // Prepare HTML using computed display values
+  let htmlPart = emailTemplate.templateContent || "";
+  htmlPart = htmlPart
+    .replace(/{{Student Name}}/g, (payload.student.studentFirstName || "") + " " + (payload.student.studentLastName || ""))
+    .replace(/{{Invoice Date}}/g, new Date().toDateString())
+    .replace(/{{Hourly Rate}}/g, String(displayRate))
+    .replace(/{{Total Amount}}/g, String(displayTotal))
+    .replace(/{{Package Name}}/g, payload.subscription.subscriptionName)
+    .replace(/{{Hours}}/g, String(hours))
+    .replace(/{{Payment Link}}/g, (updatedEvaluation && (updatedEvaluation as any).paymentLink) || "")
+    .replace(/{{Due Date}}/g, dueDate.toDateString());
+
+  // If discount applied, optionally annotate the email (if template has a placeholder {{DiscountNote}})
+  if (discountApplied) {
+    htmlPart = htmlPart.replace(/{{DiscountNote}}/g, "10% family discount applied");
+  } else {
+    htmlPart = htmlPart.replace(/{{DiscountNote}}/g, "");
+  }
+
+  await sendEmailClient(emailTo, subject, htmlPart);
+
+  console.log("✅ Invoice Email sent", { discountApplied });
+
+}
+
 
     return updatedEvaluation ;
   } else if (
@@ -295,7 +340,7 @@ export const updateStudentEvaluation = async (
     let teacherName = payload.teacher?.teacherName;
     let teacherEmail = payload.teacher?.teacherEmail;
     if (
-      payload.teacher?.teacherId && 
+      payload.teacher?.teacherId &&
       (!teacherName || teacherName === "Not Assigned" || !teacherEmail || teacherEmail === "Not Assigned")
     ) {
       const teacherUser = await User.findOne({ userId: payload.teacher.teacherId, role: "TEACHER" }).exec();
@@ -333,12 +378,11 @@ export const updateStudentEvaluation = async (
     if (zoomMailTemplate) {
       const subject = "Trial class";
       const htmlPart = zoomMailTemplate.templateContent
-        .replace(
-          "<date>",
-          moment(String(payload.preferredTrialDate)).format("DD-MM-YYYY")
-        )
-        .replace("<meetingTime>", payload.preferredTrialFromTime as string)
-        .replace("<zoomlink>", updatedMeetingDetails?.meetingLink ?? "");
+         .replace(/{{Student’s Name}}/g, existingMeeting?.student?.name || " ")
+        .replace(/{{Teacher Name}}/g, teacherName || " ")  
+  .replace(/{{Preferred Date}}/g, new Date(payload.preferredTrialDate || '').toDateString())
+  .replace(/{{Preferred Time}}/g, payload.preferredTrialFromTime + " - " + payload.preferredTrialToTime)
+  .replace(/{{Zoom Link}}/g,  updatedMeetingDetails?.meetingLink || existingMeeting?.meetingLink || " ");
 
       // Only send to valid teacher email
       const emailTo = [];
@@ -421,9 +465,11 @@ async function trialClassAssigned(
 
   const subject = "Trail class";
   const htmlPart = zoomMailTemplate?.templateContent
-    .replace("<date>", preferredTrialDate)
-    .replace("<meetingTime>", preferredTrialFromTime)
-    .replace("<zoomlink>", meetingDetails.join_url);
+     .replace(/{{Student’s Name}}/g, createEvaluation.student.studentFirstName + ' ' + createEvaluation.student.studentLastName)
+        .replace(/{{Teacher Name}}/g, teacherEmail.userName)  
+  .replace(/{{Preferred Date}}/g,   new Date(preferredTrialDate).toDateString())
+  .replace(/{{Preferred Time}}/g, preferredTrialFromTime)
+  .replace(/{{Zoom Link}}/g,  meetingDetails.join_url);
   const emailTo = [
     { email: teacherEmail.email },
     { email: createEvaluation.student.studentEmail },
@@ -483,7 +529,7 @@ async function trialClassAssigned(
     lastUpdatedBy: "Admin",
   });
   await CreatemeetingDetails.save();
-const academicCoach = await users.findById(createEvaluation.academicCoachId);
+  const academicCoach = await users.findById(createEvaluation.academicCoachId);
   if (teacherDetails.userId) {
     await sendNotification({
       messages: `${createEvaluation.student.studentFirstName} ${createEvaluation.student.studentLastName} has been assigned to you for a trial class.`,
@@ -580,7 +626,7 @@ async function getZoomAccessToken() {
  */
 export const getAllEvaluationRecords = async (
   params: GetAllRecordsParams
-): Promise<{ totalCount: number; evaluation: IEvaluation[] }> => {
+): Promise<{ totalCount: number; evaluation: IEvaluation[]; referralId?: string | null; familyId?: string | null; familyEmail?: string | null }> => {
   const {
     academicCoachId,
     searchText,
@@ -628,7 +674,7 @@ export const getAllEvaluationRecords = async (
     const skip = Math.max(
       0,
       ((Number(offset) ?? Number(commonMessages.OFFSET)) - 1) *
-        (Number(limit) ?? Number(commonMessages.LIMIT))
+      (Number(limit) ?? Number(commonMessages.LIMIT))
     );
     evaluationQuery
       .skip(skip)
@@ -643,6 +689,84 @@ export const getAllEvaluationRecords = async (
   AppLogger.info(evaluationMessages.GET_ALL_LIST_SUCCESS, {
     totalCount: totalCount,
   });
+  
+  // Ensure referral/family values from StudentModel are present on the
+  // Evaluation document (stored at top-level fields: `referralId`,
+  // `familyId`, `familyEmail`). This fixes several bugs:
+  // - Student model uses `refernceId` (note spelling) so we must read that.
+  // - Evaluation stores these values at the document root, not inside
+  //   the `student` sub-document, so update those top-level fields.
+  const updateOps: Promise<any>[] = [];
+  for (const ev of evaluation) {
+    try {
+      const studentKey = ev?.student?.studentRegisterId || ev?.student?.studentId;
+      if (!studentKey) continue;
+
+      // Fetch the student by either `studentId` or `_id` (studentRegisterId)
+      const mainStudent = await StudentModel.findOne(
+        {
+          $or: [
+            { studentId: ev.student?.studentId },
+            { _id: ev.student?.studentRegisterId },
+          ],
+        },
+        { refernceId: 1, familyId: 1, familyEmail: 1 }
+      ).lean();
+
+      if (!mainStudent) continue;
+
+      const currentReferral = (ev as any).referralId ?? (ev as any).referralId === undefined ? null : (ev as any).referralId;
+      const currentFamilyId = (ev as any).familyId ?? null;
+      const currentFamilyEmail = (ev as any).familyEmail ?? null;
+
+      const studentReferral = mainStudent.refernceId ?? null; // spelled in student model
+      const studentFamilyId = mainStudent.familyId ?? null;
+      const studentFamilyEmail = mainStudent.familyEmail ?? null;
+
+      const needsUpdate =
+        currentReferral !== studentReferral ||
+        currentFamilyId !== studentFamilyId ||
+        currentFamilyEmail !== studentFamilyEmail;
+
+      if (!needsUpdate) continue;
+
+      AppLogger.info("Syncing student referral/family to evaluation", {
+        trialId: ev.trialId ?? ev._id,
+        studentRegisterId: ev.student?.studentRegisterId,
+        studentId: ev.student?.studentId,
+        studentReferral,
+        studentFamilyId,
+        studentFamilyEmail,
+      });
+
+      // Persist to evaluation top-level fields (these exist in evaluation schema)
+      updateOps.push(
+        EvaluationModel.updateOne(
+          { _id: ev._id },
+          {
+            $set: {
+              referralId: studentReferral,
+              familyId: studentFamilyId,
+              familyEmail: studentFamilyEmail,
+            },
+          }
+        )
+      );
+
+      // Update local response object so API caller sees changes immediately
+      (ev as any).referralId = studentReferral;
+      (ev as any).familyId = studentFamilyId;
+      (ev as any).familyEmail = studentFamilyEmail;
+    } catch (err) {
+      AppLogger.error("Error syncing student data to evaluation", { err, ev });
+    }
+  }
+
+  if (updateOps.length > 0) {
+    AppLogger.info(`Applying ${updateOps.length} evaluation update(s)`);
+    await Promise.all(updateOps);
+  }
+
 
   return { totalCount, evaluation };
 };
@@ -675,7 +799,7 @@ export const updateStudentInvoice = async (
 };
 
 export const getTotalTrialClassRequestCount = async () => {
-  
+
   const evaluationStats = await EvaluationModel.aggregate([
     {
       $match: { status: "Active" }
@@ -967,7 +1091,7 @@ export const getTrialClassCount = async (
     const skip = Math.max(
       0,
       ((Number(offset) ?? Number(commonMessages.OFFSET)) - 1) *
-        (Number(limit) ?? Number(commonMessages.LIMIT))
+      (Number(limit) ?? Number(commonMessages.LIMIT))
     );
     evaluationQuery
       .skip(skip)
@@ -1005,7 +1129,7 @@ export const getTrialClassRecordById = async (teacherId: string) => {
     getTrialsClassstatus = await EvaluationModel.findOne({
       trialId: trialClassUpdateDetails.trialId
     }).exec();
-    if (getTrialsClassstatus && (getTrialsClassstatus.trialClassStatus == "" || getTrialsClassstatus.trialClassStatus =="PENDING")) {
+    if (getTrialsClassstatus && (getTrialsClassstatus.trialClassStatus == "" || getTrialsClassstatus.trialClassStatus == "PENDING")) {
       const trialClass = await MeetingSchedule.find({
         trialId: getTrialsClassstatus.trialId,
         // scheduledStartDate:  {

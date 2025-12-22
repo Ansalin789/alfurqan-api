@@ -15,6 +15,14 @@ const knowledgeBaseSchema = new Schema<IKnowledgeBase>(
         type: String,
         required: true,
       },
+      level:{
+        type: String,
+        required: true,
+      },
+      teacherId:{
+        type: String,
+        required: false,
+      },
       uploadedFormat: {
         type: String,
         required: true,
@@ -60,7 +68,8 @@ const knowledgeBaseSchema = new Schema<IKnowledgeBase>(
     subjectTitle: z.string(),
     uploadedFormat: z.enum([uploadedFormat.PDF, uploadedFormat.VIDEO,]),
     uploadedFile: z.any(),
-    
+    level: z.string(),
+    teacherId : z.string().optional(),
     status: z.string(),
     createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
       message: addKnowledgeBaseMessages.INVALID_DATE_FORMAT,

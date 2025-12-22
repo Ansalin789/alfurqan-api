@@ -94,6 +94,8 @@ export interface IStudents extends Document {
   phoneNumber: number;
   city?: string;
   country: string;
+  familyId?: string;
+  familyEmail?: string;
   countryCode: string;
   learningInterest: LearningInterest;
   numberOfStudents: NumberOfStudents;
@@ -120,7 +122,8 @@ export interface IStudentCreate {
     academicCoachId: string;
   };
   profilepic?: Buffer;
-
+familyId?: string;
+familyEmail?: string;
   email: string;
   gender: string;
   phoneNumber: number;
@@ -362,6 +365,9 @@ export interface IEvaluation extends Document {
     status: Status;
     createdDate: Date;
     createdBy: string;
+    refernceId?: string | null;
+    familyId?: string | null;
+    familyEmail?: string | null;
   };
   classType: string;
   teacher: {
@@ -369,6 +375,9 @@ export interface IEvaluation extends Document {
     teacherName: string;
     teacherEmail: string;
   },
+  familyEmail?: string;
+  familyId?: string;
+  referralId?: string;
   joiningDate: Date;
   classDay: any;
   startTime: any;
@@ -457,6 +466,9 @@ export interface IEvaluationCreate {
     status: Status;
     createdDate: Date;
     createdBy?: string;
+    refernceId?: string | null;
+    familyId?: string | null;
+    familyEmail?: string | null;
   };
   classType: string;
   teacher: {
@@ -464,6 +476,8 @@ export interface IEvaluationCreate {
     teacherName: string;
     teacherEmail: string;
   },
+  familyEmail?: string;
+  familyId?: string;
   joiningDate?: Date;
   classDay?: string[];
   startTime?: string[];
@@ -768,6 +782,8 @@ export interface IAlStudents extends Document {
     city: string;
     country: string;
   };
+  familyId?: string;
+  familyEmail?: string;
   profilepic?: Buffer;
   referredBy?: string;
   refernceId: string;
@@ -1758,7 +1774,9 @@ export interface IExpenseCreate {
 
 export interface IKnowledgeBase extends Document {
   courseName: string,
-  subjectTitle: string;
+  level:string,
+  teacherId?:string,
+  subjectTitle: string,
   uploadedFormat: string,
   uploadedFile: String,
   status: string,
@@ -1770,6 +1788,8 @@ export interface IKnowledgeBase extends Document {
 
 export interface IKnowledgeBaseCreate {
   courseName: string,
+  level:string,
+  teacherId?:string,
   subjectTitle: string;
   uploadedFormat: string,
   uploadedFile: any,
@@ -2224,4 +2244,136 @@ export interface IModulePermissionAccess extends Document {
   createdBy: string;
   updatedDate?: Date;
   updatedBy: string;
+}
+
+
+
+export interface IGroupMessageParticipant {
+  participantId: string;
+  participantName: string;
+  participantEmail?: string;
+  role: "teacher" | "student" | "admin" | "supervisor" | "academiccoach";
+  isRemoved?: boolean;
+  removedDate?: Date;
+}
+
+export interface Group extends Document {
+  groupId: string;
+  GroupName: string;
+  GroupNameDescription: string;
+  CourseName: string;
+  Designation: string;
+  PreferredTeacher: string;
+  uploadedFormat?: string,
+  uploadedFile?: any,
+  groupMessageParticipant: IGroupMessageParticipant[];
+
+  groupMessageOrganizer: {
+    organizerId: string;
+    organizerName: string;
+    organizerEmail?: string;
+    role: "teacher" | "student" | "admin" | "supervisor" | "academiccoach";
+  };
+
+  messages: string;
+  isRead: boolean;
+  notificationStatus: "SEEN" | "UN_SEEN";
+  status: "Active" | "Inactive" | "Deleted";
+  isGroupDeleted: boolean;
+  groupDeletedAt?: Date;
+  groupDeletedBy?: string;
+  createdDate?: Date;
+  createdBy?: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+  isDeleted?: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
+}
+export interface GroupCreate {
+  groupId: string;
+  GroupName: string;
+  GroupNameDescription: string;
+  CourseName: string;
+  Designation: string;
+  PreferredTeacher: string;
+  uploadedFormat?: string,
+  uploadedFile?: any,
+  groupMessageParticipant: IGroupMessageParticipant[];
+
+  groupMessageOrganizer: {
+    organizerId: string;
+    organizerName: string;
+    organizerEmail?: string;
+    role: "teacher" | "student" | "admin" | "supervisor" | "academiccoach";
+  };
+
+  messages: string;
+  isRead: boolean;
+  notificationStatus: "SEEN" | "UN_SEEN";
+  status: "Active" | "Inactive" | "Deleted";
+  isGroupDeleted: boolean;
+  groupDeletedAt?: Date;
+  groupDeletedBy?: string;
+  createdDate?: Date;
+  createdBy?: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+  isDeleted?: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
+}
+
+export interface GroupMessage extends Document {
+  groupId: string;
+  uploadedFormat?: string,
+  uploadedFile?: any,
+  messages: string;
+  isRead: boolean;
+
+  groupMessageParticipant: IGroupMessageParticipant[];
+
+  groupMessageOrganizer: {
+    organizerId: string;
+    organizerName: string;
+    organizerEmail?: string;
+    role: "teacher" | "student" | "admin" | "supervisor" | "academiccoach";
+  };
+
+  notificationStatus: "SEEN" | "UN_SEEN";
+  status: "Active" | "Inactive" | "Deleted";
+
+  createdDate?: Date;
+  createdBy?: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+  isDeleted?: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
+}
+export interface GroupMessageCreate {
+  groupId: string;
+
+  messages: string;
+  isRead: boolean;
+
+  groupMessageParticipant: IGroupMessageParticipant[];
+
+  groupMessageOrganizer: {
+    organizerId: string;
+    organizerName: string;
+    organizerEmail?: string;
+    role: "teacher" | "student" | "admin" | "supervisor" | "academiccoach";
+  };
+
+  notificationStatus: "SEEN" | "UN_SEEN";
+  status: "Active" | "Inactive" | "Deleted";
+
+  createdDate?: Date;
+  createdBy?: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+  isDeleted?: boolean;
+  deletedAt?: Date;
+  deletedBy?: string;
 }

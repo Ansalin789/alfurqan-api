@@ -82,6 +82,8 @@ export interface GetAllRecordsParams {
   limit?: string | null;
   role?: string;
   classDay?: any;
+  familyId?: string;
+  familyEmail?: string;
   trialClassStatus?: any;
   userid?: any;
   filterValues?: {

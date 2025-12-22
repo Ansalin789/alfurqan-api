@@ -68,6 +68,35 @@ export async function getSharePointDriveId(accessToken: string, siteId: string):
     console.log('SharePoint Drive ID:', driveId);
     return driveId;
 }
+export async function uploadVideoToSharePoint(
+  videoBuffer: Buffer,
+  fileName: string
+): Promise<{ fileId: string; driveId: string; name: string; webUrl: string }> {
+
+  const token = await getSharePointAccessToken();
+  const siteId = await getSharePointSiteId(token);
+  const driveId = await getSharePointDriveId(token, siteId);
+
+  // Recommended path for videos
+  const uploadUrl = 
+    `https://graph.microsoft.com/v1.0/sites/${siteId}/drive/root:/WebApplication/Video/${fileName}:/content`;
+
+  const response = await axios.put(uploadUrl, videoBuffer, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/octet-stream", 
+    },
+    maxBodyLength: Infinity,
+    maxContentLength: Infinity,
+  });
+
+  return {
+    fileId: response.data.id,
+    driveId: response.data.parentReference.driveId,
+    name: response.data.name,
+    webUrl: response.data.webUrl, 
+  };
+}
 
 
 

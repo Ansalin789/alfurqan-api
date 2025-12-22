@@ -1354,6 +1354,8 @@ export const getStudentList = async (
 
     classType?: string;
     groupClassId?: string;
+    familyId?: string;
+    familyEmail?: string;
     assignment?: {
       assignmentId: string;
       assignmentType: string;
@@ -1393,6 +1395,7 @@ export const getStudentList = async (
         if (alstudent) {
           evaluation = await Evaluation.findOne({
             "student.studentId": alstudent.student.studentId,
+            familyId: alstudent.familyId,
           }).exec();
         }
         let assignments: AssignmentItem[] = [];
@@ -1435,6 +1438,8 @@ export const getStudentList = async (
           studentId: student.id,
           name: student.studentFirstName,
           level: alstudent?.level || "", // ✅ Add level here
+          familyId: alstudent?.familyId || "",
+          familyEmail: alstudent?.familyEmail || "",
 
           studentDetails: {
             student: evaluation?.student,

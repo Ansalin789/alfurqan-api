@@ -89,7 +89,8 @@ const createInputValidation = z.object({
       offset: true,
       limit: true,
       trialClassStatus: true,
-      filterValues: true
+      filterValues: true,
+      studentId: true,
     }),
   });
 
