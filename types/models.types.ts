@@ -2261,10 +2261,10 @@ export interface IGroupMessageParticipant {
 export interface Group extends Document {
   groupId: string;
   GroupName: string;
-  GroupNameDescription: string;
-  CourseName: string;
-  Designation: string;
-  PreferredTeacher: string;
+  GroupNameDescription?: string;
+  CourseName?: string;
+  Designation?: string;
+  PreferredTeacher?: string;
   uploadedFormat?: string,
   uploadedFile?: any,
   groupMessageParticipant: IGroupMessageParticipant[];
@@ -2294,10 +2294,10 @@ export interface Group extends Document {
 export interface GroupCreate {
   groupId: string;
   GroupName: string;
-  GroupNameDescription: string;
-  CourseName: string;
-  Designation: string;
-  PreferredTeacher: string;
+  GroupNameDescription?: string;
+  CourseName?: string;
+  Designation?: string;
+  PreferredTeacher?: string;
   uploadedFormat?: string,
   uploadedFile?: any,
   groupMessageParticipant: IGroupMessageParticipant[];
