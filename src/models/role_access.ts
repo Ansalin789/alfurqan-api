@@ -31,6 +31,10 @@ const roleAccessControlSchema = new Schema<IRoleAccessControl>({
         type: String,
         require: true
     },
+    dateOfJoining: {
+        type: Date,
+        require: false
+    },
     status: {
         type: String,
         require: true
@@ -71,6 +75,9 @@ export const zodRoleAccessControlSchema = z.object({
     employeeName: z.string(),
     employeeEmailId: z.string().email(),
     roleStatus: z.string(),
+    dateOfJoining: z.string().refine((val) => !Number.isNaN(Date.parse(val)), {
+        message: commonMessages.INVALID_DATE_FORMAT,
+      }).transform((val) => new Date(val)).optional(),
     status:z.enum([appStatus.ACTIVE, appStatus.IN_ACTIVE, appStatus.DELETED]),
     createdDate:  z.string().refine((val) => !Number.isNaN(Date.parse(val)), {
         message: commonMessages.INVALID_DATE_FORMAT,

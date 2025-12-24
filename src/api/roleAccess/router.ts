@@ -8,9 +8,9 @@ const register = async (server: Server): Promise<void> => {
     
     {
       method: "PUT",
-      path: "/update-access/{_id}",
+      path: "/employeeroleaccess/{_id}",
       options: {
-        handler: handler.updateroleAccessById,
+        handler: handler.updateModuleAccessById,
         description: roleAccess.UPDATE,
         tags: ["api", "roleAccess"],
         auth: {
@@ -20,25 +20,40 @@ const register = async (server: Server): Promise<void> => {
 
     {
       method: "GET",
-      path: "/update-access/list",
+      path: "/employeeroleaccess/list",
       options: {
         handler:handler.getsettinglist,  
         tags: ["api", "roleAccess"],  
         auth: {
           strategies: ["jwt"],
-        }, },
+        },
+       },
     },
 
     {
         method: "GET",
-        path: "/update-access/{id}",
+        path: "/employeeroleaccess/{id}",
         options: {
           handler:handler.getsettingById,
           tags: ["api", "role-access"],
           description: "Get settingdetail by Id",
           auth: {
             strategies: ["jwt"],
-          },  },
+          }, 
+          },
+      },
+
+         {
+        method: "GET",
+        path: "/employeemoduleaccess/{id}",
+        options: {
+          handler:handler.getModuleAccessById,
+          tags: ["api", "role-access"],
+          description: "Get settingdetail by Id",
+          // auth: {
+          //   strategies: ["jwt"],
+          // }, 
+          },
       },
 
 

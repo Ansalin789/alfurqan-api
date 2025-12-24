@@ -1,6 +1,6 @@
 import { Request, ResponseToolkit } from '@hapi/hapi';
 import UserModel from "../../models/users"
-import  getallsettinglist, { getrolesettingById, updateUserAccess } from "../../operations/roleaccess"
+import  getallsettinglist, { getModuleAccessRecord, getrolesettingById, updateUserAccess } from "../../operations/roleaccess"
 import { IAccessModel } from '../../../types/models.types';
 import roleacces from '../../models/roleacces'
 
@@ -8,7 +8,7 @@ export default{
 
   //Update the role access
 
-  async updateroleAccessById(req: Request, h: ResponseToolkit) {
+  async updateModuleAccessById(req: Request, h: ResponseToolkit) {
     try {
       const rawPayload = req.payload as Partial<IAccessModel>;
       const { _id } = req.params; // Get the employee ID from the URL parameter
@@ -150,7 +150,7 @@ export default{
         return h.response({ success: false, message: "ID is required" }).code(400);
       }
   
-      const { settings } = await getrolesettingById(settingId);
+      const  settings : any  = await getrolesettingById(settingId);
   
       if (!settings) {
         return h.response({ success: false, message: "Setting not found" }).code(404);
@@ -166,4 +166,27 @@ export default{
         message: error.message ?? "Failed to fetch settings",
       }).code(500);
     }
-  },}
+  },
+
+
+ async getModuleAccessById(req: Request, h: ResponseToolkit) {
+  const id = req.params.id;
+  
+      if (!id) {
+        return h.response({ success: false, message: "ID is required" }).code(400);
+      }
+console.log("Module Access ID:", id);
+      const  modulePermission : any  = await getModuleAccessRecord(id);
+
+      if (!modulePermission) {
+        return h.response({ success: false, message: "Module access not found" }).code(404);
+      }
+  
+      return h.response({
+        success: true,
+        data: modulePermission,
+      }).code(200);
+ }
+
+
+}

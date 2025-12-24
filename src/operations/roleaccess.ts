@@ -1,6 +1,7 @@
 import { Types } from "mongoose";
-import { IAccessModel } from "../../types/models.types";
-import roleacces from "../models/roleacces";
+import { IAccessModel, IModulePermissionAccess } from "../../types/models.types";
+import roleacces from "../models/role_access";
+import ModulePermissionAccess from "../models/module_permission_access";
 
 
 
@@ -34,7 +35,7 @@ export const updateUserAccess = async (
 
     return {
       totalCount,
-      assignments: [roleAccess]  // Return the updated or newly created roleAccess record
+      assignments: [roleAccess.toObject() as IAccessModel]  // Return the updated or newly created roleAccess record
     };
 
   } catch (error) {
@@ -42,9 +43,6 @@ export const updateUserAccess = async (
     return { error };
   }
 };
-
-
-
 
 
 /**
@@ -82,10 +80,30 @@ export default async function getallsettinglist(filters: FilterOptions) {
 
 export const getrolesettingById = async (employeeId: string) => {
   try {
-    const settings = await roleacces.findOne({employeeId }).lean();
-    return { settings };
+    const settings = await roleacces.find({employeeId }).lean();
+
+    return {  employeeId: settings[0].employeeId,
+      employeeName: settings[0].employeeName,
+      employeeEmailId: settings[0].employeeEmailId,
+      roleDetails: settings.map((setting) => ({
+        roleId: setting.roleId,
+        roleName: setting.roleName,
+        roleStatus: setting.roleStatus,
+      })),
+
+     };
   } catch (error) {
     throw new Error(`Failed to fetch role access: ${(error as Error).message}`);
   }
 };
+
+
+export const getModuleAccessRecord = async (
+  id: string
+): Promise<IModulePermissionAccess | null> => {
+  return ModulePermissionAccess.findOne({
+    'role.roleId': id,
+  }).lean();
+};
+
 

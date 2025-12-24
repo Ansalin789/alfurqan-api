@@ -2203,6 +2203,7 @@ export interface IRoleAccessControl extends Document {
   employeeName: string;
   employeeEmailId: string;
   roleStatus: string;
+  dateOfJoining: Date;
   status: string;
   createdDate: Date;
   createdBy: string;
