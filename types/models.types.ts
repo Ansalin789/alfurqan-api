@@ -103,8 +103,8 @@ export interface IStudents extends Document {
   referralSource: ReferalResource;
   startDate : Date;
   evaluationStatus: EvaluationStatus;
-  refernceId: string,
-  referredBy:string,
+  refernceId?: string,
+  referredBy?:string,
   status: Status;
   createdDate: Date;
   createdBy: string;
@@ -135,8 +135,8 @@ export interface IStudentCreate {
   referralSource: ReferalResource;
   startDate : Date;
   evaluationStatus: EvaluationStatus;
-  refernceId: string;
-  referredBy:string;
+  refernceId?: string;
+  referredBy?:string;
   status: Status;
   createdDate: Date;
   createdBy: string;
@@ -750,7 +750,7 @@ export interface MeetingSchedulePayload {
   meetingLink?: string | null;
   createdBy?: string;
   lastUpdatedBy?: string;
-  referenceId: string;
+  referenceId?: string;
   referenceType: string;
   remarks?: string;
 }
@@ -769,7 +769,7 @@ export interface IAlStudents extends Document{
   };
 profilepic?: Buffer;
 referredBy?:string;
-  refernceId:string;
+  refernceId?:string;
   level?: string;
   username: string,
   password: string;
@@ -792,8 +792,7 @@ export interface IAlStudentCreate{
     studentPhone: number;
     gender: string;
   };
-profilepic?: Buffer;
-
+  profilepic?: Buffer;
   level?: string;
   username: string,
   role: string;
