@@ -2406,8 +2406,8 @@ export const bulkupdateClassAttendanceByClassLink = async (
       },
       {
         $push: {
-          "teacher.teacherSessionStart": teacherStart,
-          "teacher.teacherSessionEnd": teacherEnd,
+          "teacher.teacherSessionStart": { $each: teacherStart },
+          "teacher.teacherSessionEnd":{ $each: teacherEnd },
         },
       }
     );

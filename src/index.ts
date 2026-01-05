@@ -487,7 +487,7 @@ cron.schedule("*/5 * * * *", async () => {
   }
 }
 
-  const teacherEndTime = teacherEndTimeList[teacherEndTimeList.length - 1];
+  const teacherEndTime = teacherEndTimeList[teacherEndTimeList.at(-1)] || "";
 
   if (teacherStartTime && teacherEndTime) {
     const start = moment(teacherStartTime, "HH:mm");
@@ -717,7 +717,7 @@ for (const cls of groupClassSchedule) {
   const teacherJoined = Array.isArray(anyClass.teacher.teacherSessionStart) &&
                         anyClass.teacher.teacherSessionStart.length > 0;
 
-  const teacherStartTime = anyClass.teacher.teacherSessionStart?.[0] || "";
+  const teacherStartTime = anyClass.teacher.teacherSessionStart?.at(-1) || "";
   const teacherStartTimeList = [...(anyClass.teacher.teacherSessionStart || [])];
   let teacherEndList = [...(anyClass.teacher.teacherSessionEnd || [])];
   if (nowHHMM === endHHMM) {
@@ -737,30 +737,48 @@ for (const cls of groupClassSchedule) {
  const bulkOps: any[] = [];
 
 for (const cls of sessions) {
-  const studentJoined = Array.isArray(cls.student.studnetSessionStart) &&
-                        cls.student.studnetSessionStart.length > 0;
+  const studentJoined =
+    Array.isArray(cls.student?.studnetSessionStart) &&
+    cls.student.studnetSessionStart.length > 0;
 
+ 
   const updatePayload: any = {
     sessionStatus: nowHHMM === endHHMM ? "Completed" : cls.sessionStatus,
     "teacher.teacherSessionEnd": teacherEndList,
   };
 
+ 
   if (teacherJoined) {
-     const duration = moment.duration(moment(teacherEndTime, "HH:mm").diff(moment(teacherStartTime, "HH:mm"))).asMinutes();
-      const rate = rateMap["GROUPCLASS"] || 0;
-      const amount = parseFloat(((duration / 60) * rate).toFixed(2));
+
+    const duration = moment
+      .duration(
+        moment(teacherEndTime, "HH:mm").diff(
+          moment(teacherStartTime, "HH:mm"),
+        ),
+      )
+      .asMinutes();
+
+    const rate = rateMap["GROUPCLASS"] || 0;
+    const amount = parseFloat(((duration / 60) * rate).toFixed(2));
+
+    console.log("[CALC]", { duration, rate, amount });
 
     if (studentJoined) {
+      console.log("[ATTENDANCE] Student PRESENT", { sessionId: cls._id });
+
       Object.assign(updatePayload, {
-        scheduleStatus: nowHHMM === endHHMM ? "Completed" : cls.scheduleStatus,
+        scheduleStatus:
+          nowHHMM === endHHMM ? "Completed" : cls.scheduleStatus,
         studentAttendee: "Present",
         teacherAttendee: "Present",
         sessionStarttime: teacherStartTime,
         sessionEndtime: teacherEndTime,
         classhour: duration,
-        amount: amount,
+        amount,
       });
     } else {
+      console.log("[ATTENDANCE] Student ABSENT", { sessionId: cls._id });
+
       Object.assign(updatePayload, {
         scheduleStatus: "StudentAbsent",
         studentAttendee: "Absent",
@@ -768,43 +786,50 @@ for (const cls of sessions) {
         sessionStarttime: teacherStartTime,
         sessionEndtime: teacherEndTime,
         classhour: duration,
-        amount: amount,
+        amount,
       });
 
-      // 🔁 Queue async notification (below)
       cls.__notify = {
         type: "STUDENT_ABSENT_ALERT",
-        message: `Student ${cls.student?.studentFirstName} was absent for the group class on ${anyClass.startDate} at ${anyClass.startTime[0]}.`
+        message: `Student ${cls.student?.studentFirstName ?? "Unknown Student"} was absent for the group class on ${anyClass.startDate} at ${anyClass.startTime?.[0] ?? "Unknown Time"}.`,
       };
+
+      console.log("[NOTIFY_QUEUED]", cls.__notify);
     }
   } else {
-    const isStudentPresent = studentJoined;
 
     Object.assign(updatePayload, {
-      scheduleStatus: isStudentPresent ? "TeacherAbsent" : "BothAbsent",
-      sessionStatus: nowHHMM === endHHMM ? "Completed" : cls.sessionStatus,
-      studentAttendee: isStudentPresent ? "Present" : "Absent",
+      scheduleStatus: studentJoined ? "TeacherAbsent" : "BothAbsent",
+      sessionStatus:
+        nowHHMM === endHHMM ? "Completed" : cls.sessionStatus,
+      studentAttendee: studentJoined ? "Present" : "Absent",
       teacherAttendee: "Absent",
       classhour: 0,
       amount: 0,
       sessionStarttime: "",
-      sessionEndtime: ""
+      sessionEndtime: "",
     });
 
-    // 🔁 Queue async notification (below)
     cls.__notify = {
       type: "TEACHER_ABSENT_ALERT",
-      message: `Teacher ${cls.teacher?.teacherName} was absent for the group class on ${anyClass.startDate} at ${anyClass.startTime[0]}.`
+      message: `Teacher ${cls.teacher?.teacherName ?? "Unknown Teacher"} was absent for the group class on ${anyClass.startDate} at ${anyClass.startTime?.[0] ?? "Unknown Time"}.`,
     };
+
+    console.log("[NOTIFY_QUEUED]", cls.__notify);
   }
+
 
   bulkOps.push({
     updateOne: {
       filter: { _id: cls._id },
       update: { $set: updatePayload },
-    }
+    },
   });
+
+  console.log("[BULK_OP_PUSHED]", { sessionId: cls._id });
 }
+
+
 
 // ✅ Do bulk update
 await ClassScheduleModel.bulkWrite(bulkOps);
@@ -817,7 +842,7 @@ for (const cls of sessions) {
 }
 
 // ✅ Auto end logic
-if (nowHHMM === endHHMM) {
+if (nowMoment.isSameOrAfter(endTime)) {
   await liveClassAutoEnd({ data: classLink });
 }
   console.log(`✅ Group Class ${classLink}: ${teacherJoined ? "Teacher Present" : "Teacher Absent"} — Updated ${sessions.length} sessions`);
