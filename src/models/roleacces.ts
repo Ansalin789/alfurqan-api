@@ -22,7 +22,7 @@ const roleAccess = new Schema<IAccessModel>(
           write: { type: Boolean, required: false },
           delete: { type: Boolean, required: false },
         },
-        student: {
+        students: {
           read: { type: Boolean, required: false },
           write: { type: Boolean, required: false },
           delete: { type: Boolean, required: false },
@@ -47,7 +47,7 @@ const roleAccess = new Schema<IAccessModel>(
           write: { type: Boolean, required: false },
           delete: { type: Boolean, required: false },
         },
-        invoice: {
+        finance: {
           read: { type: Boolean, required: false },
           write: { type: Boolean, required: false },
           delete: { type: Boolean, required: false },
@@ -75,7 +75,7 @@ const roleAccess = new Schema<IAccessModel>(
           write: { type: Boolean, required: false },
           delete: { type: Boolean, required: false },
         },
-        trailmanagement: {
+        trialmanagement: {
           read: { type: Boolean, required: false },
           write: { type: Boolean, required: false },
           delete: { type: Boolean, required: false },
@@ -118,7 +118,7 @@ const roleAccess = new Schema<IAccessModel>(
           write: { type: Boolean, required: false },
           delete: { type: Boolean, required: false },
         },
-        meetingtraining: {
+        meetingandtraining: {
           read: { type: Boolean, required: false },
           write: { type: Boolean, required: false },
           delete: { type: Boolean, required: false },
@@ -253,7 +253,7 @@ export const zodroleAccessSchema = z.object({
         write: z.boolean().optional(),
         delete: z.boolean().optional(),
       }).optional(),
-      student: z.object({
+      students: z.object({
         read: z.boolean().optional(),
         write: z.boolean().optional(),
         delete: z.boolean().optional(),
@@ -278,7 +278,7 @@ export const zodroleAccessSchema = z.object({
         write: z.boolean().optional(),
         delete: z.boolean().optional(),
       }).optional(),
-      invoice: z.object({
+      finance: z.object({
         read: z.boolean().optional(),
         write: z.boolean().optional(),
         delete: z.boolean().optional(),
@@ -307,22 +307,22 @@ export const zodroleAccessSchema = z.object({
         write: z.boolean().optional(),
         delete: z.boolean().optional(),
       }).optional(),
-      scheduledevaluation: z.object({
+      trialmanagement: z.object({
         read: z.boolean().optional(),
         write: z.boolean().optional(),
         delete: z.boolean().optional(),
       }).optional(),
-      scheduledtrail: z.object({
+      managestudents: z.object({
         read: z.boolean().optional(),
         write: z.boolean().optional(),
         delete: z.boolean().optional(),
       }).optional(),
-      students: z.object({
+      manageteachers: z.object({
         read: z.boolean().optional(),
         write: z.boolean().optional(),
         delete: z.boolean().optional(),
       }).optional(),
-      teachers: z.object({
+      schedule: z.object({
         read: z.boolean().optional(),
         write: z.boolean().optional(),
         delete: z.boolean().optional(),
@@ -351,7 +351,7 @@ export const zodroleAccessSchema = z.object({
         write: z.boolean().optional(),
         delete: z.boolean().optional(),
       }).optional(),
-      meetingtraining: z.object({
+      meetingandtraining: z.object({
         read: z.boolean().optional(),
         write: z.boolean().optional(),
         delete: z.boolean().optional(),

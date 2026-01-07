@@ -1785,13 +1785,13 @@ export interface IAccessModel {
     adminmodules?: {
       dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
       evaluation?: { read?: boolean, write?: boolean, delete?: boolean },
-      student?: { read?: boolean, write?: boolean, delete?: boolean },
+      students?: { read?: boolean, write?: boolean, delete?: boolean },
       employees?: { read?: boolean, write?: boolean, delete?: boolean },
       courses?: { read?: boolean, write?: boolean, delete?: boolean },
             meetings?: { read?: boolean, write?: boolean, delete?: boolean },
 
       classes?: { read?: boolean, write?: boolean, delete?: boolean },
-      invoice?: { read?: boolean, write?: boolean, delete?: boolean },
+      finance?: { read?: boolean, write?: boolean, delete?: boolean },
       analytics?: { read?: boolean, write?: boolean, delete?: boolean },
       messages?: { read?: boolean, write?: boolean, delete?: boolean },
       settings?: { read?: boolean, write?: boolean, delete?: boolean },
@@ -1799,7 +1799,7 @@ export interface IAccessModel {
     academicCoach?: boolean;
     academicmodules?: {
       dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
-      trailmanagement?: { read?: boolean, write?: boolean, delete?: boolean },
+      trialmanagement?: { read?: boolean, write?: boolean, delete?: boolean },
       schedule?: { read?: boolean, write?: boolean, delete?: boolean },
       managestudents?: { read?: boolean, write?: boolean, delete?: boolean },
       manageteachers?: { read?: boolean, write?: boolean, delete?: boolean },
@@ -1810,7 +1810,7 @@ export interface IAccessModel {
     supervisormodules?: {
       dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
       recruitment?: { read?: boolean, write?: boolean, delete?: boolean },
-      meetingtraining?: { read?: boolean, write?: boolean, delete?: boolean },
+      meetingandtraining?: { read?: boolean, write?: boolean, delete?: boolean },
       teachers?: { read: boolean, write?: boolean, delete?: boolean },
       messages?: { read?: boolean, write?: boolean, delete?: boolean },
       support?: { read?: boolean, write?: boolean, delete?: boolean },
@@ -1853,12 +1853,12 @@ export interface IAccessModel extends Document{
     adminmodules?: {
       dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
       evaluation?: { read?: boolean, write?: boolean, delete?: boolean },
-      student?: { read?: boolean, write?: boolean, delete?: boolean },
+      students?: { read?: boolean, write?: boolean, delete?: boolean },
       employees?: { read?: boolean, write?: boolean, delete?: boolean },
       courses?: { read?: boolean, write?: boolean, delete?: boolean },
       meetings?: { read?: boolean, write?: boolean, delete?: boolean },
       classes?: { read?: boolean, write?: boolean, delete?: boolean },
-      invoice?: { read?: boolean, write?: boolean, delete?: boolean },
+      finance?: { read?: boolean, write?: boolean, delete?: boolean },
       analytics?: { read?: boolean, write?: boolean, delete?: boolean },
       messages?: { read?: boolean, write?: boolean, delete?: boolean },
       settings?: { read?: boolean, write?: boolean, delete?: boolean },
@@ -1866,7 +1866,7 @@ export interface IAccessModel extends Document{
     academicCoach?: boolean;
     academicmodules?: {
       dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
-      trailmanagement?: { read?: boolean, write?: boolean, delete?: boolean },
+      trialmanagement?: { read?: boolean, write?: boolean, delete?: boolean },
       schedule?: { read?: boolean, write?: boolean, delete?: boolean },
       managestudents?: { read?: boolean, write?: boolean, delete?: boolean },
       manageteachers?: { read?: boolean, write?: boolean, delete?: boolean },
@@ -1877,7 +1877,7 @@ export interface IAccessModel extends Document{
     supervisormodules?: {
       dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
       recruitment?: { read?: boolean, write?: boolean, delete?: boolean },
-      meetingtraining?: { read?: boolean, write?: boolean, delete?: boolean },
+      meetingandtraining?: { read?: boolean, write?: boolean, delete?: boolean },
       teachers?: { read: boolean, write?: boolean, delete?: boolean },
       messages?: { read?: boolean, write?: boolean, delete?: boolean },
       support?: { read?: boolean, write?: boolean, delete?: boolean },
