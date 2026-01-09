@@ -99,12 +99,13 @@ export const updateStudentClassSchedule = async (
     student,
     teacher,
     classLink,
+    course,
   } = payload;
 
   const alfurqanStudent = await AlStudenModel.findOne({
     _id: new Types.ObjectId(id),
   }).exec(); // 🧠 Extract reference values from the first student
-  const courseDetails = await Course.findOne({});
+  const courseDetails = await Course.findOne({courseName : course}).exec();
   if (!student) {
     throw new Error("Student details are required.");
   }
@@ -678,7 +679,7 @@ export const getClassesForTeacher = async (params: GetAllRecordsParams) => {
     $facet: {
       /* ================= GROUP CLASSES ================= */
       groupClasses: [
-        { $match: { sessionClassType: "GROUPCLASS" } },
+        { $match: { sessionClassType: "GROUPCLASS","teacher.teacherId": teacherId }   },
 
         {
           $unwind: "$classDay"
@@ -714,7 +715,7 @@ export const getClassesForTeacher = async (params: GetAllRecordsParams) => {
             startTime: { $first: "$startTime" },
             endTime: { $first: "$endTime" },
 
-            students: {
+            student: {
               $push: {
                 student: "$student",
                 status: "$status",
@@ -737,14 +738,14 @@ export const getClassesForTeacher = async (params: GetAllRecordsParams) => {
             endDate: 1,
             startTime: ["$startTime"],
             endTime: ["$endTime"],
-            students: 1
+            student: 1
           }
         }
       ],
 
       /* ================= REGULAR CLASSES ================= */
       regularClasses: [
-        { $match: { sessionClassType: "REGULARCLASS" } }
+        { $match: { sessionClassType: "REGULARCLASS" ,"teacher.teacherId": teacherId} }
       ]
     }
   },
@@ -786,13 +787,16 @@ const trialclasses = await Calendar.aggregate([
         studentId: "$student.studentId",
         studentName: "$student.name"
       },
-
+      course: {
+        courseId: "$course.courseId",
+        courseName: "$course.courseName"},
       meetingLink: 1,
       scheduledStartDate: 1,
       scheduledEndDate: 1,
       scheduledFrom: 1,
       scheduledTo: 1,
-      meetingStatus: 1
+      meetingStatus: 1,
+      trialClassStatus:1,
     }
   }
 ]);
