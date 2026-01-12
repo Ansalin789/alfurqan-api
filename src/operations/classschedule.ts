@@ -106,6 +106,9 @@ export const updateStudentClassSchedule = async (
     _id: new Types.ObjectId(id),
   }).exec(); // 🧠 Extract reference values from the first student
   const courseDetails = await Course.findOne({courseName : course}).exec();
+  if(!courseDetails){
+    throw new Error("Course details are required.");
+  }
   if (!student) {
     throw new Error("Student details are required.");
   }
