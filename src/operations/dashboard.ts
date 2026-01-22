@@ -120,201 +120,113 @@ export const dashboardWidgetCounts = async (
   }
 }
 
+
+
 export async function dashboardWidgetTeacherCounts(teacherId: string) {
   try {
-    if (!teacherId) {
+    if (!teacherId || !Types.ObjectId.isValid(teacherId)) {
       throw new Error("Invalid teacher ID");
     }
 
-    if (!Types.ObjectId.isValid(teacherId)) {
-      throw new Error("Invalid teacher ID format");
+    function parseDateTime(date: Date | string, time: string) {
+      if (!date || !time) return null;
+      const dateStr = date instanceof Date ? date.toISOString().split("T")[0] : date.split("T")[0];
+      const dt = new Date(`${dateStr}T${time}:00`);
+      return isNaN(dt.getTime()) ? null : dt;
     }
 
-    // Shared match stage
-    const matchStage = {
-      $match: {
-        "teacher.teacherId": teacherId,
-        $or: [
-          { deletedAt: { $exists: false } },
-          { deletedAt: null }
-        ]
-      }
-    };
+    function parseAmount(amount: string | number) {
+      if (!amount) return 0;
+      if (typeof amount === "number") return amount;
+      return parseFloat(amount.toString().replace(/[$,]/g, "")) || 0;
+    }
 
-    // Total Aggregation Pipeline
-    const totalPipeline = [
-      matchStage,
-      {
-        $group: {
-          _id: null,
-          totalClasses: { $sum: 1 },
-          uniqueStudents: {
-            $addToSet: {
-              $cond: [
-                {
-                  $and: [
-                    { $ne: ["$student.studentId", null] },
-                    { $ne: ["$student.studentId", ""] }
-                  ]
-                },
-                "$student.studentId",
-                "$$REMOVE"
-              ]
-            }
-          },
-          totalHours: {
-            $sum: {
-              $switch: {
-                branches: [
-                  { case: { $gt: ["$totalHourse", 0] }, then: "$totalHourse" },
-                  { case: { $gt: ["$totalHours", 0] }, then: "$totalHours" }
-                ],
-                default: 1
-              }
-            }
-          },
-         totalEarnings: {
-  $sum: {
-    $let: {
-      vars: {
-        cleanAmount: {
-          $toDouble: {
-            $replaceAll: {
-              input: {
-                $replaceAll: {
-                  input: "$amount",
-                  find: ",",
-                  replacement: ""
-                }
-              },
-              find: { $literal: "$" }, // ✅ FIXED HERE
-              replacement: ""
+    const classes = await classShedule.find({
+      "teacher.teacherId": teacherId,
+      $or: [{ deletedAt: { $exists: false } }, { deletedAt: null }]
+    }).lean();
+
+    let totalClasses = 0;
+    let totalHours = 0;
+    let totalEarnings = 0;
+    const allStudents = new Set<string>();
+
+    const groupClassMap = new Map<string, { hours: number; earning: number; students: Set<string> }>();
+
+    for (const cls of classes) {
+      const isGroup = cls.sessionClassType === "GROUPCLASS";
+
+      if (isGroup) {
+        // Create unique key per group session
+        const key = cls.classLink + "_" + cls.startDate.toString();
+        if (!groupClassMap.has(key)) {
+          // Compute total hours for this session
+          let classHours = 0;
+          if (Array.isArray(cls.startTime) && Array.isArray(cls.endTime) && cls.startTime.length === cls.endTime.length) {
+            for (let i = 0; i < cls.startTime.length; i++) {
+              const startDT = parseDateTime(cls.startDate, cls.startTime[i]);
+              const endDT = parseDateTime(cls.startDate, cls.endTime[i]);
+              if (!startDT || !endDT) continue;
+              classHours += (endDT.getTime() - startDT.getTime()) / 36e5;
             }
           }
-        }
-      },
-      in: { $ifNull: ["$$cleanAmount", 0] }
-    }
-  }
-}
+          const earning = parseAmount(cls.earnings || cls.amount);
 
+          // Add group session once
+          totalClasses += 1;
+          totalHours += classHours;
+          totalEarnings += earning;
+
+          // Add group data
+          groupClassMap.set(key, { hours: classHours, earning, students: new Set<string>() });
         }
-      },
-      {
-        $project: {
-          _id: 0,
-          totalclasses: "$totalClasses",
-          totalstudents: { $size: "$uniqueStudents" },
-          totalhours: { $round: ["$totalHours", 0] },
-          totalearnings: { $round: ["$totalEarnings", 0] }
+
+        // Add students
+        const groupData = groupClassMap.get(key)!;
+        if (Array.isArray(cls.student)) {
+          cls.student.forEach((s: any) => s.studentId && groupData.students.add(s.studentId));
+        } else if (cls.student?.studentId) {
+          groupData.students.add(cls.student.studentId);
         }
+
+      } else {
+        // Regular class
+        const startDT = parseDateTime(cls.startDate, cls.startTime);
+        const endDT = parseDateTime(cls.startDate, cls.endTime);
+        if (!startDT || !endDT) continue;
+
+        const hours = (endDT.getTime() - startDT.getTime()) / 36e5;
+        const earning = parseAmount(cls.earnings || cls.amount);
+
+        totalClasses += 1;
+        totalHours += hours;
+        totalEarnings += earning;
+
+        if (cls.student?.studentId) allStudents.add(cls.student.studentId);
       }
-    ];
-
-const totalResult = await classShedule.aggregate(totalPipeline as PipelineStage[]);
-
-    // Monthly Aggregation Pipeline
-    const monthlyPipeline = [
-      matchStage,
-      {
-        $addFields: {
-          createdAtSafe: { $ifNull: ["$createdAt", new Date()] },
-        }
-      },
-      {
-        $addFields: {
-          year: { $year: "$createdAtSafe" },
-          month: { $month: "$createdAtSafe" }
-        }
-      },
-      {
-        $group: {
-          _id: { year: "$year", month: "$month" },
-          totalClasses: { $sum: 1 },
-          uniqueStudents: {
-            $addToSet: {
-              $cond: [
-                {
-                  $and: [
-                    { $ne: ["$student.studentId", null] },
-                    { $ne: ["$student.studentId", ""] }
-                  ]
-                },
-                "$student.studentId",
-                "$$REMOVE"
-              ]
-            }
-          },
-          totalHours: {
-            $sum: {
-              $switch: {
-                branches: [
-                  { case: { $gt: ["$totalHourse", 0] }, then: "$totalHourse" },
-                  { case: { $gt: ["$totalHours", 0] }, then: "$totalHours" }
-                ],
-                default: 1
-              }
-            }
-          },
-        totalEarnings: {
-  $sum: {
-    $let: {
-      vars: {
-        cleanAmount: {
-          $toDouble: {
-            $replaceAll: {
-              input: {
-                $replaceAll: {
-                  input: "$amount",
-                  find: ",",
-                  replacement: ""
-                }
-              },
-              find: { $literal: "$" }, // ✅ FIXED HERE
-              replacement: ""
-            }
-          }
-        }
-      },
-      in: { $ifNull: ["$$cleanAmount", 0] }
     }
-  }
-}
 
-        }
-      },
-      {
-        $project: {
-          _id: 0,
-          year: "$_id.year",
-          month: "$_id.month",
-          totalclasses: "$totalClasses",
-          totalstudents: { $size: "$uniqueStudents" },
-          totalhours: { $round: ["$totalHours", 0] },
-          totalearnings: { $round: ["$totalEarnings", 0] }
-        }
-      },
-      {
-        $sort: { year: 1, month: 1 }
-      }
-    ];
-
-const monthlyResult = await classShedule.aggregate(monthlyPipeline as PipelineStage[]);
+    // Merge all students from group classes
+    for (const groupData of groupClassMap.values()) {
+      groupData.students.forEach(s => allStudents.add(s));
+    }
 
     return {
-      ...(totalResult[0] || {
-        totalclasses: 0,
-        totalstudents: 0,
-        totalhours: 0,
-        totalearnings: 0,
-      }),
-      monthlyData: monthlyResult
+      totalclasses: totalClasses,
+      totalhours: Number(totalHours.toFixed(2)),
+      totalearnings: Math.round(totalEarnings * 100) / 100, // keep 2 decimal
+      totalstudents: allStudents.size
     };
+
   } catch (error) {
     console.error("Error in dashboardWidgetTeacherCounts:", error);
     throw error;
   }
 }
+
+
+
+
 
 
 

@@ -19,17 +19,19 @@ import {
 } from "../redis/handler/teacherSlotHander";
 import { emitEventToClient } from "../shared/socket";
 import AuditLog from "../models/auditlog";
+import users from "../models/users";
 
 export const topicHandler: Record<string, (data: any) => Promise<void>> = {
 
   "invoice-paid": async (data: any) => {
     console.log("invioce data ", data);
     const latestRevenue = await getTotalAmountByCourse("yearly");
+      const admin = await users.find({role: "ADMIN" , status: "ACTIVE" }).exec();
     console.log("💰 Latest Revenue:", latestRevenue);
     emitEventToClient(
       "revenueUpdated",
       latestRevenue,
-      "6805da8c06542aa33858b889"
+      admin[0]?._id.toString()
     );
   },
 

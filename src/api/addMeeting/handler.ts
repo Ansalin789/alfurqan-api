@@ -89,7 +89,7 @@ export default {
         : [];
   
       // 🧠 Shared meetingId for all records
-      const meetingId = payload.meetingId || `meet-${crypto.randomUUID()}`;
+      const meetingId = payload.meetingId || `ALFMT-${String(Math.floor(1 + Math.random() * 99)).padStart(2, '0')}`;
   
       // ✅ Create per-participant records in service
       const meetingResult = await createMeeting({
