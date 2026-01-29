@@ -435,6 +435,7 @@ export interface IEvaluationCreate{
   academicCoachId: string;
   student: {
   studentId?: string;
+  familyId?: string;
   studentRegisterId?: string;
   studentFirstName: string;
   studentLastName: string;
