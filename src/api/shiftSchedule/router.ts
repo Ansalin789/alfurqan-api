@@ -14,7 +14,8 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "shiftschedule"],
         auth: {
           strategies: ["jwt"],
-        }, },
+        },
+      },
     },
     // {
     //   method: "GET",
@@ -37,20 +38,22 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "shiftschedule"],
         auth: {
           strategies: ["jwt"],
-        },  },
+        },
+      },
     },
+  {
+  method: "PUT",
+  path: "/shiftschedule",
+  options: {
+    handler: handler.updateShiftSchedule,
+    description: "Update shift schedule",
+    tags: ["api", "shiftschedule"],
+    auth: {
+      strategies: ["jwt"],
+    },
+  },
+}
 
-    {
-            method: "GET",
-            path: "/shiftschedule/{id}",
-            options: {
-              handler: handler.getShiftscheduleById,
-              description: userMessages.CREATE,
-              tags: ["api", "users"],
-              auth: {
-                strategies: ["jwt"],
-              },  },
-          },
     // {
     //   method: "PUT",
     //   path: "/users/{userId}",

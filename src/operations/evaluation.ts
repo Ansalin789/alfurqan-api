@@ -245,40 +245,83 @@ export const updateStudentEvaluation = async (
     console.log("updatedEvaluation>>", updatedEvaluation);
 
     const emailTemplate = await EmailTemplate.findOne({
-      templateKey: "Invoice",
-    }).exec();
+  templateKey: "Invoice",
+}).exec();
 
-    if (
-      emailTemplate &&
-      payload.student &&
-      payload.subscription &&
-      evaluation
-    ) {
-      const emailTo = [{ email: payload.student.studentEmail }];
-      const subject = "Invoice";
+if (emailTemplate && payload.student && payload.subscription && evaluation) {
 
-      const htmlPart = emailTemplate.templateContent
-        .replace(
-          "<studentname>",
-          payload.student.studentFirstName +
-            " " +
-            payload.student.studentLastName
-        )
-        .replace("<address>", payload.student.studentCity || " ")
-        .replace("<phonenumber>", payload.student.studentPhone.toString())
-        .replace("<email>", payload.student.studentEmail)
-        .replace("<plan>", payload.subscription.subscriptionName)
-        .replace("<coursename>", payload.student.learningInterest)
-        .replace("<amount>", evaluation.planTotalPrice.toString())
-        .replace("<adjustamount>", evaluation.planTotalPrice.toString())
-        .replace("<subtotal>", evaluation.planTotalPrice.toString())
-        .replace("<total>", evaluation.planTotalPrice.toString())
-        .replace("<paymentLink>", updatedEvaluation.paymentLink);
+  const emailTo = [{ email: payload.student.studentEmail }];
+  const subject = "Invoice";
 
-      await sendEmailClient(emailTo, subject, htmlPart);
-      console.log("✅ Invoice Email sent");
+  // Base values
+  const rawTotalPrice = Number(evaluation?.planTotalPrice) || 1;
+  const hours = Number(evaluation?.accomplishmentTime) || 1;
+
+  // Compute discount if family is being used for 4th time or more
+  let displayTotal = Number(rawTotalPrice);
+  let displayRate = displayTotal / (hours || 1);
+  let discountApplied = false;
+
+  const familyId = (evaluation && (evaluation as any).familyId) || payload.student.familyId || null;
+  if (familyId) {
+    try {
+      const familyUsageCount = await EvaluationModel.countDocuments({ familyId }).exec();
+      // Apply discount when family key has been used 4th time or more
+      if (familyUsageCount >= 3) {
+        discountApplied = true;
+        displayTotal = Number((displayTotal * 0.9).toFixed(2)); // 10% off
+        displayRate = Number((displayTotal / (hours || 1)).toFixed(2));
+
+        // Persist discounted total/amount and flag to evaluation (best-effort; fields may vary by schema)
+        try {
+          await EvaluationModel.findByIdAndUpdate(
+            id,
+            {
+              $set: {
+                planTotalPrice: String(displayTotal),
+                amount: String(displayTotal),
+                discountApplied: true,
+              },
+            },
+            { new: true }
+          ).exec();
+        } catch (err) {
+          // don't block email if DB update fails; just log
+          AppLogger.error("Failed to persist discounted price for evaluation", { err, id, familyId });
+        }
+      }
+    } catch (err) {
+      AppLogger.error("Error counting family usage for discount", { err, familyId });
     }
+  }
 
+  const dueDate = new Date();
+  dueDate.setDate(dueDate.getDate() + 2);
+
+  // Prepare HTML using computed display values
+  let htmlPart = emailTemplate.templateContent || "";
+  htmlPart = htmlPart
+    .replace(/{{Student Name}}/g, (payload.student.studentFirstName || "") + " " + (payload.student.studentLastName || ""))
+    .replace(/{{Invoice Date}}/g, new Date().toDateString())
+    .replace(/{{Hourly Rate}}/g, String(displayRate))
+    .replace(/{{Total Amount}}/g, String(displayTotal))
+    .replace(/{{Package Name}}/g, payload.subscription.subscriptionName)
+    .replace(/{{Hours}}/g, String(hours))
+    .replace(/{{Payment Link}}/g, (updatedEvaluation && (updatedEvaluation as any).paymentLink) || "")
+    .replace(/{{Due Date}}/g, dueDate.toDateString());
+
+  // If discount applied, optionally annotate the email (if template has a placeholder {{DiscountNote}})
+  if (discountApplied) {
+    htmlPart = htmlPart.replace(/{{DiscountNote}}/g, "10% family discount applied");
+  } else {
+    htmlPart = htmlPart.replace(/{{DiscountNote}}/g, "");
+  }
+
+  await sendEmailClient(emailTo, subject, htmlPart);
+
+  console.log("✅ Invoice Email sent", { discountApplied });
+
+}
     return updatedEvaluation ;
   } else if (
     payload.teacher ||
@@ -288,14 +331,20 @@ export const updateStudentEvaluation = async (
   ) {
     console.log("💡 Running Meeting Schedule Update (reuse Zoom link) Flow...");
 
+    const evaluation = await EvaluationModel.findById(id).lean();
+  if (!evaluation) {
+    throw new Error("Evaluation not found");
+  }
+
+  const trialId = evaluation.trialId;
     // 👉 Get existing meeting schedule (to reuse link)
-    const existingMeeting = await MeetingSchedule.findOne({ trialId: id });
+    const existingMeeting = await MeetingSchedule.findOne({ trialId });
 
     // 👉 If teacherId is present but name/email missing or 'Not Assigned', fetch from User model
     let teacherName = payload.teacher?.teacherName;
     let teacherEmail = payload.teacher?.teacherEmail;
     if (
-      payload.teacher?.teacherId && 
+      payload.teacher?.teacherId &&
       (!teacherName || teacherName === "Not Assigned" || !teacherEmail || teacherEmail === "Not Assigned")
     ) {
       const teacherUser = await User.findOne({ userId: payload.teacher.teacherId, role: "TEACHER" }).exec();
@@ -305,7 +354,7 @@ export const updateStudentEvaluation = async (
 
     // 👉 Update meeting schedule with new details but keep existing meetingLink
     const updatedMeetingDetails = await MeetingSchedule.findOneAndUpdate(
-      { trialId: id },
+      {trialId},
       {
         $set: {
           teacher: {
@@ -333,12 +382,11 @@ export const updateStudentEvaluation = async (
     if (zoomMailTemplate) {
       const subject = "Trial class";
       const htmlPart = zoomMailTemplate.templateContent
-        .replace(
-          "<date>",
-          moment(String(payload.preferredTrialDate)).format("DD-MM-YYYY")
-        )
-        .replace("<meetingTime>", payload.preferredTrialFromTime as string)
-        .replace("<zoomlink>", updatedMeetingDetails?.meetingLink ?? "");
+         .replace(/{{Student’s Name}}/g, existingMeeting?.student?.name || " ")
+        .replace(/{{Teacher Name}}/g, teacherName || " ")  
+  .replace(/{{Preferred Date}}/g, new Date(payload.preferredTrialDate || '').toDateString())
+  .replace(/{{Preferred Time}}/g, payload.preferredTrialFromTime + " - " + payload.preferredTrialToTime)
+  .replace(/{{Zoom Link}}/g,  updatedMeetingDetails?.meetingLink || existingMeeting?.meetingLink || " ");
 
       // Only send to valid teacher email
       const emailTo = [];
@@ -359,7 +407,8 @@ export const updateStudentEvaluation = async (
       }
     }
 
-    return null; // 👉 Evaluation not updated in this case
+const updatedEvaluation = await EvaluationModel.findById(id).lean();
+return updatedEvaluation as IEvaluation;
   }
 
   console.log("ℹ️ No special email flow triggered");

@@ -47,6 +47,12 @@ student: {
         required: true, 
     }
 },
+refernceId:{
+  type:String,
+    required: true,
+},
+referredBy:{  type:String,
+    required: false,},
 username: {
     type:String,
     required: true,
@@ -124,6 +130,8 @@ export const zodAlStudentSchema = z.object({
       gender: z.string()
     }),
     sessionClassType:z.string().optional(),
+    refernceId:z.string(),
+    referredBy:z.string().optional(),
     level:z.string().optional(),
     profilepic: z
     .union([z.string().nullable(), z.instanceof(Buffer), fileObjectSchema])

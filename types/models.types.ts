@@ -104,6 +104,7 @@ export interface IStudents extends Document {
   startDate : Date;
   evaluationStatus: EvaluationStatus;
   refernceId: string,
+  referredBy:string,
   status: Status;
   createdDate: Date;
   createdBy: string;
@@ -134,7 +135,8 @@ export interface IStudentCreate {
   referralSource: ReferalResource;
   startDate : Date;
   evaluationStatus: EvaluationStatus;
-  refernceId: string,
+  refernceId: string;
+  referredBy:string;
   status: Status;
   createdDate: Date;
   createdBy: string;
@@ -433,6 +435,7 @@ export interface IEvaluationCreate{
   academicCoachId: string;
   student: {
   studentId?: string;
+  familyId?: string;
   studentRegisterId?: string;
   studentFirstName: string;
   studentLastName: string;
@@ -766,8 +769,8 @@ export interface IAlStudents extends Document{
     country: string;
   };
 profilepic?: Buffer;
-
-
+referredBy?:string;
+  refernceId:string;
   level?: string;
   username: string,
   password: string;

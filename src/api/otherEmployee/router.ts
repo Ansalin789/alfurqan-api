@@ -27,6 +27,21 @@ const register = async (server: Server): Promise<void> => {
       
     },
      
+
+   {
+      method: "PUT",
+      path: "/otheremployee/{_id}",
+      options: {
+        handler: handler.updateOtherEmployee,
+        description: otherEmployeesMessages.CREATE,
+        tags: ["api", "recruitment"],
+        auth: {
+          strategies: ["jwt"],
+        }, },
+      
+    },
+
+
     {
       method: "GET",
       path: "/otheremp/countriescount",

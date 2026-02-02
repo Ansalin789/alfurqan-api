@@ -160,6 +160,8 @@ export const createMeeting = async ( payload: IMeetingCreate): Promise<IMeeting 
 
     // Generate/normalize meetingId (keep provided id if present)
     const meetingId = payload.meetingId || `meet-${uuidv4()}`;
+  
+
 
     // Check for past date
     if (meetingDate < new Date()) {
@@ -252,7 +254,7 @@ const autoScheduleMeeting = async () => {
  for (const date of meetingDates) {
   // ✅ Generate a unique meetingId per date
   const formattedDate = date.toISOString().split("T")[0]; // e.g., "2025-07-29"
-  const baseMeetingId = `auto-${supervisor._id}-${formattedDate}`;
+  const baseMeetingId =   generateAFTCode("AFM");
 
   for (const teacher of teachers) {
     const existingMeeting = await Meeting.findOne({
@@ -384,3 +386,8 @@ export const meetingByIdRecord = async (
     _id: new Types.ObjectId(_id),
   }).lean();
 };
+
+function generateAFTCode(preName: string) {
+  const num = Math.floor(10000 + Math.random() * 90000);
+    return `${preName}${num}`;
+}

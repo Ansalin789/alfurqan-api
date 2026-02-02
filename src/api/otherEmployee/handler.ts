@@ -1,7 +1,7 @@
 import { ResponseToolkit,Request } from "@hapi/hapi";
 import { z } from "zod";
-import { zodOtherEmployeeSchema } from "../../models/otheremployee";
-import { getOhterEmpCountriesCount, getOhterEmployeeById, saveOtherEmployee } from "../../operations/otheremployee";
+import otheremployee, { zodOtherEmployeeSchema } from "../../models/otheremployee";
+import { getOhterEmpCountriesCount, getOhterEmployeeById, saveOtherEmployee, UpdateOtherEmployee } from "../../operations/otheremployee";
 import * as Stream from "stream";
 import { isNil } from "lodash";
 import { notFound } from "@hapi/boom";
@@ -118,6 +118,50 @@ export default {
       return result;
         },
  
+
+async updateOtherEmployee(req: Request, h: ResponseToolkit) {
+  const _id = req.params._id;
+
+  const { payload } = createEmployeeInputValidation.parse({
+    payload: req.payload,
+  });
+
+ const updateData = {
+  firstName: payload.firstName,
+  lastName: payload.lastName,
+  designation: payload.designation,
+  email: payload.email,
+  phoneNumber: payload.phoneNumber,
+  dateOfBirth: payload.dateOfBirth,
+  country: payload.country,
+  city: payload.city,
+  residentialAddress: payload.residentialAddress,
+  higherQualification: payload.higherQualification,
+  universityName: payload.universityName,
+  languagesKnown: payload.languagesKnown,
+  experience: payload.experience ? String(payload.experience) : undefined,
+  passportNumber: payload.passportNumber,
+  bankName: payload.bankName,
+  accountNumber: payload.accountNumber,
+  bankCode: payload.bankCode,
+};
+
+  Object.keys(updateData).forEach((key) => {
+    const typedKey = key as keyof typeof updateData;
+    if (updateData[typedKey] === undefined) {
+      delete updateData[typedKey];
+    }
+  });
+
+  const updatedEmployee = await UpdateOtherEmployee(_id, updateData);
+
+  if (!updatedEmployee) return { error: "Employee not found" };
+
+  return updatedEmployee;
+}
+
+
+
 }
 async function streamToBuffer(stream: Readable): Promise<Buffer> {
   const chunks: any[] = [];
@@ -129,5 +173,9 @@ async function streamToBuffer(stream: Readable): Promise<Buffer> {
     stream.on("error", (err: any) => reject(err));
     stream.on("end", () => resolve(Buffer.concat(chunks)));
   });
+
+
+
+  
 }
 

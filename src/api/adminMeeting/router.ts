@@ -93,6 +93,22 @@ const register = async (server: Server): Promise<void> => {
                 allow: "application/json"
               }
             }
+          },
+          {
+            method: "POST",
+            path: "/allAdminMeeting/request-reschedule",
+            options: {
+              handler: handler.requestAdminMeetingReschedule,
+              description: addAminMeetingMessages.UPDATE,
+              tags: ["api", "adminmeeting"],
+              payload: {
+                parse: true,
+                allow: "application/json"
+              },
+              auth: {
+                strategies: ["jwt"],
+              },
+            },
           }
 
 
