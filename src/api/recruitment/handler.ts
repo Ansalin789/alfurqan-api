@@ -11,6 +11,7 @@ import { isNil } from "lodash";
 import { supervisorCardCount, supervisorRecruitmentList, supervisorTeacherList } from "../../kafka/producers/supervisorProducer";
 import { sendNotification } from "../../operations/notification";
 import { uploadFileToSharePoint } from "../../shared/sharepoint";
+import users from "../../models/users";
 
 
 
@@ -127,12 +128,13 @@ export default{
 
         console.log("File uploaded to SharePoint. Link:", shareLink.fileId);
 const generateTeacherId = generateAFTCode("AFT");
+   const supervisor = await users.find({role: "SUPERVISOR" , status: "Active" }).exec();
     const result = await createRecruitment({
       candidateId: generateTeacherId,
       supervisor: {
-        supervisorId: "67a467bcc346aaaea402f760",
-        supervisorName: "Arthi",
-        supervisorEmail:  "arthi.blackstoneinfomatics@gmail.com",
+        supervisorId: supervisor[0]?._id.toString() || "",
+        supervisorName: supervisor[0]?.userName || "Supervisor",
+        supervisorEmail:  supervisor[0]?.email || "supervisor@gmail.com",
         supervisorRole:  "SUPERVISOR",
       },
       candidateFirstName: payload.candidateFirstName,

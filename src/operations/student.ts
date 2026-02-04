@@ -15,6 +15,7 @@ import { Types } from "mongoose";
 import { sendNotification } from "./notification";
 import UserModel from "../models/users";
 import { generateRollNo } from "./rollcounter";
+import users from "../models/users";
 
 
 
@@ -62,13 +63,15 @@ export const createStudent = async (
         email: academicCoach?.email || " " // Provide a default value if undefined
     };
     const savedUser = await newUser.save(); 
+          const admin = await users.find({role: "ADMIN" , status: "ACTIVE" }).exec();
+    
     await sendNotification({
       messages: `${savedUser.firstName}! has been joined in our academic team !.`,
       senderId: savedUser._id.toString(),
       senderName: savedUser.firstName,
       senderEmail: savedUser.email,
       isRead : false,
-      receiverId: [savedUser.academicCoach.academicCoachId.toString(),"6805da8c06542aa33858b889"],
+      receiverId: [savedUser.academicCoach.academicCoachId.toString(),admin[0]?._id.toString()],
       receiverName: [savedUser.academicCoach.name,"Admin"],
       receiverEmail: [savedUser.academicCoach.email,"rahul.blackstoneinfomatics@gmail.com"],
     

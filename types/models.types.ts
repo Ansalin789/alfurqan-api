@@ -103,8 +103,8 @@ export interface IStudents extends Document {
   referralSource: ReferalResource;
   startDate : Date;
   evaluationStatus: EvaluationStatus;
-  refernceId: string,
-  referredBy:string,
+  refernceId?: string,
+  referredBy?:string,
   status: Status;
   createdDate: Date;
   createdBy: string;
@@ -135,8 +135,8 @@ export interface IStudentCreate {
   referralSource: ReferalResource;
   startDate : Date;
   evaluationStatus: EvaluationStatus;
-  refernceId: string;
-  referredBy:string;
+  refernceId?: string;
+  referredBy?:string;
   status: Status;
   createdDate: Date;
   createdBy: string;
@@ -751,7 +751,7 @@ export interface MeetingSchedulePayload {
   meetingLink?: string | null;
   createdBy?: string;
   lastUpdatedBy?: string;
-  referenceId: string;
+  referenceId?: string;
   referenceType: string;
   remarks?: string;
 }
@@ -770,7 +770,7 @@ export interface IAlStudents extends Document{
   };
 profilepic?: Buffer;
 referredBy?:string;
-  refernceId:string;
+  refernceId?:string;
   level?: string;
   username: string,
   password: string;
@@ -793,8 +793,7 @@ export interface IAlStudentCreate{
     studentPhone: number;
     gender: string;
   };
-profilepic?: Buffer;
-
+  profilepic?: Buffer;
   level?: string;
   username: string,
   role: string;
@@ -1789,13 +1788,13 @@ export interface IAccessModel {
     adminmodules?: {
       dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
       evaluation?: { read?: boolean, write?: boolean, delete?: boolean },
-      student?: { read?: boolean, write?: boolean, delete?: boolean },
+      students?: { read?: boolean, write?: boolean, delete?: boolean },
       employees?: { read?: boolean, write?: boolean, delete?: boolean },
       courses?: { read?: boolean, write?: boolean, delete?: boolean },
             meetings?: { read?: boolean, write?: boolean, delete?: boolean },
 
       classes?: { read?: boolean, write?: boolean, delete?: boolean },
-      invoice?: { read?: boolean, write?: boolean, delete?: boolean },
+      finance?: { read?: boolean, write?: boolean, delete?: boolean },
       analytics?: { read?: boolean, write?: boolean, delete?: boolean },
       messages?: { read?: boolean, write?: boolean, delete?: boolean },
       settings?: { read?: boolean, write?: boolean, delete?: boolean },
@@ -1803,7 +1802,7 @@ export interface IAccessModel {
     academicCoach?: boolean;
     academicmodules?: {
       dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
-      trailmanagement?: { read?: boolean, write?: boolean, delete?: boolean },
+      trialmanagement?: { read?: boolean, write?: boolean, delete?: boolean },
       schedule?: { read?: boolean, write?: boolean, delete?: boolean },
       managestudents?: { read?: boolean, write?: boolean, delete?: boolean },
       manageteachers?: { read?: boolean, write?: boolean, delete?: boolean },
@@ -1814,7 +1813,7 @@ export interface IAccessModel {
     supervisormodules?: {
       dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
       recruitment?: { read?: boolean, write?: boolean, delete?: boolean },
-      meetingtraining?: { read?: boolean, write?: boolean, delete?: boolean },
+      meetingandtraining?: { read?: boolean, write?: boolean, delete?: boolean },
       teachers?: { read: boolean, write?: boolean, delete?: boolean },
       messages?: { read?: boolean, write?: boolean, delete?: boolean },
       support?: { read?: boolean, write?: boolean, delete?: boolean },
@@ -1857,12 +1856,12 @@ export interface IAccessModel extends Document{
     adminmodules?: {
       dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
       evaluation?: { read?: boolean, write?: boolean, delete?: boolean },
-      student?: { read?: boolean, write?: boolean, delete?: boolean },
+      students?: { read?: boolean, write?: boolean, delete?: boolean },
       employees?: { read?: boolean, write?: boolean, delete?: boolean },
       courses?: { read?: boolean, write?: boolean, delete?: boolean },
       meetings?: { read?: boolean, write?: boolean, delete?: boolean },
       classes?: { read?: boolean, write?: boolean, delete?: boolean },
-      invoice?: { read?: boolean, write?: boolean, delete?: boolean },
+      finance?: { read?: boolean, write?: boolean, delete?: boolean },
       analytics?: { read?: boolean, write?: boolean, delete?: boolean },
       messages?: { read?: boolean, write?: boolean, delete?: boolean },
       settings?: { read?: boolean, write?: boolean, delete?: boolean },
@@ -1870,7 +1869,7 @@ export interface IAccessModel extends Document{
     academicCoach?: boolean;
     academicmodules?: {
       dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
-      trailmanagement?: { read?: boolean, write?: boolean, delete?: boolean },
+      trialmanagement?: { read?: boolean, write?: boolean, delete?: boolean },
       schedule?: { read?: boolean, write?: boolean, delete?: boolean },
       managestudents?: { read?: boolean, write?: boolean, delete?: boolean },
       manageteachers?: { read?: boolean, write?: boolean, delete?: boolean },
@@ -1881,7 +1880,7 @@ export interface IAccessModel extends Document{
     supervisormodules?: {
       dashboard?: { read?: boolean, write?: boolean, delete?: boolean },
       recruitment?: { read?: boolean, write?: boolean, delete?: boolean },
-      meetingtraining?: { read?: boolean, write?: boolean, delete?: boolean },
+      meetingandtraining?: { read?: boolean, write?: boolean, delete?: boolean },
       teachers?: { read: boolean, write?: boolean, delete?: boolean },
       messages?: { read?: boolean, write?: boolean, delete?: boolean },
       support?: { read?: boolean, write?: boolean, delete?: boolean },

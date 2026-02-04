@@ -99,12 +99,16 @@ export const updateStudentClassSchedule = async (
     student,
     teacher,
     classLink,
+    course,
   } = payload;
 
   const alfurqanStudent = await AlStudenModel.findOne({
     _id: new Types.ObjectId(id),
   }).exec(); // 🧠 Extract reference values from the first student
-  const courseDetails = await Course.findOne({});
+  const courseDetails = await Course.findOne({courseName : course}).exec();
+  if(!courseDetails){
+    throw new Error("Course details are required.");
+  }
   if (!student) {
     throw new Error("Student details are required.");
   }
@@ -659,68 +663,225 @@ export const getClassesForStudent = async (
 export const getClassesForTeacher = async (params: GetAllRecordsParams) => {
   const {
     teacherId,
-    sortBy = "_id",
-    sortOrder = "asc",
-    offset = 1,
-    limit = 10,
+    offset,
+    limit,
   } = params;
 
   if (!teacherId) {
     throw new Error("Teacher ID is required");
   }
 
-  const query: any = { "teacher.teacherId": teacherId };
-  const sortOptions: any = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
+  // ✅ SAFE PAGINATION
+  const page = Math.max(1, Number(offset) || 1);
+  const pageSize = Math.max(1, Number(limit) || 10);
+  const skip = (page - 1) * pageSize;
 
   try {
-    const skip = Math.max(0, (Number(offset) - 1) * Number(limit));
+    const pipeline = [
+  {
+    $facet: {
+      /* ================= GROUP CLASSES ================= */
+      groupClasses: [
+        { $match: { sessionClassType: "GROUPCLASS","teacher.teacherId": teacherId }   },
 
-    const [classScheduleList, totalCount] = await Promise.all([
-      ClassScheduleModel.find(query)
-        .sort(sortOptions)
-        .skip(skip)
-        .limit(Number(limit))
-        .exec(),
-      ClassScheduleModel.countDocuments(query).exec(),
-    ]);
-    let evaluation: any;
-    // Enrich class schedule with student and evaluation data
-    const enrichedSchedules = await Promise.all(
-      classScheduleList.map(async (cls) => {
-        const studentId = cls?.student?.id;
-        const alfstudent = await AlStudenModel.findOne({
-          _id: new Types.ObjectId(studentId),
-        });
-        console.log("alfstudent", alfstudent);
-        evaluation = await Evaluation.findOne({
-          "student.studentId": alfstudent?.student?.studentId,
-        });
+        {
+          $unwind: "$classDay"
+        },
 
-        const trialclass = await Calendar.findOne({
-          trialId: evaluation?._id,
-        });
-        return {
-          ...cls.toObject(),
-          alfstudent,
-        };
-      })
-    );
+        {
+          $unwind: "$startTime"
+        },
 
-    const trialclass = await Calendar.find({
-      "teacher.teacherId": teacherId,
-    }).exec();
-    console.log("trialclass", trialclass);
+        {
+          $unwind: "$endTime"
+        },
 
-    return {
-      totalCount,
-      classSchedule: enrichedSchedules,
-      trialclasses: trialclass ?? [],
-    };
+        {
+          $group: {
+            _id: {
+              classLink: "$classLink",
+              classDay: "$classDay",
+              startDate: "$startDate",
+              startTime: "$startTime"
+            },
+
+            classLink: { $first: "$classLink" },
+            sessionClassType: { $first: "$sessionClassType" },
+            scheduleStatus: { $first: "$scheduleStatus" },
+
+            course: { $first: "$course" },
+
+            classDay: { $first: "$classDay" },
+            startDate: { $first: "$startDate" },
+            endDate: { $first: "$endDate" },
+
+            startTime: { $first: "$startTime" },
+            endTime: { $first: "$endTime" },
+
+            student: {
+              $push: {
+                student: "$student",
+                status: "$status",
+                sessionStatus: "$sessionStatus",
+                earnings: "$earnings"
+              }
+            }
+          }
+        },
+
+        {
+          $project: {
+            _id: "$classLink",
+            classLink: 1,
+            sessionClassType: 1,
+            scheduleStatus: 1,
+            course: 1,
+            classDay: ["$classDay"],
+            startDate: 1,
+            endDate: 1,
+            startTime: ["$startTime"],
+            endTime: ["$endTime"],
+            student: 1
+          }
+        }
+      ],
+
+      /* ================= REGULAR CLASSES ================= */
+      regularClasses: [
+        { $match: { sessionClassType: "REGULARCLASS" ,"teacher.teacherId": teacherId} }
+      ]
+    }
+  },
+
+  /* ================= MERGE BOTH ================= */
+  {
+    $project: {
+      classScheduleList: {
+        $concatArrays: ["$groupClasses", "$regularClasses"]
+      }
+    }
+  },
+
+  { $unwind: "$classScheduleList" },
+
+  {
+    $replaceRoot: {
+      newRoot: "$classScheduleList"
+    }
+  }
+];
+
+ const classScheduleList = await ClassScheduleModel.aggregate(pipeline);
+const trialclasses = await Calendar.aggregate([
+  {
+    $match: {
+      "teacher.teacherId": teacherId
+    }
+  },
+  {
+    $project: {
+      _id: 0,
+      id: "$_id",
+      trialId: 1,
+      classType: 1,
+
+      student: {
+        id: "$student.studentId",
+        studentId: "$student.studentId",
+        studentName: "$student.name"
+      },
+      course: {
+        courseId: "$course.courseId",
+        courseName: "$course.courseName"},
+      meetingLink: 1,
+      scheduledStartDate: 1,
+      scheduledEndDate: 1,
+      scheduledFrom: 1,
+      scheduledTo: 1,
+      meetingStatus: 1,
+      trialClassStatus:1,
+    }
+  }
+]);
+const response = {
+  totalCount: classScheduleList.length,
+  classScheduleList,
+  trialclasses // fetched separately
+};
+
+return response; 
+  
   } catch (error) {
-    console.error("Error fetching classes for student:", error);
-    throw new Error("Failed to fetch classes for the student");
+    console.error("Error fetching classes:", error);
+    throw new Error("Failed to fetch teacher classes");
   }
 };
+
+// export const getClassesForTeacher = async (params: GetAllRecordsParams) => {
+//   const {
+//     teacherId,
+//     sortBy = "_id",
+//     sortOrder = "asc",
+//     offset = 1,
+//     limit = 10,
+//   } = params;
+
+//   if (!teacherId) {
+//     throw new Error("Teacher ID is required");
+//   }
+
+//   const query: any = { "teacher.teacherId": teacherId };
+//   const sortOptions: any = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
+
+//   try {
+//     const skip = Math.max(0, (Number(offset) - 1) * Number(limit));
+
+//     const [classScheduleList, totalCount] = await Promise.all([
+//       ClassScheduleModel.find(query)
+//         .sort(sortOptions)
+//         .skip(skip)
+//         .limit(Number(limit))
+//         .exec(),
+//       ClassScheduleModel.countDocuments(query).exec(),
+//     ]);
+//     let evaluation: any;
+//     // Enrich class schedule with student and evaluation data
+//     const enrichedSchedules = await Promise.all(
+//       classScheduleList.map(async (cls) => {
+//         const studentId = cls?.student?.id;
+//         const alfstudent = await AlStudenModel.findOne({
+//           _id: new Types.ObjectId(studentId),
+//         });
+//         console.log("alfstudent", alfstudent);
+//         evaluation = await Evaluation.findOne({
+//           "student.studentId": alfstudent?.student?.studentId,
+//         });
+
+//         const trialclass = await Calendar.findOne({
+//           trialId: evaluation?._id,
+//         });
+//         return {
+//           ...cls.toObject(),
+//           alfstudent,
+//         };
+//       })
+//     );
+
+//     const trialclass = await Calendar.find({
+//       "teacher.teacherId": teacherId,
+//     }).exec();
+//     console.log("trialclass", trialclass);
+
+//     return {
+//       totalCount,
+//       classSchedule: enrichedSchedules,
+//       trialclasses: trialclass ?? [],
+//     };
+//   } catch (error) {
+//     console.error("Error fetching classes for student:", error);
+//     throw new Error("Failed to fetch classes for the student");
+//   }
+// };
 
 export const getStudentClassHours = async (
   studentId: string
@@ -2406,8 +2567,8 @@ export const bulkupdateClassAttendanceByClassLink = async (
       },
       {
         $push: {
-          "teacher.teacherSessionStart": teacherStart,
-          "teacher.teacherSessionEnd": teacherEnd,
+          "teacher.teacherSessionStart": { $each: teacherStart },
+          "teacher.teacherSessionEnd":{ $each: teacherEnd },
         },
       }
     );

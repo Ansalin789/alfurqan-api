@@ -108,7 +108,7 @@ export const createTeacherFeedback = async (
       !isNaN(payload.level) // Ensures payload.level is a valid number
     ) {
       await AlStudentsModel.findOneAndUpdate(
-        { _id: feedbackRecord.student.studentId },
+        { 'student.studentId': feedbackRecord.student.studentId },
         { $set: { level: payload.level } },
         { new: true }
       );
