@@ -128,9 +128,7 @@ export default{
 
         console.log("File uploaded to SharePoint. Link:", shareLink.fileId);
 const generateTeacherId = generateAFTCode("AFT");
-
-   const supervisor = await users.find({role: "SUPERVISOR" , status: "ACTIVE" }).exec();
-
+   const supervisor = await users.find({role: "SUPERVISOR" , status: "Active" }).exec();
     const result = await createRecruitment({
       candidateId: generateTeacherId,
       supervisor: {
