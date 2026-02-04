@@ -10,6 +10,7 @@ import  ClassScheduleModel  from "../models/classShedule"
 import Evaluation from "../models/evaluation"; 
 import alstudents from "../models/alstudents";
 import StudentModel from "../models/student";
+import evaluation from "../models/evaluation";
 
 export const getAllalstudentsList = async (
   params: GetAllRecordsParams
@@ -18,8 +19,8 @@ export const getAllalstudentsList = async (
   students: any[];
 }> => {
 
-  const { studentId, searchText, sortBy, sortOrder, offset, limit, filterValues } = params;
-
+  const { studentId,academicCoachId, searchText, sortBy, sortOrder, offset, limit, filterValues } = params;
+ console.log("Params received in getAllalstudentsList:", params);
   const query: any = {};
 
   // 🔍 Search text filter
@@ -36,6 +37,7 @@ export const getAllalstudentsList = async (
       ? { $in: studentId }
       : studentId;
   }
+  
 
   // 🔍 Additional Filter values
   if (filterValues) {
@@ -51,7 +53,18 @@ export const getAllalstudentsList = async (
   const sortOptions: any = {
     [sortBy]: sortOrder === "asc" ? 1 : -1,
   };
+const academicCoachStudentIds = academicCoachId
+  ? await evaluation.distinct(
+      'student.studentId',
+      { academicCoachId }
+    )
+  : [];
+  console.log("Academic Coach Student IDs:", academicCoachStudentIds);
 
+if (academicCoachStudentIds.length) {
+ query["student.studentId"] = { $in: academicCoachStudentIds };
+}
+   console.log("Final Query after Academic Coach Filter:", JSON.stringify(query, null, 2));
   const studentQuery = AlStudentsModel.find(query).sort(sortOptions);
 
   // Pagination
@@ -62,7 +75,8 @@ export const getAllalstudentsList = async (
     );
     studentQuery.skip(skip).limit(Number(limit) ?? 10);
   }
-
+   
+ 
   // Fetch students and total count
   const [students, totalCount] = await Promise.all([
     studentQuery.exec(),

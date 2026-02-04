@@ -49,7 +49,7 @@ student: {
 },
 refernceId:{
   type:String,
-    required: true,
+    required: false,
 },
 referredBy:{  type:String,
     required: false,},
@@ -130,7 +130,7 @@ export const zodAlStudentSchema = z.object({
       gender: z.string()
     }),
     sessionClassType:z.string().optional(),
-    refernceId:z.string(),
+    refernceId:z.string().optional(),
     referredBy:z.string().optional(),
     level:z.string().optional(),
     profilepic: z

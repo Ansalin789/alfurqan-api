@@ -21,6 +21,7 @@ import {
 import stinvoice from "../models/stinvoice";
 import { Request, ResponseToolkit } from "@hapi/hapi";
 import alstudents from "../models/alstudents";
+import paymentDetails from "../models/paymentDetails";
 
 /**
  * Retrieves a list of all evaluation records with filters, sorting, and pagination.
@@ -61,43 +62,61 @@ export const getAllStudetnInVoiceList = async (
   };
 
 
-  export const getStudentInvoicesById = async (studentId: string): Promise<IStudentInvoice[]> => { // Accept studentId as a parameter
-    try {
-      const objectId = new Types.ObjectId(studentId); // Convert the passed studentId to ObjectId
-  
-      // Find student in alstudents collection using _id
-      const alStudent = await alstudents.findById(objectId);
-  
-      if (!alStudent) {
-        console.log("❌ No student found in alstudents with given _id");
-        return [];
-      }
-  
-      console.log("✅ Found student:", alStudent);
-  
-      // Find invoices based on the student's _id
-      const invoices = await StudentInvoiceModel.find({
-        "student.studentId": studentId, // match studentId as a string
-        paymentStatus: "Pending"        // filter directly in the DB query
-      }).sort({ lastUpdatedDate: -1 });
-      
-  
-      console.log(`🧾 Total invoices found: ${invoices.length}`);
-  
-      // Filter pending invoices
-      const pendingInvoices = invoices.filter(
-        (invoice) => invoice.paymentStatus === "Pending"
-      );
-  
-      console.log(`📌 Pending invoice count: ${pendingInvoices.length}`);
-      console.log("💬 Pending invoice details:", pendingInvoices);
-  
-      return pendingInvoices;
-    } catch (error) {
-      console.error("🚨 Error in getStudentInvoicesById:", error);
+export const getStudentInvoicesByAlStudentId = async (
+  alStudentId: string,
+  courseName: string
+): Promise<IStudentInvoice[]> => {
+  try {
+
+    const objectId = new Types.ObjectId(alStudentId);
+
+    const alStudent = await alstudents.findById(objectId);
+    if (!alStudent) {
       return [];
     }
-  };
+
+    const studentId = alStudent.student.studentId;
+
+    // Get all payment details for this student
+    const paymentDetailsList = await paymentDetails.find({
+      userId: studentId
+    });
+
+    // Find all invoices for this student + course
+    const query: any = {
+      "student.studentId": studentId,
+      courseName: courseName
+    };
+
+    const invoices = await StudentInvoiceModel.find(query)
+      .sort({ lastUpdatedDate: -1 });
+
+    // Attach paymentDate to invoice
+   const invoicesWithPaymentDate = invoices.map((invoice) => {
+  const invoiceObj = invoice.toObject();
+
+  // Convert cents → dollars before comparison
+  const matchingPayment = paymentDetailsList.find(
+    (pd) =>
+      Number(pd.paymentAmount) / 100 === Number(invoice.amount) &&
+      pd.userId === studentId
+  );
+
+  if (matchingPayment) {
+    invoiceObj.paymentDate = matchingPayment.paymentDate;
+  }
+
+  return invoiceObj;
+});
+
+
+    return invoicesWithPaymentDate;
+
+  } catch (error) {
+    console.error("🚨 Error in getStudentInvoicesByAlStudentId:", error);
+    return [];
+  }
+};
 
  
   export const getStudentAllRevenue = async (

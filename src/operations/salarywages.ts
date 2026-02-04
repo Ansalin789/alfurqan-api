@@ -13,17 +13,7 @@ import moment from "moment";
 
 
 
-export const runSalaryCron = async () => {
-  console.log("🔄 Starting salary calculation cron job...");
 
-  try {
-    const today = moment().format("YYYY-MM-DD"); // Get current date as string
-    await runSalaryCalculationForDate(today);
-    console.log("✅ Salary processing completed successfully");
-  } catch (error) {
-    console.error("❌ Salary processing failed:", error);
-  }
-};
 
 // const processAllUsers = async (now: Date, monthLabel: string) => {
 //   // Get all active users with relevant roles
@@ -158,7 +148,7 @@ export const runSalaryCron = async () => {
 
 // const processFixedSalaryEmployee = async (employeeId: string, designation: string, monthLabel: string) => {
 //   const salaryAmount = await getFixedSalaryAmount(employeeId);
-  
+
 //   if (salaryAmount <= 0) {
 //     return;
 //   }
@@ -201,8 +191,8 @@ export const getAllSalaryList = async (
 
   // ✅ Build the query for fetching expenses
   const Query = salaryandwages.find(query).sort(sortOptions); // Use `Expense` model here
-  
- 
+
+
   // ✅ Fetch expenses and the total count
   const [expenses, totalCount] = await Promise.all([
     Query.exec(),
@@ -308,9 +298,9 @@ export const updateSalaryWages = async ({
     paymentDate,
     balanceAmount
   });
-  
+
   console.log('Update object to DB:', update);
-  
+
   return {
     success: true,
     updated: result.modifiedCount,
@@ -323,6 +313,19 @@ export const updateSalaryWages = async ({
   };
 };
 
+
+export const runSalaryCron = async () => {
+  console.log("🔄 Starting salary calculation cron job...");
+
+  try {
+    const today = moment().format("YYYY-MM-DD"); // Get current date as string
+    await runSalaryCalculationForDate(today);
+    console.log("✅ Salary processing completed successfully");
+  } catch (error) {
+    console.error("❌ Salary processing failed:", error);
+  }
+};
+
 export const runSalaryCalculationForDate = async (dateStr: string) => {
   console.log("⏰ Running salary calculation for:", dateStr);
 
@@ -331,37 +334,33 @@ export const runSalaryCalculationForDate = async (dateStr: string) => {
     const todayStart = testDate.startOf("day").toDate();
     const todayEnd = testDate.endOf("day").toDate();
     const todayDate = testDate.format("YYYY-MM-DD");
-    const monthLabel = testDate.format("MMM YYYY");
+    const monthLabel = testDate.format("MMM YYYY"); // For AC/Supervisor fixed salary
 
-    console.log("📆 Date range:", todayStart, "➡️", todayEnd);
-
-    let eligibleUsers = [];
-    try {
-      eligibleUsers = await UserModel.find({
-        role: { $in: ["TEACHER", "ACADEMIC", "SUPERVISOR"] },
-        status: "Active",
-      }).lean();
-      console.log("👤 Eligible users:", eligibleUsers.map(u => u.email).join(", "));
-    } catch (err) {
-      console.error("❌ Error fetching eligible users:", err);
-      return;
-    }
+    const eligibleUsers = await UserModel.find({
+      role: { $in: ["TEACHER", "ACADEMICCOACH", "SUPERVISOR"] },
+      status: "Active",
+    }).lean();
 
     for (const user of eligibleUsers) {
-      const { userId: employeeId, email: employeeEmail } = user;
-      const designation: string = Array.isArray(user.role) ? user.role[0] : user.role;
-    
-      if (!employeeId) {
-        console.warn(`⚠️ Skipping ${employeeEmail} due to missing employeeId`);
-        continue;
-      }
-    
-      if (["ACADEMIC", "SUPERVISOR"].includes(designation)) {
-        await processFixedSalaryEmployee(employeeId, designation, monthLabel);
+      const { userId: employeeId, email: employeeEmail, userName: employeeName } = user;
+      const designation = Array.isArray(user.role) ? user.role[0] : user.role;
+
+      if (!employeeId) continue;
+
+      // AC / Supervisor fixed salary
+      if (["ACADEMICCOACH", "SUPERVISOR"].includes(designation)) {
+        await processFixedSalaryEmployee(
+          employeeId,
+          employeeName,
+          employeeEmail,
+          designation
+        );
         continue;
       }
 
-      // Class-based salary logic for Teacher
+      console.log("👔 Fixed salary user:", employeeName);
+
+      // ✅ TEACHER – DAILY CLASS BASED SALARY
       const query = {
         "teacher.teacherId": employeeId,
         scheduleStatus: "Completed",
@@ -369,14 +368,8 @@ export const runSalaryCalculationForDate = async (dateStr: string) => {
         startDate: { $gte: todayStart, $lte: todayEnd },
       };
 
-      let todayClasses = [];
-      try {
-        todayClasses = await classShedule.find(query).lean();
-        console.log(`📚 ${designation} class count: ${todayClasses.length}`);
-      } catch (err) {
-        console.error(`❌ Error fetching classes for ${employeeEmail}:`, err);
-        continue;
-      }
+      const todayClasses = await classShedule.find(query).lean();
+      console.log(`📚 ${designation} class count: ${todayClasses.length}`);
 
       if (!todayClasses.length) continue;
 
@@ -392,64 +385,54 @@ export const runSalaryCalculationForDate = async (dateStr: string) => {
           if (!seenRegular.has(cls.classLink)) {
             seenRegular.add(cls.classLink);
             regularTotal += amt;
-            console.log(`🟢 REGULARCLASS +${amt} | ${cls.classLink}`);
           }
         } else if (cls.sessionClassType === "GROUPCLASS") {
           const groupKey = `${cls.classLink}_${employeeId}_${todayDate}`;
           if (!seenGroup.has(groupKey)) {
             seenGroup.add(groupKey);
             groupTotal += amt;
-            console.log(`🔵 GROUPCLASS +${amt} | ${cls.classLink}`);
           }
         }
       }
 
       const totalEarnings = +(regularTotal + groupTotal).toFixed(2);
-      console.log(`💰 Earnings for ${employeeEmail}: ${totalEarnings}`);
-
       if (totalEarnings === 0) continue;
 
-      try {
-        const pendingSalary = await salaryandwages.findOne({
+      // ✅ Insert or update daily salary for teacher
+      const pendingSalary = await salaryandwages.findOne({
+        employeeId,
+        paymentStatus: "Pending",
+        $or: [{ paymentDate: "" }],
+      });
+
+      if (pendingSalary) {
+        pendingSalary.salaryAmount =
+          Number(pendingSalary.salaryAmount || 0) + totalEarnings;
+        await pendingSalary.save();
+        console.log(
+          `✅ Updated pending salary for ${employeeName} ${employeeEmail} ➕${totalEarnings}`
+        );
+      } else {
+        await salaryandwages.create({
           employeeId,
+          employeeName,
+          employeeMail: employeeEmail,   // required
+          designation,
+          salaryMonth: todayDate,
+          salaryAmount: totalEarnings,
+          balanceAmount: totalEarnings,
+          deductionAmount: 0,
+          paymentMethod: "Bank Transfer",
           paymentStatus: "Pending",
-          $or: [{ paymentDate: "" }],
+          status: "Active",
+          createdDate: new Date(),
+          createdBy: "Cron",
         });
-      
-        if (pendingSalary) {
-          const oldAmount = pendingSalary.salaryAmount || 0;
-          pendingSalary.salaryAmount = oldAmount + totalEarnings;
-          await pendingSalary.save();
-          console.log(`✅ Updated existing pending salary for ${employeeEmail} ➕${totalEarnings}`);
-        } else {
-          const paidSalary = await salaryandwages.findOne({
-            employeeId,
-            paymentStatus: "Paid"
-          }).sort({ createdDate: 1 });
-      
-          if (paidSalary) {
-            console.log(`📄 Found previous paid salary for ${employeeEmail} on ${paidSalary.createdDate}`);
-          }
-      
-          const newPending = await salaryandwages.findOne({
-            employeeId,
-            paymentStatus: "Pending",
-            $or: [{ paymentDate: "" }]
-          });
-      
-          if (newPending) {
-            const oldAmount = newPending.salaryAmount || 0;
-            newPending.salaryAmount = oldAmount + totalEarnings;
-            await newPending.save();
-            console.log(`✅ Updated newly found pending salary for ${employeeEmail} ➕${totalEarnings}`);
-          } else {
-            console.warn(`⚠️ No pending or paid salary record found for ${employeeEmail}`);
-          }
-        }
-      } catch (err) {
-        console.error(`❌ Error updating salary for ${employeeEmail}:`, err);
+
+        console.log(
+          `🆕 Created new pending salary for ${employeeEmail} = ${totalEarnings}`
+        );
       }
-     
     }
 
     console.log("✅🎉 Salary calculation completed for", dateStr);
@@ -459,76 +442,84 @@ export const runSalaryCalculationForDate = async (dateStr: string) => {
 };
 
 // A.C and Supervisor 
-
 const getFixedSalaryAmount = async (employeeId: string) => {
   const wageInfo = await EmpWagesModel.findOne({ employeeId }).lean();
-  if (!wageInfo) {
-    console.warn(`⚠️ No wage info found for employee ${employeeId}`);
-    return 0;
-  }
+  if (!wageInfo) return 0;
   return parseFloat(String(wageInfo.classType.rate).replace(/\$|,/g, '') || "0");
 };
 
-const processFixedSalaryEmployee = async (employeeId: string, designation: string, monthLabel: string) => {
+export const processFixedSalaryEmployee = async (
+  employeeId: string,
+  employeeName: string,
+  employeeEmail: string,
+  designation: string
+) => {
   const salaryAmount = await getFixedSalaryAmount(employeeId);
-
   if (salaryAmount <= 0) return;
 
+  const monthLabel = moment().format("MMM YYYY"); // current month
+
+  // Check if a salary record already exists for this employee + month
   const existing = await salaryandwages.findOne({
     employeeId,
     designation,
     monthLabel,
-    status: "Active"
+    status: "Active",
   });
 
-  if (existing) {
-    if (existing.paymentStatus === "Paid") {
-      // Create a new pending salary record
-      await salaryandwages.create({
-        employeeId,
-        designation,
-        monthLabel,
-        salaryAmount: salaryAmount.toString(),
-        balanceAmount: salaryAmount,
-        status: "Active",
-        paymentStatus: "Pending",
-        paymentDate: "",
-        createdDate: new Date(),
-        updatedAt: new Date()
-      });
-      console.log(`🆕 Created new fixed salary record (Paid already) for ${designation} ${employeeId} = $${salaryAmount}`);
-    } else {
-      // it will Update the existing record when the paymentstatus is pending 
-      await salaryandwages.updateOne(
-        { _id: existing._id },
-        {
-          $set: {
-            salaryAmount: salaryAmount.toString(),
-            balanceAmount: salaryAmount,
-            updatedAt: new Date(),
-            paymentDate: new Date()
-          }
-        }
-      );
-      console.log(`💰 Updated fixed salary for ${designation} ${employeeId} = $${salaryAmount}`);
-    }
-  } else {
-    //  No record found - create new
+  if (existing && existing.paymentStatus === "Pending") {
+    console.log(`⏭️ Salary already pending for ${employeeName} (${monthLabel})`);
+    return; // DO NOTHING
+  }
+
+  if (existing && existing.paymentStatus === "Paid") {
+    // Create new pending record for next cycle/month
     await salaryandwages.create({
       employeeId,
+      employeeName,
+      employeeMail: employeeEmail,
       designation,
       monthLabel,
-      salaryAmount: salaryAmount.toString(),
+      salaryAmount: salaryAmount,
       balanceAmount: salaryAmount,
+      deductionAmount: 0,
+      paymentMethod: "Bank Transfer",
       status: "Active",
       paymentStatus: "Pending",
       paymentDate: "",
       createdDate: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      createdBy: "Cron",
     });
-    console.log(`🆕 Created new fixed salary record for ${designation} ${employeeId} = $${salaryAmount}`);
+    console.log(`🆕 Created new salary for ${employeeName} (${monthLabel})`);
+    return;
+  }
+
+  if (!existing) {
+    // First time salary for this month
+    await salaryandwages.create({
+      employeeId,
+      employeeName,
+      employeeMail: employeeEmail,
+      designation,
+      monthLabel,
+      salaryAmount: salaryAmount,
+      balanceAmount: salaryAmount,
+      deductionAmount: 0,
+      paymentMethod: "Bank Transfer",
+      status: "Active",
+      paymentStatus: "Pending",
+      paymentDate: "",
+      createdDate: new Date(),
+      updatedAt: new Date(),
+      createdBy: "Cron",
+    });
+    console.log(`🆕 First salary created for ${employeeName} (${monthLabel})`);
   }
 };
+
+
+
 
 //get by employeeId
 export const getRecordByTeacherId = async (
@@ -544,9 +535,7 @@ export const getRecordByTeacherId = async (
   };
 
   console.log("🔍 Salary/Wages Query:", query);
-
   const records = await salaryandwages.find(query).exec(); // use find() for MongoDB/Mongoose
-
   return {
     totalCount: records.length,
     records,

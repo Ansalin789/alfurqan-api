@@ -671,6 +671,7 @@ async bulkcreateandSchedule(req: Request, h: ResponseToolkit) {
       classLink: meetingId,
       classDay: classDayValues,
       package: alfurqanStudents?.student.package,
+      course: alfurqanStudents?.student.course,
       preferedTeacher: payload.preferedTeacher,
       weeklySlots:rawPayload.weeklySlots,
       sessionClassType: payload.sessionClassType || "",

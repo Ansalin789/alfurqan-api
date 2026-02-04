@@ -21,6 +21,7 @@ import { Readable } from "stream";
 // Input validation schema
 const getAllalstudentsListInputValidation = z.object({
   query: zodGetAllRecordsQuerySchema.pick({
+    academicCoachId:true,
     searchText: true,
     sortBy: true,
     sortOrder: true,

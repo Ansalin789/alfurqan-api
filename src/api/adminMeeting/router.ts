@@ -31,9 +31,10 @@ const register = async (server: Server): Promise<void> => {
                 handler: handler.getAllAdminMeeting,
                 description: addAminMeetingMessages.LIST,
                 tags: ["api", "adminmeeting"],
-                auth: {
-                  strategies: ["jwt"],
-                }, },
+                // auth: {
+                //   strategies: ["jwt"],
+                // },
+               },
           },
 
            {

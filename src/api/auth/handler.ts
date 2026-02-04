@@ -362,6 +362,7 @@ console.log(">>>>email", payload.email);
       return {
         message: 'Email found.',
         id:users._id,
+        userId : user._id,
         username1:activeRecord.userName,
         accessToken,
         role:user.role[0]

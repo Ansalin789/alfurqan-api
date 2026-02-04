@@ -5,37 +5,35 @@ import User from "../models/users";
 import cron from "node-cron";
 import { GetAllRecordsParams } from "../shared/enum";
 import mongoose, { Types } from "mongoose";
-import { v4 as uuidv4 } from 'uuid';
-import adminmeeting from "../models/adminmeeting"
+import { v4 as uuidv4 } from "uuid";
+import adminmeeting from "../models/adminmeeting";
 
 const addmeeting = Meeting;
 
-export interface IMeetingUpdate{
-    meetingName:string,
-    selectedDate: Date,
-    status?:string,
-    meetingStatus?: string,
-    startTime:string,
-    endTime:string,
-    updatedDate?:Date,
-    updatedBy?:string,
-    description:string,
-    }
+export interface IMeetingUpdate {
+  meetingName: string;
+  selectedDate: Date;
+  status?: string;
+  meetingStatus?: string;
+  startTime: string;
+  endTime: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+  description: string;
+}
 
 export interface IMeetingMinutesUpdate {
   meetingStatus: string;
   duration?: string;
   meetingminutes: string;
-  teacher: ITeacher[];  // Fix this from `string` to `ITeacher[]`
+  teacher: ITeacher[]; // Fix this from `string` to `ITeacher[]`
 }
-
 
 /**
  * Creates a new meeting.
  *
  * @param {IMeetingCreate} payload - The data for the new meeting.
  */
- 
 
 /**
  * Retrieves all meeting records with optional filters.
@@ -46,7 +44,11 @@ export const getAllMeetingRecords = async (
 ): Promise<{
   totalCount: number;
   meetings: IMeeting[];
-  groupedAutoMeetings: { meetingId: string; meetingName: string; participants: any[] }[];
+  groupedAutoMeetings: {
+    meetingId: string;
+    meetingName: string;
+    participants: any[];
+  }[];
 }> => {
   try {
     const { offset, limit, supervisorId } = params;
@@ -54,20 +56,24 @@ export const getAllMeetingRecords = async (
     console.log("✅ supervisorId received:", supervisorId);
 
     // Fetch auto-scheduled meetings
-    const adminMeetings = await adminmeeting.find({
-      "teacher.teacherId": supervisorId,
-    }).lean();
+    const adminMeetings = await adminmeeting
+      .find({
+        "teacher.teacherId": supervisorId,
+      })
+      .lean();
     console.log("✅ adminMeetings found:", adminMeetings.length);
 
     // Fetch manually added meetings
     const addMeetings = await Meeting.find({
-      "supervisor.supervisorId": supervisorId,
+      "organizer.organizerId": supervisorId,
     }).lean();
+
     console.log("✅ addMeetings found:", addMeetings.length);
 
     // Combine and paginate
     const combinedMeetings = [...adminMeetings, ...addMeetings].sort(
-      (a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()
+      (a, b) =>
+        new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()
     );
 
     const start = offset ? parseInt(offset) : 0;
@@ -78,38 +84,37 @@ export const getAllMeetingRecords = async (
     console.log("✅ paginated meetings returned:", paginated.length);
 
     // Group ONLY auto-scheduled meetings by meetingId
-// ✅ Group ONLY auto-scheduled meetings from the addMeeting (Meeting) collection
-const groupedMap = new Map<
-  string,
-  { meetingId: string; meetingName: string; participants: any[] }
->();
+    // ✅ Group ONLY auto-scheduled meetings from the addMeeting (Meeting) collection
+    const groupedMap = new Map<
+      string,
+      { meetingId: string; meetingName: string; participants: any[] }
+    >();
 
-for (const meeting of addMeetings) {
-  // ✅ Only group if meetingId starts with "auto-"
-  if (!meeting.meetingId?.startsWith("auto-")) continue;
+    for (const meeting of addMeetings) {
+      // ✅ Only group if meetingId starts with "auto-"
+      if (!meeting.meetingId?.startsWith("auto-")) continue;
 
-  const id = meeting.meetingId;
-  const name = meeting.meetingName;
+      const id = meeting.meetingId;
+      const name = meeting.meetingName;
 
-  if (!groupedMap.has(id)) {
-    groupedMap.set(id, {
-      meetingId: id,
-      meetingName: name,
-      participants: [],
-    });
-  }
+      if (!groupedMap.has(id)) {
+        groupedMap.set(id, {
+          meetingId: id,
+          meetingName: name,
+          participants: [],
+        });
+      }
 
-  // Add participant (use appropriate field from your schema)
-  // Assuming meeting has a participant/teacher/student field — adjust accordingly
-  if (Array.isArray(meeting.teacher) && meeting.teacher.length > 0) {
-    groupedMap.get(id)!.participants.push(...meeting.teacher);
-  } else if (meeting.teacher) {
-    groupedMap.get(id)!.participants.push(meeting.teacher); // fallback if `participants` field not present
-  }
-}
+      // Add participant (use appropriate field from your schema)
+      // Assuming meeting has a participant/teacher/student field — adjust accordingly
+      if (Array.isArray(meeting.teacher) && meeting.teacher.length > 0) {
+        groupedMap.get(id)!.participants.push(...meeting.teacher);
+      } else if (meeting.teacher) {
+        groupedMap.get(id)!.participants.push(meeting.teacher); // fallback if `participants` field not present
+      }
+    }
 
-const groupedAutoMeetings = Array.from(groupedMap.values());
-
+    const groupedAutoMeetings = Array.from(groupedMap.values());
 
     return {
       totalCount: combinedMeetings.length,
@@ -122,7 +127,9 @@ const groupedAutoMeetings = Array.from(groupedMap.values());
   }
 };
 
-export const createMeeting = async ( payload: IMeetingCreate): Promise<IMeeting | IMeeting[] | { error: any }> => {
+export const createMeeting = async (
+  payload: IMeetingCreate
+): Promise<IMeeting | IMeeting[] | { error: any }> => {
   try {
     // Extract and sanitize supervisor fields from payload
 
@@ -133,9 +140,7 @@ export const createMeeting = async ( payload: IMeetingCreate): Promise<IMeeting 
     // Check for overlapping meeting
     const conflictingMeeting = await Meeting.findOne({
       selectedDate: meetingDate,
-      $or: [
-        { startTime: { $lt: endTime }, endTime: { $gt: startTime } },
-      ],
+      $or: [{ startTime: { $lt: endTime }, endTime: { $gt: startTime } }],
     });
 
     if (conflictingMeeting) {
@@ -146,23 +151,25 @@ export const createMeeting = async ( payload: IMeetingCreate): Promise<IMeeting 
     }
 
     // Generate/normalize meetingId (keep provided id if present)
-  //  const meetingId = payload.meetingId || `meet-${uuidv4()}`;
-  
-  const meetingId =   generateAFTCode("AFM");
-
+    const meetingId = payload.meetingId || `meet-${uuidv4()}`;
 
     // Check for past date
     if (meetingDate < new Date()) {
-      return { error: "Meeting date cannot be in the past. Please select a future date." };
+      return {
+        error:
+          "Meeting date cannot be in the past. Please select a future date.",
+      };
     }
 
     // If multiple participants are provided, create one record per participant
-    const participants = Array.isArray(payload.participants) ? payload.participants : [];
+    const participants = Array.isArray(payload.participants)
+      ? payload.participants
+      : [];
     if (participants.length > 0) {
       const docs = participants.map((participant) => ({
         meetingName: payload.meetingName,
         meetingId,
-        organizer: payload.organizer, // ✅ include organizer
+        organizer: payload.organizer,
         selectedDate: meetingDate,
         startTime: payload.startTime,
         endTime: payload.endTime,
@@ -196,8 +203,6 @@ export const createMeeting = async ( payload: IMeetingCreate): Promise<IMeeting 
   }
 };
 
-
-
 // Auto Schedule Weekly Meeting - for ALL teachers (new, old, logged-in or not)
 const autoScheduleMeeting = async () => {
   try {
@@ -212,10 +217,10 @@ const autoScheduleMeeting = async () => {
     let baseDays = isFebruary ? [14, 28] : [15, 30];
 
     // Ensure the dates exist in the month (e.g., for Feb with 29 days)
-    baseDays = baseDays.map(day => Math.min(day, daysInMonth));
+    baseDays = baseDays.map((day) => Math.min(day, daysInMonth));
 
     // Convert base days to Date objects, adjust if Sunday
-    const meetingDates = baseDays.map(day => {
+    const meetingDates = baseDays.map((day) => {
       const date = new Date(year, month, day, 10, 0, 0); // 10:00 AM
       const isSunday = date.getDay() === 0; // 0 = Sunday
       if (isSunday) {
@@ -233,109 +238,114 @@ const autoScheduleMeeting = async () => {
       return;
     }
 
-    const teachers = await User.find({ role: { $in: ["TEACHER"] }, status: "Active" });
+    const teachers = await User.find({
+      role: { $in: ["TEACHER"] },
+      status: "Active",
+    });
     if (teachers.length === 0) {
       console.log("❌ No active teachers found.");
       return;
     }
 
- for (const date of meetingDates) {
-  // ✅ Generate a unique meetingId per date
-  const formattedDate = date.toISOString().split("T")[0]; // e.g., "2025-07-29"
-  const baseMeetingId =   generateAFTCode("AFM");
+    for (const date of meetingDates) {
+      // ✅ Generate a unique meetingId per date
+      const formattedDate = date.toISOString().split("T")[0]; // e.g., "2025-07-29"
+      const baseMeetingId = generateAFTCode("AFM");
 
-  for (const teacher of teachers) {
-    const existingMeeting = await Meeting.findOne({
-      selectedDate: date,
-      "supervisor.supervisorId": supervisor._id.toString(),
-      "teacher.teacherId": teacher._id.toString(),
-    });
+      for (const teacher of teachers) {
+        const existingMeeting = await Meeting.findOne({
+          selectedDate: date,
+          "supervisor.supervisorId": supervisor._id.toString(),
+          "teacher.teacherId": teacher._id.toString(),
+        });
 
-    if (existingMeeting) {
-      console.log(`⚠️ Meeting already scheduled for ${teacher.userName} on ${date.toDateString()}`);
-      continue;
-    }
-
-    const newMeeting = new Meeting({
-      meetingId: baseMeetingId, // 🔁 Use the same meetingId for all teachers on the same date
-      meetingName: `Auto-Scheduled Meeting on ${date.toDateString()}`,
-      description: "This is an automatically scheduled meeting.",
-      createdDate: new Date(),
-      selectedDate: date,
-      startTime: startTime,
-      endTime: endTime,
-      createdBy: supervisor.userName,
-      teacher: [
-        {
-          teacherId: teacher._id.toString(),
-          teacherName: teacher.userName,
-          teacherEmail: teacher.email,
+        if (existingMeeting) {
+          console.log(
+            `⚠️ Meeting already scheduled for ${
+              teacher.userName
+            } on ${date.toDateString()}`
+          );
+          continue;
         }
-      ],
-      supervisor: {
-        supervisorId: supervisor._id.toString(),
-        supervisorName: supervisor.userName,
-        supervisorEmail: supervisor.email,
-        supervisorRole: Array.isArray(supervisor.role) ? supervisor.role[0] : supervisor.role,
-      },
-      meetingStatus: "Scheduled",
-      status: "Active",
-    });
 
-    await newMeeting.save();
-    console.log(`✅ Scheduled meeting for ${teacher.userName} on ${date.toDateString()}`);
-  }
-}
+        const newMeeting = new Meeting({
+          meetingId: baseMeetingId, // 🔁 Use the same meetingId for all teachers on the same date
+          meetingName: `Auto-Scheduled Meeting on ${date.toDateString()}`,
+          description: "This is an automatically scheduled meeting.",
+          createdDate: new Date(),
+          selectedDate: date,
+          startTime: startTime,
+          endTime: endTime,
+          createdBy: supervisor.userName,
+          teacher: [
+            {
+              teacherId: teacher._id.toString(),
+              teacherName: teacher.userName,
+              teacherEmail: teacher.email,
+            },
+          ],
+          supervisor: {
+            supervisorId: supervisor._id.toString(),
+            supervisorName: supervisor.userName,
+            supervisorEmail: supervisor.email,
+            supervisorRole: Array.isArray(supervisor.role)
+              ? supervisor.role[0]
+              : supervisor.role,
+          },
+          meetingStatus: "Scheduled",
+          status: "Active",
+        });
 
+        await newMeeting.save();
+        console.log(
+          `✅ Scheduled meeting for ${
+            teacher.userName
+          } on ${date.toDateString()}`
+        );
+      }
+    }
   } catch (error) {
     console.error("❌ Error auto-scheduling meetings:", error);
   }
 };
 
-
-
-
 // CRON Job to run auto-scheduling at 23:55 every day
 cron.schedule("55 23 * * *", async () => {
-    console.log("⏰ Running the auto-scheduling job every 23:55...");
-    await autoScheduleMeeting();
+  console.log("⏰ Running the auto-scheduling job every 23:55...");
+  await autoScheduleMeeting();
 });
-
-
 
 //Get by ID
 
 export const getMeetingRecordById = async (
   meetingId: string
-): Promise<
-  { source:  'supervisor' | 'admin'; data: any }[]
-> => {
+): Promise<{ source: "supervisor" | "admin"; data: any }[]> => {
   const trimmedId = meetingId.trim();
 
-  const [ supervisorMatches, adminMatches] = await Promise.all([
+  const [supervisorMatches, adminMatches] = await Promise.all([
     addmeeting.find({ meetingId: trimmedId }).lean(),
     adminmeeting.find({ meetingId: trimmedId }).lean(),
   ]);
 
   return [
-    ...supervisorMatches.map((data) => ({ source: 'supervisor' as const, data })),
-    ...adminMatches.map((data) => ({ source: 'admin' as const, data })),
+    ...supervisorMatches.map((data) => ({
+      source: "supervisor" as const,
+      data,
+    })),
+    ...adminMatches.map((data) => ({ source: "admin" as const, data })),
   ];
 };
-
 
 //Update
 
 export const updateMeetingById = async (
   id: string,
-  payload: Partial<IMeetingUpdate>
-): Promise<IMeeting | null> => {
-  return addmeeting.findOneAndUpdate(
-    { _id: new Types.ObjectId(id) },
-    { $set: payload },
-    { new: true }
-  ).lean();
-}
+  payload: Partial<IMeeting>
+) => {
+  return addmeeting
+    .findByIdAndUpdate(id, { $set: payload }, { new: true })
+    .lean();
+};
 
 
 //Update meeting minutes
@@ -348,34 +358,46 @@ export const updateMeetingMinutesAndAttendees = async (
   teacher: ITeacher[],
   updatedBy?: string
 ): Promise<Partial<IMeetingMinutesUpdate> | null> => {
-  const updated = await addmeeting.findOneAndUpdate(
-    { _id: new Types.ObjectId(id) },
-    {
-      $set: {
-        duration,
-        meetingminutes,
-        meetingStatus,
-        teacher,
-        updatedBy,
-        updatedDate: new Date(), // set server-side
+  const updated = await addmeeting
+    .findOneAndUpdate(
+      { _id: new Types.ObjectId(id) },
+      {
+        $set: {
+          duration,
+          meetingminutes,
+          meetingStatus,
+          teacher,
+          updatedBy,
+          updatedDate: new Date(), // set server-side
+        },
       },
-    },
-    { new: true, projection: { meetingminutes: 1, teacher: 1, duration: 1, meetingStatus: 1, _id: 0 } } // return only relevant fields
-  ).lean();
+      {
+        new: true,
+        projection: {
+          meetingminutes: 1,
+          teacher: 1,
+          duration: 1,
+          meetingStatus: 1,
+          _id: 0,
+        },
+      } // return only relevant fields
+    )
+    .lean();
 
   return updated as unknown as Partial<IMeetingMinutesUpdate> | null;
 };
 
-
 export const meetingByIdRecord = async (
   _id: string
 ): Promise<IMeeting | null> => {
-  return addmeeting.findOne({
-    _id: new Types.ObjectId(_id),
-  }).lean();
+  return addmeeting
+    .findOne({
+      _id: new Types.ObjectId(_id),
+    })
+    .lean();
 };
 
 function generateAFTCode(preName: string) {
   const num = Math.floor(10000 + Math.random() * 90000);
-    return `${preName}${num}`;
+  return `${preName}${num}`;
 }
