@@ -117,14 +117,14 @@ export const getallTeachermeeting = async (
 
 const [teacherMeetings, adminMeetings, supervisormeeting] = await Promise.all([
   teacherMeeting.find({ "teacher.teacherId": teacherId.trim() }).exec(),
-  addmeeting.find({ "teacher.teacherId": teacherId.trim() }).exec(),
+  addmeeting.find({ "participants.participantId": teacherId.trim() }).exec(),
   adminmeeting.find({ "teacher.teacherId": teacherId.trim() }).exec(),
 ]);
 
 
   console.log("📘 teacherMeetings:", teacherMeetings.length);
   console.log("📘 adminMeetings:", adminMeetings.length);
-  console.log("📘 studentMeetings:", supervisormeeting.length);
+  console.log("📘 studentMeetings:", supervisormeeting);
 
   const mergedMeetings = [...teacherMeetings, ...adminMeetings, ...supervisormeeting].sort(
     (a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()

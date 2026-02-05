@@ -7,6 +7,11 @@ import { applicationStatus, appStatus, commonMessages } from "../config/messages
 
 const recruitmentSchema = new Schema<IRecruitment>(
 {
+
+candidateId: {
+    type: String,
+    required: true,
+},
 candidateFirstName:{
     type: String,
     required: true,

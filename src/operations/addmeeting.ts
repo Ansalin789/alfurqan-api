@@ -34,6 +34,7 @@ export interface IMeetingMinutesUpdate {
  *
  * @param {IMeetingCreate} payload - The data for the new meeting.
  */
+ 
 
 /**
  * Retrieves all meeting records with optional filters.
@@ -127,9 +128,7 @@ export const getAllMeetingRecords = async (
   }
 };
 
-export const createMeeting = async (
-  payload: IMeetingCreate
-): Promise<IMeeting | IMeeting[] | { error: any }> => {
+export const createMeeting = async ( payload: IMeetingCreate): Promise<IMeeting | IMeeting[] | { error: any }> => {
   try {
     // Extract and sanitize supervisor fields from payload
 
@@ -151,7 +150,10 @@ export const createMeeting = async (
     }
 
     // Generate/normalize meetingId (keep provided id if present)
-    const meetingId = payload.meetingId || `meet-${uuidv4()}`;
+  //  const meetingId = payload.meetingId || `meet-${uuidv4()}`;
+  
+  const meetingId =   generateAFTCode("AFM");
+
 
     // Check for past date
     if (meetingDate < new Date()) {

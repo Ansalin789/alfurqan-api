@@ -435,6 +435,7 @@ export interface IEvaluationCreate{
   academicCoachId: string;
   student: {
   studentId?: string;
+  familyId?: string;
   studentRegisterId?: string;
   studentFirstName: string;
   studentLastName: string;
@@ -1321,6 +1322,7 @@ export interface ISuperviosrFeedback  extends Document{
 }
 
 export interface IRecruitment extends Document{
+  candidateId: string;
   candidateFirstName: string;
   candidateLastName : string;
   supervisor:{
@@ -1367,6 +1369,7 @@ export interface IRecruitment extends Document{
 }
 
 export interface IRecruitmentCreate{
+  candidateId: string;
   supervisor:{
     supervisorId?: string,
     supervisorName?: string,

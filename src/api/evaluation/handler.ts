@@ -104,7 +104,7 @@ export default {
         const startTimeValues = payload.startTime?.map((time: { value: string; label: string }) => time.value);
         const endTimeValues = payload.endTime?.map((time: { value: string; label: string }) => time.value);
    
-        const generateTrialId = generateAFTCode("AFT");
+        const generateTrialId = generateAFTCode("AFTC");
 
         const result = await createEvaluationRecord({
           trialId: generateTrialId,
