@@ -5,51 +5,52 @@ import { GetAllRecordsParams } from "../shared/enum";
 import AppLogger from "../helpers/logging";
 import MeetingSchedules from "../models/calendar";
 import { Types } from "mongoose";
-
+import SuprvisorMeeting from "../models/addmeeting";
+import AdminMeeting from "../models/adminmeeting";
 
 export const getAllAcademicCoach = async (
   params: GetAllRecordsParams
-): Promise<{ totalCount: number; academicCoach: IMeetingSchedule[] }> => {
+): Promise<{
+  totalCount: number;
+  academicCoach: IMeetingSchedule[];
+  meetingList: any[];
+  adminMeetingList: any[];
+}> => {
   const { sortBy, sortOrder, offset, limit } = params;
 
-  // Construct query object
-  const query: any = {
-    "academicCoach.academicCoachId": { $ne: null }, // Exclude null academicCoachId
+  const query = {
+    "academicCoach.academicCoachId": { $exists: true, $ne: null },
   };
 
-  // Log query for debugging
-  console.log("Constructed Query:", JSON.stringify(query, null, 2));
+  const sortOptions = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
 
-  // Sorting options
-  const sortOptions: any = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
-
-  // Pagination
-  const Query = MeetingSchedules.find(query).sort(sortOptions);
-  if (!isNil(offset) && !isNil(limit)) {
-    const skip = Math.max(
-      0,
-      ((Number(offset) ?? Number(commonMessages.OFFSET)) - 1) *
-        (Number(limit) ?? Number(commonMessages.LIMIT))
-    );
-    Query.skip(skip).limit(Number(limit) ?? Number(commonMessages.LIMIT));
-  }
-
-  // Execute query and count total records concurrently
-  const [academicCoach, totalCount] = await Promise.all([
-    Query.exec(),
-    MeetingSchedules.countDocuments(query).exec(),
-  ]);
-
-  // Log the fetched records
-  AppLogger.info(meetingSchedulesMessages.GET_ALL_LIST_SUCCESS, {
-    totalCount: totalCount,
+  const queryBuilder = MeetingSchedules.find({
+    "academicCoach.academicCoachId": params.academicCoachId,
   });
 
-  // Return results
-  return { totalCount, academicCoach };
-  
-};
+  if (!isNil(offset) && !isNil(limit)) {
+    const page = Math.max(1, Number(offset));
+    const size = Number(limit) || Number(commonMessages.LIMIT);
+    queryBuilder.skip((page - 1) * size).limit(size);
+  }
 
+  const [academicCoach, totalCount] = await Promise.all([
+    queryBuilder.exec(),
+    MeetingSchedules.countDocuments(query),
+  ]);
+
+  const meetingList = await SuprvisorMeeting.find({
+    "organizer.organizerId": params.academicCoachId,
+  }).lean();
+
+  const adminMeetingList = await AdminMeeting.find({
+    "teacher.teacherId": params.academicCoachId,
+  }).lean();
+
+  AppLogger.info(meetingSchedulesMessages.GET_ALL_LIST_SUCCESS, { totalCount });
+
+  return { totalCount, academicCoach, meetingList, adminMeetingList };
+};
 
 export const getAcademicCoachId = async (
   id: string

@@ -15,6 +15,7 @@ const getmeetingScheduleListInputValidation = z.object({
     sortOrder: true,
     offset: true,
     limit: true,
+    academicCoachId: true,
   }),
 });
 
