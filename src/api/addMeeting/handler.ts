@@ -309,41 +309,30 @@ async updateMeetingRecordById(req: Request, h: ResponseToolkit) {
 //Update meeting minutes
 async updateMeetingMinutesRecordById(req: Request, h: ResponseToolkit) {
   try {
-    console.log("Content-Type:", req.headers["content-type"]);
-    console.log("Raw payload:", req.payload);
-
     const meetingId = req.params.meetingbyId;
-    const payload = req.payload as {
-      duration: string;
-      meetingStatus: string;
-      meetingminutes: string;
-      teacher: ITeacher[];
-      updatedBy?: string;
-    };
+    const payload = req.payload as any;
+const result = await updateMeetingMinutesAndAttendees(
+  meetingId,
+  payload?.meetingminutes,
+  payload?.meetingStatus,
+  payload?.duration,
+  Array.isArray(payload?.teacher) ? payload.teacher : [],
+  payload?.updatedBy
+);
 
-    if (!payload || !payload.meetingminutes || !Array.isArray(payload.teacher)) {
-      return h.response({ message: "Missing or invalid data" }).code(400);
-    }
-
-    const result = await updateMeetingMinutesAndAttendees(
-      meetingId,
-      payload.meetingminutes,
-        payload.meetingStatus,
-      payload.duration,
-      payload.teacher,
-      payload.updatedBy
-    );
 
     if (!result) {
-      return h.response({ message: addMeetingMessages.USER_NOT_FOUND }).code(404);
+      return h.response({ message: "Meeting not found" }).code(404);
     }
 
     return h.response(result).code(200);
+
   } catch (error) {
-    console.error("Error updating meeting minutes and attendees:", error);
-    return h.response({ message: "Internal Server Error", error }).code(500);
+    console.error(error);
+    return h.response({ message: "Server Error" }).code(500);
   }
-},
+}
+,
 
 async getMeetingByIdRecord (req: Request, h: ResponseToolkit) {
 

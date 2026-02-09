@@ -91,10 +91,14 @@ export const getAllMeetingRecords = async (
       { meetingId: string; meetingName: string; participants: any[] }
     >();
 
-    for (const meeting of addMeetings) {
-      // ✅ Only group if meetingId starts with "auto-"
-      if (!meeting.meetingId?.startsWith("auto-")) continue;
+     const autoMeetings = await Meeting.find({
+      status: "Active",
+    }).lean();
 
+    for (const meeting of autoMeetings) {
+      // ✅ Only group if meetingId starts with "auto-"
+      if (!meeting.meetingName?.startsWith("Auto-")) continue;
+    
       const id = meeting.meetingId;
       const name = meeting.meetingName;
 
@@ -105,7 +109,7 @@ export const getAllMeetingRecords = async (
           participants: [],
         });
       }
-
+console.log("✅ Processing meeting for grouping:", groupedMap);
       // Add participant (use appropriate field from your schema)
       // Assuming meeting has a participant/teacher/student field — adjust accordingly
       if (Array.isArray(meeting.teacher) && meeting.teacher.length > 0) {
@@ -352,41 +356,51 @@ export const updateMeetingById = async (
 
 //Update meeting minutes
 
+// Backend Controller
 export const updateMeetingMinutesAndAttendees = async (
-  id: string,
+  meetingId: string,
   meetingminutes: string,
   meetingStatus: string,
   duration: string,
   teacher: ITeacher[],
   updatedBy?: string
 ): Promise<Partial<IMeetingMinutesUpdate> | null> => {
-  const updated = await addmeeting
-    .findOneAndUpdate(
-      { _id: new Types.ObjectId(id) },
-      {
-        $set: {
-          duration,
-          meetingminutes,
-          meetingStatus,
-          teacher,
-          updatedBy,
-          updatedDate: new Date(), // set server-side
-        },
-      },
-      {
-        new: true,
-        projection: {
-          meetingminutes: 1,
-          teacher: 1,
-          duration: 1,
-          meetingStatus: 1,
-          _id: 0,
-        },
-      } // return only relevant fields
-    )
-    .lean();
+  console.log("🔍 Backend received:", { meetingId, teacher, duration, meetingminutes });
+  
+  try {
+    const updated = await addmeeting
+      .findOneAndUpdate(
+        { meetingId },
 
-  return updated as unknown as Partial<IMeetingMinutesUpdate> | null;
+        {
+          $set: {
+            duration,
+            meetingminutes,
+            meetingStatus,
+            teacher: Array.isArray(teacher) ? teacher : [],
+            updatedBy,
+            updatedDate: new Date(),
+          },
+        },
+        {
+          new: true,
+          projection: {
+            meetingminutes: 1,
+            teacher: 1,
+            duration: 1,
+            meetingStatus: 1,
+            _id: 0,
+          },
+        }
+      )
+      .lean();
+
+    console.log("✅ Updated document:", updated);
+    return updated as unknown as Partial<IMeetingMinutesUpdate> | null;
+  } catch (error) {
+    console.error("❌ Update error:", error);
+    throw error;
+  }
 };
 
 export const meetingByIdRecord = async (
