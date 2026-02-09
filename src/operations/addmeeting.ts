@@ -91,10 +91,14 @@ export const getAllMeetingRecords = async (
       { meetingId: string; meetingName: string; participants: any[] }
     >();
 
-    for (const meeting of addMeetings) {
-      // ✅ Only group if meetingId starts with "auto-"
-      if (!meeting.meetingId?.startsWith("auto-")) continue;
+     const autoMeetings = await Meeting.find({
+      status: "Active",
+    }).lean();
 
+    for (const meeting of autoMeetings) {
+      // ✅ Only group if meetingId starts with "auto-"
+      if (!meeting.meetingName?.startsWith("Auto-")) continue;
+    
       const id = meeting.meetingId;
       const name = meeting.meetingName;
 
@@ -105,7 +109,7 @@ export const getAllMeetingRecords = async (
           participants: [],
         });
       }
-
+console.log("✅ Processing meeting for grouping:", groupedMap);
       // Add participant (use appropriate field from your schema)
       // Assuming meeting has a participant/teacher/student field — adjust accordingly
       if (Array.isArray(meeting.teacher) && meeting.teacher.length > 0) {
