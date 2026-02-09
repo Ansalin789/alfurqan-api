@@ -311,15 +311,15 @@ async updateMeetingMinutesRecordById(req: Request, h: ResponseToolkit) {
   try {
     const meetingId = req.params.meetingbyId;
     const payload = req.payload as any;
+const result = await updateMeetingMinutesAndAttendees(
+  meetingId,
+  payload?.meetingminutes,
+  payload?.meetingStatus,
+  payload?.duration,
+  Array.isArray(payload?.teacher) ? payload.teacher : [],
+  payload?.updatedBy
+);
 
-    const result = await updateMeetingMinutesAndAttendees(
-      meetingId,
-      payload?.meetingminutes,
-      payload?.meetingStatus,
-      payload?.duration,
-      payload?.teacher,
-      payload?.updatedBy
-    );
 
     if (!result) {
       return h.response({ message: "Meeting not found" }).code(404);
