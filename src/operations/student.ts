@@ -89,7 +89,7 @@ export const createStudent = async (
         const emailTo = [
             { email: payload.email }
         ];
-        const subject = "Welcome To Alfurqan";
+        const subject = "Welcome To Blackstone Infomatics";
         const htmlPart = emailTemplate.templateContent.replace('<username>', payload.firstName + ' ' + payload.lastName);
         //const htmlPart = "<html><body><p>Hello World</p></body></html>";
         sendEmailClient(emailTo, subject,htmlPart);
@@ -148,7 +148,7 @@ export const createStudent = async (
     });
 
     const subject = 'Evaluation Zoom Meeting';
-    const htmlPart = zoomMailTemplate?.templateContent.replace('<date>', payload.startDate.toDateString()).replace('<meetingtime>', payload.preferredFromTime).replace('<zoomlink>', CreatemeetingDetails.meetingLink);
+    const htmlPart = zoomMailTemplate?.templateContent.replace('<username>', payload.firstName + ' ' + payload.lastName).replace('<date>', payload.startDate.toDateString()).replace('<meetingtime>', payload.preferredFromTime).replace('<zoomlink>', CreatemeetingDetails.meetingLink);
     const emailTo = [
       { email: payload.email }, { email: savedUser.academicCoach.email }
   ];

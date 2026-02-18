@@ -289,6 +289,7 @@ async function createTeacherPortalPortal(updateData: any) {
     const subject = "Welcome To Alfurqan Team";
     const htmlPart = emailTemplate.templateContent
       .replace('<username>', createTeacherPortal.userName)
+      .replace('<username>', createTeacherPortal.userName)
       .replace('<password>', createTeacherPortal.password);
     sendEmailClient(emailTo, subject, htmlPart);
   }

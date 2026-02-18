@@ -36,6 +36,7 @@ import { evaluationTeacherSlotBook } from "../redis/handler/teacherSlotHander";
 import moment from "moment";
 import { generateRollNo } from "./rollcounter";
 import users from "../models/users";
+import student from "../models/student";
 
 export interface EvaluationFilter {
   id(id: any): string;
@@ -74,7 +75,7 @@ export const createEvaluationRecord = async (
   }).exec();
 
   //rollNo
-     const rollNo = await generateRollNo('ALFST', 3);
+  const rollNo = await generateRollNo('ALFST', 3);
   if (loginUser) {
     newStudent.academicCoach = {
       academicCoachId: payload.academicCoachId || " ", // Provide a default value if undefined
@@ -245,84 +246,84 @@ export const updateStudentEvaluation = async (
     console.log("updatedEvaluation>>", updatedEvaluation);
 
     const emailTemplate = await EmailTemplate.findOne({
-  templateKey: "Invoice",
-}).exec();
+      templateKey: "Invoice",
+    }).exec();
 
-if (emailTemplate && payload.student && payload.subscription && evaluation) {
+    if (emailTemplate && payload.student && payload.subscription && evaluation) {
 
-  const emailTo = [{ email: payload.student.studentEmail }];
-  const subject = "Invoice";
+      const emailTo = [{ email: payload.student.studentEmail }];
+      const subject = "Invoice";
 
-  // Base values
-  const rawTotalPrice = Number(evaluation?.planTotalPrice) || 1;
-  const hours = Number(evaluation?.accomplishmentTime) || 1;
+      // Base values
+      const rawTotalPrice = Number(evaluation?.planTotalPrice) || 1;
+      const hours = Number(evaluation?.accomplishmentTime) || 1;
 
-  // Compute discount if family is being used for 4th time or more
-  let displayTotal = Number(rawTotalPrice);
-  let displayRate = displayTotal / (hours || 1);
-  let discountApplied = false;
+      // Compute discount if family is being used for 4th time or more
+      let displayTotal = Number(rawTotalPrice);
+      let displayRate = displayTotal / (hours || 1);
+      let discountApplied = false;
 
-  const familyId = (evaluation && (evaluation as any).familyId) || payload.student.familyId || null;
-  if (familyId) {
-    try {
-      const familyUsageCount = await EvaluationModel.countDocuments({ familyId }).exec();
-      // Apply discount when family key has been used 4th time or more
-      if (familyUsageCount >= 3) {
-        discountApplied = true;
-        displayTotal = Number((displayTotal * 0.9).toFixed(2)); // 10% off
-        displayRate = Number((displayTotal / (hours || 1)).toFixed(2));
-
-        // Persist discounted total/amount and flag to evaluation (best-effort; fields may vary by schema)
+      const familyId = (evaluation && (evaluation as any).familyId) || payload.student.familyId || null;
+      if (familyId) {
         try {
-          await EvaluationModel.findByIdAndUpdate(
-            id,
-            {
-              $set: {
-                planTotalPrice: String(displayTotal),
-                amount: String(displayTotal),
-                discountApplied: true,
-              },
-            },
-            { new: true }
-          ).exec();
+          const familyUsageCount = await EvaluationModel.countDocuments({ familyId }).exec();
+          // Apply discount when family key has been used 4th time or more
+          if (familyUsageCount >= 3) {
+            discountApplied = true;
+            displayTotal = Number((displayTotal * 0.9).toFixed(2)); // 10% off
+            displayRate = Number((displayTotal / (hours || 1)).toFixed(2));
+
+            // Persist discounted total/amount and flag to evaluation (best-effort; fields may vary by schema)
+            try {
+              await EvaluationModel.findByIdAndUpdate(
+                id,
+                {
+                  $set: {
+                    planTotalPrice: String(displayTotal),
+                    amount: String(displayTotal),
+                    discountApplied: true,
+                  },
+                },
+                { new: true }
+              ).exec();
+            } catch (err) {
+              // don't block email if DB update fails; just log
+              AppLogger.error("Failed to persist discounted price for evaluation", { err, id, familyId });
+            }
+          }
         } catch (err) {
-          // don't block email if DB update fails; just log
-          AppLogger.error("Failed to persist discounted price for evaluation", { err, id, familyId });
+          AppLogger.error("Error counting family usage for discount", { err, familyId });
         }
       }
-    } catch (err) {
-      AppLogger.error("Error counting family usage for discount", { err, familyId });
+
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 2);
+
+      // Prepare HTML using computed display values
+      let htmlPart = emailTemplate.templateContent || "";
+      htmlPart = htmlPart
+        .replace(/{{Student Name}}/g, (payload.student.studentFirstName || "") + " " + (payload.student.studentLastName || ""))
+        .replace(/{{Invoice Date}}/g, new Date().toDateString())
+        .replace(/{{Hourly Rate}}/g, String(displayRate))
+        .replace(/{{Total Amount}}/g, String(displayTotal))
+        .replace(/{{Package Name}}/g, payload.subscription.subscriptionName)
+        .replace(/{{Hours}}/g, String(hours))
+        .replace(/{{Payment Link}}/g, (updatedEvaluation && (updatedEvaluation as any).paymentLink) || "")
+        .replace(/{{Due Date}}/g, dueDate.toDateString());
+
+      // If discount applied, optionally annotate the email (if template has a placeholder {{DiscountNote}})
+      if (discountApplied) {
+        htmlPart = htmlPart.replace(/{{DiscountNote}}/g, "10% family discount applied");
+      } else {
+        htmlPart = htmlPart.replace(/{{DiscountNote}}/g, "");
+      }
+
+      await sendEmailClient(emailTo, subject, htmlPart);
+
+      console.log("✅ Invoice Email sent", { discountApplied });
+
     }
-  }
-
-  const dueDate = new Date();
-  dueDate.setDate(dueDate.getDate() + 2);
-
-  // Prepare HTML using computed display values
-  let htmlPart = emailTemplate.templateContent || "";
-  htmlPart = htmlPart
-    .replace(/{{Student Name}}/g, (payload.student.studentFirstName || "") + " " + (payload.student.studentLastName || ""))
-    .replace(/{{Invoice Date}}/g, new Date().toDateString())
-    .replace(/{{Hourly Rate}}/g, String(displayRate))
-    .replace(/{{Total Amount}}/g, String(displayTotal))
-    .replace(/{{Package Name}}/g, payload.subscription.subscriptionName)
-    .replace(/{{Hours}}/g, String(hours))
-    .replace(/{{Payment Link}}/g, (updatedEvaluation && (updatedEvaluation as any).paymentLink) || "")
-    .replace(/{{Due Date}}/g, dueDate.toDateString());
-
-  // If discount applied, optionally annotate the email (if template has a placeholder {{DiscountNote}})
-  if (discountApplied) {
-    htmlPart = htmlPart.replace(/{{DiscountNote}}/g, "10% family discount applied");
-  } else {
-    htmlPart = htmlPart.replace(/{{DiscountNote}}/g, "");
-  }
-
-  await sendEmailClient(emailTo, subject, htmlPart);
-
-  console.log("✅ Invoice Email sent", { discountApplied });
-
-}
-    return updatedEvaluation ;
+    return updatedEvaluation;
   } else if (
     payload.teacher ||
     payload.preferredTrialDate ||
@@ -332,11 +333,11 @@ if (emailTemplate && payload.student && payload.subscription && evaluation) {
     console.log("💡 Running Meeting Schedule Update (reuse Zoom link) Flow...");
 
     const evaluation = await EvaluationModel.findById(id).lean();
-  if (!evaluation) {
-    throw new Error("Evaluation not found");
-  }
+    if (!evaluation) {
+      throw new Error("Evaluation not found");
+    }
 
-  const trialId = evaluation.trialId;
+    const trialId = evaluation.trialId;
     // 👉 Get existing meeting schedule (to reuse link)
     const existingMeeting = await MeetingSchedule.findOne({ trialId });
 
@@ -354,7 +355,7 @@ if (emailTemplate && payload.student && payload.subscription && evaluation) {
 
     // 👉 Update meeting schedule with new details but keep existing meetingLink
     const updatedMeetingDetails = await MeetingSchedule.findOneAndUpdate(
-      {trialId},
+      { trialId },
       {
         $set: {
           teacher: {
@@ -382,11 +383,11 @@ if (emailTemplate && payload.student && payload.subscription && evaluation) {
     if (zoomMailTemplate) {
       const subject = "Trial class";
       const htmlPart = zoomMailTemplate.templateContent
-         .replace(/{{Student’s Name}}/g, existingMeeting?.student?.name || " ")
-        .replace(/{{Teacher Name}}/g, teacherName || " ")  
-  .replace(/{{Preferred Date}}/g, new Date(payload.preferredTrialDate || '').toDateString())
-  .replace(/{{Preferred Time}}/g, payload.preferredTrialFromTime + " - " + payload.preferredTrialToTime)
-  .replace(/{{Zoom Link}}/g,  updatedMeetingDetails?.meetingLink || existingMeeting?.meetingLink || " ");
+        .replace(/{{Student Name}}/g, existingMeeting?.student?.name || " ")
+        .replace(/{{Teacher Name}}/g, teacherName || " ")
+        .replace(/{{Preferred Date}}/g, new Date(payload.preferredTrialDate || '').toDateString())
+        .replace(/{{Preferred Time}}/g, payload.preferredTrialFromTime + " - " + payload.preferredTrialToTime)
+        .replace(/{{Zoom Link}}/g, updatedMeetingDetails?.meetingLink || existingMeeting?.meetingLink || " ");
 
       // Only send to valid teacher email
       const emailTo = [];
@@ -407,8 +408,8 @@ if (emailTemplate && payload.student && payload.subscription && evaluation) {
       }
     }
 
-const updatedEvaluation = await EvaluationModel.findById(id).lean();
-return updatedEvaluation as IEvaluation;
+    const updatedEvaluation = await EvaluationModel.findById(id).lean();
+    return updatedEvaluation as IEvaluation;
   }
 
   console.log("ℹ️ No special email flow triggered");
@@ -464,102 +465,108 @@ async function trialClassAssigned(
     createEvaluation,
     preferredTrialFromTime
   );
+  // 👉 Send Zoom email (with existing link + updated date/time)
   const zoomMailTemplate = await EmailTemplate.findOne({
     templateKey: "trailmanagement",
   }).exec();
 
-  const subject = "Trail class";
-  const htmlPart = zoomMailTemplate?.templateContent
-    .replace("<date>", preferredTrialDate)
-    .replace("<meetingTime>", preferredTrialFromTime)
-    .replace("<zoomlink>", meetingDetails.join_url);
-  const emailTo = [
-    { email: teacherEmail.email },
-    { email: createEvaluation.student.studentEmail },
-  ];
-  if (htmlPart) {
-    sendEmailClient(emailTo, subject, htmlPart);
-  }
-  const course = await Course.findOne({
-    courseName: createEvaluation.student.learningInterest,
-  });
-  const CreatemeetingDetails = await MeetingSchedule.create({
-    academicCoach: {
-      academicCoachId: null,
-      name: null,
-      role: null,
-      email: null,
-    },
-    teacher: {
-      teacherId: teacherEmail.userId,
-      name: teacherEmail.userName,
-      email: teacherEmail.email,
-    },
-    student: {
-      studentId: createEvaluation.student.studentId,
-      name:
-        createEvaluation.student.studentFirstName +
-        " " +
-        createEvaluation.student.studentLastName,
-      email: createEvaluation.student.studentEmail,
-      city: createEvaluation.student.studentCity,
-      country: createEvaluation.student.studentCountry,
-      phonenumber: createEvaluation.student.studentPhone,
-    },
-    trialId: createEvaluation.trialId,
-    subject: "Student First class",
-    meetingLocation: "Zoom",
-    course: {
-      courseId: course?._id,
-      courseName: course?.courseName,
-    },
-    classType: "Trail class",
-    meetingType: "Online",
-    meetingLink: meetingDetails.join_url,
-    isScheduledMeeting: true,
-    scheduledStartDate: startOfDayIST,
-    scheduledEndDate: startOfDayIST,
-    scheduledFrom: preferredTrialFromTime,
-    scheduledTo: preferredTrialToTime,
-    timeZone: createEvaluation.student.timeZone,
-    description: "Test Description",
-    meetingStatus: "Scheduled",
-    studentResponse: "PENDING",
-    status: "Active",
-    createdDate: new Date(),
-    createdBy: createEvaluation.createdBy,
-    lastUpdatedDate: new Date(),
-    lastUpdatedBy: "Admin",
-  });
-  await CreatemeetingDetails.save();
-const academicCoach = await users.findById(createEvaluation.academicCoachId);
-  if (teacherDetails.userId) {
-    await sendNotification({
-      messages: `${createEvaluation.student.studentFirstName} ${createEvaluation.student.studentLastName} has been assigned to you for a trial class.`,
-      senderId: createEvaluation.academicCoachId?.toString() ?? "system",
-      senderName: academicCoach?.userName ?? "system",
-      senderEmail: academicCoach?.email ?? "system",
-      isRead: false,
-      receiverId: [teacherDetails.userId],
-      receiverName: [teacherDetails.userName],
-      receiverEmail: [teacherDetails.email],
-      notificationType: "TEACHER_TRAILCLASS_NOTIFICATION",
-      notificationStatus: "Unseen",
-      status: "active",
-      createdBy: "system",
-      updatedBy: "system",
-    });
-  }
+  if (zoomMailTemplate) {
+    const subject = "Trial class";
+    const htmlPart = zoomMailTemplate.templateContent
+      .replace(/{{Student Name}}/g, student.name || " ")
+      .replace(/{{Teacher Name}}/g, teacherEmail.userName || " ")
+      .replace(/{{Preferred Date}}/g, new Date(preferredTrialDate || '').toDateString())
+      .replace(/{{Preferred Time}}/g, preferredTrialFromTime + " - " + preferredTrialToTime)
+      .replace(/{{Zoom Link}}/g, meetingDetails.join_url || " ");
 
-  if (CreatemeetingDetails) {
-    const teacherId = CreatemeetingDetails.teacher.teacherId;
-    const from = CreatemeetingDetails.scheduledFrom;
-    const to = CreatemeetingDetails.scheduledTo;
-    const date = CreatemeetingDetails.scheduledStartDate;
-    await academicAvailableTeachers({
-      event: "update",
-      data: { date, teacherId, from, to },
+    const emailTo = [
+      { email: teacherEmail.email },
+      { email: createEvaluation.student.studentEmail },
+    ];
+    if (htmlPart) {
+      sendEmailClient(emailTo, subject, htmlPart);
+    }
+    const course = await Course.findOne({
+      courseName: createEvaluation.student.learningInterest,
     });
+    const CreatemeetingDetails = await MeetingSchedule.create({
+      academicCoach: {
+        academicCoachId: null,
+        name: null,
+        role: null,
+        email: null,
+      },
+      teacher: {
+        teacherId: teacherEmail.userId,
+        name: teacherEmail.userName,
+        email: teacherEmail.email,
+      },
+      student: {
+        studentId: createEvaluation.student.studentId,
+        name:
+          createEvaluation.student.studentFirstName +
+          " " +
+          createEvaluation.student.studentLastName,
+        email: createEvaluation.student.studentEmail,
+        city: createEvaluation.student.studentCity,
+        country: createEvaluation.student.studentCountry,
+        phonenumber: createEvaluation.student.studentPhone,
+      },
+      trialId: createEvaluation.trialId,
+      subject: "Student First class",
+      meetingLocation: "Zoom",
+      course: {
+        courseId: course?._id,
+        courseName: course?.courseName,
+      },
+      classType: "Trail class",
+      meetingType: "Online",
+      meetingLink: meetingDetails.join_url,
+      isScheduledMeeting: true,
+      scheduledStartDate: startOfDayIST,
+      scheduledEndDate: startOfDayIST,
+      scheduledFrom: preferredTrialFromTime,
+      scheduledTo: preferredTrialToTime,
+      timeZone: createEvaluation.student.timeZone,
+      description: "Test Description",
+      meetingStatus: "Scheduled",
+      studentResponse: "PENDING",
+      status: "Active",
+      createdDate: new Date(),
+      createdBy: createEvaluation.createdBy,
+      lastUpdatedDate: new Date(),
+      lastUpdatedBy: "Admin",
+    });
+    await CreatemeetingDetails.save();
+    const academicCoach = await users.findById(createEvaluation.academicCoachId);
+    if (teacherDetails.userId) {
+      await sendNotification({
+        messages: `${createEvaluation.student.studentFirstName} ${createEvaluation.student.studentLastName} has been assigned to you for a trial class.`,
+        senderId: createEvaluation.academicCoachId?.toString() ?? "system",
+        senderName: academicCoach?.userName ?? "system",
+        senderEmail: academicCoach?.email ?? "system",
+        isRead: false,
+        receiverId: [teacherDetails.userId],
+        receiverName: [teacherDetails.userName],
+        receiverEmail: [teacherDetails.email],
+        notificationType: "TEACHER_TRAILCLASS_NOTIFICATION",
+        notificationStatus: "Unseen",
+        status: "active",
+        createdBy: "system",
+        updatedBy: "system",
+      });
+    }
+
+    if (CreatemeetingDetails) {
+      const teacherId = CreatemeetingDetails.teacher.teacherId;
+      const from = CreatemeetingDetails.scheduledFrom;
+      const to = CreatemeetingDetails.scheduledTo;
+      const date = CreatemeetingDetails.scheduledStartDate;
+      await academicAvailableTeachers({
+        event: "update",
+        data: { date, teacherId, from, to },
+      });
+    }
   }
 }
 
@@ -677,7 +684,7 @@ export const getAllEvaluationRecords = async (
     const skip = Math.max(
       0,
       ((Number(offset) ?? Number(commonMessages.OFFSET)) - 1) *
-        (Number(limit) ?? Number(commonMessages.LIMIT))
+      (Number(limit) ?? Number(commonMessages.LIMIT))
     );
     evaluationQuery
       .skip(skip)
@@ -724,7 +731,7 @@ export const updateStudentInvoice = async (
 };
 
 export const getTotalTrialClassRequestCount = async () => {
-  
+
   const evaluationStats = await EvaluationModel.aggregate([
     {
       $match: { status: "Active" }
@@ -1016,7 +1023,7 @@ export const getTrialClassCount = async (
     const skip = Math.max(
       0,
       ((Number(offset) ?? Number(commonMessages.OFFSET)) - 1) *
-        (Number(limit) ?? Number(commonMessages.LIMIT))
+      (Number(limit) ?? Number(commonMessages.LIMIT))
     );
     evaluationQuery
       .skip(skip)
@@ -1054,7 +1061,7 @@ export const getTrialClassRecordById = async (teacherId: string) => {
     getTrialsClassstatus = await EvaluationModel.findOne({
       trialId: trialClassUpdateDetails.trialId
     }).exec();
-    if (getTrialsClassstatus && (getTrialsClassstatus.trialClassStatus == "" || getTrialsClassstatus.trialClassStatus =="PENDING")) {
+    if (getTrialsClassstatus && (getTrialsClassstatus.trialClassStatus == "" || getTrialsClassstatus.trialClassStatus == "PENDING")) {
       const trialClass = await MeetingSchedule.find({
         trialId: getTrialsClassstatus.trialId,
         // scheduledStartDate:  {
