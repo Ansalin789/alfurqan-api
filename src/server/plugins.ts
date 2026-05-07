@@ -30,13 +30,14 @@ import employeeWagesAPI from "../api/empwege/router";
 import expenseAPI from "../api/expenses/router";
 import KnowledgeBaseAPI from "../api/knowledgebase/router";
 import salaryandwagesAPI from "../api/salarywages/router";
-
 import packageAPI from "../api/package/router"
 import leaveRequestAPI from "../api/leaveRequest/router";
 import TeachermeetingAPI from "../api/teacherMeeting/router"
 import Level from "../api/level/router"; 
 import AdminAssignment from "../api/adminAssignment/router";
 import fileUplocadAPI from "../api/fileUpload/router";
+import subscriptionSAASAPI from "../api/subscription_SAAS/router";
+import plansAPI from "../api/plan/router";
 
 
 export const appPlugins = [
@@ -152,5 +153,11 @@ export const appPlugins = [
   },
    {
     plugin:fileUplocadAPI,
+  },
+  {
+    plugin:subscriptionSAASAPI,
+  },
+  {
+    plugin:plansAPI,
   }
 ];
