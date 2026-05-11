@@ -115,6 +115,18 @@ const register = async (
         // },
       },
     },
+    {
+      method: "PUT",
+      path:"/subscriptions/upgrade/{subscriptionId}",
+      options:{
+        handler: handler.updateSubscription,
+        description: userMessages.UPDATE,
+        tags: ["api", "subscriptions"],
+        // auth: {
+        //   strategies: ["jwt"],
+        // },
+      }
+    }
 
     // UPGRADE PLAN
     // {

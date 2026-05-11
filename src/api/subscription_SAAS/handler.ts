@@ -40,10 +40,13 @@ export default {
       lastUpdatedBy,
     } = payload;
 
+    const subscriptionId = `${tenantId}-${planId}`;
+
     return createSubscription({
       tenantId,
       planId,
       planName,
+      subscriptionId,
       subscriptionStatus: subscriptionStatus as any,
       startDate: new Date(startDate),
       endDate: new Date(endDate),
@@ -54,13 +57,29 @@ export default {
   },
 
   // UPDATE SUBSCRIPTION
-  async updateSubscription(req: Request, h: ResponseToolkit) {
+ async updateSubscription(req: Request, h: ResponseToolkit) {
+  try {
     const { subscriptionId } = req.params;
 
     const payload = req.payload as Partial<SubscriptionPayload>;
 
-    return updateSubscription(subscriptionId, payload as Partial<Subscription>);
-  },
+    const result = await updateSubscription(
+      subscriptionId,
+      payload as Partial<Subscription>
+    );
+
+    return h.response({
+      success: true,
+      data: result,
+    }).code(200);
+
+  } catch (error: any) {
+    return h.response({
+      success: false,
+      message: error.message || "Something went wrong",
+    }).code(error.statusCode || 500);
+  }
+},
 
   // GET ALL SUBSCRIPTIONS
   async getSubscriptions(req: Request, h: ResponseToolkit) {

@@ -52,26 +52,42 @@ export const getSubscriptionRecordById =
 
 
 // UPDATE SUBSCRIPTION
-export const updateSubscription =
-  async (
-    id: string,
-    payload: Partial<Subscription>
-  ): Promise<Subscription | null> => {
+export const updateSubscription = async (
+  subscriptionId: string,
+  payload: Partial<Subscription>
+): Promise<Subscription | null> => {
+  try {
+    if (!subscriptionId) {
+      const err: any = new Error("Subscription ID is required");
+      err.statusCode = 400;
+      throw err;
+    }
 
-    return SubscriptionModel.findOneAndUpdate(
-      {
-        _id: new Types.ObjectId(id),
-      },
+    // Direct update (no need extra findOne)
+    const updatedSubscription = await SubscriptionModel.findOneAndUpdate(
+      { subscriptionId },
+      { $set: payload },
+      { new: true }
+    );
 
-      {
-        $set: payload,
-      },
+    if (!updatedSubscription) {
+      const err: any = new Error(`Subscription not found for ID: ${subscriptionId}`);
+      err.statusCode = 500;
+      throw err;
+    }
 
-      {
-        new: true,
-      }
-    ).lean();
-  };
+    return updatedSubscription;
+
+  } catch (error: any) {
+    console.error("Error updating subscription:", error.message);
+
+    // Preserve original statusCode if exists
+    const err: any = new Error(error.message || "Failed to update subscription");
+    err.statusCode = error.statusCode || 500;
+
+    throw err;
+  }
+};
 
 
 // CANCEL SUBSCRIPTION

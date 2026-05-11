@@ -9,7 +9,11 @@ const SubscriptionSchema = new Schema<Subscription>(
       type: String,
       required: true,
     },
-
+    subscriptionId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
     planId: {
       type: String,
       ref: "Plan",
@@ -66,6 +70,7 @@ const SubscriptionSchema = new Schema<Subscription>(
 
 export const createSubscriptionValidation = z.object({
   tenantId: z.string(),
+  subscriptionId: z.string(),
   planId: z.string(),
   planName: z.string(),
   subscriptionStatus: z.enum([
