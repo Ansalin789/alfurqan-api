@@ -2231,3 +2231,37 @@ export interface ITenantSettingsPayload {
   lastUpdatedDate?: Date;
   lastUpdatedBy?: string;
 }
+export interface Plans extends Document {
+  planName: string;
+  features: string[];
+  price: number;
+  tenantId: string;
+  planId: string;
+  trialDays: number;
+  maxUsers: number;
+  allowedRoles: string[];
+  canCreateCustomRoles: boolean;
+  currency: string;
+  billingCycle: 'MONTHLY' | 'YEARLY' | 'LIFETIME' | 'QUARTERLY' | 'HALF_YEARLY';
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+}
+
+export interface Subscription extends Document {
+  tenantId: string;
+  planId: string;
+  planName: string;
+  subscriptionId: string;
+  subscriptionStatus: 'ACTIVE' | 'INACTIVE' | 'CANCELLED' | 'EXPIRED'| 'TRIALS';
+  startDate: Date;
+  isTrialUsed: boolean;
+  endDate: Date;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+}
