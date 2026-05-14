@@ -16,12 +16,13 @@ import {
 } from "../../config/messages";
 import jwt from "jsonwebtoken";
 import { zodAuthenticationSchema } from "../../shared/zod_schema_validation";
-import { createActiveSessionRecord, getActiveSessionRecord, getLatestSessionRecord, updateActiveSessionRecord } from "../../operations/active_session";
+import { createActiveSessionRecord, getActiveSessionRecord, updateActiveSessionRecord } from "../../operations/active_session";
 import { getActiveUserRecord, updateUser } from "../../operations/users";
+import { getActiveTenantRecordByCode } from "../../operations/tenants";
+import ActiveSessionModel from "../../models/active_session";
+import { getActiveStudentRecord } from "../../operations/alstudents";
 import UserModel from "../../models/users";
 import AlStudentsModel from "../../models/alstudents";
-import { getActiveStudentRecord } from "../../operations/alstudents";
-import ActiveSessionModel from "../../models/active_session";
 
 // Input validation for user signin
 const signInInputValidation = z.object({
@@ -49,26 +50,16 @@ export default {
     });
 
     const { username, password } = payload;
-    console.log("user>>>", `${username} ${password}`);
-
-    let user: any = await getActiveUserRecord({ userName: username });
-
-    console.log("user>>>", user);
-
-    // Validate the user exists in either DB
+    let user: any = await getActiveUserRecord({ userName: username });    // Validate the user exists in the DB
     if (isNil(user)) {
       return badRequest(userMessages.USER_NOT_FOUND);
     }
 
-    // Check password for `user`
-    if (user && payload.password !== user.password) {
-      console.log("password>>>", password);
+    if (!(await verifyPassword(decryptPassword(password), user.password))) {
       return unauthorized(authMessages.INCORRECT_PASSWORD);
     }
 
-
-
-    // Determine which record to use
+       // Determine which record to use
     const activeRecord = user;
   // 🔎 Step 1: Find latest session for this user (by loginDate)
   const latestSession = await ActiveSessionModel.findOne({ userId: String(activeRecord._id) })
@@ -85,29 +76,34 @@ export default {
   }
 
     const jwtPayload = {
-      userName: activeRecord.userName ,
-      sub: String(activeRecord._id),
+      userName: user.userName,
+      sub: String(user._id),
+      tenantId: user.tenantId,
     };
-
     const accessToken = generateAuthToken(jwtPayload);
-    const userWithoutPassword = omit(activeRecord, ["password"]);
-    console.log("accessToken:",accessToken)
-  //  await updateUser(String(activeRecord._id), { lastLoginDate: new Date() });
+    const userWithoutPassword = omit(user, ["password"]);
+
+    await updateUser(String(user._id), { lastLoginDate: new Date() });
 
     // Save the session for logout activity
     await createActiveSessionRecord({
-      userId: String(activeRecord._id),
+      tenantId: user.tenantId,
+      userId: String(user._id),
       loginDate: new Date(),
       isActive: true,
       accessToken,
     });
 
+    const tenantData: any = await getActiveTenantRecordByCode(user.tenantId);
+
+    // Return user details with auth token for successfull login
     return {
       ...userWithoutPassword,
       accessToken,
+      organizationName: tenantData.organizationName ?? null,
+      tenantJobCode: tenantData.tenantJobCode ?? null
     };
   },
-
 
   async studentSignIn(req: Request, h: ResponseToolkit) {
     const { payload } = signInInputValidation.parse({
@@ -115,29 +111,22 @@ export default {
     });
 
     const { username, password } = payload;
-    console.log("user>>>", `${username} ${password}`);
 
     let users: any = await getActiveStudentRecord({ username: username });
-
-    console.log("student>>>", users);
 
     // Validate the user exists in either DB
     if (isNil(users)) {
       return badRequest(userMessages.USER_NOT_FOUND);
     }
-
-
-
     // Check password for `users`
     if (users && payload.password !== users.password) {
-      console.log("password>>>", password);
       return unauthorized(authMessages.INCORRECT_PASSWORD);
     }
 
     // Determine which record to use
     const activeRecord = users;
     // 🔎 Step 1: Find latest session for this user (by loginDate)
-  const latestSession = await ActiveSessionModel.findOne({ userId: String(activeRecord._id) })
+    const latestSession = await ActiveSessionModel.findOne({ userId: String(activeRecord._id) })
     .sort({ loginDate: -1 }) // most recent first
     .exec();
 
@@ -156,7 +145,6 @@ export default {
 
     const accessToken = generateAuthToken(jwtPayload);
     const userWithoutPassword = omit(activeRecord, ["password"]);
-    console.log("accessToken:",accessToken)
   //  await updateUser(String(activeRecord._id), { lastLoginDate: new Date() });
 
     // Save the session for logout activity
@@ -165,6 +153,7 @@ export default {
       loginDate: new Date(),
       isActive: true,
       accessToken,
+      tenantId: activeRecord.tenantId ?? "Unknown",
     });
 
     return {
@@ -173,74 +162,43 @@ export default {
     };
   },
 
+  async signOut(req: Request, h: ResponseToolkit) {
 
- async signOut(req: Request, h: ResponseToolkit) {
-  try {
-    const { authorization } = req.headers;
-    console.log("🔑 Authorization header:", authorization);
+    const { authorization, tenantid } = req.headers;
 
+    // Check if Authorization header is present and starts with 'Bearer '
     if (!authorization || !authorization.startsWith("Bearer ")) {
-      console.log("❌ No Bearer token provided");
       return badRequest(authMessages.NO_TOKEN_PROVIDED);
     }
 
-    const token = authorization.replace("Bearer ", "").trim();
-    console.log("📌 Extracted Token:", token);
+    const token = authorization.replace("Bearer ", "");
 
-    // ✅ Verify token properly
-    let decodedToken: any;
-    try {
-      decodedToken = jwt.verify(token, process.env.JWT_SECRET!);
-      console.log("✅ Decoded & Verified Token:", decodedToken);
-    } catch (err: any) {
-      console.error("❌ JWT verification failed:", err.message);
+    const decodedToken: any = jwt.decode(token);
+
+    if (!decodedToken) {
       return unauthorized(authMessages.INVALID_TOKEN);
     }
-
-    // 🔎 Fetch the latest session for this user
-    const latestSession: any = await getLatestSessionRecord({
+    const checkAuthToken: any = await getActiveSessionRecord({
+      accessToken: token,
+      isActive: true,
       userId: decodedToken.sub,
-    }); 
-    // 👉 `getLatestSessionRecord` should internally sort by `signedInAt` desc or `createdAt` desc and pick one
-
-    console.log("🔍 Latest session lookup:", latestSession);
-
-    if (isNil(latestSession)) {
-      console.log("❌ No session found for user");
-      return unauthorized(authMessages.TOKEN_NO_LONGER_VALID);
-    }
-
-    // 🔒 Ensure token matches the latest session
-    if (latestSession.accessToken !== token || !latestSession.isActive) {
-      console.log("❌ Token is not the latest active session");
-      return unauthorized(authMessages.TOKEN_NO_LONGER_VALID);
-    }
-
-    // 📝 Update session: set inactive + signedOutAt
-    const result = await updateActiveSessionRecord(String(latestSession._id), {
-      isActive: false,
-      signedOutAt: new Date(),
+      tenantId: tenantid,
     });
-    console.log("📝 Update session result:", result);
+
+    // Check the provided token exists in the database
+    if (isNil(checkAuthToken)) {
+      return unauthorized(authMessages.TOKEN_NO_LONGER_VALID);
+    }
+
+    const result = await updateActiveSessionRecord(String(checkAuthToken._id), { isActive: false });
 
     if (isNil(result)) {
-      console.log("❌ Failed to update session");
       return badRequest(authMessages.SIGNOUT_UNSUCCESS);
     }
 
-    console.log("✅ Signout successful for user:", decodedToken.sub, "at", new Date().toISOString());
-    return h.response({
-      message: authMessages.SIGNOUT_SUCCESS,
-      signedOutAt: new Date().toISOString(),
-    });
-
-  } catch (err: any) {
-    console.error("🔥 Unexpected error in signOut:", err);
-    return badRequest("Something went wrong during signout");
-  }
-},
-
-
+    return h
+      .response({ message: authMessages.SIGNOUT_SUCCESS });
+  },
 
   // User's Change Password
   async changePassword(req: Request, h: ResponseToolkit) {
@@ -264,20 +222,15 @@ export default {
     return result;
   },
 
-
-  async checkEmail(req: Request, h: ResponseToolkit) {
+    async checkEmail(req: Request, h: ResponseToolkit) {
     const { payload } = checkEmailInputValidation.parse({
       payload: req.payload,
     });
-console.log(">>>>email", payload.email);
     const { email } = payload;
 
-    try {
       const user = await AlStudentsModel.findOne({ 'student.studentEmail': email }).exec();
       let users: any = await getActiveStudentRecord({ username: user?.username });
 
-      console.log("Users>>",users._id);
-      console.log("User>>",user);
       if (isNil(user)) {
         return h.response({
           message: 'Email not found.',
@@ -292,7 +245,6 @@ console.log(">>>>email", payload.email);
     };
 
     const accessToken = generateAuthToken(jwtPayload);
-    console.log("accessToken:",accessToken)
   //  await updateUser(String(activeRecord._id), { lastLoginDate: new Date() });
 
     // Save the session for logout activity
@@ -301,6 +253,7 @@ console.log(">>>>email", payload.email);
       loginDate: new Date(),
       isActive: true,
       accessToken,
+      tenantId: activeRecord.tenantId ?? "Unknown",
     });
       
      
@@ -312,11 +265,6 @@ console.log(">>>>email", payload.email);
         role:user.role,
         package:user.student.package
       };// 200 - OK
-    } catch (error) {
-      return h.response({
-        message: 'Internal Server Error.',
-      }).code(500); // 500 - Internal Server Error
-    }
   },
 
 
@@ -324,15 +272,11 @@ console.log(">>>>email", payload.email);
     const { payload } = checkEmailInputValidation.parse({
       payload: req.payload,
     });
-    console.log(">>>>email", payload.email);
     const { email } = payload;
 
-    try {
       const user = await UserModel.findOne({ 'email': email }).exec();
       let users: any = await getActiveUserRecord({ userName: user?.userName });
-      
-      console.log("Users>>",users._id);
-      console.log("User>>",user);
+
       if (isNil(user)) {
         return h.response({
           message: 'Email not found.',
@@ -347,7 +291,6 @@ console.log(">>>>email", payload.email);
     };
 
     const accessToken = generateAuthToken(jwtPayload);
-    console.log("accessToken:",accessToken)
   //  await updateUser(String(activeRecord._id), { lastLoginDate: new Date() });
 
     // Save the session for logout activity
@@ -356,32 +299,20 @@ console.log(">>>>email", payload.email);
       loginDate: new Date(),
       isActive: true,
       accessToken,
+      tenantId: activeRecord.tenantId ?? "Unknown",
     });
       
      
       return {
         message: 'Email found.',
         id:users._id,
-        userId : user._id,
         username1:activeRecord.userName,
         accessToken,
         role:user.role[0]
       };// 200 - OK
-    } catch (error) {
-      return h.response({
-        message: 'Internal Server Error.',
-      }).code(500); // 500 - Internal Server Error
-    }
   },
 
 
-//  async getAcademicAvaialableTime(req: Request, h: ResponseToolkit){
-//   const academicCoachList = await UserModel.find({ 'role': 'ACADEMICCOACH' }).exec();
-
-//    for(const availableTime of academicCoachList){
-// const shiftTime = await ShiftSchedule.find({'role': 'ACADEMICCOACH', })
-//  }
-//  }
  async getAcademicAvaialableTime(req: Request, h: ResponseToolkit){
   return getAcademicAvaialableTimeList(req.query.scheduleDate);
 

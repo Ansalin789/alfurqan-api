@@ -15,9 +15,6 @@ import RecruitmentModel from "../models/recruitment";
  *  - `totalCount`: The total number of user records matching the query.
  */
 
-
-
-
 export const getAllUserRecords = async (
   params: GetAlluserRecordsParams
 ): Promise<{ users: IUser[]; totalCount: number }> => {
@@ -31,10 +28,6 @@ export const getAllUserRecords = async (
   const totalCount = await UserModel.countDocuments(query);
   return { users, totalCount };
 };
-
-
-
-
 
 
 /**
@@ -95,13 +88,17 @@ export const getActiveUserRecord = async (
  * @param {IUserCreate} payload - The data of the user to be created.
  * @returns {Promise<Omit<IUser, 'password'>>} - A promise that resolves to the created user document.
  */
+
 export const createUser = async (
   payload: IUserCreate
 ): Promise<Omit<IUser, "password">> => {
+  // Create a new instance of the UserModel with the provided data
   const newUser = new UserModel(payload);
 
+  // Save the new user to the database
   const savedUser = await newUser.save();
 
+  // Convert the savedUser to a plain object and omit the password
   const userObject = savedUser.toObject() as Omit<IUser, "password"> & {
     password?: string;
   };
@@ -109,7 +106,6 @@ export const createUser = async (
 
   return userObject as Omit<IUser, "password">;
 };
-
 /**
  * Updates a user by their ID.
  *
@@ -285,10 +281,6 @@ export const getTeacherGenderCountDetails = async () => {
 };
 
 
-
-
-
-
 export const getOtherEmployeesDetails = async (): Promise<{ users: IUser[]; totalCount: number }> => {
   const users = await UserModel.find({
     role: { $ne: "TEACHER" },
@@ -339,8 +331,6 @@ export const getOtherEmpCardCount = async() =>{
   return { totalOtherEmpCount, otherEmpCount: results };
 
 };
-
-
 
 export const getOtherEmpGender = async() => {
   const otherEmpCount= await UserModel.aggregate([

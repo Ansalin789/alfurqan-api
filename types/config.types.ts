@@ -47,6 +47,10 @@ export interface Config {
         zoom_client_id:string;
         zoom_client_secret:string;
         zoom_account_id:string;
-    }
+    },
+       atsConfig:{
+    zoho_job_url_import: string;
+    zoho_job_access_token_import: string;
+    },
    
 }

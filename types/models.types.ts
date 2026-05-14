@@ -42,6 +42,7 @@ enum EvaluationStatus{
 }
 
 export interface IUser extends Document {
+  tenantId?: string;
   userId?: string;
   userName: string;
   gender: string;
@@ -60,6 +61,7 @@ export interface IUser extends Document {
 }
 
 export interface IUserCreate {
+  tenantId?: string;
   userId?: string;
   userName: string;
   gender: string;
@@ -686,6 +688,7 @@ export interface IClassScheduleCreate{
 }
 
 export interface IActiveSession extends Document {
+  tenantId: string;
   userId: string;
   loginDate: Date;
   isActive: boolean;
@@ -2172,4 +2175,59 @@ export interface LogDocument extends Document {
 export interface IRollCounter extends Document {
    prefix: String;
     sequence: String;
+}
+
+// Define the ITenant interface
+export interface ITenant extends Document {
+  tenantCode: string;
+  tenantName: string;
+  tenantLogo: string;
+  organizationName: string;
+  countryCode: string;
+  phoneNumber?: string;
+  mobileNumber: string;
+  emailId: string;
+  gstNo?: string;
+  panNo: string;
+  website?: string;
+  faxNo?: string;
+  address?: string;
+  postalCode?: string;
+  country?: string;
+  activeLicense?: object;
+  settings?: any[];
+  status: keyof typeof CustomEnumerator.Status;
+  createdDate: Date;
+  createdBy: string;
+  lastUpdatedDate: Date;
+  lastUpdatedBy: string;
+  tenantJobCode: string;
+}
+
+// Define the ITenantSettings interface
+export interface ITenantSettings extends Document {
+  tenantId: string;
+  keyName: string;
+  keyValue: any;
+  aiModel?:string;
+  apiKey?:string;
+  module: string;
+  isConnected: boolean;
+  status: keyof typeof CustomEnumerator.Status;
+  createdDate?: Date;
+  createdBy: string;
+  lastUpdatedDate?: Date;
+  lastUpdatedBy?: string;
+}
+export interface ITenantSettingsPayload {
+  tenantId: string;
+  keyName: string;
+  keyValue: any;
+  module: string;
+  isConnected: boolean;
+  status: keyof typeof CustomEnumerator.Status;
+  createdDate?: Date;
+  createdBy: string;
+  lastUpdatedDate?: Date;
+  lastUpdatedBy?: string;
 }

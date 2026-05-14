@@ -13,7 +13,8 @@ interface RedisData {
   tenantId: string;
 }
 
-const secretKey = config.encryption.iv;
+
+const secretKey = "my-secret-key";
 
 // Hash password function
 export const hashPassword = async (password: string): Promise<string> => {
@@ -35,50 +36,39 @@ export const decodeCustomBase64 = (value: string): string => {
   return base64;
 };
 
-export const encryptPassword = (plainText: string): string => {
-  // Encrypt the plain text password using the secret key
-  const encryptedBytes = CryptoJS.AES.encrypt(plainText, secretKey);
-  const encrypted = encryptedBytes.toString(); // Encrypted data as Base64 string
-  // Convert to custom Base64 format
-  const customBase64 = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(encrypted))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
-  return customBase64;
-};
-
 
 // Custom validation function to check if the password is encrypted
 export const isEncryptedPassword = (value: string): boolean => {
-  const base64 = decodeCustomBase64(value);
 
-  if (!CryptoJS.enc.Base64.parse(base64)) {
-    return false;
-  }
+    const base64 = decodeCustomBase64(value);
+    // CryptoJS.AES.decrypt already handles the OpenSSL "Salted__" Base64 format
+    const decryptedBytes = CryptoJS.AES.decrypt(base64, secretKey);
 
-  const encrypted = CryptoJS.enc.Base64.parse(base64).toString(CryptoJS.enc.Utf8);
+    // Step 3: Convert decrypted WordArray to UTF-8 string
+    const decryptedPassword = decryptedBytes.toString(CryptoJS.enc.Utf8);
 
-  const decryptedBytes = CryptoJS.AES.decrypt(encrypted, secretKey);
-  const decryptedPassword = decryptedBytes.toString(CryptoJS.enc.Utf8);
-
-  return decryptedPassword !== '';
+    return decryptedPassword !== '';
+   
 };
 
-// Decrypt function
-export const decryptPassword = (encryptedValue: string): string => {
-  // Decode the custom Base64 string
-  const base64 = decodeCustomBase64(encryptedValue);
+export const decryptPassword = (
+  encryptedValue: string
+): string => {
+    // Direct decrypt
+    const decryptedBytes =
+      CryptoJS.AES.decrypt(
+        encryptedValue,
+        secretKey
+      );
 
-  // Parse the Base64 string to get the encrypted data
-  const encrypted = CryptoJS.enc.Base64.parse(base64).toString(CryptoJS.enc.Utf8);
 
-  // Decrypt the encrypted data using the secret key
-  const decryptedBytes = CryptoJS.AES.decrypt(encrypted, secretKey);
-  const decryptedText = decryptedBytes.toString(CryptoJS.enc.Utf8);
-  return decryptedText;
+    // Convert decrypted bytes to UTF8
+    const decryptedText =
+      decryptedBytes.toString(
+        CryptoJS.enc.Utf8
+      );
+    return decryptedText;
 };
-
-
 // Generate JWT token
 export const generateAuthToken = (data: any): string => jwt.sign(data, config.jwtAuth.secret, { expiresIn: config.jwtAuth.expiresIn, algorithm: 'HS256' });
 
