@@ -1,3 +1,5 @@
+
+
 import { IActiveSession } from "../../types/models.types";
 import ActiveSessionModel from "../models/active_session";
 
@@ -5,6 +7,7 @@ export interface ActiveSessionRecord {
   accessToken: string;
   isActive: boolean;
   userId: string;
+  tenantId: string;
   loginDate?: Date;
 }
 
@@ -46,7 +49,6 @@ export const updateActiveSessionRecord = async (sessionId: string, payload: any)
     )
     .exec();
 };
-
 export const getLatestSessionRecord = async (
   query: { userId: string }
 ): Promise<IActiveSession | null> => {

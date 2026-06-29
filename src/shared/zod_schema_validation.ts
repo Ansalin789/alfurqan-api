@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { isEncryptedPassword } from "./common";
+import { userMessages } from "../config/messages";
 
 export const zodGetAllRecordsQuerySchema = z.object({
   id: z.string().optional(),
@@ -47,7 +49,11 @@ export const zodGetAllUserRecordsQuerySchema = z.object({
 
 export const zodAuthenticationSchema = z.object({
   username: z.string().min(3),
-  password: z.string().min(8),
+  password: z
+    .string()
+    .refine((value) => isEncryptedPassword(value), {
+      message: userMessages.ENCRYPT_PASSWORD_ERROR,
+    }),
 });
 
 export const zodGetAssignmentList = z.object({

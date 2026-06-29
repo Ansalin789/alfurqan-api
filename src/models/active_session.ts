@@ -3,6 +3,10 @@ import { IActiveSession } from "../../types/models.types";
 
 const activeSessionSchema = new Schema<IActiveSession>(
   {
+    tenantId: {
+      type: String,
+      required: true,
+    },
     userId: {
       type: String,
       required: true,

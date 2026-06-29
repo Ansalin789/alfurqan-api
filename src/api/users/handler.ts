@@ -53,8 +53,8 @@ const getUsersBulkDeleteInputValidation = z.object({
 const createInputValidation = z.object({
   payload: zodUserSchema.pick({
     userName: true,
-    email: true,
     gender: true,
+    email: true,
     password: true,
     role: true,
     profileImage: true,
@@ -82,21 +82,9 @@ const updateInputValidation = z.object({
     .partial(), // Makes all picked fields optional
 });
 
-// export default {
-//   // Retrieve all the users list
-//   async getAllUsers(req: Request, h: ResponseToolkit) {
-//     const { query } = getUsersListInputValidation.parse({
-//       query: req.query,
-//     });
-
-//     // Fetch the user records using the validated and parsed parameters
-//     return getAllUserRecords(query);
-//   },
-
  export default {
   // // Retrieve all the users list with role and date filters
   async getAllUsers(req: Request, h: ResponseToolkit) {
-    try {
       // Parse and validate the query parameters
       const { query } = getUsersListInputValidation.parse({
         query: req.query,
@@ -104,7 +92,6 @@ const updateInputValidation = z.object({
 
       const { role, date } = query;
 
-      console.log(">>>>>>>>>>>>", role);
       // Build the filter object
       const filter: GetAlluserRecordsParams = {
         role,
@@ -122,10 +109,6 @@ const updateInputValidation = z.object({
       const result = await getAllUserRecords(filter);
 
       return result;
-    } catch (error) {
-      console.error("Validation Error:", error);
-      return badRequest("Validation error: ");
-    }
   },
 
 
@@ -140,16 +123,17 @@ const updateInputValidation = z.object({
     return result;
   },
 
-  // Create a new user
-  async createUser(req: Request, h: ResponseToolkit) {
+
+    async createUser(req: Request, h: ResponseToolkit) {
     const { payload } = createInputValidation.parse({
       payload: req.payload,
     });
 
+    const { tenantid } = req.headers;
     const {
       userName,
-      email,
       gender,
+      email,
       password,
       role,
       profileImage,
@@ -158,13 +142,14 @@ const updateInputValidation = z.object({
       lastUpdatedBy,
     } = payload;
 
-    //const hashedPassword = await hashPassword(decryptPassword(password));
+    const hashedPassword = await hashPassword(decryptPassword(password));
 
     return createUser({
+      tenantId: tenantid as string,
       userName,
-      email,
       gender,
-      password,
+      email,
+      password: hashedPassword,
       role,
       profileImage: profileImage ?? null,
       status,

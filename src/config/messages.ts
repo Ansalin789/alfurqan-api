@@ -32,6 +32,7 @@ export const userMessages: Record<string, string> = Object.freeze({
   USER_NOT_FOUND: "Your account is not found or active, contact admin",
   ENCRYPT_PASSWORD_ERROR: "Password must be an encrypted value",
   USER_PROFILE_INVALID_FILE_TYPE: "Invalid file type. Only .png , .jpg or jpeg files are allowed.",
+  ACTIVE_USER_NOT_FOUND: "Active user not found with the provided credentials",
 });
 
 
@@ -504,4 +505,20 @@ export const leaveRequestMessages: Record<string, string> = Object.freeze({
   FROM_DATE_REQUIRED: "From date is required",
   TO_DATE_REQUIRED: "To date is required",
   REASON_REQUIRED: "Reason for leave is required",
+});
+export const syncJob: Record<string, any> = Object.freeze({
+  ZOHO_RECRUIT: 'Please connect to the Zoho Recruit',
+  SYNC_JOB: 'Sync jobs from the ATS integrations',
+  AUTHORIZATION_CODE: 'authorization_code',
+  REFRESH_TOKEN: 'refresh_token',
+  JOB_OPENING_STATUS: ['In-progress', 'On-Hold', 'Filled', 'Cancelled', 'Declined', 'Inactive', 'Waiting for approval', 'Submitted by client'],
+  ADDITIONAL_DETAILS: ['workExperience', 'salary', 'requiredskills'],
+  JOB_SYNCED: 'Job synced Successfully',
+  UPDATED: 'job updated from Other Applications- Zoho Recurit.',
+  CREATED: 'job imported from Other Applications- Zoho Recruit.',
+  INVALID_ACCESS_TOKEN: 'Invalid access token',
+  ENDPOINT_NOT_FOUND: 'Endpoint not found',
+  API_REQUEST_FAILED: 'API request failed:',
+  UNEXPECTED_ERROR: 'An unexpected error occurred',
+  CONTENT_TYPE: ['Bearer', 'application/json', 'application/x-www-form-urlencoded'],
 });

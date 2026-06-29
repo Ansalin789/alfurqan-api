@@ -4,10 +4,17 @@ import { IUser } from "../../types/models.types";
 
 import CustomEnumerator from "../shared/enum";
 import { z } from "zod";
-import { appStatus, commonMessages } from "../config/messages";
+import { appStatus, commonMessages, userMessages } from "../config/messages";
+import { isEncryptedPassword } from "../shared/common";
 
 const userSchema = new Schema<IUser>(
   {
+     tenantId: {
+ type: String,
+      default: uuidv4,
+      required: false,
+      unique: true,
+     },
     userId: {
       type: String,
       default: uuidv4,
@@ -88,11 +95,14 @@ const userSchema = new Schema<IUser>(
 
 export const zodUserSchema = z.object({
   userName: z.string().min(3),
+  gender: z.string(),
   email: z.string().email(),
-  gender: z.string().email(),
   password: z
     .string()
-    .min(8),
+    .min(8)
+    .refine((value) => isEncryptedPassword(value), {
+      message: userMessages.ENCRYPT_PASSWORD_ERROR,
+    }),
   role: z.array(z.string()).min(1),
   position: z.string().optional(),
   profileImage: z.string().nullable(),

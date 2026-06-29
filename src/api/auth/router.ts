@@ -14,22 +14,24 @@ const register = async (server: Server): Promise<void> => {
         tags: ["api", "auth"],
       },
     },
-
-    {
-      method: "POST",
-      path: "/studentsignin",
-      options: {
-        handler: handler.studentSignIn,
-        description: authMessages.SIGN_IN,
-        tags: ["api", "auth"],
-      },
-    },
     {
       method: "POST",
       path: "/signout",
       options: {
         handler: handler.signOut,
         description: authMessages.SIGN_OUT,
+        tags: ["api", "auth"],
+        auth: {
+          strategies: ["jwt"],
+        },
+      },
+    },
+{
+      method: "POST",
+      path: "/studentsignin",
+      options: {
+        handler: handler.studentSignIn,
+        description: authMessages.SIGN_IN,
         tags: ["api", "auth"],
       },
     },
@@ -40,6 +42,9 @@ const register = async (server: Server): Promise<void> => {
         handler: handler.changePassword,
         description: authMessages.CHANGE_PASSWORD,
         tags: ["api", "auth"],
+        auth: {
+          strategies: ["jwt"],
+        },
       },
     },
     {
@@ -80,7 +85,7 @@ const register = async (server: Server): Promise<void> => {
            },
         },
 
-
+    
   ];
   server.route(routes);
 };

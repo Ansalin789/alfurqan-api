@@ -69,6 +69,9 @@ export class CustomEnumerator {
 }
 
 export interface GetAllRecordsParams {
+  tenantId?: string;
+  modules?: string[];
+  keyNames?: string[];
   groupId?: string;
   roomId?: string;
   supervisorId?: string;

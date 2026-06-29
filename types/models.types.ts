@@ -42,6 +42,7 @@ enum EvaluationStatus{
 }
 
 export interface IUser extends Document {
+  tenantId?: string;
   userId?: string;
   userName: string;
   gender: string;
@@ -60,6 +61,7 @@ export interface IUser extends Document {
 }
 
 export interface IUserCreate {
+  tenantId?: string;
   userId?: string;
   userName: string;
   gender: string;
@@ -686,6 +688,7 @@ export interface IClassScheduleCreate{
 }
 
 export interface IActiveSession extends Document {
+  tenantId: string;
   userId: string;
   loginDate: Date;
   isActive: boolean;
@@ -2172,4 +2175,133 @@ export interface LogDocument extends Document {
 export interface IRollCounter extends Document {
    prefix: String;
     sequence: String;
+}
+
+// Define the ITenant interface
+export interface ITenant extends Document {
+  tenantCode: string;
+  tenantName: string;
+  tenantLogo: string;
+  mobileNumber: string;
+  organizationName: string;
+  phoneNumber?: string;
+  address?: string;
+  country?: string;
+  companyRegistrationCertificate: string;
+  gstCertificate: string;
+  addressProof: string;
+  emailId: string;
+  faxNo?: string;
+  state: string;
+  city: string;
+  street: string;
+  gstNo?: string;
+  panNo?: string;
+  postalCode?: string;
+  tenantJobCode: string;
+  website?: string;
+  status?: string;
+  activeLicense?: object;
+  plan?: string;
+  timeZone: string;
+  currency: string;
+  settings?: any[];
+  createdDate: Date;
+  createdBy: string;
+  lastUpdatedDate: Date;
+  lastUpdatedBy: string;
+}
+
+export interface ITenantCreate {
+  tenantName: string;
+  tenantLogo: string;
+  mobileNumber: string;
+  organizationName: string;
+  phoneNumber?: string;
+  state: string;
+  city: string;
+  street: string;
+  country?: string;
+  companyRegistrationCertificate?: string;
+  addressProof?: string;
+  plan?: string;
+  activeLicense?: object;
+  timeZone?: string;
+  currency?: string;
+  emailId: string;
+  faxNo?: string;
+  gstNo?: string;
+  panNo?: string;
+  postalCode?: string;
+  tenantJobCode: string;
+  website?: string;
+  status?: string;
+  settings?: any[];
+  createdDate?: Date;
+  createdBy: string;
+  lastUpdatedDate?: Date;
+  lastUpdatedBy: string;
+
+}
+
+// Define the ITenantSettings interface
+export interface ITenantSettings extends Document {
+  tenantId: string;
+  keyName: string;
+  keyValue: any;
+  aiModel?:string;
+  apiKey?:string;
+  module: string;
+  isConnected: boolean;
+  status: keyof typeof CustomEnumerator.Status;
+  createdDate?: Date;
+  createdBy: string;
+  lastUpdatedDate?: Date;
+  lastUpdatedBy?: string;
+}
+export interface ITenantSettingsPayload {
+  tenantId: string;
+  keyName: string;
+  keyValue: any;
+  module: string;
+  isConnected: boolean;
+  status: keyof typeof CustomEnumerator.Status;
+  createdDate?: Date;
+  createdBy: string;
+  lastUpdatedDate?: Date;
+  lastUpdatedBy?: string;
+}
+export interface Plans extends Document {
+  planName: string;
+  features: string[];
+  price: number;
+  tenantId: string;
+  planId: string;
+  trialDays: number;
+  maxUsers: number;
+  allowedRoles: string[];
+  canCreateCustomRoles: boolean;
+  currency: string;
+  billingCycle: 'MONTHLY' | 'YEARLY' | 'LIFETIME' | 'QUARTERLY' | 'HALF_YEARLY';
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate?: Date;
+  updatedBy?: string;
+}
+
+export interface Subscription extends Document {
+  tenantId: string;
+  planId: string;
+  planName: string;
+  subscriptionId: string;
+  subscriptionStatus: 'ACTIVE' | 'INACTIVE' | 'CANCELLED' | 'EXPIRED'| 'TRIALS';
+  startDate: Date;
+  isTrialUsed: boolean;
+  endDate: Date;
+  status: string;
+  createdDate: Date;
+  createdBy: string;
+  updatedDate?: Date;
+  updatedBy?: string;
 }

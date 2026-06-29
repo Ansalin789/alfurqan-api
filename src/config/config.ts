@@ -8,9 +8,9 @@ export const serverSettings: ServerOptions = {
   routes: {
     cors: {
       origin: ["*"],
-      headers: ["Accept", "Authorization", "Content-Type", "If-None-Match"],
+      headers: ["Accept", "Authorization", "Content-Type", "If-None-Match", "tenantid"],
       exposedHeaders: ["WWW-Authenticate", "Server-Authorization"],
-      additionalExposedHeaders: ["Accept"],
+      additionalExposedHeaders: ["Accept", "tenantid"],
       maxAge: 60,
       credentials: true,
     },
