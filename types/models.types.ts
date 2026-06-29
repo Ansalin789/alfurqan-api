@@ -2182,26 +2182,66 @@ export interface ITenant extends Document {
   tenantCode: string;
   tenantName: string;
   tenantLogo: string;
-  organizationName: string;
-  countryCode: string;
-  phoneNumber?: string;
   mobileNumber: string;
-  emailId: string;
-  gstNo?: string;
-  panNo: string;
-  website?: string;
-  faxNo?: string;
+  organizationName: string;
+  phoneNumber?: string;
   address?: string;
-  postalCode?: string;
   country?: string;
+  companyRegistrationCertificate: string;
+  gstCertificate: string;
+  addressProof: string;
+  emailId: string;
+  faxNo?: string;
+  state: string;
+  city: string;
+  street: string;
+  gstNo?: string;
+  panNo?: string;
+  postalCode?: string;
+  tenantJobCode: string;
+  website?: string;
+  status?: string;
   activeLicense?: object;
+  plan?: string;
+  timeZone: string;
+  currency: string;
   settings?: any[];
-  status: keyof typeof CustomEnumerator.Status;
   createdDate: Date;
   createdBy: string;
   lastUpdatedDate: Date;
   lastUpdatedBy: string;
+}
+
+export interface ITenantCreate {
+  tenantName: string;
+  tenantLogo: string;
+  mobileNumber: string;
+  organizationName: string;
+  phoneNumber?: string;
+  state: string;
+  city: string;
+  street: string;
+  country?: string;
+  companyRegistrationCertificate?: string;
+  addressProof?: string;
+  plan?: string;
+  activeLicense?: object;
+  timeZone?: string;
+  currency?: string;
+  emailId: string;
+  faxNo?: string;
+  gstNo?: string;
+  panNo?: string;
+  postalCode?: string;
   tenantJobCode: string;
+  website?: string;
+  status?: string;
+  settings?: any[];
+  createdDate?: Date;
+  createdBy: string;
+  lastUpdatedDate?: Date;
+  lastUpdatedBy: string;
+
 }
 
 // Define the ITenantSettings interface

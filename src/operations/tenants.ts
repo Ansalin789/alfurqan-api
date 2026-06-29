@@ -1,4 +1,4 @@
-import { ITenant, ITenantSettings, ITenantSettingsPayload } from "../../types/models.types";
+import { ITenant, ITenantCreate, ITenantSettings, ITenantSettingsPayload } from "../../types/models.types";
 import { appStatus, syncJob, tenantsMessages } from "../config/messages";
 import TenantModel from "../models/tenants";
 import TenantSettingsModel from "../models/tenant_setting";
@@ -9,6 +9,7 @@ import AppLogger from "../helpers/logging";
 import { Types } from "mongoose";
 import { config } from "../config/env";
 import axios from 'axios';
+import { generateTenant } from "./rollcounter";
 
 
 export interface TenantDetails {
@@ -27,6 +28,26 @@ export interface TenantDetails {
   lastUpdatedBy: string;
 }
 
+
+/**
+ * Creates a new student.
+ *
+ * @param {ITenantCreate} payload - The data of the user to be created.
+ * @returns {Promise<ITenant>} - A promise that resolves to the created user document.
+ */
+
+export const createTenant = async (
+    payload: ITenantCreate
+): Promise<ITenant | { error: any }> => { 
+  const tenantCode = await generateTenant('TEN', 6);
+  const newTenant = new TenantModel({
+    ...payload,
+    tenantCode,
+  });
+
+  const savedTenant = await newTenant.save();
+  return savedTenant.toObject();
+}
 
 /**
  * Retrieves a tenant record by its tenantCode.
@@ -123,7 +144,6 @@ export const getActiveTenantRecordByJobCode = async (
     status: appStatus.ACTIVE,
   }).lean();
 };
-
 
 
 /**
@@ -291,3 +311,5 @@ export const getTenantSettingsById = async (
 ): Promise<ITenantSettings | null> => {
   return TenantSettingsModel.findById({ _id: new Types.ObjectId(tenantSettingId), status: appStatus.ACTIVE }).exec()
 };
+
+

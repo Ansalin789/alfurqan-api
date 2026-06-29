@@ -3,6 +3,7 @@ import { z } from "zod";
 import { zodGetAllRecordsQuerySchema } from "../../shared/zod_schema_validation";
 import { zodTenantSettingsSchema } from "../../models/tenant_setting";
 import {
+  createTenant,
   createTenantSettings,
   getActiveTenantRecordByCode,
   getAllTenantSettingsRecords,
@@ -56,7 +57,9 @@ const updateTenantDetailsInput = z.object({
   payload: zodTenantSchema.pick({
     organizationName: true,
     phoneNumber: true,
-    address: true,
+    state: true,
+    city: true,
+    street: true,
     country: true,
     emailId: true,
     faxNo: true,
@@ -68,9 +71,101 @@ const updateTenantDetailsInput = z.object({
     lastUpdatedDate: true,
     lastUpdatedBy: true
   })
-})
+});
+
+const createTenantInputValidation = z.object({
+  payload: zodTenantSchema.pick({
+    tenantName: true,
+    tenantLogo: true,
+    mobileNumber: true,
+    organizationName: true,
+    phoneNumber: true,
+    state: true,
+    city: true,
+    street: true,
+    country: true,
+    companyRegistrationCertificate: true,
+    addressProof: true,
+    plan: true,
+    timeZone: true,
+    currency: true,
+    emailId: true,
+    faxNo: true,
+    gstNo: true,
+    panNo: true,
+    postalCode: true,
+    tenantJobCode: true,
+    website: true,
+    status: true,
+    createdBy: true,
+    lastUpdatedBy: true
+  })
+});
+
 
 export default {
+
+  //create new tenant
+
+  async createTenant(req: Request, h: ResponseToolkit) {
+    const { payload } = createTenantInputValidation.parse({
+      payload: req.payload,
+    }); 
+    const {
+    tenantName,
+    tenantLogo,
+    organizationName,
+    phoneNumber,
+    mobileNumber,
+    emailId,
+    gstNo,
+    panNo,
+    website,
+    tenantJobCode,
+    faxNo,
+    state,
+    city,
+    street ,
+    postalCode,
+    country,
+    companyRegistrationCertificate,
+    addressProof,
+    plan,
+    timeZone,
+    currency,
+    status,
+    createdBy,
+    lastUpdatedBy
+    } = payload;
+    return createTenant({
+      tenantName,
+      tenantLogo,
+      mobileNumber,
+      organizationName,
+      phoneNumber,
+      state,
+      city,
+      street,
+      country,
+      companyRegistrationCertificate,
+      addressProof,
+      plan,
+      timeZone,
+      currency,
+      emailId,
+      faxNo,
+      gstNo,
+      panNo,
+      postalCode,
+      tenantJobCode,
+      website,
+      status,
+      createdBy,
+      lastUpdatedBy
+    });
+  },
+
+
   // Create a new tenant settings
   async createTenantSettings(req: Request, h: ResponseToolkit) {
     const { payload } = createInputValidation.parse({
@@ -131,15 +226,15 @@ export default {
     return getActiveTenantRecordByCode(String(req.params.tenantCode));
   },
 
-  async updateTenantDetailsById(req: Request, h: ResponseToolkit) {
-    const { payload } = updateTenantDetailsInput.parse({
-      payload: req.payload
-    })
-    return updateTenantDetailsByTenantId(String(req.params.tenantId), {
-      ...payload,
-      lastUpdatedDate: new Date()
-    });
-  },
+  // async updateTenantDetailsById(req: Request, h: ResponseToolkit) {
+  //   const { payload } = updateTenantDetailsInput.parse({
+  //     payload: req.payload
+  //   })
+  //   return updateTenantDetailsByTenantId(String(req.params.tenantId), {
+  //     ...payload,
+  //     lastUpdatedDate: new Date()
+  //   });
+  // },
 
 
 };

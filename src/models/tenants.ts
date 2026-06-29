@@ -63,7 +63,15 @@ const tenantSchema = new Schema<ITenant>(
       type: String,
       default: null,
     },
-    address: {
+    state: {
+      type: String,
+      default: null,
+    },
+    city: {
+      type: String,
+      default: null,
+    },
+    street: {
       type: String,
       default: null,
     },
@@ -75,9 +83,30 @@ const tenantSchema = new Schema<ITenant>(
       type: String,
       default: null,
     },
-    activeLicense: {
-      type: Schema.Types.Mixed,
+    companyRegistrationCertificate: {
+       type: String,
+       default: null,
+    },
+    gstCertificate: {
+      type: String,
       default: null,
+    },
+    addressProof: {
+      type: String,
+      default: null,
+    },
+    plan: {
+      type: String,
+      required: true,
+    },
+    timeZone: {
+      type: String,
+      default: "UTC",
+      required: true,
+    },
+    currency: {
+      type: String,
+      required: true,
     },
     settings: {
       type: [Schema.Types.Mixed],
@@ -112,18 +141,30 @@ const tenantSchema = new Schema<ITenant>(
 );
 
 export const zodTenantSchema = z.object({
-  address: z.string().min(3),
-  country: z.string(),
-  emailId: z.string().email(),
-  faxNo: z.string(),
-  gstNo: z.string(),
+  tenantCode: z.string().min(3),
+  tenantName: z.string().min(3),
+  tenantLogo: z.string(),
   organizationName: z.string(),
-  panNo: z.string(),
   phoneNumber: z.string(),
-  postalCode: z.string(),
-  tenantCode: z.string(),
-  tenantJobCode: z.string(),
+  mobileNumber: z.string(),
+  emailId: z.string().email(),
+  gstNo: z.string(),
+  panNo: z.string(),
   website: z.string(),
+  tenantJobCode: z.string(),
+  faxNo: z.string(),
+  state: z.string(),
+  city: z.string(),
+  street: z.string(),
+  postalCode: z.string(),
+  country: z.string(),
+  companyRegistrationCertificate: z.string().optional(),
+  gstCertificate: z.string().optional(),
+  addressProof: z.string().optional(),
+  plan: z.string().optional(),
+  timeZone: z.string().optional(),
+  currency: z.string().optional(),
+  status: z.string().optional(),
   createdDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: commonMessages.INVALID_DATE_FORMAT,
   }).transform((val) => new Date(val)).optional(),
