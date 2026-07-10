@@ -10,7 +10,6 @@ interface RedisData {
   jobAdditionalDetails: any;
   link: any;
   model: any;
-  tenantId: string;
 }
 
 
@@ -75,16 +74,14 @@ export const generateAuthToken = (data: any): string => jwt.sign(data, config.jw
 export const authUserData = (token: string) => {
   let userInfo = {
     userName: "NO-AUTH",
-    userId: "Unknown",
-    tenantId: "Unknown"
+    userId: "Unknown"
   };
   const decodedToken: any = jwt.decode(token.replace("Bearer", ""));
   if (decodedToken) {
-    const { userName, sub, tenantId } = decodedToken;
+    const { userName, sub } = decodedToken;
     userInfo = {
       userName: userName ?? "NO-AUTH",
-      userId: sub ?? "Unknown",
-      tenantId: tenantId ?? "Unknown"
+      userId: sub ?? "Unknown"
     };
   }
   return userInfo;

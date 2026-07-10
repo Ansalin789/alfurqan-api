@@ -36,7 +36,6 @@ import TeachermeetingAPI from "../api/teacherMeeting/router"
 import Level from "../api/level/router"; 
 import AdminAssignment from "../api/adminAssignment/router";
 import fileUplocadAPI from "../api/fileUpload/router";
-import  teanantAPI  from "../api/tenant/router";
 import subscriptionSAASAPI from "../api/subscription_SAAS/router";
 import plansAPI from "../api/plan/router";
 
@@ -154,9 +153,6 @@ export const appPlugins = [
   },
    {
     plugin:fileUplocadAPI,
-  },
-   {
-    plugin: teanantAPI,
   },
   {
     plugin:subscriptionSAASAPI,

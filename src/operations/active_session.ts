@@ -7,7 +7,6 @@ export interface ActiveSessionRecord {
   accessToken: string;
   isActive: boolean;
   userId: string;
-  tenantId: string;
   loginDate?: Date;
 }
 

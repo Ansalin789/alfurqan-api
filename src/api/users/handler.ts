@@ -129,7 +129,6 @@ const updateInputValidation = z.object({
       payload: req.payload,
     });
 
-    const { tenantid } = req.headers;
     const {
       userName,
       gender,
@@ -145,7 +144,6 @@ const updateInputValidation = z.object({
     const hashedPassword = await hashPassword(decryptPassword(password));
 
     return createUser({
-      tenantId: tenantid as string,
       userName,
       gender,
       email,
@@ -164,12 +162,10 @@ const updateInputValidation = z.object({
       payload: req.payload,
     });
 
-    const { tenantid } = req.headers;
     const { password } = validationResult.payload;
 
     let formData = {
       ...validationResult.payload,
-      tenantId: tenantid as string,
       lastUpdatedDate: new Date(),
     };
 

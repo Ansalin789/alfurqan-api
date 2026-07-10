@@ -18,7 +18,6 @@ import jwt from "jsonwebtoken";
 import { zodAuthenticationSchema } from "../../shared/zod_schema_validation";
 import { createActiveSessionRecord, getActiveSessionRecord, updateActiveSessionRecord } from "../../operations/active_session";
 import { getActiveUserRecord, updateUser } from "../../operations/users";
-import { getActiveTenantRecordByCode } from "../../operations/tenants";
 import ActiveSessionModel from "../../models/active_session";
 import { getActiveStudentRecord } from "../../operations/alstudents";
 import UserModel from "../../models/users";
@@ -78,7 +77,6 @@ export default {
     const jwtPayload = {
       userName: user.userName,
       sub: String(user._id),
-      tenantId: user.tenantId,
     };
     const accessToken = generateAuthToken(jwtPayload);
     const userWithoutPassword = omit(user, ["password"]);
@@ -87,21 +85,16 @@ export default {
 
     // Save the session for logout activity
     await createActiveSessionRecord({
-      tenantId: user.tenantId,
       userId: String(user._id),
       loginDate: new Date(),
       isActive: true,
       accessToken,
     });
 
-    const tenantData: any = await getActiveTenantRecordByCode(user.tenantId);
-
-    // Return user details with auth token for successfull login
+    // Return user details with auth token for successful login
     return {
       ...userWithoutPassword,
       accessToken,
-      organizationName: tenantData.organizationName ?? null,
-      tenantJobCode: tenantData.tenantJobCode ?? null
     };
   },
 
@@ -153,7 +146,6 @@ export default {
       loginDate: new Date(),
       isActive: true,
       accessToken,
-      tenantId: activeRecord.tenantId ?? "Unknown",
     });
 
     return {
@@ -164,7 +156,7 @@ export default {
 
   async signOut(req: Request, h: ResponseToolkit) {
 
-    const { authorization, tenantid } = req.headers;
+    const { authorization } = req.headers;
 
     // Check if Authorization header is present and starts with 'Bearer '
     if (!authorization || !authorization.startsWith("Bearer ")) {
@@ -182,7 +174,6 @@ export default {
       accessToken: token,
       isActive: true,
       userId: decodedToken.sub,
-      tenantId: tenantid,
     });
 
     // Check the provided token exists in the database
@@ -253,7 +244,6 @@ export default {
       loginDate: new Date(),
       isActive: true,
       accessToken,
-      tenantId: activeRecord.tenantId ?? "Unknown",
     });
       
      
@@ -299,7 +289,6 @@ export default {
       loginDate: new Date(),
       isActive: true,
       accessToken,
-      tenantId: activeRecord.tenantId ?? "Unknown",
     });
       
      

@@ -9,12 +9,6 @@ import { isEncryptedPassword } from "../shared/common";
 
 const userSchema = new Schema<IUser>(
   {
-     tenantId: {
- type: String,
-      default: uuidv4,
-      required: false,
-      unique: true,
-     },
     userId: {
       type: String,
       default: uuidv4,

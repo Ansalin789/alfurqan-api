@@ -42,7 +42,6 @@ enum EvaluationStatus{
 }
 
 export interface IUser extends Document {
-  tenantId?: string;
   userId?: string;
   userName: string;
   gender: string;
@@ -61,7 +60,6 @@ export interface IUser extends Document {
 }
 
 export interface IUserCreate {
-  tenantId?: string;
   userId?: string;
   userName: string;
   gender: string;
@@ -688,7 +686,6 @@ export interface IClassScheduleCreate{
 }
 
 export interface IActiveSession extends Document {
-  tenantId: string;
   userId: string;
   loginDate: Date;
   isActive: boolean;

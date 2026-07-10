@@ -24,7 +24,6 @@ const register = (server: Server) => {
           userAgent: headers["user-agent"] || "Unknown",
           referrer: headers.referrer || "No Referrer",
           ipAddress: info.remoteAddress,
-          tenantId: headers["tenantid"] || "Unknown Tenant",
           responsePayload: response.source || "No Response Payload",
         });
       }

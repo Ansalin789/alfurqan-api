@@ -66,9 +66,9 @@ export const getUserRecordById = async (
  * @returns {Promise<IUser | null>} - Returns a promise that resolves to the matched user record or null if no match is found.
  */
 export const getActiveUserRecord = async (
-  query: Partial<{ id: string; userName: string; tenantId: string; role: string }>
+  query: Partial<{ id: string; userName: string; role: string }>
 ): Promise<IUser | null> => {
-  const { id, userName, tenantId, role } = query;
+  const { id, userName, role } = query;
 
   const dbQuery: any = {
     status: appStatus.ACTIVE,
@@ -76,7 +76,6 @@ export const getActiveUserRecord = async (
 
   if (!isNil(id)) dbQuery._id = new Types.ObjectId(id);
   if (!isNil(userName)) dbQuery.userName = userName;
-  if (!isNil(tenantId)) dbQuery.tenantId = tenantId;
   if (!isNil(role)) dbQuery.role = role;
 
   return UserModel.findOne(dbQuery).lean();
