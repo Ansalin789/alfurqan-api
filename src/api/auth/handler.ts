@@ -108,28 +108,35 @@ export default {
     };
   },
 
+
   async studentSignIn(req: Request, h: ResponseToolkit) {
     const { payload } = signInInputValidation.parse({
       payload: req.payload,
     });
 
     const { username, password } = payload;
-
+  
     let users: any = await getActiveStudentRecord({ username: username });
+
+    console.log("student>>>", users);
 
     // Validate the user exists in either DB
     if (isNil(users)) {
       return badRequest(userMessages.USER_NOT_FOUND);
     }
+
+
+
     // Check password for `users`
     if (users && payload.password !== users.password) {
+      console.log("password>>>", password);
       return unauthorized(authMessages.INCORRECT_PASSWORD);
     }
 
     // Determine which record to use
     const activeRecord = users;
     // 🔎 Step 1: Find latest session for this user (by loginDate)
-    const latestSession = await ActiveSessionModel.findOne({ userId: String(activeRecord._id) })
+  const latestSession = await ActiveSessionModel.findOne({ userId: String(activeRecord._id) })
     .sort({ loginDate: -1 }) // most recent first
     .exec();
 
@@ -148,6 +155,7 @@ export default {
 
     const accessToken = generateAuthToken(jwtPayload);
     const userWithoutPassword = omit(activeRecord, ["password"]);
+    console.log("accessToken:",accessToken)
   //  await updateUser(String(activeRecord._id), { lastLoginDate: new Date() });
 
     // Save the session for logout activity
