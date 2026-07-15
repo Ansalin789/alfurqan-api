@@ -49,16 +49,26 @@ export default {
     });
 
     const { username, password } = payload;
-    let user: any = await getActiveUserRecord({ userName: username });    // Validate the user exists in the DB
+    console.log("user>>>", `${username} ${password}`);
+
+    let user: any = await getActiveUserRecord({ userName: username });
+
+    console.log("user>>>", user);
+
+    // Validate the user exists in either DB
     if (isNil(user)) {
       return badRequest(userMessages.USER_NOT_FOUND);
     }
 
-    if (!(await verifyPassword(decryptPassword(password), user.password))) {
+    // Check password for `user`
+    if (user && payload.password !== user.password) {
+      console.log("password>>>", password);
       return unauthorized(authMessages.INCORRECT_PASSWORD);
     }
 
-       // Determine which record to use
+
+
+    // Determine which record to use
     const activeRecord = user;
   // 🔎 Step 1: Find latest session for this user (by loginDate)
   const latestSession = await ActiveSessionModel.findOne({ userId: String(activeRecord._id) })
@@ -75,23 +85,23 @@ export default {
   }
 
     const jwtPayload = {
-      userName: user.userName,
-      sub: String(user._id),
+      userName: activeRecord.userName ,
+      sub: String(activeRecord._id),
     };
-    const accessToken = generateAuthToken(jwtPayload);
-    const userWithoutPassword = omit(user, ["password"]);
 
-    await updateUser(String(user._id), { lastLoginDate: new Date() });
+    const accessToken = generateAuthToken(jwtPayload);
+    const userWithoutPassword = omit(activeRecord, ["password"]);
+    console.log("accessToken:",accessToken)
+  //  await updateUser(String(activeRecord._id), { lastLoginDate: new Date() });
 
     // Save the session for logout activity
     await createActiveSessionRecord({
-      userId: String(user._id),
+      userId: String(activeRecord._id),
       loginDate: new Date(),
       isActive: true,
       accessToken,
     });
 
-    // Return user details with auth token for successful login
     return {
       ...userWithoutPassword,
       accessToken,
