@@ -49,11 +49,7 @@ export const zodGetAllUserRecordsQuerySchema = z.object({
 
 export const zodAuthenticationSchema = z.object({
   username: z.string().min(3),
-  password: z
-    .string()
-    .refine((value) => isEncryptedPassword(value), {
-      message: userMessages.ENCRYPT_PASSWORD_ERROR,
-    }),
+  password: z.string().min(8),
 });
 
 export const zodGetAssignmentList = z.object({
