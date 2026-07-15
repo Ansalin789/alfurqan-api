@@ -121,10 +121,9 @@ export const dashboardWidgetCounts = async (
 }
 
 
-
 export async function dashboardWidgetTeacherCounts(teacherId: string) {
   try {
-    if (!teacherId || !Types.ObjectId.isValid(teacherId)) {
+    if (!teacherId) {
       throw new Error("Invalid teacher ID");
     }
 
