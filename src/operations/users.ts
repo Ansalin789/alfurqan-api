@@ -5,6 +5,8 @@ import { appStatus } from "../config/messages";
 import {  isNil } from "lodash";
 import { GetAllRecordsParams, GetAlluserRecordsParams } from "../shared/enum";
 import RecruitmentModel from "../models/recruitment";
+import IAlStudentsModel from "../models/alstudents";
+
 /**
  * Retrieves all user records for a given tenant, with support for search, pagination, sorting, role filtering, and excluding passwords.
  *
@@ -67,7 +69,7 @@ export const getUserRecordById = async (
  */
 export const getActiveUserRecord = async (
   query: Partial<{ id: string; userName: string; role: string }>
-): Promise<IUser | null> => {
+): Promise<boolean> => {
   const { id, userName, role } = query;
 
   const dbQuery: any = {
@@ -78,7 +80,16 @@ export const getActiveUserRecord = async (
   if (!isNil(userName)) dbQuery.userName = userName;
   if (!isNil(role)) dbQuery.role = role;
 
-  return UserModel.findOne(dbQuery).lean();
+  let exists = await UserModel.exists(dbQuery);
+
+  if (!exists) {
+    const studentQuery = { ...dbQuery };
+    delete studentQuery.role;
+
+    exists = await IAlStudentsModel.exists(studentQuery);
+  }
+
+  return !!exists;
 };
 
 /**

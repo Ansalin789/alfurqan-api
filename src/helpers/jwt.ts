@@ -17,7 +17,7 @@ export const validateUserAuth = async (decoded: string, req: Request) => {
       userId: sub,
     });
 
-    if (isNil(user) || isNil(activeSession)) {
+    if (!user || isNil(activeSession)) {
       return { isValid: false };
     }
 
