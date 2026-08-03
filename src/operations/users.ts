@@ -69,7 +69,7 @@ export const getUserRecordById = async (
  */
 export const getActiveUserRecord = async (
   query: Partial<{ id: string; userName: string; role: string }>
-): Promise<boolean> => {
+) => {
   const { id, userName, role } = query;
 
   const dbQuery: any = {
@@ -80,16 +80,26 @@ export const getActiveUserRecord = async (
   if (!isNil(userName)) dbQuery.userName = userName;
   if (!isNil(role)) dbQuery.role = role;
 
-  let exists = await UserModel.exists(dbQuery);
+  
 
-  if (!exists) {
+  // Search in User collection
+  let user = await UserModel.findOne(dbQuery).lean();
+
+
+  // If not found, search in Student collection
+  if (!user) {
     const studentQuery = { ...dbQuery };
     delete studentQuery.role;
 
-    exists = await IAlStudentsModel.exists(studentQuery);
+    console.log("Student Query:", studentQuery);
+
+    user = await IAlStudentsModel.findOne(studentQuery).lean();
+    console.log("IAlStudentsModel.findOne():", user);
   }
 
-  return !!exists;
+  console.log("Final User:", user);
+
+  return user;
 };
 
 /**
